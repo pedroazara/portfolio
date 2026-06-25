@@ -125,12 +125,12 @@ export async function getAdminPassword(): Promise<string> {
     }
     
     // Auto-initialize the password with the user-defined value in Firestore if it doesn't exist
-    const defaultPassword = "lHj1vZ4v6jBqpc";
+    const defaultPassword = "pedro123";
     await setDoc(docRef, { password: defaultPassword }, { merge: true });
     return defaultPassword;
   } catch (error) {
     console.warn("Failed to fetch admin password from Firestore, using default fallback:", error);
-    return "lHj1vZ4v6jBqpc";
+    return "pedro123";
   }
 }
 

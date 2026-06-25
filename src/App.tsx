@@ -77,6 +77,13 @@ export default function App() {
   // Load initial resume state from localStorage or template
   const [resumeData, setResumeData] = useState<ResumeData>(initialResumeData);
 
+  // Synchronize browser tab title dynamically with the profile name and language
+  useEffect(() => {
+    const name = resumeData?.profile?.name || "Pedro Henrique Almeida";
+    const titleSuffix = language === "en" ? "Portfolio & Blog" : "Currículo, Portfólio & Blog";
+    document.title = `${name} | ${titleSuffix}`;
+  }, [resumeData?.profile?.name, language]);
+
   // Fetch initial data from Firestore or fallback to localStorage
   useEffect(() => {
     async function loadData() {
@@ -519,8 +526,8 @@ export default function App() {
           </p>
           <p className="mt-2 text-xs text-slate-400 font-sans">
             {language === "en" 
-              ? "All changes are secure and automatically saved in your browser's local storage." 
-              : "Todas as alterações são seguras e salvas automaticamente no armazenamento local do seu navegador."}
+              ? "All changes are secure and automatically synchronized in the cloud in real-time via Firebase." 
+              : "Todas as alterações são seguras e sincronizadas na nuvem em tempo real via Firebase."}
           </p>
 
           <div className="mt-4 flex justify-center gap-4 text-xs text-slate-400 font-mono">

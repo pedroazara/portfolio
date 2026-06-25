@@ -172,7 +172,7 @@ export default function PortfolioControls({
 
             {/* Reset and Clear Actions only visible in Edit Mode */}
             {isEditMode && (
-              <div className="flex items-center gap-2 border-l border-slate-200 dark:border-slate-800 pl-2">
+              <div className="flex flex-wrap items-center gap-2 sm:border-l sm:border-slate-200 sm:dark:border-slate-800 sm:pl-2">
                 <button
                   type="button"
                   onClick={onOpenImageBank}
