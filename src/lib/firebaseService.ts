@@ -70,13 +70,40 @@ export async function fetchResumeData(): Promise<ResumeData | null> {
 }
 
 /**
+ * Helper function to recursively remove undefined properties from objects
+ * before sending them to Firestore, preventing payload rejection.
+ */
+function cleanUndefined<T>(obj: T): T {
+  if (obj === null || obj === undefined) {
+    return obj;
+  }
+  if (Array.isArray(obj)) {
+    return obj.map(item => cleanUndefined(item)) as any;
+  }
+  if (typeof obj === "object") {
+    const cleaned: any = {};
+    for (const key in obj) {
+      if (Object.prototype.hasOwnProperty.call(obj, key)) {
+        const val = (obj as any)[key];
+        if (val !== undefined) {
+          cleaned[key] = cleanUndefined(val);
+        }
+      }
+    }
+    return cleaned;
+  }
+  return obj;
+}
+
+/**
  * Saves the entire resume and portfolio data to Firestore.
  */
 export async function saveResumeData(data: ResumeData): Promise<void> {
   const fullPath = `${PORTFOLIO_DOC_PATH}/${PORTFOLIO_DOC_ID}`;
   try {
     const docRef = doc(db, PORTFOLIO_DOC_PATH, PORTFOLIO_DOC_ID);
-    await setDoc(docRef, data, { merge: true });
+    const cleanedData = cleanUndefined(data);
+    await setDoc(docRef, cleanedData, { merge: true });
   } catch (error) {
     handleFirestoreError(error, OperationType.WRITE, fullPath);
   }

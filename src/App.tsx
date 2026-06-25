@@ -22,6 +22,33 @@ const EDIT_MODE_KEY = "curriculo_portfolio_edit_mode_v1";
 const AUTH_KEY = "curriculo_portfolio_auth_v1";
 const LANG_KEY = "curriculo_portfolio_lang_v1";
 
+const sanitizeResumeData = (data: any): ResumeData => {
+  return {
+    profile: {
+      name: data?.profile?.name ?? initialResumeData.profile.name,
+      title: data?.profile?.title ?? initialResumeData.profile.title,
+      titleEn: data?.profile?.titleEn ?? initialResumeData.profile.titleEn ?? "",
+      bio: data?.profile?.bio ?? initialResumeData.profile.bio,
+      bioEn: data?.profile?.bioEn ?? initialResumeData.profile.bioEn ?? "",
+      email: data?.profile?.email ?? initialResumeData.profile.email,
+      phone: data?.profile?.phone ?? initialResumeData.profile.phone,
+      location: data?.profile?.location ?? initialResumeData.profile.location,
+      website: data?.profile?.website ?? initialResumeData.profile.website ?? "",
+      github: data?.profile?.github ?? initialResumeData.profile.github ?? "",
+      linkedin: data?.profile?.linkedin ?? initialResumeData.profile.linkedin ?? "",
+      twitter: data?.profile?.twitter ?? initialResumeData.profile.twitter ?? "",
+      avatarUrl: data?.profile?.avatarUrl ?? initialResumeData.profile.avatarUrl ?? "",
+    },
+    categories: Array.isArray(data?.categories) ? data.categories : (initialResumeData.categories || []),
+    projects: Array.isArray(data?.projects) ? data.projects : (initialResumeData.projects || []),
+    experiences: Array.isArray(data?.experiences) ? data.experiences : (initialResumeData.experiences || []),
+    educations: Array.isArray(data?.educations) ? data.educations : (initialResumeData.educations || []),
+    skills: Array.isArray(data?.skills) ? data.skills : (initialResumeData.skills || []),
+    courses: Array.isArray(data?.courses) ? data.courses : (initialResumeData.courses || []),
+    posts: Array.isArray(data?.posts) ? data.posts : (initialResumeData.posts || []),
+  };
+};
+
 export default function App() {
   const [language, setLanguage] = useState<Language>(() => {
     const saved = localStorage.getItem(LANG_KEY);
@@ -56,13 +83,13 @@ export default function App() {
       try {
         const firestoreData = await fetchResumeData();
         if (firestoreData) {
-          setResumeData(firestoreData);
+          setResumeData(sanitizeResumeData(firestoreData));
         } else {
           // Fallback to local storage if document doesn't exist in Firestore
           const saved = localStorage.getItem(STORAGE_KEY);
           if (saved) {
             try {
-              setResumeData(JSON.parse(saved) as ResumeData);
+              setResumeData(sanitizeResumeData(JSON.parse(saved)));
             } catch (err) {
               console.error("Erro ao ler dados salvos no LocalStorage:", err);
             }
@@ -74,7 +101,7 @@ export default function App() {
         const saved = localStorage.getItem(STORAGE_KEY);
         if (saved) {
           try {
-            setResumeData(JSON.parse(saved) as ResumeData);
+            setResumeData(sanitizeResumeData(JSON.parse(saved)));
           } catch (e) {
             console.error(e);
           }
