@@ -10,6 +10,7 @@ import PortfolioControls from "./components/PortfolioControls";
 import BlogSection from "./components/BlogSection";
 import LoginModal from "./components/LoginModal";
 import ImageBankModal from "./components/ImageBankModal";
+import ChangePasswordModal from "./components/ChangePasswordModal";
 import { Sparkles, CheckCircle2, Lock, Atom, FileText, BookOpen, Cloud, Sun, Moon } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { Language, translations } from "./lib/translations";
@@ -110,6 +111,7 @@ export default function App() {
 
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isImageBankOpen, setIsImageBankOpen] = useState(false);
+  const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
   const [showAutoSaveBanner, setShowAutoSaveBanner] = useState(false);
   const [activePage, setActivePage] = useState<"cv" | "blog">("cv");
   const [selectedBlogPostId, setSelectedBlogPostId] = useState<string | null>(null);
@@ -414,6 +416,7 @@ export default function App() {
             onLoginClick={() => setIsLoginModalOpen(true)}
             onLogout={handleLogout}
             onOpenImageBank={() => setIsImageBankOpen(true)}
+            onOpenChangePassword={() => setIsChangePasswordOpen(true)}
           />
         )}
 
@@ -512,6 +515,12 @@ export default function App() {
       <ImageBankModal
         isOpen={isImageBankOpen}
         onClose={() => setIsImageBankOpen(false)}
+      />
+
+      {/* Change Password Modal */}
+      <ChangePasswordModal
+        isOpen={isChangePasswordOpen}
+        onClose={() => setIsChangePasswordOpen(false)}
       />
     </div>
   );

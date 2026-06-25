@@ -1,5 +1,5 @@
 import React, { useRef } from "react";
-import { Eye, Edit3, Download, Upload, Lock, LogOut, Image as ImageIcon, FileText } from "lucide-react";
+import { Eye, Edit3, Download, Upload, Lock, LogOut, Image as ImageIcon, FileText, KeyRound } from "lucide-react";
 import { ResumeData } from "../types";
 import { generateResumePDF } from "../utils/pdfGenerator";
 
@@ -14,6 +14,7 @@ interface PortfolioControlsProps {
   onLoginClick: () => void;
   onLogout: () => void;
   onOpenImageBank: () => void;
+  onOpenChangePassword: () => void;
 }
 
 export default function PortfolioControls({
@@ -27,6 +28,7 @@ export default function PortfolioControls({
   onLoginClick,
   onLogout,
   onOpenImageBank,
+  onOpenChangePassword,
 }: PortfolioControlsProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -180,6 +182,16 @@ export default function PortfolioControls({
                 >
                   <ImageIcon className="h-4 w-4" />
                   <span>Banco de Imagens</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={onOpenChangePassword}
+                  className="flex items-center gap-1.5 rounded-lg border border-amber-200 dark:border-amber-900 bg-amber-50/50 dark:bg-amber-950/20 px-3 py-2 text-xs font-bold text-amber-700 dark:text-amber-300 transition-all hover:bg-amber-50 dark:hover:bg-amber-950/40 hover:text-amber-800 dark:hover:text-amber-200 cursor-pointer shadow-xs"
+                  title="Alterar Senha do Administrador"
+                  id="change-password-btn"
+                >
+                  <KeyRound className="h-4 w-4" />
+                  <span>Alterar Senha</span>
                 </button>
               </div>
             )}

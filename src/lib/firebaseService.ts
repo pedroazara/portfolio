@@ -82,3 +82,42 @@ export async function saveResumeData(data: ResumeData): Promise<void> {
   }
 }
 
+/**
+ * Fetches the admin password from Firestore or initializes it with the default if not present.
+ */
+export async function getAdminPassword(): Promise<string> {
+  const fullPath = "portfolio_settings/security";
+  try {
+    const docRef = doc(db, "portfolio_settings", "security");
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
+      const data = docSnap.data();
+      if (data && data.password) {
+        return data.password;
+      }
+    }
+    
+    // Auto-initialize the password with the user-defined value in Firestore if it doesn't exist
+    const defaultPassword = "lHj1vZ4v6jBqpc";
+    await setDoc(docRef, { password: defaultPassword }, { merge: true });
+    return defaultPassword;
+  } catch (error) {
+    console.warn("Failed to fetch admin password from Firestore, using default fallback:", error);
+    return "lHj1vZ4v6jBqpc";
+  }
+}
+
+/**
+ * Updates the admin password in Firestore.
+ */
+export async function updateAdminPassword(newPassword: string): Promise<void> {
+  const fullPath = "portfolio_settings/security";
+  try {
+    const docRef = doc(db, "portfolio_settings", "security");
+    await setDoc(docRef, { password: newPassword }, { merge: true });
+  } catch (error) {
+    handleFirestoreError(error, OperationType.WRITE, fullPath);
+  }
+}
+
+

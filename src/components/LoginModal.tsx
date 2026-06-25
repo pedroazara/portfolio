@@ -1,6 +1,7 @@
 import React, { useState } from "react";
-import { X, Lock, KeyRound, Eye, EyeOff, AlertCircle } from "lucide-react";
+import { X, Lock, KeyRound, Eye, EyeOff, AlertCircle, Loader2 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
+import { getAdminPassword } from "../lib/firebaseService";
 
 interface LoginModalProps {
   isOpen: boolean;
@@ -12,17 +13,33 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }: LoginMod
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Simple password check (secure client-side check suited for personal curriculum site)
-    if (password === "pedro123" || password === "pedro") {
-      onLoginSuccess();
-      setPassword("");
-      setError("");
-      onClose();
-    } else {
-      setError("Senha incorreta. Tente novamente! (Dica: use pedro123)");
+    if (!password.trim()) {
+      setError("Por favor, insira a chave de acesso.");
+      return;
+    }
+
+    setIsLoading(true);
+    setError("");
+
+    try {
+      const correctPassword = await getAdminPassword();
+      if (password === correctPassword) {
+        onLoginSuccess();
+        setPassword("");
+        setError("");
+        onClose();
+      } else {
+        setError("Senha incorreta. Tente novamente!");
+      }
+    } catch (err) {
+      console.error(err);
+      setError("Erro ao verificar senha. Verifique sua conexão com o Firestore.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -36,7 +53,7 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }: LoginMod
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          onClick={onClose}
+          onClick={isLoading ? undefined : onClose}
           className="fixed inset-0 bg-slate-950/40 backdrop-blur-md transition-opacity"
         />
 
@@ -53,7 +70,8 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }: LoginMod
             <div className="absolute right-4 top-4">
               <button
                 onClick={onClose}
-                className="rounded-full p-1.5 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-600 dark:hover:text-slate-300 transition-colors cursor-pointer"
+                disabled={isLoading}
+                className="rounded-full p-1.5 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-600 dark:hover:text-slate-300 transition-colors cursor-pointer disabled:opacity-50"
                 id="close-login-btn"
               >
                 <X className="h-4.5 w-4.5" />
@@ -63,7 +81,7 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }: LoginMod
             <div className="flex flex-col items-center text-center">
               {/* Lock icon illustration */}
               <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 mb-4 shadow-sm shadow-indigo-100/50 dark:shadow-none">
-                <Lock className="h-6 w-6" />
+                {isLoading ? <Loader2 className="h-6 w-6 animate-spin" /> : <Lock className="h-6 w-6" />}
               </div>
 
               <h2 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white font-display">
@@ -89,7 +107,6 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }: LoginMod
                   <label className="text-xs font-semibold text-slate-600 dark:text-slate-300 font-sans">
                     Chave de Acesso (Senha)
                   </label>
-                  <span className="text-[10px] font-medium text-slate-400 dark:text-slate-500 font-mono">Dica: pedro123</span>
                 </div>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400 dark:text-slate-500 pointer-events-none">
@@ -99,18 +116,20 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }: LoginMod
                     type={showPassword ? "text" : "password"}
                     required
                     autoFocus
+                    disabled={isLoading}
                     value={password}
                     onChange={(e) => {
                       setPassword(e.target.value);
                       if (error) setError("");
                     }}
                     placeholder="••••••••"
-                    className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-slate-900 dark:text-white py-2.5 pl-10 pr-10 text-sm font-sans focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-hidden"
+                    className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-slate-900 dark:text-white py-2.5 pl-10 pr-10 text-sm font-sans focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-hidden disabled:opacity-75"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 cursor-pointer"
+                    disabled={isLoading}
+                    className="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 cursor-pointer disabled:opacity-50"
                   >
                     {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
@@ -122,15 +141,18 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }: LoginMod
                 <button
                   type="button"
                   onClick={onClose}
-                  className="flex-1 rounded-xl border border-slate-200 dark:border-slate-800 py-2.5 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                  disabled={isLoading}
+                  className="flex-1 rounded-xl border border-slate-200 dark:border-slate-800 py-2.5 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer disabled:opacity-50"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 rounded-xl bg-indigo-600 py-2.5 text-xs font-semibold text-white shadow-md shadow-indigo-100 dark:shadow-none hover:bg-indigo-700 transition-colors cursor-pointer"
+                  disabled={isLoading}
+                  className="flex-1 flex items-center justify-center gap-1.5 rounded-xl bg-indigo-600 py-2.5 text-xs font-semibold text-white shadow-md shadow-indigo-100 dark:shadow-none hover:bg-indigo-700 transition-colors cursor-pointer disabled:bg-indigo-500 disabled:opacity-75"
                 >
-                  Acessar Painel
+                  {isLoading && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                  {isLoading ? "Acessando..." : "Acessar Painel"}
                 </button>
               </div>
             </form>
