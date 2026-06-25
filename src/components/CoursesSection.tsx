@@ -111,17 +111,17 @@ export default function CoursesSection({
   };
 
   return (
-    <section className="rounded-2xl border border-slate-100 bg-white p-6 sm:p-8 md:p-10 shadow-xs print-border print-shadow-none print-m-0">
-      <div className="flex items-center justify-between border-b border-slate-100 pb-5 mb-6">
+    <section className="rounded-2xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 sm:p-8 md:p-10 shadow-xs print-border print-shadow-none print-m-0 transition-colors duration-300">
+      <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-5 mb-6">
         <div className="flex items-center gap-3">
-          <div className="rounded-xl bg-amber-50 p-2.5 text-amber-600 print-border">
+          <div className="rounded-xl bg-amber-50 dark:bg-amber-950/40 p-2.5 text-amber-600 dark:text-amber-400 print-border">
             <Award className="h-6 w-6" />
           </div>
           <div>
-            <h2 className="text-xl font-bold tracking-tight text-slate-900 font-display">
+            <h2 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white font-display">
               {language === "en" ? "Courses & Certifications" : "Cursos & Certificações"}
             </h2>
-            <p className="text-sm text-slate-500 font-sans">
+            <p className="text-sm text-slate-500 dark:text-slate-400 font-sans">
               {language === "en" 
                 ? "Free courses, specializations and certificates issued by platforms and institutions." 
                 : "Cursos livres, especializações e certificados emitidos por plataformas e instituições."}
@@ -132,7 +132,7 @@ export default function CoursesSection({
         {isEditMode && (
           <button
             onClick={handleOpenAdd}
-            className="flex items-center gap-1 rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white shadow-xs transition-colors hover:bg-indigo-700 no-print print:hidden"
+            className="flex items-center gap-1 rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white shadow-xs transition-colors hover:bg-indigo-700 no-print print:hidden cursor-pointer"
             id="add-course-btn"
           >
             <Plus className="h-3.5 w-3.5" />
@@ -142,9 +142,9 @@ export default function CoursesSection({
       </div>
 
       {courses.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-slate-200 p-8 text-center font-sans">
-          <Award className="mx-auto h-6 w-6 text-slate-300" />
-          <p className="mt-2 text-xs text-slate-400 font-medium">
+        <div className="rounded-xl border border-dashed border-slate-200 dark:border-slate-800 p-8 text-center font-sans">
+          <Award className="mx-auto h-6 w-6 text-slate-300 dark:text-slate-700" />
+          <p className="mt-2 text-xs text-slate-400 dark:text-slate-500 font-medium">
             {language === "en" ? "No courses or certificates added." : "Nenhum curso ou certificado adicionado."}
           </p>
         </div>
@@ -153,19 +153,19 @@ export default function CoursesSection({
           {courses.map((course) => (
             <div
               key={course.id}
-              className="group relative flex flex-col justify-between rounded-xl border border-slate-100 bg-slate-50/30 p-5 transition-all hover:border-slate-200 hover:bg-slate-50/60 print-border print-bg-none print:p-4 print-break-inside-avoid"
+              className="group relative flex flex-col justify-between rounded-xl border border-slate-100 dark:border-slate-800/60 bg-slate-50/30 dark:bg-slate-950/20 p-5 transition-all hover:border-slate-200 dark:hover:border-slate-700 hover:bg-slate-50/60 dark:hover:bg-slate-950/40 print-border print-bg-none print:p-4 print-break-inside-avoid"
             >
               <div>
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex items-start gap-3">
-                    <div className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber-50 text-amber-600 print-border print-bg-none">
+                    <div className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 print-border print-bg-none">
                       <Award className="h-4.5 w-4.5" />
                     </div>
                     <div>
-                      <h3 className="font-semibold text-slate-900 font-display text-sm sm:text-base leading-tight">
+                      <h3 className="font-semibold text-slate-900 dark:text-white font-display text-sm sm:text-base leading-tight">
                         {language === "en" && course.nameEn ? course.nameEn : course.name}
                       </h3>
-                      <p className="text-xs font-semibold text-indigo-600 font-sans mt-0.5">
+                      <p className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 font-sans mt-0.5">
                         {course.organization}
                       </p>
                     </div>
@@ -173,17 +173,17 @@ export default function CoursesSection({
 
                   {/* Actions (Edit / Delete) */}
                   {isEditMode && (
-                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity no-print print:hidden shrink-0">
+                    <div className="flex items-center gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity no-print print:hidden shrink-0">
                       <button
                         onClick={() => handleOpenEdit(course)}
-                        className="rounded-md p-1.5 text-slate-400 hover:bg-slate-100 hover:text-indigo-600 transition-colors"
+                        className="rounded-md p-1.5 text-slate-400 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors cursor-pointer"
                         title={language === "en" ? "Edit" : "Editar"}
                       >
                         <Edit2 className="h-3.5 w-3.5" />
                       </button>
                       <button
                         onClick={() => handleDelete(course.id)}
-                        className="rounded-md p-1.5 text-slate-400 hover:bg-slate-100 hover:text-rose-600 transition-colors"
+                        className="rounded-md p-1.5 text-slate-400 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-rose-600 dark:hover:text-rose-400 transition-colors cursor-pointer"
                         title={language === "en" ? "Delete" : "Excluir"}
                       >
                         <Trash2 className="h-3.5 w-3.5" />
@@ -192,25 +192,25 @@ export default function CoursesSection({
                   )}
                 </div>
 
-                <div className="mt-3 flex items-center gap-1.5 text-slate-400 font-sans text-xs">
-                  <Calendar className="h-3.5 w-3.5 text-slate-300" />
+                <div className="mt-3 flex items-center gap-1.5 text-slate-400 dark:text-slate-500 font-sans text-xs">
+                  <Calendar className="h-3.5 w-3.5 text-slate-300 dark:text-slate-600" />
                   <span>{language === "en" ? `Issued in ${formatDate(course.issueDate)}` : `Emitido em ${formatDate(course.issueDate)}`}</span>
                 </div>
 
                 {(course.description || course.descriptionEn) && (
-                  <div className="mt-2.5 text-xs text-slate-500 font-sans leading-relaxed">
-                    <MarkdownRenderer content={language === "en" && course.descriptionEn ? course.descriptionEn : course.description} className="text-xs text-slate-500 font-sans space-y-1" />
+                  <div className="mt-2.5 text-xs text-slate-500 dark:text-slate-400 font-sans leading-relaxed">
+                    <MarkdownRenderer content={language === "en" && course.descriptionEn ? course.descriptionEn : course.description} className="text-xs text-slate-500 dark:text-slate-400 font-sans space-y-1" />
                   </div>
                 )}
               </div>
 
               {course.credentialUrl && (
-                <div className="mt-4 pt-3 border-t border-slate-100/80 flex">
+                <div className="mt-4 pt-3 border-t border-slate-100/80 dark:border-slate-800/80 flex">
                   <a
                     href={course.credentialUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-600 hover:text-indigo-700 transition-colors"
+                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors cursor-pointer"
                   >
                     <span>{language === "en" ? "Show credential" : "Exibir credencial"}</span>
                     <ExternalLink className="h-3 w-3" />

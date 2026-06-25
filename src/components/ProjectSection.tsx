@@ -304,17 +304,17 @@ export default function ProjectSection({
   };
 
   return (
-    <section className="mb-8 rounded-2xl border border-slate-100 bg-white p-6 sm:p-8 md:p-10 shadow-xs print-border print-shadow-none print-m-0">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-slate-100 pb-5 mb-6">
+    <section className="mb-8 rounded-2xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 sm:p-8 md:p-10 shadow-xs print-border print-shadow-none print-m-0 transition-colors duration-300">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-slate-100 dark:border-slate-800 pb-5 mb-6">
         <div className="flex items-center gap-3">
-          <div className="rounded-xl bg-indigo-50 p-2.5 text-indigo-600 print-border">
+          <div className="rounded-xl bg-indigo-50 dark:bg-indigo-950/40 p-2.5 text-indigo-600 dark:text-indigo-400 print-border">
             <FolderKanban className="h-6 w-6" />
           </div>
           <div>
-            <h2 className="text-xl font-bold tracking-tight text-slate-900 font-display">
+            <h2 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white font-display">
               {language === "en" ? "Projects by Specialty Area" : "Projetos por Área de Especialidade"}
             </h2>
-            <p className="text-sm text-slate-500 font-sans">
+            <p className="text-sm text-slate-500 dark:text-slate-400 font-sans">
               {language === "en" 
                 ? "My main works organized by specialty areas. Click on projects to see detailed information and pictures." 
                 : "Meus principais trabalhos organizados por áreas de atuação. Clique nos projetos para ver mais informações e fotos."}
@@ -327,15 +327,15 @@ export default function ProjectSection({
           <div className="flex flex-wrap gap-2 no-print print:hidden">
             <button
               onClick={handleOpenCategoryAdd}
-              className="flex items-center gap-1 rounded-lg border border-slate-200 bg-slate-50 px-3.5 py-2 text-xs font-semibold text-slate-600 transition-colors hover:bg-slate-100"
+              className="flex items-center gap-1 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 px-3.5 py-2 text-xs font-semibold text-slate-600 dark:text-slate-400 transition-colors hover:bg-slate-100 dark:hover:bg-slate-850 cursor-pointer"
               id="add-category-btn"
             >
-              <Settings className="h-3.5 w-3.5 text-slate-500" />
+              <Settings className="h-3.5 w-3.5 text-slate-500 dark:text-slate-400" />
               {language === "en" ? "Add Area (Section)" : "Adicionar Área (Seção)"}
             </button>
             <button
               onClick={handleOpenProjectAdd}
-              className="flex items-center gap-1 rounded-lg bg-indigo-600 px-3.5 py-2 text-xs font-semibold text-white shadow-xs transition-colors hover:bg-indigo-700"
+              className="flex items-center gap-1 rounded-lg bg-indigo-600 px-3.5 py-2 text-xs font-semibold text-white shadow-xs transition-colors hover:bg-indigo-700 cursor-pointer"
               id="add-project-btn"
             >
               <Plus className="h-4 w-4" />
@@ -347,13 +347,13 @@ export default function ProjectSection({
 
       {/* Tabs / Filter Navigation */}
       {categories.length > 0 && (
-        <div className="mb-6 flex flex-wrap gap-1.5 border-b border-slate-100 pb-4 no-print print:hidden">
+        <div className="mb-6 flex flex-wrap gap-1.5 border-b border-slate-100 dark:border-slate-800 pb-4 no-print print:hidden">
           <button
             onClick={() => setActiveCategory("all")}
-            className={`rounded-lg px-4 py-2 text-xs font-semibold transition-all ${
+            className={`rounded-lg px-4 py-2 text-xs font-semibold transition-all cursor-pointer ${
               activeCategory === "all"
-                ? "bg-slate-900 text-white shadow-xs"
-                : "bg-slate-50 text-slate-600 hover:bg-slate-100"
+                ? "bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 shadow-xs"
+                : "bg-slate-50 dark:bg-slate-950 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
             }`}
           >
             {language === "en" ? `All Projects (${projects.length})` : `Todos os Projetos (${projects.length})`}
@@ -364,10 +364,10 @@ export default function ProjectSection({
               <div key={cat.id} className="relative flex items-center group">
                 <button
                   onClick={() => setActiveCategory(cat.id)}
-                  className={`rounded-lg px-4 py-2 text-xs font-semibold transition-all ${
+                  className={`rounded-lg px-4 py-2 text-xs font-semibold transition-all cursor-pointer ${
                     activeCategory === cat.id
                       ? "bg-indigo-600 text-white shadow-xs"
-                      : "bg-slate-50 text-slate-600 hover:bg-slate-100"
+                      : "bg-slate-50 dark:bg-slate-950 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
                   }`}
                 >
                   {cat.nameEn && language === "en" ? cat.nameEn : cat.name} ({count})
@@ -375,17 +375,17 @@ export default function ProjectSection({
 
                 {/* Edit Category actions inline in Edit Mode */}
                 {isEditMode && (
-                  <div className="hidden group-hover:flex absolute -top-2 -right-1 bg-white border border-slate-200 rounded-full shadow-md px-1 py-0.5 items-center gap-1 z-10">
+                  <div className="hidden group-hover:flex absolute -top-2 -right-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-full shadow-md px-1 py-0.5 items-center gap-1 z-10">
                     <button
                       onClick={() => handleOpenCategoryEdit(cat)}
-                      className="p-1 rounded-full text-indigo-600 hover:bg-slate-50"
+                      className="p-1 rounded-full text-indigo-600 dark:text-indigo-400 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer"
                       title="Editar Área"
                     >
                       <Edit2 className="h-2.5 w-2.5" />
                     </button>
                     <button
                       onClick={() => handleDeleteCategory(cat.id)}
-                      className="p-1 rounded-full text-rose-600 hover:bg-slate-50"
+                      className="p-1 rounded-full text-rose-600 dark:text-rose-400 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer"
                       title="Excluir Área"
                     >
                       <Trash2 className="h-2.5 w-2.5" />
@@ -400,10 +400,10 @@ export default function ProjectSection({
 
       {/* Area Description Card */}
       {activeCategory !== "all" && (categories.find((c) => c.id === activeCategory)?.description || categories.find((c) => c.id === activeCategory)?.descriptionEn) && (
-        <div className="mb-6 rounded-xl bg-slate-50 p-4 border border-slate-100 flex items-start gap-2.5 no-print print:hidden">
+        <div className="mb-6 rounded-xl bg-slate-50 dark:bg-slate-950/40 p-4 border border-slate-100 dark:border-slate-800 flex items-start gap-2.5 no-print print:hidden">
           <Info className="h-4 w-4 text-indigo-500 shrink-0 mt-0.5" />
-          <p className="text-xs text-slate-500 leading-relaxed font-sans">
-            <span className="font-semibold text-slate-700">{language === "en" ? "About this area: " : "Sobre esta área: "}</span>
+          <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed font-sans">
+            <span className="font-semibold text-slate-700 dark:text-slate-300">{language === "en" ? "About this area: " : "Sobre esta área: "}</span>
             {language === "en" 
               ? (categories.find((c) => c.id === activeCategory)?.descriptionEn || categories.find((c) => c.id === activeCategory)?.description)
               : (categories.find((c) => c.id === activeCategory)?.description || categories.find((c) => c.id === activeCategory)?.descriptionEn)}
@@ -413,15 +413,15 @@ export default function ProjectSection({
 
       {/* Projects Grid */}
       {filteredProjects.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-slate-200 p-10 text-center font-sans">
-          <FolderKanban className="mx-auto h-8 w-8 text-slate-300" />
-          <p className="mt-2 text-sm text-slate-500 font-medium">
+        <div className="rounded-xl border border-dashed border-slate-200 dark:border-slate-800 p-10 text-center font-sans">
+          <FolderKanban className="mx-auto h-8 w-8 text-slate-300 dark:text-slate-700" />
+          <p className="mt-2 text-sm text-slate-500 dark:text-slate-400 font-medium">
             {language === "en" ? "No projects found in this area." : "Nenhum projeto encontrado nesta área."}
           </p>
           {isEditMode && (
             <button
               onClick={handleOpenProjectAdd}
-              className="mt-3 text-xs font-semibold text-indigo-600 hover:text-indigo-700"
+              className="mt-3 text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 cursor-pointer"
             >
               {language === "en" ? "Add first project" : "Adicionar primeiro projeto"}
             </button>
@@ -435,20 +435,20 @@ export default function ProjectSection({
               <article
                 key={proj.id}
                 onClick={() => setSelectedProject(proj)}
-                className="group relative flex flex-col overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-xs transition-all hover:shadow-lg hover:border-slate-200 hover:-translate-y-1 cursor-pointer print-border print-shadow-none print-translate-none print-break-inside-avoid"
+                className="group relative flex flex-col overflow-hidden rounded-2xl border border-slate-100 dark:border-slate-800/80 bg-white dark:bg-slate-900/40 shadow-xs transition-all hover:shadow-lg hover:border-slate-200 dark:hover:border-slate-700 hover:-translate-y-1 cursor-pointer print-border print-shadow-none print-translate-none print-break-inside-avoid duration-300"
               >
                 {/* Project Image */}
                 {proj.imageUrl && (
-                  <div className="relative aspect-video w-full overflow-hidden bg-slate-50 print:hidden">
+                  <div className="relative aspect-video w-full overflow-hidden bg-slate-50 dark:bg-slate-950/30 print:hidden rounded-t-2xl">
                     <LocalImage
                       src={proj.imageUrl}
                       alt={proj.title}
                       referrerPolicy="no-referrer"
-                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105 rounded-t-2xl"
                     />
                     {/* View overlay icon */}
-                    <div className="absolute inset-0 bg-slate-900/10 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                      <div className="rounded-full bg-white/90 p-2.5 shadow-sm text-slate-950 scale-90 group-hover:scale-100 transition-transform">
+                    <div className="absolute inset-0 bg-slate-900/10 dark:bg-slate-950/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                      <div className="rounded-full bg-white/90 dark:bg-slate-900/90 p-2.5 shadow-sm text-slate-950 dark:text-white scale-90 group-hover:scale-100 transition-transform">
                         <Eye className="h-4.5 w-4.5" />
                       </div>
                     </div>
@@ -457,16 +457,16 @@ export default function ProjectSection({
 
                 {/* Project Body */}
                 <div className="flex flex-1 flex-col p-5">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-600 font-mono">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 font-mono">
                     {cat ? ((language === "en" && cat.nameEn) ? cat.nameEn : cat.name) : (language === "en" ? "Uncategorized" : "Sem Categoria")}
                   </span>
 
-                  <h3 className="mt-1.5 text-base font-bold text-slate-900 group-hover:text-indigo-600 transition-colors font-display leading-tight">
+                  <h3 className="mt-1.5 text-base font-bold text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors font-display leading-tight">
                     {(language === "en" && proj.titleEn) ? proj.titleEn : proj.title}
                   </h3>
 
-                  <div className="mt-2 text-xs leading-relaxed text-slate-500 line-clamp-3 font-sans print:line-clamp-none overflow-hidden">
-                    <MarkdownRenderer content={(language === "en" && proj.descriptionEn) ? proj.descriptionEn : proj.description} className="text-xs text-slate-500 font-sans space-y-1" />
+                  <div className="mt-2 text-xs leading-relaxed text-slate-500 dark:text-slate-400 line-clamp-3 font-sans print:line-clamp-none overflow-hidden">
+                    <MarkdownRenderer content={(language === "en" && proj.descriptionEn) ? proj.descriptionEn : proj.description} className="text-xs text-slate-500 dark:text-slate-400 font-sans space-y-1" />
                   </div>
 
                   {/* Tags */}
@@ -475,13 +475,13 @@ export default function ProjectSection({
                       {proj.tags.slice(0, 4).map((tag, idx) => (
                         <span
                           key={idx}
-                          className="rounded bg-slate-100 px-1.5 py-0.5 text-[9px] font-medium text-slate-600 font-mono"
+                          className="rounded bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 text-[9px] font-medium text-slate-600 dark:text-slate-400 font-mono"
                         >
                           {tag}
                         </span>
                       ))}
                       {proj.tags.length > 4 && (
-                        <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[9px] font-medium text-slate-500 font-mono">
+                        <span className="rounded bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 text-[9px] font-medium text-slate-500 dark:text-slate-500 font-mono">
                           +{proj.tags.length - 4}
                         </span>
                       )}
@@ -489,9 +489,9 @@ export default function ProjectSection({
                   )}
 
                   {/* Actions / Links */}
-                  <div className="mt-auto pt-4 flex items-center justify-between border-t border-slate-50 no-print print:hidden">
+                  <div className="mt-auto pt-4 flex items-center justify-between border-t border-slate-50 dark:border-slate-800/80 no-print print:hidden">
                     <div className="flex items-center gap-2">
-                      <span className="text-[11px] font-semibold text-indigo-600 hover:text-indigo-700 flex items-center gap-1">
+                      <span className="text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 flex items-center gap-1">
                         {language === "en" ? "View details" : "Ver detalhes"}
                       </span>
                       {proj.blogPostId && onNavigateToBlogPost && (
@@ -501,7 +501,7 @@ export default function ProjectSection({
                             e.stopPropagation();
                             onNavigateToBlogPost(proj.blogPostId!);
                           }}
-                          className="flex items-center gap-1 rounded-md bg-indigo-50 border border-indigo-100/60 px-2 py-0.5 text-[10px] font-bold text-indigo-700 hover:bg-indigo-100 transition-all cursor-pointer"
+                          className="flex items-center gap-1 rounded-md bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-100/60 dark:border-indigo-900/40 px-2 py-0.5 text-[10px] font-bold text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 transition-all cursor-pointer"
                           title="Ver explicação detalhada no Blog"
                         >
                           <BookOpen className="h-3 w-3" />
@@ -515,14 +515,14 @@ export default function ProjectSection({
                       <div className="flex items-center gap-1.5">
                         <button
                           onClick={(e) => handleOpenProjectEdit(proj, e)}
-                          className="rounded-lg p-1.5 text-slate-400 hover:bg-indigo-50 hover:text-indigo-600 transition-colors"
+                          className="rounded-lg p-1.5 text-slate-400 dark:text-slate-500 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors cursor-pointer"
                           title="Editar Projeto"
                         >
                           <Edit2 className="h-3.5 w-3.5" />
                         </button>
                         <button
                           onClick={(e) => handleDeleteProject(proj.id, e)}
-                          className="rounded-lg p-1.5 text-slate-400 hover:bg-rose-50 hover:text-rose-600 transition-colors"
+                          className="rounded-lg p-1.5 text-slate-400 dark:text-slate-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 hover:text-rose-600 dark:hover:text-rose-400 transition-colors cursor-pointer"
                           title="Excluir Projeto"
                         >
                           <Trash2 className="h-3.5 w-3.5" />

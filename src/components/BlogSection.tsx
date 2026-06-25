@@ -211,7 +211,7 @@ export default function BlogSection({
   });
 
   return (
-    <section className="mt-16 border-t border-slate-100 pt-16" id="blog-section">
+    <div className="mt-16 border-t border-slate-100 dark:border-slate-800/80 pt-16 no-print print:hidden" id="blog-section">
       {/* Header */}
       <div className="mb-10 flex flex-col md:flex-row md:items-end md:justify-between gap-4">
         <div>
@@ -246,7 +246,7 @@ export default function BlogSection({
       </div>
 
       {/* Category Tabs */}
-      <div className="mb-8 flex flex-wrap gap-2 border-b border-slate-200/50 pb-4">
+      <div className="mb-8 flex flex-wrap gap-2 border-b border-slate-200/50 dark:border-slate-800/80 pb-4">
         {availableCategories.map((cat) => {
           const isActive = selectedCategory === cat || (selectedCategory === "Todos" && cat === "Todos");
           const displayLabel = cat === "Todos" ? (language === "en" ? "All" : "Todos") : cat;
@@ -254,10 +254,10 @@ export default function BlogSection({
             <button
               key={cat}
               onClick={() => setSelectedCategory(cat)}
-              className={`rounded-full px-4 py-1.5 text-xs font-bold transition-all ${
+              className={`rounded-full px-4 py-1.5 text-xs font-bold transition-all cursor-pointer ${
                 isActive
-                  ? "bg-indigo-600 text-white shadow-sm shadow-indigo-100"
-                  : "bg-slate-50 text-slate-500 hover:bg-slate-100 hover:text-slate-800"
+                  ? "bg-indigo-600 dark:bg-indigo-500 text-white shadow-sm shadow-indigo-100 dark:shadow-none"
+                  : "bg-slate-50 dark:bg-slate-900 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-800 dark:hover:text-slate-200"
               }`}
             >
               {displayLabel}
@@ -267,12 +267,12 @@ export default function BlogSection({
       </div>
 
       {filteredPosts.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-slate-200 p-12 text-center">
-          <FileText className="mx-auto h-12 w-12 text-slate-300" />
-          <h3 className="mt-4 text-sm font-bold text-slate-900 font-display">
+        <div className="rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 p-12 text-center">
+          <FileText className="mx-auto h-12 w-12 text-slate-300 dark:text-slate-700" />
+          <h3 className="mt-4 text-sm font-bold text-slate-900 dark:text-white font-display">
             {language === "en" ? "No articles found" : "Sem artigos publicados"}
           </h3>
-          <p className="mt-1 text-xs text-slate-500 font-sans">
+          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400 font-sans">
             {isEditMode 
               ? (language === "en" ? "Click 'New Article' to create your first post." : "Clique em 'Novo Artigo' para criar sua primeira publicação no blog.") 
               : (language === "en" ? "No publications available under this category." : "Nenhuma publicação disponível nesta seção.")}
@@ -289,29 +289,29 @@ export default function BlogSection({
               <article
                 key={post.id}
                 onClick={() => setSelectedPost(post)}
-                className="group flex flex-col overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-xs transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:border-slate-200/80 cursor-pointer h-full"
+                className="group flex flex-col overflow-hidden rounded-2xl border border-slate-100 dark:border-slate-800/80 bg-white dark:bg-slate-900 shadow-xs transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:border-slate-200/80 dark:hover:border-slate-700 cursor-pointer h-full"
               >
                 {/* Cover Image */}
                 {post.imageUrl ? (
-                  <div className="relative aspect-video w-full overflow-hidden bg-slate-50 shrink-0">
+                  <div className="relative aspect-video w-full overflow-hidden bg-slate-50 dark:bg-slate-950/30 shrink-0 rounded-t-2xl">
                     <LocalImage
                       src={post.imageUrl}
                       alt={displayTitle}
                       referrerPolicy="no-referrer"
-                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.02]"
+                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.02] rounded-t-2xl"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-slate-950/15 to-transparent" />
                     {getPostCategoryDisplay(post) && (
-                      <span className="absolute top-3 left-3 rounded-lg bg-slate-900/70 backdrop-blur-xs px-2.5 py-1 text-[10px] font-bold text-white uppercase tracking-wider">
+                      <span className="absolute top-3 left-3 rounded-full bg-slate-900/70 dark:bg-slate-950/80 backdrop-blur-xs px-2.5 py-1 text-[10px] font-bold text-white uppercase tracking-wider">
                         {getPostCategoryDisplay(post)}
                       </span>
                     )}
                   </div>
                 ) : (
-                  <div className="relative aspect-video w-full bg-slate-100 shrink-0 flex items-center justify-center text-slate-400">
-                    <BookOpen className="h-8 w-8 text-slate-300" />
+                  <div className="relative aspect-video w-full bg-slate-100 dark:bg-slate-950/30 shrink-0 flex items-center justify-center text-slate-400 dark:text-slate-500 rounded-t-2xl">
+                    <BookOpen className="h-8 w-8 text-slate-300 dark:text-slate-700" />
                     {getPostCategoryDisplay(post) && (
-                      <span className="absolute top-3 left-3 rounded-lg bg-slate-900/70 backdrop-blur-xs px-2.5 py-1 text-[10px] font-bold text-white uppercase tracking-wider">
+                      <span className="absolute top-3 left-3 rounded-full bg-slate-900/70 dark:bg-slate-950/80 backdrop-blur-xs px-2.5 py-1 text-[10px] font-bold text-white uppercase tracking-wider">
                         {getPostCategoryDisplay(post)}
                       </span>
                     )}
@@ -319,15 +319,15 @@ export default function BlogSection({
                 )}
 
                 {/* Card Body */}
-                <div className="flex-1 p-6 flex flex-col justify-between">
-                  <div className="space-y-3.5">
+                <div className="flex-1 p-6 sm:p-7 md:p-8 flex flex-col justify-between">
+                  <div className="space-y-5">
                     {/* Meta */}
-                    <div className="flex items-center gap-3 text-slate-400 font-mono text-[11px]">
+                    <div className="flex items-center gap-3 text-slate-400 dark:text-slate-500 font-mono text-[11px]">
                       <span className="flex items-center gap-1">
                         <Calendar className="h-3.5 w-3.5" />
                         {post.date}
                       </span>
-                      <span className="text-slate-200">•</span>
+                      <span className="text-slate-200 dark:text-slate-800">•</span>
                       <span className="flex items-center gap-1">
                         <Clock className="h-3.5 w-3.5" />
                         {post.readTime || "5 min read"}
@@ -336,10 +336,10 @@ export default function BlogSection({
 
                     {/* Title & Summary */}
                     <div>
-                      <h3 className="text-base sm:text-lg font-bold text-slate-900 group-hover:text-indigo-600 transition-colors font-display tracking-tight leading-snug line-clamp-2">
+                      <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors font-display tracking-tight leading-snug line-clamp-2">
                         {displayTitle}
                       </h3>
-                      <p className="mt-2 text-xs text-slate-500 leading-relaxed font-sans line-clamp-3">
+                      <p className="mt-2 text-xs text-slate-500 dark:text-slate-400 leading-relaxed font-sans line-clamp-3">
                         {displaySummary}
                       </p>
                     </div>
@@ -350,7 +350,7 @@ export default function BlogSection({
                         {post.tags.map((tag, idx) => (
                           <span
                             key={idx}
-                            className="rounded-lg bg-indigo-50/60 px-2 py-0.5 text-[9px] font-semibold text-indigo-600 font-sans"
+                            className="rounded-full bg-indigo-50/60 dark:bg-indigo-950/40 px-2.5 py-0.5 text-[9px] font-semibold text-indigo-600 dark:text-indigo-400 font-sans"
                           >
                             #{tag}
                           </span>
@@ -360,8 +360,8 @@ export default function BlogSection({
                   </div>
 
                   {/* Card Footer */}
-                  <div className="mt-6 pt-4 border-t border-slate-50 flex items-center justify-between">
-                    <span className="text-xs font-bold text-indigo-600 flex items-center gap-1 hover:text-indigo-700 transition-colors">
+                  <div className="mt-6 pt-4 border-t border-slate-50 dark:border-slate-800/80 flex items-center justify-between">
+                    <span className="text-xs font-bold text-indigo-600 dark:text-indigo-400 flex items-center gap-1 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors">
                       {language === "en" ? "Read full article" : "Ler publicação integral"}
                       <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1" />
                     </span>
@@ -371,14 +371,14 @@ export default function BlogSection({
                       <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
                         <button
                           onClick={(e) => handleOpenEdit(post, e)}
-                          className="rounded-lg p-1.5 text-slate-400 hover:bg-indigo-50 hover:text-indigo-600 transition-colors"
+                          className="rounded-lg p-1.5 text-slate-400 dark:text-slate-500 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
                           title="Editar Artigo"
                         >
                           <Edit2 className="h-3.5 w-3.5" />
                         </button>
                         <button
                           onClick={(e) => handleDelete(post.id, e)}
-                          className="rounded-lg p-1.5 text-slate-400 hover:bg-rose-50 hover:text-rose-600 transition-colors"
+                          className="rounded-lg p-1.5 text-slate-400 dark:text-slate-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 hover:text-rose-600 dark:hover:text-rose-400 transition-colors"
                           title="Excluir Artigo"
                         >
                           <Trash2 className="h-3.5 w-3.5" />
@@ -794,6 +794,6 @@ export default function BlogSection({
         cancelText={language === "en" ? "Cancel" : "Cancelar"}
         type="danger"
       />
-    </section>
+    </div>
   );
 }

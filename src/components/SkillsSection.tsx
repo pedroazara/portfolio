@@ -98,17 +98,17 @@ export default function SkillsSection({ skills, isEditMode, onUpdateSkills, lang
   };
 
   return (
-    <section className="mb-8 rounded-2xl border border-slate-100 bg-white p-6 sm:p-8 md:p-10 shadow-xs print-border print-shadow-none print-m-0">
-      <div className="flex items-center justify-between border-b border-slate-100 pb-5 mb-6">
+    <section className="mb-8 rounded-2xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 sm:p-8 md:p-10 shadow-xs print-border print-shadow-none print-m-0 transition-colors duration-300">
+      <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-5 mb-6">
         <div className="flex items-center gap-3">
-          <div className="rounded-xl bg-indigo-50 p-2.5 text-indigo-600 print-border">
+          <div className="rounded-xl bg-indigo-50 dark:bg-indigo-950/40 p-2.5 text-indigo-600 dark:text-indigo-400 print-border">
             <Award className="h-6 w-6" />
           </div>
           <div>
-            <h2 className="text-xl font-bold tracking-tight text-slate-900 font-display">
+            <h2 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white font-display">
               {language === "en" ? "Skills & Competencies" : "Habilidades & Competências"}
             </h2>
-            <p className="text-sm text-slate-500 font-sans">
+            <p className="text-sm text-slate-500 dark:text-slate-400 font-sans">
               {language === "en" 
                 ? "My technical qualifications, frameworks and work tools." 
                 : "Minhas qualificações técnicas, frameworks e ferramentas de trabalho."}
@@ -119,7 +119,7 @@ export default function SkillsSection({ skills, isEditMode, onUpdateSkills, lang
         {isEditMode && (
           <button
             onClick={handleOpenAdd}
-            className="flex items-center gap-1 rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white shadow-xs transition-colors hover:bg-indigo-700 no-print print:hidden"
+            className="flex items-center gap-1 rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white shadow-xs transition-colors hover:bg-indigo-700 no-print print:hidden cursor-pointer"
             id="add-skill-btn"
           >
             <Plus className="h-3.5 w-3.5" />
@@ -129,9 +129,9 @@ export default function SkillsSection({ skills, isEditMode, onUpdateSkills, lang
       </div>
 
       {skills.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-slate-200 p-8 text-center font-sans">
-          <Award className="mx-auto h-6 w-6 text-slate-300" />
-          <p className="mt-2 text-xs text-slate-400 font-medium">
+        <div className="rounded-xl border border-dashed border-slate-200 dark:border-slate-800 p-8 text-center font-sans">
+          <Award className="mx-auto h-6 w-6 text-slate-300 dark:text-slate-700" />
+          <p className="mt-2 text-xs text-slate-400 dark:text-slate-500 font-medium">
             {language === "en" ? "No competencies added." : "Nenhuma competência adicionada."}
           </p>
         </div>
@@ -142,9 +142,9 @@ export default function SkillsSection({ skills, isEditMode, onUpdateSkills, lang
             return (
               <div
                 key={cat}
-                className="rounded-xl border border-slate-50 bg-slate-50/50 p-5 print-border print-bg-transparent print-break-inside-avoid"
+                className="rounded-xl border border-slate-100/50 dark:border-slate-800/80 bg-slate-50/50 dark:bg-slate-950/20 p-5 print-border print-bg-transparent print-break-inside-avoid"
               >
-                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 font-mono mb-4 border-b border-slate-100 pb-1">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 font-mono mb-4 border-b border-slate-100 dark:border-slate-800 pb-1">
                   {language === "en" ? getCategoryName(cat, "en") : cat}
                 </h3>
 
@@ -152,7 +152,7 @@ export default function SkillsSection({ skills, isEditMode, onUpdateSkills, lang
                   {catSkills.map((skill) => (
                     <div key={skill.id} className="group relative flex flex-col gap-1.5">
                       <div className="flex items-center justify-between">
-                        <span className="text-xs font-semibold text-slate-700 font-sans">
+                        <span className="text-xs font-semibold text-slate-700 dark:text-slate-300 font-sans">
                           {language === "en" && skill.nameEn ? skill.nameEn : skill.name}
                         </span>
 
@@ -166,7 +166,7 @@ export default function SkillsSection({ skills, isEditMode, onUpdateSkills, lang
                                 className={`h-3 w-3 ${
                                   level <= skill.level
                                     ? "text-amber-400 fill-amber-400"
-                                    : "text-slate-200"
+                                    : "text-slate-200 dark:text-slate-700"
                                 }`}
                               />
                             ))}
@@ -179,26 +179,26 @@ export default function SkillsSection({ skills, isEditMode, onUpdateSkills, lang
                       </div>
 
                       {/* Visual progress bar (extremely clean design) */}
-                      <div className="h-1.5 w-full rounded-full bg-slate-100 overflow-hidden print:hidden">
+                      <div className="h-1.5 w-full rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden print:hidden">
                         <div
-                          className="h-full rounded-full bg-indigo-600"
+                          className="h-full rounded-full bg-indigo-600 dark:bg-indigo-500"
                           style={{ width: `${(skill.level / 5) * 100}%` }}
                         ></div>
                       </div>
 
                       {/* Admin Tools */}
                       {isEditMode && (
-                        <div className="absolute right-0 top-0 hidden group-hover:flex items-center bg-white border border-slate-200 rounded px-1 py-0.5 gap-0.5 z-10 no-print print:hidden">
+                        <div className="absolute right-0 top-0 flex sm:opacity-0 sm:group-hover:opacity-100 opacity-100 items-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded px-1 py-0.5 gap-0.5 z-10 no-print print:hidden transition-opacity duration-200">
                           <button
                             onClick={() => handleOpenEdit(skill)}
-                            className="p-0.5 rounded text-indigo-600 hover:bg-slate-50"
+                            className="p-0.5 rounded text-indigo-600 dark:text-indigo-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
                             title="Editar Habilidade"
                           >
                             <Edit2 className="h-3 w-3" />
                           </button>
                           <button
                             onClick={() => handleDelete(skill.id)}
-                            className="p-0.5 rounded text-rose-600 hover:bg-slate-50"
+                            className="p-0.5 rounded text-rose-600 dark:text-rose-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
                             title="Excluir Habilidade"
                           >
                             <Trash2 className="h-3 w-3" />

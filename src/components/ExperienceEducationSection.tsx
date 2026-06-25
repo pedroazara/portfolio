@@ -210,17 +210,17 @@ export default function ExperienceEducationSection({
   return (
     <div className="grid gap-8 lg:grid-cols-2 print:grid-cols-1 print:gap-6">
       {/* EXPERIENCE COLUMN */}
-      <section className="rounded-2xl border border-slate-100 bg-white p-6 sm:p-8 md:p-10 shadow-xs print-border print-shadow-none print-m-0">
-        <div className="flex items-center justify-between border-b border-slate-100 pb-5 mb-6">
+      <section className="rounded-2xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 sm:p-8 md:p-10 shadow-xs print-border print-shadow-none print-m-0 transition-colors duration-300">
+        <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-5 mb-6">
           <div className="flex items-center gap-3">
-            <div className="rounded-xl bg-indigo-50 p-2.5 text-indigo-600 print-border">
+            <div className="rounded-xl bg-indigo-50 dark:bg-indigo-950/40 p-2.5 text-indigo-600 dark:text-indigo-400 print-border">
               <Briefcase className="h-6 w-6" />
             </div>
             <div>
-              <h2 className="text-xl font-bold tracking-tight text-slate-900 font-display">
+              <h2 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white font-display">
                 {language === "en" ? "Professional Experience" : "Experiência Profissional"}
               </h2>
-              <p className="text-sm text-slate-500 font-sans">
+              <p className="text-sm text-slate-500 dark:text-slate-400 font-sans">
                 {language === "en" ? "My professional path and leadership roles." : "Minha trajetória profissional e funções de liderança."}
               </p>
             </div>
@@ -239,39 +239,39 @@ export default function ExperienceEducationSection({
         </div>
 
         {experiences.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-slate-200 p-8 text-center font-sans">
-            <Briefcase className="mx-auto h-6 w-6 text-slate-300" />
-            <p className="mt-2 text-xs text-slate-400 font-medium">Nenhuma experiência adicionada.</p>
+          <div className="rounded-xl border border-dashed border-slate-200 dark:border-slate-800 p-8 text-center font-sans">
+            <Briefcase className="mx-auto h-6 w-6 text-slate-300 dark:text-slate-700" />
+            <p className="mt-2 text-xs text-slate-400 dark:text-slate-500 font-medium">Nenhuma experiência adicionada.</p>
           </div>
         ) : (
-          <div className="relative border-l border-slate-100 ml-4 space-y-6">
+          <div className="relative border-l border-slate-100 dark:border-slate-800 ml-4 space-y-6">
             {experiences.map((exp) => (
               <div key={exp.id} className="relative pl-6 group print-break-inside-avoid">
                 {/* Timeline dot */}
                 {exp.current ? (
-                  <span className="absolute -left-[6px] top-1.5 h-3 w-3 rounded-full border-2 border-white bg-indigo-600 outline outline-1 outline-indigo-600 ring-2 ring-white">
+                  <span className="absolute -left-[6px] top-1.5 h-3 w-3 rounded-full border-2 border-white dark:border-slate-900 bg-indigo-600 outline outline-1 outline-indigo-600 ring-2 ring-white dark:ring-slate-900">
                     <span className="absolute -inset-[3px] rounded-full bg-indigo-600/30 animate-ping"></span>
                     <span className="absolute inset-0 rounded-full bg-indigo-600 animate-pulse"></span>
                   </span>
                 ) : (
-                  <span className="absolute -left-[6px] top-1.5 h-3 w-3 rounded-full border-2 border-white bg-indigo-600 outline outline-1 outline-indigo-600 ring-2 ring-white"></span>
+                  <span className="absolute -left-[6px] top-1.5 h-3 w-3 rounded-full border-2 border-white dark:border-slate-900 bg-indigo-600 outline outline-1 outline-indigo-600 ring-2 ring-white dark:ring-slate-900"></span>
                 )}
 
                 <div className="flex flex-col gap-1">
                   <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-1">
                     <div>
-                      <h3 className="text-base font-bold text-slate-900 font-display">
+                      <h3 className="text-base font-bold text-slate-900 dark:text-white font-display">
                         {language === "en" && exp.roleEn ? exp.roleEn : exp.role}
                       </h3>
-                      <p className="text-sm font-semibold text-indigo-600 font-sans">
+                      <p className="text-sm font-semibold text-indigo-600 dark:text-indigo-400 font-sans">
                         {exp.company}
                       </p>
                     </div>
 
                     {/* Actions and Dates */}
                     <div className="flex items-center gap-2 sm:flex-col sm:items-end">
-                      <div className="flex items-center gap-1.5 text-slate-400 font-mono text-[11px] leading-none shrink-0 bg-slate-50 px-2 py-1 rounded-md print:bg-transparent print:p-0">
-                        <Calendar className="h-3.5 w-3.5 text-slate-400 print:hidden" />
+                      <div className="flex items-center gap-1.5 text-slate-400 dark:text-slate-500 font-mono text-[11px] leading-none shrink-0 bg-slate-50 dark:bg-slate-950 px-2 py-1 rounded-md print:bg-transparent print:p-0">
+                        <Calendar className="h-3.5 w-3.5 text-slate-400 dark:text-slate-500 print:hidden" />
                         <span>
                           {formatDate(exp.startDate)} — {exp.current ? (language === "en" ? "Present" : "Atualmente") : formatDate(exp.endDate)}
                         </span>
@@ -279,17 +279,17 @@ export default function ExperienceEducationSection({
 
                       {/* Admin Tools */}
                       {isEditMode && (
-                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity no-print print:hidden">
+                        <div className="flex items-center gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity no-print print:hidden">
                           <button
                             onClick={() => handleOpenExpEdit(exp)}
-                            className="rounded p-1 text-slate-400 hover:bg-slate-50 hover:text-indigo-600"
+                            className="rounded p-1 text-slate-400 dark:text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors cursor-pointer"
                             title="Editar Experiência"
                           >
                             <Edit2 className="h-3.5 w-3.5" />
                           </button>
                           <button
                             onClick={() => handleDeleteExp(exp.id)}
-                            className="rounded p-1 text-slate-400 hover:bg-slate-50 hover:text-rose-600"
+                            className="rounded p-1 text-slate-400 dark:text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-rose-600 dark:hover:text-rose-400 transition-colors cursor-pointer"
                             title="Excluir Experiência"
                           >
                             <Trash2 className="h-3.5 w-3.5" />
@@ -300,14 +300,14 @@ export default function ExperienceEducationSection({
                   </div>
 
                   {(exp.location || exp.locationEn) && (
-                    <div className="flex items-center gap-1.5 text-xs text-slate-400 font-sans mt-0.5">
+                    <div className="flex items-center gap-1.5 text-xs text-slate-400 dark:text-slate-500 font-sans mt-0.5">
                       <MapPin className="h-3.5 w-3.5" />
                       <span>{language === "en" ? (exp.locationEn || exp.location) : (exp.location || exp.locationEn)}</span>
                     </div>
                   )}
 
-                  <div className="mt-2 text-xs leading-relaxed text-slate-500 font-sans">
-                    <MarkdownRenderer content={language === "en" && exp.descriptionEn ? exp.descriptionEn : exp.description} className="text-xs text-slate-500 font-sans space-y-1" />
+                  <div className="mt-2 text-xs leading-relaxed text-slate-500 dark:text-slate-400 font-sans">
+                    <MarkdownRenderer content={language === "en" && exp.descriptionEn ? exp.descriptionEn : exp.description} className="text-xs text-slate-500 dark:text-slate-400 font-sans space-y-1" />
                   </div>
                 </div>
               </div>
@@ -317,17 +317,17 @@ export default function ExperienceEducationSection({
       </section>
 
       {/* EDUCATION COLUMN */}
-      <section className="rounded-2xl border border-slate-100 bg-white p-6 sm:p-8 md:p-10 shadow-xs print-border print-shadow-none print-m-0">
-        <div className="flex items-center justify-between border-b border-slate-100 pb-5 mb-6">
+      <section className="rounded-2xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 sm:p-8 md:p-10 shadow-xs print-border print-shadow-none print-m-0 transition-colors duration-300">
+        <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-5 mb-6">
           <div className="flex items-center gap-3">
-            <div className="rounded-xl bg-indigo-50 p-2.5 text-indigo-600 print-border">
+            <div className="rounded-xl bg-indigo-50 dark:bg-indigo-950/40 p-2.5 text-indigo-600 dark:text-indigo-400 print-border">
               <GraduationCap className="h-6 w-6" />
             </div>
             <div>
-              <h2 className="text-xl font-bold tracking-tight text-slate-900 font-display">
+              <h2 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white font-display">
                 {language === "en" ? "Academic Background" : "Formação Acadêmica"}
               </h2>
-              <p className="text-sm text-slate-500 font-sans">
+              <p className="text-sm text-slate-500 dark:text-slate-400 font-sans">
                 {language === "en" ? "My degrees, postgraduate courses, and higher education." : "Minhas graduações, pós-graduações e ensino superior."}
               </p>
             </div>
@@ -346,39 +346,39 @@ export default function ExperienceEducationSection({
         </div>
 
         {educations.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-slate-200 p-8 text-center font-sans">
-            <GraduationCap className="mx-auto h-6 w-6 text-slate-300" />
-            <p className="mt-2 text-xs text-slate-400 font-medium">Nenhuma formação adicionada.</p>
+          <div className="rounded-xl border border-dashed border-slate-200 dark:border-slate-800 p-8 text-center font-sans">
+            <GraduationCap className="mx-auto h-6 w-6 text-slate-300 dark:text-slate-700" />
+            <p className="mt-2 text-xs text-slate-400 dark:text-slate-500 font-medium">Nenhuma formação adicionada.</p>
           </div>
         ) : (
-          <div className="relative border-l border-slate-100 ml-4 space-y-6">
+          <div className="relative border-l border-slate-100 dark:border-slate-800 ml-4 space-y-6">
             {educations.map((edu) => (
               <div key={edu.id} className="relative pl-6 group print-break-inside-avoid">
                 {/* Timeline dot */}
                 {edu.current ? (
-                  <span className="absolute -left-[6px] top-1.5 h-3 w-3 rounded-full border-2 border-white bg-indigo-600 outline outline-1 outline-indigo-600 ring-2 ring-white">
+                  <span className="absolute -left-[6px] top-1.5 h-3 w-3 rounded-full border-2 border-white dark:border-slate-900 bg-indigo-600 outline outline-1 outline-indigo-600 ring-2 ring-white dark:ring-slate-900">
                     <span className="absolute -inset-[3px] rounded-full bg-indigo-600/30 animate-ping"></span>
                     <span className="absolute inset-0 rounded-full bg-indigo-600 animate-pulse"></span>
                   </span>
                 ) : (
-                  <span className="absolute -left-[6px] top-1.5 h-3 w-3 rounded-full border-2 border-white bg-indigo-600 outline outline-1 outline-indigo-600 ring-2 ring-white"></span>
+                  <span className="absolute -left-[6px] top-1.5 h-3 w-3 rounded-full border-2 border-white dark:border-slate-900 bg-indigo-600 outline outline-1 outline-indigo-600 ring-2 ring-white dark:ring-slate-900"></span>
                 )}
 
                 <div className="flex flex-col gap-1">
                   <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-1">
                     <div>
-                      <h3 className="text-base font-bold text-slate-900 font-display">
+                      <h3 className="text-base font-bold text-slate-900 dark:text-white font-display">
                         {language === "en" ? `${edu.degreeEn || edu.degree} in ${edu.fieldOfStudyEn || edu.fieldOfStudy}` : `${edu.degree} em ${edu.fieldOfStudy}`}
                       </h3>
-                      <p className="text-sm font-semibold text-indigo-600 font-sans">
+                      <p className="text-sm font-semibold text-indigo-600 dark:text-indigo-400 font-sans">
                         {edu.institution}
                       </p>
                     </div>
 
                     {/* Actions and Dates */}
                     <div className="flex items-center gap-2 sm:flex-col sm:items-end">
-                      <div className="flex items-center gap-1.5 text-slate-400 font-mono text-[11px] leading-none shrink-0 bg-slate-50 px-2 py-1 rounded-md print:bg-transparent print:p-0">
-                        <Calendar className="h-3.5 w-3.5 text-slate-400 print:hidden" />
+                      <div className="flex items-center gap-1.5 text-slate-400 dark:text-slate-500 font-mono text-[11px] leading-none shrink-0 bg-slate-50 dark:bg-slate-950 px-2 py-1 rounded-md print:bg-transparent print:p-0">
+                        <Calendar className="h-3.5 w-3.5 text-slate-400 dark:text-slate-500 print:hidden" />
                         <span>
                           {formatDate(edu.startDate)} — {edu.current ? (language === "en" ? "Present" : "Atualmente") : formatDate(edu.endDate)}
                         </span>
@@ -386,17 +386,17 @@ export default function ExperienceEducationSection({
 
                       {/* Admin Tools */}
                       {isEditMode && (
-                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity no-print print:hidden">
+                        <div className="flex items-center gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity no-print print:hidden">
                           <button
                             onClick={() => handleOpenEduEdit(edu)}
-                            className="rounded p-1 text-slate-400 hover:bg-slate-50 hover:text-indigo-600"
+                            className="rounded p-1 text-slate-400 dark:text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
                             title="Editar Formação"
                           >
                             <Edit2 className="h-3.5 w-3.5" />
                           </button>
                           <button
                             onClick={() => handleDeleteEdu(edu.id)}
-                            className="rounded p-1 text-slate-400 hover:bg-slate-50 hover:text-rose-600"
+                            className="rounded p-1 text-slate-400 dark:text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-rose-600 dark:hover:text-rose-400 transition-colors"
                             title="Excluir Formação"
                           >
                             <Trash2 className="h-3.5 w-3.5" />
@@ -407,8 +407,8 @@ export default function ExperienceEducationSection({
                   </div>
 
                   {(edu.description || edu.descriptionEn) && (
-                    <div className="mt-2 text-xs leading-relaxed text-slate-500 font-sans">
-                      <MarkdownRenderer content={language === "en" ? (edu.descriptionEn || edu.description) : (edu.description || edu.descriptionEn)} className="text-xs text-slate-500 font-sans space-y-1" />
+                    <div className="mt-2 text-xs leading-relaxed text-slate-500 dark:text-slate-400 font-sans">
+                      <MarkdownRenderer content={language === "en" ? (edu.descriptionEn || edu.description) : (edu.description || edu.descriptionEn)} className="text-xs text-slate-500 dark:text-slate-400 font-sans space-y-1" />
                     </div>
                   )}
                 </div>
