@@ -1,0 +1,74 @@
+{
+  "entities": {
+    "ResumeData": {
+      "title": "ResumeData",
+      "description": "Entire resume and portfolio data including profile, categories, projects, experiences, educations, skills, courses, and blog posts.",
+      "type": "object",
+      "properties": {
+        "profile": {
+          "type": "object",
+          "description": "Personal profile details such as name, title, bio, contact details, social links, and avatar."
+        },
+        "categories": {
+          "type": "array",
+          "description": "Project categories or specializations."
+        },
+        "projects": {
+          "type": "array",
+          "description": "List of engineering physics and developer projects."
+        },
+        "experiences": {
+          "type": "array",
+          "description": "Professional experience history."
+        },
+        "educations": {
+          "type": "array",
+          "description": "Academic educational background."
+        },
+        "skills": {
+          "type": "array",
+          "description": "Proficiencies in programming, languages, tools, and methodologies."
+        },
+        "courses": {
+          "type": "array",
+          "description": "List of completed courses and certifications."
+        },
+        "posts": {
+          "type": "array",
+          "description": "A collection of blog publications."
+        }
+      },
+      "required": ["profile", "categories", "projects", "experiences", "educations", "skills"]
+    },
+    "StoredImage": {
+      "title": "StoredImage",
+      "description": "Information and base64 data for an uploaded image stored in the portfolio media bank.",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "dataUrl": {
+          "type": "string"
+        },
+        "size": {
+          "type": "number"
+        },
+        "addedAt": {
+          "type": "number"
+        }
+      },
+      "required": ["name", "dataUrl", "size", "addedAt"]
+    }
+  },
+  "firestore": {
+    "portfolio_data/main": {
+      "schema": "ResumeData",
+      "description": "The single-document store holding the unified portfolio and blog data."
+    },
+    "portfolio_images/{imageName}": {
+      "schema": "StoredImage",
+      "description": "Collection of uploaded images for blog and resume illustrations."
+    }
+  }
+}

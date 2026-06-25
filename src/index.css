@@ -1,0 +1,310 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import "tailwindcss";
+
+@variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Plus Jakarta Sans", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+  --animate-spin-slow: spin 12s linear infinite;
+}
+
+/* Custom transitions and scrollbar */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Custom scrollbar for webkit */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* High-Fidelity Dark Mode custom selectors for complete sub-component support */
+.dark body {
+  @apply !bg-slate-950 !text-slate-100;
+}
+
+.dark section,
+.dark .bg-white {
+  @apply !bg-slate-900 !border-slate-800;
+}
+
+/* Subtle slate cards and inner components */
+.dark .bg-slate-50,
+.dark .bg-slate-100 {
+  @apply !bg-slate-950 !border-slate-800;
+}
+
+/* Scrollbar dark mode */
+.dark ::-webkit-scrollbar-thumb {
+  background: #1e293b;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #334155;
+}
+
+/* Base text elements under dark mode */
+.dark .text-slate-900,
+.dark .text-slate-950,
+.dark h1,
+.dark h2,
+.dark h3,
+.dark h4 {
+  @apply !text-white;
+}
+
+.dark .text-slate-600,
+.dark .text-slate-700,
+.dark .text-slate-800 {
+  @apply !text-slate-300;
+}
+
+.dark .text-slate-500,
+.dark .text-slate-400 {
+  @apply !text-slate-400;
+}
+
+/* Borders dark mode */
+.dark .border-slate-100,
+.dark .border-slate-200,
+.dark .border-slate-200\/50,
+.dark .border-slate-200\/60,
+.dark .border-slate-200\/80 {
+  @apply !border-slate-800;
+}
+
+/* Timeline specific dark mode */
+.dark .border-l.border-slate-100 {
+  @apply !border-slate-800;
+}
+
+/* Badges, timeline dots, custom blocks */
+.dark .bg-indigo-50 {
+  @apply !bg-indigo-950/40 !text-indigo-300;
+}
+
+.dark .bg-emerald-50 {
+  @apply !bg-emerald-950/40 !text-emerald-300;
+}
+
+/* Project and Skill tags in dark mode */
+.dark .bg-slate-100 {
+  @apply !bg-slate-800 !text-slate-300;
+}
+
+/* Active buttons in dark navigation blocks */
+.dark .bg-slate-850 {
+  @apply !bg-slate-800 !text-slate-100;
+}
+
+/* Edit and Action panel triggers */
+.dark #discrete-panel-login-btn,
+.dark #edit-profile-btn {
+  @apply !bg-slate-800 !border-slate-700 !text-slate-300;
+}
+
+.dark #discrete-panel-login-btn:hover,
+.dark #edit-profile-btn:hover {
+  @apply !bg-slate-700 !text-indigo-400;
+}
+
+/* Custom form controls dark mode overrides */
+.dark input,
+.dark textarea,
+.dark select {
+  @apply !bg-slate-800 !border-slate-700 !text-slate-100 !placeholder-slate-500;
+}
+
+.dark input:focus,
+.dark textarea:focus,
+.dark select:focus {
+  @apply !border-indigo-500;
+}
+
+/* High-Fidelity Print layout optimizations for a perfect physical Curriculum Vitae */
+@media print {
+  @page {
+    size: A4;
+    margin: 12mm 15mm 12mm 15mm;
+  }
+
+  /* Force browsers to print backgrounds and exact colors */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+    transition: none !important;
+    animation: none !important;
+  }
+
+  body {
+    background: #ffffff !important;
+    color: #1e293b !important;
+    font-size: 10pt !important;
+    line-height: 1.4 !important;
+    font-family: "Inter", sans-serif !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Completely hide all web-only UI elements, interactive widgets, controls, and footers */
+  .no-print,
+  button,
+  nav,
+  footer,
+  aside,
+  header.no-print,
+  #print-resume-btn,
+  #discrete-panel-login-btn,
+  #edit-profile-btn,
+  #view-mode-toggle,
+  #edit-mode-toggle,
+  [role="dialog"],
+  .sticky,
+  .animate-ping,
+  .animate-pulse {
+    display: none !important;
+  }
+
+  /* Ensure the main container takes up 100% of printable space without margins or shadows */
+  main {
+    max-width: 100% !important;
+    width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  /* Format sections and header as integrated, borderless documents rather than floating cards */
+  section,
+  header {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    margin: 0 0 16pt 0 !important;
+    width: 100% !important;
+    page-break-inside: auto !important;
+  }
+
+  /* Elegant LaTeX-style section headers for a premium academic/professional CV look */
+  h2 {
+    font-size: 13pt !important;
+    font-weight: 700 !important;
+    color: #1e3a8a !important; /* Deep Navy Blue for professional CV accents */
+    border-bottom: 1.5px solid #cbd5e1 !important;
+    padding-bottom: 3pt !important;
+    margin-bottom: 10pt !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.05em !important;
+    display: flex !important;
+    align-items: center !important;
+  }
+
+  h1 {
+    font-size: 24pt !important;
+    font-weight: 800 !important;
+    color: #0f172a !important;
+    letter-spacing: -0.02em !important;
+    line-height: 1.1 !important;
+  }
+
+  h3 {
+    font-size: 11pt !important;
+    font-weight: 600 !important;
+    color: #0f172a !important;
+  }
+
+  /* Ensure items avoid breaking awkwardly mid-element */
+  .print-break-inside-avoid {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  /* Format Project cards as elegant list items in physical print, avoiding bulky card boxes */
+  article {
+    border: none !important;
+    border-bottom: 1px dashed #e2e8f0 !important;
+    padding: 10pt 0 !important;
+    margin: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  article:last-child {
+    border-bottom: none !important;
+  }
+
+  /* Hide project images on print to save ink and maintain a professional document design */
+  .print\:hidden,
+  img,
+  iframe,
+  canvas {
+    display: none !important;
+  }
+
+  /* Custom styling for standard avatars in print */
+  .h-28.w-28.overflow-hidden {
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 8px !important;
+    width: 1.8in !important;
+    height: 1.8in !important;
+  }
+
+  /* Tighten grids and lists for physical paper space constraints */
+  .grid {
+    gap: 12pt !important;
+  }
+
+  .gap-8 {
+    gap: 14pt !important;
+  }
+
+  .space-y-8 > :not([hidden]) ~ :not([hidden]) {
+    --tw-space-y-reverse: 0;
+    margin-top: 14pt !important;
+    margin-bottom: 0 !important;
+  }
+
+  /* Ensure timeline vertical borders are visible and crisp */
+  .border-l.border-slate-100 {
+    border-left: 1.5px solid #cbd5e1 !important;
+  }
+
+  /* Ensure timeline bullet dots remain solid and properly colored */
+  span.absolute.bg-indigo-600 {
+    background-color: #4f46e5 !important;
+    border: 2px solid #ffffff !important;
+    box-shadow: 0 0 0 1px #4f46e5 !important;
+  }
+
+  /* Prevent text cutoff inside lists and grids */
+  p, span, li, a {
+    color: #334155 !important;
+    word-wrap: break-word !important;
+  }
+
+  /* Ensure email copying badges and hints are completely hidden */
+  .absolute.-top-9 {
+    display: none !important;
+  }
+}

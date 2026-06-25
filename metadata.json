@@ -1,0 +1,6 @@
+{
+  "name": "Currículo e Portfólio",
+  "description": "Um site interativo e elegante para criar, editar, visualizar e exportar seu currículo e projetos organizados por áreas de especialidade.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
