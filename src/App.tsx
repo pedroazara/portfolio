@@ -12,6 +12,7 @@ import BlogSection from "./components/BlogSection";
 import LoginModal from "./components/LoginModal";
 import ImageBankModal from "./components/ImageBankModal";
 import ChangePasswordModal from "./components/ChangePasswordModal";
+import LocalImage from "./components/LocalImage";
 import { Sparkles, CheckCircle2, Lock, Atom, FileText, BookOpen, Cloud, Sun, Moon } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { Language, translations } from "./lib/translations";
@@ -337,15 +338,24 @@ export default function App() {
       <div className="h-1 w-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 no-print print:hidden" />
 
       {/* Main Container */}
-      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 print:p-0 print:max-w-none">
+      <main className="mx-auto max-w-[1600px] px-4 py-8 sm:px-8 lg:px-12 print:p-0 print:max-w-none">
         
         {/* Personal Navigation Header */}
         <header className="no-print print:hidden mb-8 border-b border-slate-200/60 dark:border-slate-800/80 pb-6">
           {/* Row 1: Profile & Auto-Save Banner */}
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-5">
             <div className="flex items-center gap-3">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-indigo-600 text-white shadow-lg shadow-indigo-200 dark:shadow-indigo-950/50">
-                <Atom className="h-6 w-6 animate-spin-slow" />
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-indigo-600 text-white shadow-lg shadow-indigo-200 dark:shadow-indigo-950/50 overflow-hidden">
+                {resumeData.profile.badgeIconUrl ? (
+                  <LocalImage
+                    src={resumeData.profile.badgeIconUrl}
+                    alt="Badge Icon"
+                    referrerPolicy="no-referrer"
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <Atom className="h-6 w-6 animate-spin-slow" />
+                )}
               </div>
               <div className="min-w-0">
                 <h1 className="text-xl md:text-2xl font-black tracking-tight text-slate-900 dark:text-white font-display truncate">

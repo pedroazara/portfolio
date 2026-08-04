@@ -289,117 +289,227 @@ export default function BlogSection({
           </p>
         </div>
       ) : (
-        /* Normal sized cards in a clean responsive grid */
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {filteredPosts.map((post) => {
-            const displayTitle = (language === "en" ? post.titleEn : post.title) || post.title;
-            const displaySummary = (language === "en" ? post.summaryEn : post.summary) || post.summary;
+        <div className="space-y-12">
+          {/* Featured Hero Article (First Post) */}
+          {filteredPosts.length > 0 && (() => {
+            const featuredPost = filteredPosts[0];
+            const featTitle = (language === "en" ? featuredPost.titleEn : featuredPost.title) || featuredPost.title;
+            const featSummary = (language === "en" ? featuredPost.summaryEn : featuredPost.summary) || featuredPost.summary;
 
             return (
               <article
-                key={post.id}
-                onClick={() => setSelectedPost(post)}
-                className="group flex flex-col overflow-hidden rounded-2xl border border-slate-100 dark:border-slate-800/80 bg-white dark:bg-slate-900 shadow-xs transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:border-slate-200/80 dark:hover:border-slate-700 cursor-pointer h-full"
+                key={featuredPost.id}
+                onClick={() => setSelectedPost(featuredPost)}
+                className="group relative overflow-hidden rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl hover:border-indigo-400 dark:hover:border-indigo-700 cursor-pointer"
               >
-                {/* Cover Image */}
-                {post.imageUrl ? (
-                  <div className="relative aspect-video w-full overflow-hidden bg-slate-50 dark:bg-slate-950/30 shrink-0 rounded-t-2xl">
-                    <LocalImage
-                      src={post.imageUrl}
-                      alt={displayTitle}
-                      referrerPolicy="no-referrer"
-                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.02] rounded-t-2xl"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950/15 to-transparent" />
-                    {getPostCategoryDisplay(post) && (
-                      <span className="absolute top-3 left-3 rounded-full bg-slate-900/70 dark:bg-slate-950/80 backdrop-blur-xs px-2.5 py-1 text-[10px] font-bold text-white uppercase tracking-wider">
-                        {getPostCategoryDisplay(post)}
-                      </span>
-                    )}
-                  </div>
-                ) : (
-                  <div className="relative aspect-video w-full bg-slate-100 dark:bg-slate-950/30 shrink-0 flex items-center justify-center text-slate-400 dark:text-slate-500 rounded-t-2xl">
-                    <BookOpen className="h-8 w-8 text-slate-300 dark:text-slate-700" />
-                    {getPostCategoryDisplay(post) && (
-                      <span className="absolute top-3 left-3 rounded-full bg-slate-900/70 dark:bg-slate-950/80 backdrop-blur-xs px-2.5 py-1 text-[10px] font-bold text-white uppercase tracking-wider">
-                        {getPostCategoryDisplay(post)}
-                      </span>
-                    )}
-                  </div>
-                )}
-
-                {/* Card Body */}
-                <div className="flex-1 p-6 sm:p-7 md:p-8 flex flex-col justify-between">
-                  <div className="space-y-5">
-                    {/* Meta */}
-                    <div className="flex items-center gap-3 text-slate-400 dark:text-slate-500 font-mono text-[11px]">
-                      <span className="flex items-center gap-1">
-                        <Calendar className="h-3.5 w-3.5" />
-                        {post.date}
-                      </span>
-                      <span className="text-slate-200 dark:text-slate-800">•</span>
-                      <span className="flex items-center gap-1">
-                        <Clock className="h-3.5 w-3.5" />
-                        {post.readTime || "5 min read"}
-                      </span>
-                    </div>
-
-                    {/* Title & Summary */}
-                    <div>
-                      <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors font-display tracking-tight leading-snug line-clamp-2">
-                        {displayTitle}
-                      </h3>
-                      <p className="mt-2 text-xs text-slate-500 dark:text-slate-400 leading-relaxed font-sans line-clamp-3">
-                        {displaySummary}
-                      </p>
-                    </div>
-
-                    {/* Tags */}
-                    {post.tags.length > 0 && (
-                      <div className="flex flex-wrap gap-1.5 pt-1">
-                        {post.tags.map((tag, idx) => (
-                          <span
-                            key={idx}
-                            className="rounded-full bg-indigo-50/60 dark:bg-indigo-950/40 px-2.5 py-0.5 text-[9px] font-semibold text-indigo-600 dark:text-indigo-400 font-sans"
-                          >
-                            #{tag}
-                          </span>
-                        ))}
+                <div className="grid grid-cols-1 lg:grid-cols-12 items-stretch">
+                  {/* Cover Image (7 columns on desktop) */}
+                  <div className="lg:col-span-7 relative overflow-hidden min-h-[300px] sm:min-h-[380px] lg:min-h-[480px] bg-slate-100 dark:bg-slate-950">
+                    {featuredPost.imageUrl ? (
+                      <LocalImage
+                        src={featuredPost.imageUrl}
+                        alt={featTitle}
+                        referrerPolicy="no-referrer"
+                        className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.03]"
+                      />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center text-slate-300 dark:text-slate-700">
+                        <BookOpen className="h-20 w-20" />
                       </div>
                     )}
-                  </div>
-
-                  {/* Card Footer */}
-                  <div className="mt-6 pt-4 border-t border-slate-50 dark:border-slate-800/80 flex items-center justify-between">
-                    <span className="text-xs font-bold text-indigo-600 dark:text-indigo-400 flex items-center gap-1 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors">
-                      {language === "en" ? "Read full article" : "Ler publicação integral"}
-                      <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950/60 via-transparent to-transparent lg:hidden" />
+                    <span className="absolute top-5 left-5 rounded-full bg-indigo-600 dark:bg-indigo-500 px-4 py-1.5 text-xs font-black text-white uppercase tracking-wider shadow-md">
+                      {language === "en" ? "Featured Article" : "Artigo em Destaque"}
                     </span>
+                  </div>
 
-                    {/* Edit/Delete Actions */}
-                    {isEditMode && (
-                      <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
-                        <button
-                          onClick={(e) => handleOpenEdit(post, e)}
-                          className="rounded-lg p-1.5 text-slate-400 dark:text-slate-500 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
-                          title="Editar Artigo"
-                        >
-                          <Edit2 className="h-3.5 w-3.5" />
-                        </button>
-                        <button
-                          onClick={(e) => handleDelete(post.id, e)}
-                          className="rounded-lg p-1.5 text-slate-400 dark:text-slate-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 hover:text-rose-600 dark:hover:text-rose-400 transition-colors"
-                          title="Excluir Artigo"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </button>
+                  {/* Content (5 columns on desktop) */}
+                  <div className="lg:col-span-5 p-8 sm:p-10 lg:p-12 flex flex-col justify-between">
+                    <div className="space-y-5">
+                      <div className="flex items-center gap-3 text-slate-400 dark:text-slate-500 font-mono text-xs">
+                        {getPostCategoryDisplay(featuredPost) && (
+                          <span className="rounded-full bg-indigo-50 dark:bg-indigo-950/60 px-3 py-1 text-xs font-bold text-indigo-600 dark:text-indigo-400">
+                            {getPostCategoryDisplay(featuredPost)}
+                          </span>
+                        )}
+                        <span className="flex items-center gap-1">
+                          <Calendar className="h-3.5 w-3.5" />
+                          {featuredPost.date}
+                        </span>
+                        <span>•</span>
+                        <span className="flex items-center gap-1">
+                          <Clock className="h-3.5 w-3.5" />
+                          {featuredPost.readTime || "5 min read"}
+                        </span>
                       </div>
-                    )}
+
+                      <h3 className="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors font-display tracking-tight leading-tight">
+                        {featTitle}
+                      </h3>
+
+                      <p className="text-sm sm:text-base text-slate-600 dark:text-slate-300 leading-relaxed font-sans line-clamp-5">
+                        {featSummary}
+                      </p>
+
+                      {featuredPost.tags.length > 0 && (
+                        <div className="flex flex-wrap gap-2 pt-2">
+                          {featuredPost.tags.map((tag, idx) => (
+                            <span
+                              key={idx}
+                              className="rounded-full bg-slate-100 dark:bg-slate-800/80 px-3 py-1 text-xs font-semibold text-slate-600 dark:text-slate-400 font-sans"
+                            >
+                              #{tag}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="mt-10 pt-6 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                      <span className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 dark:bg-indigo-500 px-6 py-3 text-xs font-bold text-white shadow-md transition-all group-hover:bg-indigo-700">
+                        <span>{language === "en" ? "Read full article" : "Ler artigo completo"}</span>
+                        <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                      </span>
+
+                      {isEditMode && (
+                        <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
+                          <button
+                            onClick={(e) => handleOpenEdit(featuredPost, e)}
+                            className="rounded-xl p-2 text-slate-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+                            title="Editar Artigo"
+                          >
+                            <Edit2 className="h-4 w-4" />
+                          </button>
+                          <button
+                            onClick={(e) => handleDelete(featuredPost.id, e)}
+                            className="rounded-xl p-2 text-slate-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 hover:text-rose-600 dark:hover:text-rose-400 transition-colors"
+                            title="Excluir Artigo"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               </article>
             );
-          })}
+          })()}
+
+          {/* Remaining Articles (Spacious 2-column wide portfolio grid) */}
+          {filteredPosts.length > 1 && (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-12">
+              {filteredPosts.slice(1).map((post) => {
+                const displayTitle = (language === "en" ? post.titleEn : post.title) || post.title;
+                const displaySummary = (language === "en" ? post.summaryEn : post.summary) || post.summary;
+
+                return (
+                  <article
+                    key={post.id}
+                    onClick={() => setSelectedPost(post)}
+                    className="group flex flex-col overflow-hidden rounded-3xl border border-slate-200/70 dark:border-slate-800/80 bg-white dark:bg-slate-900 shadow-xs transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl hover:border-indigo-300 dark:hover:border-indigo-800/80 cursor-pointer h-full"
+                  >
+                    {/* Cover Image */}
+                    {post.imageUrl ? (
+                      <div className="relative aspect-[16/9] w-full overflow-hidden bg-slate-50 dark:bg-slate-950/30 shrink-0">
+                        <LocalImage
+                          src={post.imageUrl}
+                          alt={displayTitle}
+                          referrerPolicy="no-referrer"
+                          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/20 to-transparent" />
+                        {getPostCategoryDisplay(post) && (
+                          <span className="absolute top-4 left-4 rounded-full bg-slate-900/80 dark:bg-slate-950/80 backdrop-blur-xs px-3.5 py-1 text-xs font-bold text-white uppercase tracking-wider">
+                            {getPostCategoryDisplay(post)}
+                          </span>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="relative aspect-[16/9] w-full bg-slate-100 dark:bg-slate-950/30 shrink-0 flex items-center justify-center text-slate-400 dark:text-slate-500">
+                        <BookOpen className="h-12 w-12 text-slate-300 dark:text-slate-700" />
+                        {getPostCategoryDisplay(post) && (
+                          <span className="absolute top-4 left-4 rounded-full bg-slate-900/80 dark:bg-slate-950/80 backdrop-blur-xs px-3.5 py-1 text-xs font-bold text-white uppercase tracking-wider">
+                            {getPostCategoryDisplay(post)}
+                          </span>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Card Body */}
+                    <div className="flex-1 p-8 sm:p-10 lg:p-11 flex flex-col justify-between">
+                      <div className="space-y-4">
+                        {/* Meta */}
+                        <div className="flex items-center gap-3 text-slate-400 dark:text-slate-500 font-mono text-xs">
+                          <span className="flex items-center gap-1">
+                            <Calendar className="h-3.5 w-3.5" />
+                            {post.date}
+                          </span>
+                          <span className="text-slate-200 dark:text-slate-800">•</span>
+                          <span className="flex items-center gap-1">
+                            <Clock className="h-3.5 w-3.5" />
+                            {post.readTime || "5 min read"}
+                          </span>
+                        </div>
+
+                        {/* Title & Summary */}
+                        <div>
+                          <h3 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors font-display tracking-tight leading-snug line-clamp-2">
+                            {displayTitle}
+                          </h3>
+                          <p className="mt-3.5 text-sm sm:text-base text-slate-500 dark:text-slate-400 leading-relaxed font-sans line-clamp-3">
+                            {displaySummary}
+                          </p>
+                        </div>
+
+                        {/* Tags */}
+                        {post.tags.length > 0 && (
+                          <div className="flex flex-wrap gap-2 pt-2">
+                            {post.tags.map((tag, idx) => (
+                              <span
+                                key={idx}
+                                className="rounded-full bg-indigo-50/70 dark:bg-indigo-950/40 px-3 py-0.5 text-xs font-semibold text-indigo-600 dark:text-indigo-400 font-sans"
+                              >
+                                #{tag}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Card Footer */}
+                      <div className="mt-8 pt-6 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between">
+                        <span className="text-xs font-bold text-indigo-600 dark:text-indigo-400 flex items-center gap-1.5 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors">
+                          {language === "en" ? "Read full article" : "Ler publicação integral"}
+                          <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                        </span>
+
+                        {/* Edit/Delete Actions */}
+                        {isEditMode && (
+                          <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                            <button
+                              onClick={(e) => handleOpenEdit(post, e)}
+                              className="rounded-lg p-1.5 text-slate-400 dark:text-slate-500 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+                              title="Editar Artigo"
+                            >
+                              <Edit2 className="h-3.5 w-3.5" />
+                            </button>
+                            <button
+                              onClick={(e) => handleDelete(post.id, e)}
+                              className="rounded-lg p-1.5 text-slate-400 dark:text-slate-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 hover:text-rose-600 dark:hover:text-rose-400 transition-colors"
+                              title="Excluir Artigo"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+          )}
         </div>
       )}
 
@@ -422,7 +532,7 @@ export default function BlogSection({
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95, y: 20 }}
                 transition={{ type: "spring", duration: 0.5 }}
-                className="relative w-full max-w-5xl overflow-hidden rounded-3xl bg-white shadow-2xl border border-slate-100"
+                className="relative w-full max-w-7xl overflow-hidden rounded-3xl bg-white dark:bg-slate-900 shadow-2xl border border-slate-100 dark:border-slate-800 text-slate-900 dark:text-slate-100"
               >
                 {/* Header Actions */}
                 <div className="absolute right-4 top-4 z-10 flex gap-2">
@@ -452,30 +562,30 @@ export default function BlogSection({
 
                 {/* Banner Cover Image */}
                 {selectedPost.imageUrl && (
-                  <div className="relative h-72 sm:h-96 w-full overflow-hidden bg-slate-100">
+                  <div className="relative h-80 sm:h-[440px] w-full overflow-hidden bg-slate-100 dark:bg-slate-950/50">
                     <LocalImage
                       src={selectedPost.imageUrl}
                       alt={(language === "en" ? selectedPost.titleEn : selectedPost.title) || selectedPost.title}
                       referrerPolicy="no-referrer"
                       className="w-full h-full object-cover"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950/60 via-transparent to-transparent" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-transparent to-transparent" />
                   </div>
                 )}
 
                 {/* Article Contents */}
-                <div className="p-6 sm:p-10 md:p-12 max-h-[65vh] overflow-y-auto">
+                <div className="p-8 sm:p-12 lg:p-16 max-h-[72vh] overflow-y-auto">
                   {/* Category/Tags */}
-                  <div className="flex flex-wrap gap-1.5 mb-4 items-center">
+                  <div className="flex flex-wrap gap-2 mb-4 items-center">
                     {getPostCategoryDisplay(selectedPost) && (
-                      <span className="rounded-full bg-indigo-600 px-3.5 py-1 text-[11px] font-bold text-white font-sans uppercase tracking-wider">
+                      <span className="rounded-full bg-indigo-600 dark:bg-indigo-500 px-4 py-1 text-xs font-bold text-white font-sans uppercase tracking-wider shadow-sm">
                         {getPostCategoryDisplay(selectedPost)}
                       </span>
                     )}
                     {selectedPost.tags.map((tag, idx) => (
                       <span
                         key={idx}
-                        className="rounded-full bg-indigo-50 px-2.5 py-1 text-[10px] font-semibold text-indigo-700 font-sans"
+                        className="rounded-full bg-indigo-50 dark:bg-indigo-950/40 px-3 py-1 text-xs font-semibold text-indigo-700 dark:text-indigo-300 font-sans border border-indigo-100/50 dark:border-indigo-900/40"
                       >
                         #{tag}
                       </span>
@@ -483,24 +593,24 @@ export default function BlogSection({
                   </div>
 
                   {/* Title */}
-                  <h2 className="text-2xl sm:text-4xl font-black text-slate-900 tracking-tight font-display leading-tight">
+                  <h2 className="text-3xl sm:text-5xl font-black text-slate-900 dark:text-white tracking-tight font-display leading-tight">
                     {(language === "en" ? selectedPost.titleEn : selectedPost.title) || selectedPost.title}
                   </h2>
 
                   {/* Author / Date Info */}
-                  <div className="mt-4 flex flex-wrap items-center gap-4 border-b border-slate-100 pb-5 text-slate-400 font-mono text-xs">
-                    <span className="flex items-center gap-1.5 font-sans font-semibold text-slate-700">
-                      <div className="h-6 w-6 rounded-full bg-indigo-600/10 flex items-center justify-center text-indigo-600">
-                        <User className="h-3 w-3" />
+                  <div className="mt-6 flex flex-wrap items-center gap-4 border-b border-slate-100 dark:border-slate-800 pb-6 text-slate-400 dark:text-slate-500 font-mono text-xs sm:text-sm">
+                    <span className="flex items-center gap-2 font-sans font-semibold text-slate-700 dark:text-slate-300">
+                      <div className="h-7 w-7 rounded-full bg-indigo-600/10 dark:bg-indigo-500/20 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
+                        <User className="h-3.5 w-3.5" />
                       </div>
                       {authorName}
                     </span>
-                    <span className="text-slate-200 hidden sm:inline">•</span>
+                    <span className="text-slate-200 dark:text-slate-800 hidden sm:inline">•</span>
                     <span className="flex items-center gap-1">
                       <Calendar className="h-4 w-4" />
                       {selectedPost.date}
                     </span>
-                    <span className="text-slate-200">•</span>
+                    <span className="text-slate-200 dark:text-slate-800">•</span>
                     <span className="flex items-center gap-1">
                       <Clock className="h-4 w-4" />
                       {selectedPost.readTime || "5 min read"}
@@ -508,7 +618,7 @@ export default function BlogSection({
                   </div>
 
                   {/* Article Markdown/HTML Body Rendering */}
-                  <div className="mt-8 prose max-w-none text-slate-800">
+                  <div className="mt-10 prose prose-lg dark:prose-invert max-w-none text-slate-800 dark:text-slate-200 leading-relaxed font-sans">
                     <MarkdownRenderer 
                       content={(language === "en" ? selectedPost.contentEn : selectedPost.content) || selectedPost.content} 
                     />
@@ -516,15 +626,15 @@ export default function BlogSection({
                 </div>
 
                 {/* Footer Modal Action */}
-                <div className="bg-slate-50 px-6 py-4 flex justify-between items-center border-t border-slate-100">
-                  <span className="text-xs text-slate-400 font-mono">
+                <div className="bg-slate-50 dark:bg-slate-950/70 px-6 py-4 flex justify-between items-center border-t border-slate-100 dark:border-slate-800">
+                  <span className="text-xs text-slate-400 dark:text-slate-500 font-mono">
                     © {new Date().getFullYear()} {authorName}
                   </span>
                   <div className="flex gap-2">
                     {isEditMode && selectedPost && (
                       <button
                         onClick={(e) => handleOpenEdit(selectedPost, e)}
-                        className="flex items-center gap-1.5 rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-2 text-xs font-bold text-indigo-700 hover:bg-indigo-100 transition-all active:scale-95"
+                        className="flex items-center gap-1.5 rounded-xl border border-indigo-200 dark:border-indigo-800 bg-indigo-50 dark:bg-indigo-950/40 px-4 py-2 text-xs font-bold text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 transition-all active:scale-95"
                       >
                         <Edit2 className="h-3.5 w-3.5" />
                         <span>{language === "en" ? "Edit Article" : "Editar Artigo"}</span>
@@ -532,7 +642,7 @@ export default function BlogSection({
                     )}
                     <button
                       onClick={() => setSelectedPost(null)}
-                      className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-all"
+                      className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 py-2 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700/80 transition-all"
                     >
                       {language === "en" ? "Close Reading" : "Fechar Leitura"}
                     </button>

@@ -69,7 +69,7 @@ export default function ImageBankModal({ isOpen, onClose }: ImageBankModalProps)
 
   const handleFileSelect = (file: File) => {
     if (!file.type.startsWith("image/")) {
-      setErrorMsg("Por favor, selecione apenas arquivos de imagem (PNG, JPG, SVG, WEBP).");
+      setErrorMsg("Por favor, selecione apenas arquivos de imagem (PNG, JPG, GIF, SVG, WEBP).");
       return;
     }
 
@@ -244,7 +244,7 @@ export default function ImageBankModal({ isOpen, onClose }: ImageBankModalProps)
                     <div className="text-xs font-semibold text-slate-700">
                       Arraste uma imagem ou <span className="text-indigo-600 hover:underline">clique para buscar</span>
                     </div>
-                    <p className="text-[10px] text-slate-400 font-mono">PNG, JPG, SVG ou WEBP</p>
+                    <p className="text-[10px] text-slate-400 font-mono">PNG, JPG, GIF, SVG ou WEBP</p>
                   </div>
                 )}
               </div>

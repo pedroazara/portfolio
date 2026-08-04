@@ -12,6 +12,7 @@ export interface Profile {
   linkedin?: string;
   twitter?: string;
   avatarUrl?: string;
+  badgeIconUrl?: string;
 }
 
 export interface ProjectCategory {

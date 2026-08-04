@@ -74,7 +74,7 @@ export default function ProjectDetailsModal({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
             transition={{ type: "spring", duration: 0.5 }}
-            className="relative w-full max-w-4xl overflow-hidden rounded-3xl bg-white shadow-2xl border border-slate-100"
+            className="relative w-full max-w-4xl overflow-hidden rounded-3xl bg-white dark:bg-slate-900 shadow-2xl border border-slate-100 dark:border-slate-800"
           >
             {/* Header / Top Bar */}
             <div className="absolute right-4 top-4 z-10 flex items-center gap-2">
@@ -150,34 +150,34 @@ export default function ProjectDetailsModal({
               </div>
 
               {/* Information Section: Right/Bottom 5 cols */}
-              <div className="p-6 sm:p-8 md:p-10 md:col-span-5 flex flex-col justify-between max-h-[550px] overflow-y-auto">
+              <div className="p-6 sm:p-8 md:p-10 md:col-span-5 flex flex-col justify-between max-h-[550px] overflow-y-auto bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100">
                 <div className="space-y-6">
                   {/* Category & Badge */}
                   <div>
-                    <span className="inline-flex items-center gap-1 rounded-full bg-indigo-50 px-2.5 py-1 text-xs font-semibold text-indigo-700 font-sans">
-                      <Layers className="h-3.5 w-3.5 text-indigo-600" />
+                    <span className="inline-flex items-center gap-1 rounded-full bg-indigo-50 dark:bg-indigo-950/50 px-2.5 py-1 text-xs font-semibold text-indigo-700 dark:text-indigo-300 font-sans">
+                      <Layers className="h-3.5 w-3.5 text-indigo-600 dark:text-indigo-400" />
                       {displayCategoryName}
                     </span>
                   </div>
 
                   {/* Title & Teaser */}
                   <div>
-                    <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight font-display leading-tight">
+                    <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight font-display leading-tight">
                       {displayTitle}
                     </h2>
                     <div className="mt-2.5">
                       <MarkdownRenderer
                         content={displayDescription}
-                        className="text-sm font-semibold text-indigo-600/90 font-sans leading-relaxed"
+                        className="text-sm font-semibold text-indigo-600/90 dark:text-indigo-400 font-sans leading-relaxed"
                       />
                     </div>
                   </div>
 
                   {/* Detailed Description */}
                   {displayDetailedDescription && (
-                    <div className="space-y-2 border-t border-slate-100 pt-4">
-                      <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-400 font-mono">
-                        <BookOpen className="h-4 w-4 text-slate-400" />
+                    <div className="space-y-2 border-t border-slate-100 dark:border-slate-800 pt-4">
+                      <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 font-mono">
+                        <BookOpen className="h-4 w-4 text-slate-400 dark:text-slate-500" />
                         <span>{language === "en" ? "Approach & Engineering" : "Abordagem & Engenharia"}</span>
                       </div>
                       <MarkdownRenderer
