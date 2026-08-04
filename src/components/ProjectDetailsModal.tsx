@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Project, ProjectCategory } from "../types";
-import { X, ChevronLeft, ChevronRight, ExternalLink, Github, FlaskConical, Award, BookOpen, Layers } from "lucide-react";
+import { X, ChevronLeft, ChevronRight, ExternalLink, Github, FlaskConical, Award, BookOpen, Layers, Share2, Check } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import LocalImage from "./LocalImage";
 import MarkdownRenderer from "./MarkdownRenderer";
@@ -21,7 +21,16 @@ export default function ProjectDetailsModal({
   onNavigateToBlogPost,
   language = "pt",
 }: ProjectDetailsModalProps) {
+  const [copiedLink, setCopiedLink] = useState(false);
+
   if (!project) return null;
+
+  const handleCopyLink = () => {
+    const url = `${window.location.origin}/project/${project.id}`;
+    navigator.clipboard.writeText(url);
+    setCopiedLink(true);
+    setTimeout(() => setCopiedLink(false), 2000);
+  };
 
   const displayTitle = (language === "en" && project.titleEn) ? project.titleEn : project.title;
   const displayDescription = (language === "en" && project.descriptionEn) ? project.descriptionEn : project.description;
@@ -68,7 +77,14 @@ export default function ProjectDetailsModal({
             className="relative w-full max-w-4xl overflow-hidden rounded-3xl bg-white shadow-2xl border border-slate-100"
           >
             {/* Header / Top Bar */}
-            <div className="absolute right-4 top-4 z-10">
+            <div className="absolute right-4 top-4 z-10 flex items-center gap-2">
+              <button
+                onClick={handleCopyLink}
+                className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-900/40 text-white backdrop-blur-xs transition-all hover:bg-indigo-600 hover:scale-105"
+                title={copiedLink ? (language === "en" ? "Link Copied!" : "Link Copiado!") : (language === "en" ? "Copy Link" : "Copiar Link")}
+              >
+                {copiedLink ? <Check className="h-4.5 w-4.5 text-emerald-400" /> : <Share2 className="h-4.5 w-4.5" />}
+              </button>
               <button
                 onClick={onClose}
                 className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-900/40 text-white backdrop-blur-xs transition-colors hover:bg-slate-950/80"

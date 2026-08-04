@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { ResumeData, Profile, Project, ProjectCategory, Experience, Education, Skill, Course, BlogPost } from "./types";
 import { initialResumeData } from "./data/initialData";
 import ResumeHeader from "./components/ResumeHeader";
@@ -147,12 +148,48 @@ export default function App() {
   const [isImageBankOpen, setIsImageBankOpen] = useState(false);
   const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
   const [showAutoSaveBanner, setShowAutoSaveBanner] = useState(false);
-  const [activePage, setActivePage] = useState<"cv" | "blog">("cv");
-  const [selectedBlogPostId, setSelectedBlogPostId] = useState<string | null>(null);
+
+  // Router hooks for URL deep linking and SPA routes
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  const isBlog = location.pathname.startsWith("/blog");
+  const activePage: "cv" | "blog" = isBlog ? "blog" : "cv";
+
+  let selectedBlogPostId: string | null = null;
+  if (isBlog) {
+    const match = location.pathname.match(/^\/blog\/(.+)$/);
+    if (match && match[1]) {
+      selectedBlogPostId = decodeURIComponent(match[1]);
+    }
+  }
+
+  let selectedProjectId: string | null = null;
+  if (!isBlog) {
+    const match = location.pathname.match(/^\/project\/(.+)$/);
+    if (match && match[1]) {
+      selectedProjectId = decodeURIComponent(match[1]);
+    }
+  }
+
+  const handleSelectBlogPost = (postId: string | null) => {
+    if (postId) {
+      navigate(`/blog/${encodeURIComponent(postId)}`);
+    } else {
+      navigate("/blog");
+    }
+  };
+
+  const handleSelectProject = (projectId: string | null) => {
+    if (projectId) {
+      navigate(`/project/${encodeURIComponent(projectId)}`);
+    } else {
+      navigate("/");
+    }
+  };
 
   const handleNavigateToBlogPost = (postId: string) => {
-    setSelectedBlogPostId(postId);
-    setActivePage("blog");
+    navigate(`/blog/${encodeURIComponent(postId)}`);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -357,10 +394,7 @@ export default function App() {
             {/* Primary Page Navigation Tabs */}
             <nav className="flex rounded-2xl bg-slate-100 dark:bg-slate-900 p-1.5 gap-1 shadow-xs border border-slate-200/50 dark:border-slate-800 self-start">
               <button
-                onClick={() => {
-                  setActivePage("cv");
-                  setSelectedBlogPostId(null);
-                }}
+                onClick={() => navigate("/")}
                 className={`flex items-center gap-2 rounded-xl px-5 py-2.5 text-xs font-bold transition-all cursor-pointer ${
                   activePage === "cv" && !selectedBlogPostId
                     ? "bg-white dark:bg-slate-850 text-indigo-600 dark:text-indigo-400 shadow-sm"
@@ -371,7 +405,7 @@ export default function App() {
                 <span>{translations[language].cv}</span>
               </button>
               <button
-                onClick={() => setActivePage("blog")}
+                onClick={() => navigate("/blog")}
                 className={`flex items-center gap-2 rounded-xl px-5 py-2.5 text-xs font-bold transition-all cursor-pointer ${
                   activePage === "blog"
                     ? "bg-white dark:bg-slate-850 text-indigo-600 dark:text-indigo-400 shadow-sm"
@@ -476,6 +510,8 @@ export default function App() {
               posts={resumeData.posts || []}
               onNavigateToBlogPost={handleNavigateToBlogPost}
               language={language}
+              selectedProjectId={selectedProjectId}
+              onSelectProject={handleSelectProject}
             />
 
             {/* Dual Timeline (Experiences & Educations) */}
@@ -512,7 +548,7 @@ export default function App() {
             onUpdatePosts={handleUpdatePosts}
             authorName={resumeData.profile.name || "Pedro Henrique Almeida"}
             selectedPostId={selectedBlogPostId}
-            onSelectPost={setSelectedBlogPostId}
+            onSelectPost={handleSelectBlogPost}
             language={language}
           />
         )}

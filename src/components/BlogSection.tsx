@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { BlogPost } from "../types";
 import { 
   BookOpen, Calendar, Clock, Plus, Edit2, Trash2, X, FileText, 
-  Tag, Image as ImageIcon, ArrowRight, User
+  Tag, Image as ImageIcon, ArrowRight, User, Share2, Check
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import EditModal from "./EditModal";
@@ -53,6 +53,16 @@ export default function BlogSection({
     setConfirmOpen(true);
   };
   
+  const [copiedLink, setCopiedLink] = useState(false);
+
+  const handleCopyLink = () => {
+    if (!selectedPost) return;
+    const url = `${window.location.origin}/blog/${selectedPost.id}`;
+    navigator.clipboard.writeText(url);
+    setCopiedLink(true);
+    setTimeout(() => setCopiedLink(false), 2000);
+  };
+
   const selectedPost = selectedPostId !== undefined 
     ? (posts.find((p) => p.id === selectedPostId) || null)
     : (localSelectedPost ? (posts.find((p) => p.id === localSelectedPost.id) || null) : null);
@@ -416,6 +426,13 @@ export default function BlogSection({
               >
                 {/* Header Actions */}
                 <div className="absolute right-4 top-4 z-10 flex gap-2">
+                  <button
+                    onClick={handleCopyLink}
+                    className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-900/40 text-white backdrop-blur-xs transition-all hover:bg-indigo-600 hover:scale-105"
+                    title={copiedLink ? (language === "en" ? "Link Copied!" : "Link Copiado!") : (language === "en" ? "Copy Link" : "Copiar Link")}
+                  >
+                    {copiedLink ? <Check className="h-4.5 w-4.5 text-emerald-400" /> : <Share2 className="h-4.5 w-4.5" />}
+                  </button>
                   {isEditMode && selectedPost && (
                     <button
                       onClick={(e) => handleOpenEdit(selectedPost, e)}

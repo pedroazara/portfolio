@@ -19,6 +19,8 @@ interface ProjectSectionProps {
   posts?: BlogPost[];
   onNavigateToBlogPost?: (postId: string) => void;
   language?: Language;
+  selectedProjectId?: string | null;
+  onSelectProject?: (projectId: string | null) => void;
 }
 
 export default function ProjectSection({
@@ -30,9 +32,23 @@ export default function ProjectSection({
   posts = [],
   onNavigateToBlogPost,
   language = "pt",
+  selectedProjectId,
+  onSelectProject,
 }: ProjectSectionProps) {
   const [activeCategory, setActiveCategory] = useState<string>("all");
-  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+  const [localSelectedProject, setLocalSelectedProject] = useState<Project | null>(null);
+
+  const selectedProject = selectedProjectId !== undefined 
+    ? (projects.find((p) => p.id === selectedProjectId) || null)
+    : localSelectedProject;
+
+  const setSelectedProject = (proj: Project | null) => {
+    if (onSelectProject) {
+      onSelectProject(proj ? proj.id : null);
+    } else {
+      setLocalSelectedProject(proj);
+    }
+  };
 
   // Project Modal States
   const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
