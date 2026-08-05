@@ -64,7 +64,7 @@ export async function fetchResumeData(): Promise<ResumeData | null> {
     }
     return null;
   } catch (error) {
-    handleFirestoreError(error, OperationType.GET, fullPath);
+    console.warn("Firestore fetch offline or unreachable, falling back to local storage:", error);
     return null;
   }
 }
@@ -105,7 +105,7 @@ export async function saveResumeData(data: ResumeData): Promise<void> {
     const cleanedData = cleanUndefined(data);
     await setDoc(docRef, cleanedData, { merge: true });
   } catch (error) {
-    handleFirestoreError(error, OperationType.WRITE, fullPath);
+    console.warn("Firestore save failed (operating in offline/local mode):", error);
   }
 }
 
@@ -143,7 +143,7 @@ export async function updateAdminPassword(newPassword: string): Promise<void> {
     const docRef = doc(db, "portfolio_settings", "security");
     await setDoc(docRef, { password: newPassword }, { merge: true });
   } catch (error) {
-    handleFirestoreError(error, OperationType.WRITE, fullPath);
+    console.warn("Firestore password update failed (operating in local mode):", error);
   }
 }
 

@@ -16,7 +16,7 @@ import ImageBankModal from "./components/ImageBankModal";
 import ChangePasswordModal from "./components/ChangePasswordModal";
 import PdfPreviewModal from "./components/PdfPreviewModal";
 import LocalImage from "./components/LocalImage";
-import { Orbita } from "./components/WaveIcon";
+import { OrbitaIcon } from "./components/OrbitaIcon";
 import { Sparkles, CheckCircle2, Lock, Atom, FileText, BookOpen, Cloud, Sun, Moon } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { Language, translations } from "./lib/translations";

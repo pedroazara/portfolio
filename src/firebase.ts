@@ -12,5 +12,13 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 
-// Initialize Firestore with the custom database ID and ignore undefined properties
-export const db = initializeFirestore(app, { ignoreUndefinedProperties: true }, "ai-studio-3dd2fc48-171e-4247-9594-2287a0634df5");
+// Initialize Firestore with long polling fallback support and ignore undefined properties
+export const db = initializeFirestore(
+  app,
+  {
+    ignoreUndefinedProperties: true,
+    experimentalAutoDetectLongPolling: true
+  },
+  "ai-studio-3dd2fc48-171e-4247-9594-2287a0634df5"
+);
+

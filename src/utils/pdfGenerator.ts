@@ -291,9 +291,9 @@ export function createResumePDFDoc(data?: ResumeData): jsPDF | null {
       projectsToRender.forEach((proj, idx) => {
         ensureSpace(18);
 
-        // Determine Project Link URL (prioritize projectUrl / githubUrl, then blog post as fallback)
-        const projectLinkUrl = proj.projectUrl || proj.githubUrl || (proj.blogPostId ? `${origin}/blog/${proj.blogPostId}` : undefined);
-        const rightLabel = projectLinkUrl ? (proj.projectUrl ? "Ver Projeto" : proj.githubUrl ? "Ver GitHub" : "Ver Post") : "";
+        // Determine Project Link URL (link to the project on the curriculum website itself)
+        const projectLinkUrl = `${origin}/project/${encodeURIComponent(proj.id)}`;
+        const rightLabel = "Ver no Site";
         const projectTitle = `${proj.title}${proj.featured ? " [Destaque]" : ""}`;
 
         doc.setFont("helvetica", "normal");
