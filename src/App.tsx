@@ -13,6 +13,7 @@ import LoginModal from "./components/LoginModal";
 import ImageBankModal from "./components/ImageBankModal";
 import ChangePasswordModal from "./components/ChangePasswordModal";
 import LocalImage from "./components/LocalImage";
+import { Orbita } from "./components/WaveIcon";
 import { Sparkles, CheckCircle2, Lock, Atom, FileText, BookOpen, Cloud, Sun, Moon } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { Language, translations } from "./lib/translations";
@@ -345,16 +346,15 @@ export default function App() {
           {/* Row 1: Profile & Auto-Save Banner */}
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-5">
             <div className="flex items-center gap-3">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-indigo-600 text-white shadow-lg shadow-indigo-200 dark:shadow-indigo-950/50 overflow-hidden">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-indigo-600 text-white overflow-hidden p-0.5">
                 {resumeData.profile.badgeIconUrl ? (
                   <LocalImage
                     src={resumeData.profile.badgeIconUrl}
                     alt="Badge Icon"
-                    referrerPolicy="no-referrer"
-                    className="h-full w-full object-cover"
+                    className="h-full w-full object-contain"
                   />
                 ) : (
-                  <Atom className="h-6 w-6 animate-spin-slow" />
+                  <Orbita size={44} color="#ffffff" />
                 )}
               </div>
               <div className="min-w-0">
