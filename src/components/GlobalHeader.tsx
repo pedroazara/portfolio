@@ -110,11 +110,11 @@ export default function GlobalHeader({
             <div className="flex items-center gap-[8px] shrink-0">
               <Link
                 to="/"
-                className="group orb-hover flex items-center gap-2.5 rounded-xl focus-visible:outline-2 focus-visible:outline-[var(--accent)] focus-visible:outline-offset-2 hover:opacity-95 transition-opacity"
+                className="group orb-hover flex items-center gap-2.5 rounded-full focus-visible:outline-2 focus-visible:outline-[var(--accent)] focus-visible:outline-offset-2 hover:opacity-95 transition-opacity"
                 aria-label="Ir para a página inicial"
               >
-                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[var(--accent)] text-white p-0.5 shrink-0 shadow-xs">
-                  <OrbitaIcon size={40} color="#ffffff" />
+                <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[var(--accent)] text-white p-0.5 shrink-0 shadow-xs">
+                  <OrbitaIcon size={38} color="#ffffff" />
                 </div>
                 <span className="hidden sm:inline-block text-[16px] font-bold tracking-tight text-[var(--text)] font-display">
                   Pedro Ázara
@@ -243,8 +243,8 @@ export default function GlobalHeader({
         <div className="no-print print:hidden min-[860px]:hidden fixed inset-0 z-50 flex flex-col bg-[var(--surface)] text-[var(--text)] font-sans animate-in fade-in duration-150">
           <div className="flex h-[56px] items-center justify-between border-b border-[var(--border)] px-4">
             <div className="flex items-center gap-2">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--accent)] text-white p-0.5 shrink-0 shadow-xs">
-                <OrbitaIcon size={36} color="#ffffff" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--accent)] text-white p-0.5 shrink-0 shadow-xs">
+                <OrbitaIcon size={34} color="#ffffff" />
               </div>
               <span className="text-base font-bold font-display">Pedro Ázara</span>
             </div>
