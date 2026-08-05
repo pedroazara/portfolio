@@ -6,7 +6,11 @@ import { ResumeData } from "../types";
  * Features vector-drawn headers, standard margins, structured sections, word-wrapping,
  * and robust multi-page overflow page-breaking.
  */
-export function generateResumePDF(data: ResumeData) {
+export function generateResumePDF(data?: ResumeData) {
+  if (!data || !data.profile) {
+    console.error("Dados de currículo não encontrados para geração de PDF.");
+    return;
+  }
   const doc = new jsPDF({
     orientation: "portrait",
     unit: "mm",

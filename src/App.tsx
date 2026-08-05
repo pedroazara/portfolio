@@ -183,7 +183,8 @@ export default function App() {
   }, [location.pathname, isAuthenticated]);
 
   const isBlog = location.pathname.startsWith("/blog");
-  const activePage: "cv" | "blog" = isBlog ? "blog" : "cv";
+  const isProjects = location.pathname.startsWith("/projetos") || location.pathname.startsWith("/project");
+  const activePage: "cv" | "projetos" | "blog" = isBlog ? "blog" : isProjects ? "projetos" : "cv";
 
   let selectedBlogPostId: string | null = null;
   if (isBlog) {
@@ -194,8 +195,8 @@ export default function App() {
   }
 
   let selectedProjectId: string | null = null;
-  if (!isBlog) {
-    const match = location.pathname.match(/^\/project\/(.+)$/);
+  if (isProjects) {
+    const match = location.pathname.match(/^\/(?:project|projetos)\/(.+)$/);
     if (match && match[1]) {
       selectedProjectId = decodeURIComponent(match[1]);
     }
@@ -213,7 +214,11 @@ export default function App() {
     if (projectId) {
       navigate(`/project/${encodeURIComponent(projectId)}`);
     } else {
-      navigate("/");
+      if (isProjects) {
+        navigate("/projetos");
+      } else {
+        navigate("/");
+      }
     }
   };
 
@@ -451,6 +456,9 @@ export default function App() {
         onLanguageChange={setLanguage}
         darkMode={darkMode}
         onDarkModeToggle={() => setDarkMode(!darkMode)}
+        isAuthenticated={isAuthenticated}
+        onOpenLogin={() => setIsLoginModalOpen(true)}
+        resumeData={resumeData}
         badgeIconUrl={resumeData.profile.badgeIconUrl}
         authorName={resumeData.profile.name || "Pedro Henrique Almeida"}
         authorTitle={(language === "en" ? resumeData.profile.titleEn : resumeData.profile.title) || (language === "en" ? "Engineering Physics" : "Engenharia Física")}
@@ -482,6 +490,8 @@ export default function App() {
               language={language}
               selectedProjectId={selectedProjectId}
               onSelectProject={handleSelectProject}
+              searchQuery={searchQuery}
+              onSearchChange={setSearchQuery}
             />
 
             {/* Dual Timeline (Experiences & Educations) */}
@@ -510,6 +520,23 @@ export default function App() {
               language={language}
             />
           </div>
+        ) : activePage === "projetos" ? (
+          /* Standalone Projects & Innovations Page Section */
+          <ProjectSection
+            projects={resumeData.projects}
+            categories={resumeData.categories}
+            isEditMode={isEditMode}
+            onUpdateProjects={handleUpdateProjects}
+            onUpdateCategories={handleUpdateCategories}
+            posts={resumeData.posts || []}
+            onNavigateToBlogPost={handleNavigateToBlogPost}
+            language={language}
+            selectedProjectId={selectedProjectId}
+            onSelectProject={handleSelectProject}
+            isStandalonePage={true}
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+          />
         ) : (
           /* Blog / Publications Page Section */
           <BlogSection

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate, Link } from "react-router-dom";
 import { Project, ProjectCategory, BlogPost } from "../types";
-import { FolderKanban, Plus, Edit2, Trash2, ExternalLink, Github, Settings, Info, Eye, BookOpen, Image as ImageIcon, Check, RefreshCw } from "lucide-react";
+import { FolderKanban, Plus, Edit2, Trash2, ExternalLink, Github, Settings, Info, Eye, BookOpen, Image as ImageIcon, Check, RefreshCw, Search, ArrowLeft, Sparkles } from "lucide-react";
 import EditModal from "./EditModal";
 import ConfirmModal from "./ConfirmModal";
 import ProjectDetailsModal from "./ProjectDetailsModal";
@@ -21,6 +22,9 @@ interface ProjectSectionProps {
   language?: Language;
   selectedProjectId?: string | null;
   onSelectProject?: (projectId: string | null) => void;
+  isStandalonePage?: boolean;
+  searchQuery?: string;
+  onSearchChange?: (query: string) => void;
 }
 
 export default function ProjectSection({
@@ -34,9 +38,26 @@ export default function ProjectSection({
   language = "pt",
   selectedProjectId,
   onSelectProject,
+  isStandalonePage = false,
+  searchQuery = "",
+  onSearchChange,
 }: ProjectSectionProps) {
+  const navigate = useNavigate();
   const [activeCategory, setActiveCategory] = useState<string>("all");
+  const [localSearch, setLocalSearch] = useState(searchQuery);
   const [localSelectedProject, setLocalSelectedProject] = useState<Project | null>(null);
+
+  useEffect(() => {
+    setLocalSearch(searchQuery);
+  }, [searchQuery]);
+
+  const handleSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setLocalSearch(val);
+    if (onSearchChange) {
+      onSearchChange(val);
+    }
+  };
 
   const selectedProject = selectedProjectId !== undefined 
     ? (projects.find((p) => p.id === selectedProjectId) || null)
@@ -151,10 +172,21 @@ export default function ProjectSection({
     descriptionEn: "",
   });
 
-  // Filters projects based on selected tab/area
-  const filteredProjects = activeCategory === "all"
-    ? projects
-    : projects.filter((p) => p.categoryId === activeCategory);
+  // Filters projects based on selected tab/area and search query
+  const filteredProjects = projects.filter((p) => {
+    if (activeCategory !== "all" && p.categoryId !== activeCategory) {
+      return false;
+    }
+    if (localSearch.trim()) {
+      const q = localSearch.toLowerCase().trim();
+      const titleMatch = (p.title || "").toLowerCase().includes(q) || (p.titleEn || "").toLowerCase().includes(q);
+      const descMatch = (p.description || "").toLowerCase().includes(q) || (p.descriptionEn || "").toLowerCase().includes(q);
+      const tagMatch = (p.tags || []).some((t) => t.toLowerCase().includes(q));
+      const relMatch = (p.scientificRelevance || "").toLowerCase().includes(q);
+      if (!titleMatch && !descMatch && !tagMatch && !relMatch) return false;
+    }
+    return true;
+  });
 
   // --- Project Handlers ---
   const handleOpenProjectAdd = () => {
@@ -321,6 +353,37 @@ export default function ProjectSection({
 
   return (
     <section id="projetos" className="scroll-mt-32 mb-8 rounded-2xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 sm:p-8 md:p-10 shadow-xs print-border print-shadow-none print-m-0 transition-colors duration-300">
+      {/* Standalone Page Top Header */}
+      {isStandalonePage && (
+        <div className="mb-8 border-b border-slate-100 dark:border-slate-800 pb-6 no-print print:hidden">
+          <Link
+            to="/curriculo"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 mb-4 transition-colors"
+          >
+            <ArrowLeft className="h-3.5 w-3.5" />
+            <span>{language === "en" ? "Back to Curriculum" : "Voltar ao Currículo Completo"}</span>
+          </Link>
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <span className="inline-flex items-center gap-1 rounded-full bg-indigo-50 dark:bg-indigo-950/60 px-3 py-1 text-xs font-bold text-indigo-600 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-900/50">
+                  <Sparkles className="h-3.5 w-3.5" />
+                  {language === "en" ? "Engineering Physics Portfolio" : "Portfólio de Engenharia Física"}
+                </span>
+              </div>
+              <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900 dark:text-white font-display">
+                {language === "en" ? "Projects & Innovations" : "Projetos & Inovações Tecnológicas"}
+              </h1>
+              <p className="mt-1 text-sm text-slate-500 dark:text-slate-400 max-w-2xl font-sans">
+                {language === "en"
+                  ? "Computational physics models, simulation tools, web platforms, and scientific research projects."
+                  : "Modelos de física computacional, ferramentas de simulação, plataformas digitais e pesquisas científicas."}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-slate-100 dark:border-slate-800 pb-5 mb-6">
         <div className="flex items-center gap-3">
           <div className="rounded-xl bg-indigo-50 dark:bg-indigo-950/40 p-2.5 text-indigo-600 dark:text-indigo-400 print-border">
@@ -338,27 +401,42 @@ export default function ProjectSection({
           </div>
         </div>
 
-        {/* Admin Tools for Projects and Areas */}
-        {isEditMode && (
-          <div className="flex flex-wrap gap-2 no-print print:hidden">
-            <button
-              onClick={handleOpenCategoryAdd}
-              className="flex items-center gap-1 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 px-3.5 py-2 text-xs font-semibold text-slate-600 dark:text-slate-400 transition-colors hover:bg-slate-100 dark:hover:bg-slate-850 cursor-pointer"
-              id="add-category-btn"
-            >
-              <Settings className="h-3.5 w-3.5 text-slate-500 dark:text-slate-400" />
-              {language === "en" ? "Add Area (Section)" : "Adicionar Área (Seção)"}
-            </button>
-            <button
-              onClick={handleOpenProjectAdd}
-              className="flex items-center gap-1 rounded-lg bg-indigo-600 px-3.5 py-2 text-xs font-semibold text-white shadow-xs transition-colors hover:bg-indigo-700 cursor-pointer"
-              id="add-project-btn"
-            >
-              <Plus className="h-4 w-4" />
-              {language === "en" ? "Add Project" : "Adicionar Projeto"}
-            </button>
+        {/* Search & Admin Controls */}
+        <div className="flex flex-wrap items-center gap-2.5 no-print print:hidden">
+          {/* Quick Search Input */}
+          <div className="relative flex-1 sm:w-64">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+            <input
+              type="text"
+              value={localSearch}
+              onChange={handleSearchInputChange}
+              placeholder={language === "en" ? "Search projects..." : "Buscar projetos..."}
+              className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 pl-9 pr-3 py-1.5 text-xs text-slate-800 dark:text-slate-200 placeholder:text-slate-400 focus:border-indigo-500 focus:outline-hidden focus:ring-1 focus:ring-indigo-500 transition-colors"
+            />
           </div>
-        )}
+
+          {/* Admin Tools for Projects and Areas */}
+          {isEditMode && (
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={handleOpenCategoryAdd}
+                className="flex items-center gap-1 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 px-3.5 py-2 text-xs font-semibold text-slate-600 dark:text-slate-400 transition-colors hover:bg-slate-100 dark:hover:bg-slate-850 cursor-pointer"
+                id="add-category-btn"
+              >
+                <Settings className="h-3.5 w-3.5 text-slate-500 dark:text-slate-400" />
+                {language === "en" ? "Add Area" : "Adicionar Área"}
+              </button>
+              <button
+                onClick={handleOpenProjectAdd}
+                className="flex items-center gap-1 rounded-lg bg-indigo-600 px-3.5 py-2 text-xs font-semibold text-white shadow-xs transition-colors hover:bg-indigo-700 cursor-pointer"
+                id="add-project-btn"
+              >
+                <Plus className="h-4 w-4" />
+                {language === "en" ? "Add Project" : "Adicionar Projeto"}
+              </button>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Tabs / Filter Navigation */}
