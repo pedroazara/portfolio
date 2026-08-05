@@ -6,10 +6,13 @@ import { ResumeData } from "../types";
  * Features vector-drawn headers, standard margins, structured sections, word-wrapping,
  * and robust multi-page overflow page-breaking.
  */
-export function generateResumePDF(data?: ResumeData) {
+/**
+ * Creates and returns the jsPDF document instance for the CV.
+ */
+export function createResumePDFDoc(data?: ResumeData): jsPDF | null {
   if (!data || !data.profile) {
     console.error("Dados de currículo não encontrados para geração de PDF.");
-    return;
+    return null;
   }
   const doc = new jsPDF({
     orientation: "portrait",
@@ -411,7 +414,25 @@ export function generateResumePDF(data?: ResumeData) {
     });
   }
 
-  // Save the PDF
-  const userNameClean = profile.name.toLowerCase().replace(/\s+/g, "_") || "curriculo";
+  return doc;
+}
+
+/**
+ * Downloads the resume PDF directly.
+ */
+export function generateResumePDF(data?: ResumeData) {
+  const doc = createResumePDFDoc(data);
+  if (!doc) return;
+  const userNameClean = data?.profile?.name ? data.profile.name.toLowerCase().replace(/\s+/g, "_") : "curriculo";
   doc.save(`curriculo_vitae_${userNameClean}.pdf`);
+}
+
+/**
+ * Returns a Blob URL for previewing the generated PDF.
+ */
+export function getResumePDFBlobUrl(data?: ResumeData): string | null {
+  const doc = createResumePDFDoc(data);
+  if (!doc) return null;
+  const blob = doc.output("blob");
+  return URL.createObjectURL(blob);
 }

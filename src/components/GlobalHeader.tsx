@@ -14,6 +14,7 @@ interface GlobalHeaderProps {
   onSetLanguage?: (lang: "pt" | "en") => void;
   isAuthenticated?: boolean;
   onOpenLogin?: () => void;
+  onOpenPdfPreview?: () => void;
   resumeData?: ResumeData;
   badgeIconUrl?: string;
   authorName?: string;
@@ -30,6 +31,7 @@ export default function GlobalHeader({
   onSetLanguage,
   isAuthenticated = false,
   onOpenLogin,
+  onOpenPdfPreview,
   resumeData,
   badgeIconUrl,
   authorName = "Pedro Henrique Almeida",
@@ -78,7 +80,11 @@ export default function GlobalHeader({
   };
 
   const handleDownloadCV = () => {
-    generateResumePDF(resumeData);
+    if (onOpenPdfPreview) {
+      onOpenPdfPreview();
+    } else {
+      generateResumePDF(resumeData);
+    }
   };
 
   const topOffset = isAuthenticated ? "top-[40px]" : "top-0";
@@ -203,16 +209,18 @@ export default function GlobalHeader({
                 <span>{isAuthenticated ? (language === "en" ? "Admin Mode" : "Modo Admin") : "Admin"}</span>
               </button>
 
-              {/* Primary CTA: Baixar CV (Solid Button) */}
-              <button
-                type="button"
-                onClick={handleDownloadCV}
-                className="flex items-center gap-1.5 rounded-lg bg-[var(--accent)] hover:opacity-90 px-3.5 py-2 text-[13px] font-bold text-white shadow-xs transition-all active:scale-95 cursor-pointer"
-                id="global-download-cv-cta"
-              >
-                <Download className="h-4 w-4 shrink-0" />
-                <span>{language === "en" ? "Download CV" : "Baixar CV"}</span>
-              </button>
+              {/* Primary CTA: Baixar CV (Solid Button) - ONLY when logged in */}
+              {isAuthenticated && (
+                <button
+                  type="button"
+                  onClick={handleDownloadCV}
+                  className="flex items-center gap-1.5 rounded-lg bg-[var(--accent)] hover:opacity-90 px-3.5 py-2 text-[13px] font-bold text-white shadow-xs transition-all active:scale-95 cursor-pointer"
+                  id="global-download-cv-cta"
+                >
+                  <Download className="h-4 w-4 shrink-0" />
+                  <span>{language === "en" ? "Download CV" : "Baixar CV"}</span>
+                </button>
+              )}
 
               {/* Mobile Drawer Trigger (< 860px) */}
               <button
@@ -334,17 +342,19 @@ export default function GlobalHeader({
                 </button>
               </div>
 
-              <button
-                type="button"
-                onClick={() => {
-                  setIsMobileMenuOpen(false);
-                  handleDownloadCV();
-                }}
-                className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-[var(--accent)] py-3 text-sm font-bold text-white shadow-md active:scale-95 transition-transform"
-              >
-                <Download className="h-4 w-4" />
-                <span>{language === "en" ? "Download Curriculum PDF" : "Baixar Currículo em PDF"}</span>
-              </button>
+              {isAuthenticated && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsMobileMenuOpen(false);
+                    handleDownloadCV();
+                  }}
+                  className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-[var(--accent)] py-3 text-sm font-bold text-white shadow-md active:scale-95 transition-transform"
+                >
+                  <Download className="h-4 w-4" />
+                  <span>{language === "en" ? "Download Curriculum PDF" : "Baixar Currículo em PDF"}</span>
+                </button>
+              )}
             </div>
           </div>
         </div>

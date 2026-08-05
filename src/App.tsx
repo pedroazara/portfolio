@@ -14,6 +14,7 @@ import BlogSection from "./components/BlogSection";
 import LoginModal from "./components/LoginModal";
 import ImageBankModal from "./components/ImageBankModal";
 import ChangePasswordModal from "./components/ChangePasswordModal";
+import PdfPreviewModal from "./components/PdfPreviewModal";
 import LocalImage from "./components/LocalImage";
 import { Orbita } from "./components/WaveIcon";
 import { Sparkles, CheckCircle2, Lock, Atom, FileText, BookOpen, Cloud, Sun, Moon } from "lucide-react";
@@ -146,6 +147,7 @@ export default function App() {
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isImageBankOpen, setIsImageBankOpen] = useState(false);
   const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
+  const [isPdfPreviewOpen, setIsPdfPreviewOpen] = useState(false);
   const [showAutoSaveBanner, setShowAutoSaveBanner] = useState(false);
   const [isGlobalCollapsed, setIsGlobalCollapsed] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -446,6 +448,7 @@ export default function App() {
           onLogout={handleLogout}
           onOpenImageBank={() => setIsImageBankOpen(true)}
           onOpenChangePassword={() => setIsChangePasswordOpen(true)}
+          onOpenPdfPreview={() => setIsPdfPreviewOpen(true)}
         />
       )}
 
@@ -458,6 +461,7 @@ export default function App() {
         onDarkModeToggle={() => setDarkMode(!darkMode)}
         isAuthenticated={isAuthenticated}
         onOpenLogin={() => setIsLoginModalOpen(true)}
+        onOpenPdfPreview={() => setIsPdfPreviewOpen(true)}
         resumeData={resumeData}
         badgeIconUrl={resumeData.profile.badgeIconUrl}
         authorName={resumeData.profile.name || "Pedro Henrique Almeida"}
@@ -589,6 +593,14 @@ export default function App() {
       <ChangePasswordModal
         isOpen={isChangePasswordOpen}
         onClose={() => setIsChangePasswordOpen(false)}
+      />
+
+      {/* PDF Preview Modal */}
+      <PdfPreviewModal
+        isOpen={isPdfPreviewOpen}
+        onClose={() => setIsPdfPreviewOpen(false)}
+        resumeData={resumeData}
+        language={language}
       />
     </div>
   );

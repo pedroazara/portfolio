@@ -16,6 +16,7 @@ interface AdminStripProps {
   onLogout: () => void;
   onResetToTemplate?: () => void;
   onClearAll?: () => void;
+  onOpenPdfPreview?: () => void;
   language?: "pt" | "en";
 }
 
@@ -30,6 +31,7 @@ export default function AdminStrip({
   onOpenImageBank,
   onOpenChangePassword,
   onLogout,
+  onOpenPdfPreview,
   language = "pt",
 }: AdminStripProps) {
   const isSavedVisible = showSavedStatus || showAutoSaveBanner;
@@ -126,8 +128,12 @@ export default function AdminStrip({
   };
 
   const handleDownloadPDF = () => {
-    generateResumePDF(resumeData);
     setIsMenuOpen(false);
+    if (onOpenPdfPreview) {
+      onOpenPdfPreview();
+    } else {
+      generateResumePDF(resumeData);
+    }
   };
 
   const saveStatusText = isSaving
