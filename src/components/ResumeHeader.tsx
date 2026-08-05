@@ -50,7 +50,7 @@ export default function ResumeHeader({ profile, isEditMode, onUpdateProfile, lan
   };
 
   return (
-    <header className="relative mb-8 rounded-2xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 sm:p-8 md:p-10 shadow-xs print-border print-shadow-none print-m-0 transition-colors duration-300">
+    <section id="perfil" className="scroll-mt-32 relative mb-8 rounded-2xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 sm:p-8 md:p-10 shadow-xs print-border print-shadow-none print-m-0 transition-colors duration-300">
       {/* Edit Trigger (Only visible in edit mode, hidden in prints) */}
       {isEditMode && (
         <button
@@ -422,6 +422,6 @@ export default function ResumeHeader({ profile, isEditMode, onUpdateProfile, lan
           </div>
         </form>
       </EditModal>
-    </header>
+    </section>
   );
 }

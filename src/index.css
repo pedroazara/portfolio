@@ -10,6 +10,47 @@
   --animate-spin-slow: spin 12s linear infinite;
 }
 
+:root {
+  --surface: #ffffff;
+  --surface-raised: #f8fafc;
+  --border: #e2e8f0;
+  --border-strong: #cbd5e1;
+  --text: #0f172a;
+  --text-muted: #64748b;
+  --accent: #4f46e5;
+  --accent-soft: #eef2ff;
+}
+
+.dark {
+  --surface: #0f172a;
+  --surface-raised: #1e293b;
+  --border: #334155;
+  --border-strong: #475569;
+  --text: #f8fafc;
+  --text-muted: #94a3b8;
+  --accent: #6366f1;
+  --accent-soft: #1e1b4b;
+}
+
+/* Skip link for keyboard accessibility */
+.skip-link {
+  position: absolute;
+  top: -100px;
+  left: 16px;
+  background: var(--accent);
+  color: #ffffff;
+  padding: 8px 16px;
+  border-radius: 6px;
+  z-index: 100;
+  font-weight: 600;
+  font-size: 14px;
+  transition: top 0.2s ease;
+}
+
+.skip-link:focus {
+  top: 12px;
+}
+
 /* Custom transitions and scrollbar */
 html {
   scroll-behavior: smooth;

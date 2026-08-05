@@ -7,7 +7,9 @@ import ProjectSection from "./components/ProjectSection";
 import ExperienceEducationSection from "./components/ExperienceEducationSection";
 import CoursesSection from "./components/CoursesSection";
 import SkillsSection from "./components/SkillsSection";
-import PortfolioControls from "./components/PortfolioControls";
+import AdminStrip from "./components/AdminStrip";
+import GlobalHeader from "./components/GlobalHeader";
+import SectionHeader from "./components/SectionHeader";
 import BlogSection from "./components/BlogSection";
 import LoginModal from "./components/LoginModal";
 import ImageBankModal from "./components/ImageBankModal";
@@ -145,10 +147,40 @@ export default function App() {
   const [isImageBankOpen, setIsImageBankOpen] = useState(false);
   const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
   const [showAutoSaveBanner, setShowAutoSaveBanner] = useState(false);
+  const [isGlobalCollapsed, setIsGlobalCollapsed] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   // Router hooks for URL deep linking and SPA routes
   const location = useLocation();
   const navigate = useNavigate();
+
+  // Scroll direction detection for global bar collapse (> 120px)
+  useEffect(() => {
+    let lastY = window.scrollY;
+    const handleScroll = () => {
+      const currentY = window.scrollY;
+      const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      if (prefersReducedMotion) {
+        setIsGlobalCollapsed(false);
+        return;
+      }
+      if (currentY > 120 && currentY > lastY + 6) {
+        setIsGlobalCollapsed(true);
+      } else if (currentY < lastY - 6 || currentY <= 120) {
+        setIsGlobalCollapsed(false);
+      }
+      lastY = currentY;
+    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  // Open login modal when visiting /admin if not authenticated
+  useEffect(() => {
+    if (location.pathname === "/admin" && !isAuthenticated) {
+      setIsLoginModalOpen(true);
+    }
+  }, [location.pathname, isAuthenticated]);
 
   const isBlog = location.pathname.startsWith("/blog");
   const activePage: "cv" | "blog" = isBlog ? "blog" : "cv";
@@ -189,6 +221,20 @@ export default function App() {
     navigate(`/blog/${encodeURIComponent(postId)}`);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
+
+  // Route scroll sync
+  useEffect(() => {
+    if (location.pathname === "/projetos") {
+      const projElem = document.getElementById("projetos");
+      if (projElem) {
+        projElem.scrollIntoView({ behavior: "smooth" });
+      }
+    } else if (location.pathname === "/curriculo" || location.pathname === "/") {
+      if (!location.hash) {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+    }
+  }, [location.pathname]);
 
   // Dynamic client-side document title, canonical link, and meta description synchronization
   useEffect(() => {
@@ -369,169 +415,49 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-slate-50/50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 antialiased selection:bg-indigo-500 selection:text-white print:bg-white print:p-0 transition-colors duration-300">
-      {/* Top Decoration Bar */}
+      {/* Skip Link for Accessibility */}
+      <a
+        href="#conteudo-principal"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-50 focus:rounded-xl focus:bg-indigo-600 focus:px-4 focus:py-2 focus:text-sm focus:font-bold focus:text-white focus:shadow-xl focus:outline-hidden"
+      >
+        {language === "en" ? "Skip to main content" : "Ir para o conteúdo principal"}
+      </a>
+
+      {/* Top Decoration Line */}
       <div className="h-1 w-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 no-print print:hidden" />
 
-      {/* Main Container */}
-      <main className="mx-auto max-w-[1600px] px-4 py-8 sm:px-8 lg:px-12 print:p-0 print:max-w-none">
-        
-        {/* Personal Navigation Header */}
-        <header className="no-print print:hidden mb-8 border-b border-slate-200/60 dark:border-slate-800/80 pb-6">
-          {/* Row 1: Profile & Auto-Save Banner */}
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-5">
-            <div className="flex items-center gap-3">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-indigo-600 text-white overflow-hidden p-0.5">
-                {resumeData.profile.badgeIconUrl ? (
-                  <LocalImage
-                    src={resumeData.profile.badgeIconUrl}
-                    alt="Badge Icon"
-                    className="h-full w-full object-contain"
-                  />
-                ) : (
-                  <Orbita size={44} color="#ffffff" />
-                )}
-              </div>
-              <div className="min-w-0">
-                <h1 className="text-xl md:text-2xl font-black tracking-tight text-slate-900 dark:text-white font-display truncate">
-                  {resumeData.profile.name || "Pedro Henrique Almeida"}
-                </h1>
-                <p className="text-xs font-semibold text-slate-400 dark:text-slate-500 font-mono tracking-wider uppercase leading-relaxed mt-0.5">
-                  {(language === "en" ? resumeData.profile.titleEn : resumeData.profile.title) || (language === "en" ? "Engineering Physics" : "Engenharia Física")}
-                </p>
-              </div>
-            </div>
+      {/* Admin Strip (Visible ONLY when authenticated) */}
+      {isAuthenticated && (
+        <AdminStrip
+          isEditMode={isEditMode}
+          onToggleEditMode={() => setIsEditMode(!isEditMode)}
+          isSaving={isSaving}
+          showAutoSaveBanner={showAutoSaveBanner}
+          language={language}
+          resumeData={resumeData}
+          onResetToTemplate={handleResetToTemplate}
+          onClearAll={handleClearAll}
+          onImportJSON={handleImportJSON}
+          onLogout={handleLogout}
+          onOpenImageBank={() => setIsImageBankOpen(true)}
+          onOpenChangePassword={() => setIsChangePasswordOpen(true)}
+        />
+      )}
 
-            {/* Auto-Save & Cloud Sync indicator on the right side of profile row */}
-            <div className="flex items-center md:justify-end gap-1.5 self-start md:self-auto h-7">
-              <AnimatePresence>
-                {isSaving && (
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.9 }}
-                    className="flex items-center gap-1 rounded-full bg-indigo-50 dark:bg-indigo-950/40 px-3 py-1 text-[11px] font-semibold text-indigo-700 dark:text-indigo-300 border border-indigo-100 dark:border-indigo-900/50"
-                  >
-                    <Cloud className="h-3 w-3 text-indigo-600 dark:text-indigo-400 animate-pulse" />
-                    <span>{language === "en" ? "Syncing..." : "Salvando..."}</span>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+      {/* Global Navigation Header (64px, scroll-hiding) */}
+      <GlobalHeader
+        isCollapsed={isGlobalCollapsed}
+        language={language}
+        onLanguageChange={setLanguage}
+        darkMode={darkMode}
+        onDarkModeToggle={() => setDarkMode(!darkMode)}
+        badgeIconUrl={resumeData.profile.badgeIconUrl}
+        authorName={resumeData.profile.name || "Pedro Henrique Almeida"}
+        authorTitle={(language === "en" ? resumeData.profile.titleEn : resumeData.profile.title) || (language === "en" ? "Engineering Physics" : "Engenharia Física")}
+      />
 
-              <AnimatePresence>
-                {showAutoSaveBanner && !isSaving && (
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.9 }}
-                    className="flex items-center gap-1.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 px-3 py-1 text-[11px] font-semibold text-emerald-700 dark:text-emerald-300 border border-emerald-100 dark:border-emerald-900/50"
-                  >
-                    <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
-                    <span>{translations[language].saved}</span>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-          </div>
-
-          {/* Row 2: Unified Navigation (left) & Settings / Panel trigger (right) */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pt-1">
-            {/* Primary Page Navigation Tabs */}
-            <nav className="flex rounded-2xl bg-slate-100 dark:bg-slate-900 p-1.5 gap-1 shadow-xs border border-slate-200/50 dark:border-slate-800 self-start">
-              <button
-                onClick={() => navigate("/")}
-                className={`flex items-center gap-2 rounded-xl px-5 py-2.5 text-xs font-bold transition-all cursor-pointer ${
-                  activePage === "cv" && !selectedBlogPostId
-                    ? "bg-white dark:bg-slate-850 text-indigo-600 dark:text-indigo-400 shadow-sm"
-                    : "text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50 hover:text-slate-950 dark:hover:text-slate-100"
-                }`}
-              >
-                <FileText className="h-4 w-4" />
-                <span>{translations[language].cv}</span>
-              </button>
-              <button
-                onClick={() => navigate("/blog")}
-                className={`flex items-center gap-2 rounded-xl px-5 py-2.5 text-xs font-bold transition-all cursor-pointer ${
-                  activePage === "blog"
-                    ? "bg-white dark:bg-slate-850 text-indigo-600 dark:text-indigo-400 shadow-sm"
-                    : "text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50 hover:text-slate-950 dark:hover:text-slate-100"
-                }`}
-              >
-                <BookOpen className="h-4 w-4" />
-                <span>{translations[language].blog}</span>
-              </button>
-            </nav>
-
-            {/* Preferences (Language, Dark Mode, Admin Trigger) */}
-            <div className="flex flex-wrap items-center gap-2.5 self-start sm:self-auto">
-              {/* Language Switcher */}
-              <div className="flex rounded-2xl bg-slate-100 dark:bg-slate-900 p-1 shadow-xs border border-slate-200/50 dark:border-slate-800">
-                <button
-                  onClick={() => setLanguage("pt")}
-                  className={`rounded-xl px-2.5 py-1.5 text-xs font-bold transition-all cursor-pointer ${
-                    language === "pt"
-                      ? "bg-white dark:bg-slate-850 text-indigo-600 dark:text-indigo-400 shadow-sm"
-                      : "text-slate-500 dark:text-slate-400 hover:text-slate-950 dark:hover:text-slate-100"
-                  }`}
-                  title={translations[language].portuguese}
-                >
-                  PT
-                </button>
-                <button
-                  onClick={() => setLanguage("en")}
-                  className={`rounded-xl px-2.5 py-1.5 text-xs font-bold transition-all cursor-pointer ${
-                    language === "en"
-                      ? "bg-white dark:bg-slate-850 text-indigo-600 dark:text-indigo-400 shadow-sm"
-                      : "text-slate-500 dark:text-slate-400 hover:text-slate-950 dark:hover:text-slate-100"
-                  }`}
-                  title={translations[language].english}
-                >
-                  EN
-                </button>
-              </div>
-
-              {/* Dark Mode Toggle */}
-              <button
-                onClick={() => setDarkMode(!darkMode)}
-                className="flex h-9 w-9 items-center justify-center rounded-2xl border border-slate-200/80 bg-white/95 hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900/95 text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-100 shadow-xs dark:hover:bg-slate-800 transition-all cursor-pointer"
-                title={translations[language].darkModeToggle}
-                aria-label={translations[language].darkModeToggle}
-              >
-                {darkMode ? <Sun className="h-4 w-4 text-amber-500" /> : <Moon className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />}
-              </button>
-
-              {/* Discrete Admin/Panel trigger in top navigation when not logged in */}
-              {!isAuthenticated && (
-                <button
-                  onClick={() => setIsLoginModalOpen(true)}
-                  className="flex items-center gap-1.5 rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white/85 dark:bg-slate-900/85 hover:bg-slate-50 dark:hover:bg-slate-800 px-3.5 py-2 text-xs font-semibold text-slate-500 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors shadow-xs cursor-pointer"
-                  title={translations[language].restrictedAccess}
-                  id="discrete-panel-login-btn"
-                >
-                  <Lock className="h-3.5 w-3.5" />
-                  <span>{translations[language].panel}</span>
-                </button>
-              )}
-            </div>
-          </div>
-        </header>
-
-        {/* Floating/Sticky Navigation Control Panel - Only visible for authenticated users */}
-        {isAuthenticated && (
-          <PortfolioControls
-            isEditMode={isEditMode}
-            onToggleEditMode={() => setIsEditMode(!isEditMode)}
-            onResetToTemplate={handleResetToTemplate}
-            onClearAll={handleClearAll}
-            onImportJSON={handleImportJSON}
-            resumeData={resumeData}
-            isAuthenticated={isAuthenticated}
-            onLoginClick={() => setIsLoginModalOpen(true)}
-            onLogout={handleLogout}
-            onOpenImageBank={() => setIsImageBankOpen(true)}
-            onOpenChangePassword={() => setIsChangePasswordOpen(true)}
-          />
-        )}
-
+      {/* Main Content Area */}
+      <main id="conteudo-principal" className="mx-auto max-w-[1600px] px-4 py-8 sm:px-8 lg:px-12 print:p-0 print:max-w-none focus:outline-hidden">
         {activePage === "cv" ? (
           /* High-Fidelity Active Resume / Portfolio View */
           <div className="space-y-8 print:space-y-6">
@@ -594,6 +520,7 @@ export default function App() {
             selectedPostId={selectedBlogPostId}
             onSelectPost={handleSelectBlogPost}
             language={language}
+            searchQuery={searchQuery}
           />
         )}
       </main>

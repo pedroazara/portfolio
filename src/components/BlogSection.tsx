@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { BlogPost } from "../types";
 import { 
   BookOpen, Calendar, Clock, Plus, Edit2, Trash2, X, FileText, 
@@ -20,6 +21,7 @@ interface BlogSectionProps {
   selectedPostId?: string | null;
   onSelectPost?: (postId: string | null) => void;
   language?: Language;
+  searchQuery?: string;
 }
 
 const CATEGORIES = [
@@ -38,7 +40,10 @@ export default function BlogSection({
   selectedPostId,
   onSelectPost,
   language = "pt",
+  searchQuery = "",
 }: BlogSectionProps) {
+  const [searchParams] = useSearchParams();
+  const urlCategory = searchParams.get("categoria") || "Todos";
   const [localSelectedPost, setLocalSelectedPost] = useState<BlogPost | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string>("Todos");
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -214,10 +219,23 @@ export default function BlogSection({
   const availableCategories = ["Todos", ...Array.from(new Set([...defaultCats, ...postsCategories]))];
 
   // Filter posts
+  const activeCategoryFilter = urlCategory !== "Todos" ? urlCategory : selectedCategory;
   const filteredPosts = posts.filter((post) => {
-    if (selectedCategory === "Todos" || selectedCategory === "All") return true;
+    // Hide drafts for public users if not in edit mode
+    if (!isEditMode && (post as any).draft) return false;
+
+    // Search query matching
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase().trim();
+      const titleMatch = (post.title || "").toLowerCase().includes(q) || (post.titleEn || "").toLowerCase().includes(q);
+      const summaryMatch = (post.summary || "").toLowerCase().includes(q) || (post.summaryEn || "").toLowerCase().includes(q);
+      const tagMatch = (post.tags || []).some((t) => t.toLowerCase().includes(q));
+      if (!titleMatch && !summaryMatch && !tagMatch) return false;
+    }
+
+    if (activeCategoryFilter === "Todos" || activeCategoryFilter === "All") return true;
     const postCat = getPostCategoryDisplay(post);
-    return postCat.toLowerCase().trim() === selectedCategory.toLowerCase().trim();
+    return postCat.toLowerCase().trim() === activeCategoryFilter.toLowerCase().trim();
   });
 
   return (
