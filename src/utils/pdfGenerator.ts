@@ -291,19 +291,10 @@ export function createResumePDFDoc(data?: ResumeData): jsPDF | null {
       projectsToRender.forEach((proj, idx) => {
         ensureSpace(18);
 
-        // Determine Blog Post URL (link strictly to the blog post, NOT project/site URL)
-        let blogPostUrl: string | undefined = undefined;
-        if (proj.blogPostId) {
-          blogPostUrl = `${origin}/blog/${proj.blogPostId}`;
-        } else if (data.posts && data.posts.length > 0) {
-          const matchedPost = data.posts.find(p => p.id === proj.id || p.id === proj.blogPostId);
-          if (matchedPost) {
-            blogPostUrl = `${origin}/blog/${matchedPost.id}`;
-          }
-        }
-
+        // Determine Project Link URL (prioritize projectUrl / githubUrl, then blog post as fallback)
+        const projectLinkUrl = proj.projectUrl || proj.githubUrl || (proj.blogPostId ? `${origin}/blog/${proj.blogPostId}` : undefined);
+        const rightLabel = projectLinkUrl ? (proj.projectUrl ? "Ver Projeto" : proj.githubUrl ? "Ver GitHub" : "Ver Post") : "";
         const projectTitle = `${proj.title}${proj.featured ? " [Destaque]" : ""}`;
-        const rightLabel = blogPostUrl ? "Ver Post no Blog" : "";
 
         doc.setFont("helvetica", "normal");
         doc.setFontSize(8);
@@ -318,18 +309,18 @@ export function createResumePDFDoc(data?: ResumeData): jsPDF | null {
         const titleLines = doc.splitTextToSize(projectTitle, maxTitleWidthLine1);
 
         // Draw line 1 of title
-        if (blogPostUrl) {
-          doc.textWithLink(titleLines[0], MARGIN_LEFT, y, { url: blogPostUrl });
+        if (projectLinkUrl) {
+          doc.textWithLink(titleLines[0], MARGIN_LEFT, y, { url: projectLinkUrl });
         } else {
           doc.text(titleLines[0], MARGIN_LEFT, y);
         }
 
-        // Display "Ver Post no Blog" on the right if blog post link exists
-        if (blogPostUrl && rightLabel) {
+        // Display "Ver Projeto" on the right if link exists
+        if (projectLinkUrl && rightLabel) {
           doc.setFont("helvetica", "normal");
           doc.setFontSize(8);
           doc.setTextColor(79, 70, 229);
-          doc.textWithLink(rightLabel, PAGE_WIDTH - MARGIN_RIGHT - metaWidth, y, { url: blogPostUrl });
+          doc.textWithLink(rightLabel, PAGE_WIDTH - MARGIN_RIGHT - metaWidth, y, { url: projectLinkUrl });
         }
 
         // Draw subsequent lines of title if wrapped
@@ -340,8 +331,8 @@ export function createResumePDFDoc(data?: ResumeData): jsPDF | null {
           for (let i = 1; i < titleLines.length; i++) {
             y += 4.5;
             ensureSpace(4.5);
-            if (blogPostUrl) {
-              doc.textWithLink(titleLines[i], MARGIN_LEFT, y, { url: blogPostUrl });
+            if (projectLinkUrl) {
+              doc.textWithLink(titleLines[i], MARGIN_LEFT, y, { url: projectLinkUrl });
             } else {
               doc.text(titleLines[i], MARGIN_LEFT, y);
             }

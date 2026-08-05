@@ -1,25 +1,39 @@
 import React, { useState } from "react";
-import { Experience, Education } from "../types";
-import { Briefcase, GraduationCap, Plus, Edit2, Trash2, Calendar, MapPin } from "lucide-react";
+import { Experience, AcademicActivity, Education, Subperiod } from "../types";
+import {
+  FlaskConical,
+  Users,
+  GraduationCap,
+  Plus,
+  Edit2,
+  Trash2,
+  ChevronDown,
+  ExternalLink,
+  AlertCircle
+} from "lucide-react";
 import EditModal from "./EditModal";
 import ConfirmModal from "./ConfirmModal";
 import MarkdownRenderer from "./MarkdownRenderer";
-import { Language, translations } from "../lib/translations";
+import { Language } from "../lib/translations";
 
 interface ExperienceEducationSectionProps {
   experiences: Experience[];
+  academicActivities?: AcademicActivity[];
   educations: Education[];
   isEditMode: boolean;
   onUpdateExperiences: (updated: Experience[]) => void;
+  onUpdateAcademicActivities?: (updated: AcademicActivity[]) => void;
   onUpdateEducations: (updated: Education[]) => void;
   language?: Language;
 }
 
 export default function ExperienceEducationSection({
   experiences,
+  academicActivities = [],
   educations,
   isEditMode,
   onUpdateExperiences,
+  onUpdateAcademicActivities,
   onUpdateEducations,
   language = "pt",
 }: ExperienceEducationSectionProps) {
@@ -38,9 +52,17 @@ export default function ExperienceEducationSection({
     setConfirmOpen(true);
   };
 
-  // Experience Modal States
+  // Disclosure states for Academic Activities with extra content
+  const [expandedActivities, setExpandedActivities] = useState<Record<string, boolean>>({});
+
+  const toggleActivityExpand = (id: string) => {
+    setExpandedActivities((prev) => ({ ...prev, [id]: !prev[id] }));
+  };
+
+  // --- Research Experience Modal States ---
   const [isExpModalOpen, setIsExpModalOpen] = useState(false);
   const [editingExp, setEditingExp] = useState<Experience | null>(null);
+  const [expError, setExpError] = useState<string | null>(null);
   const [expForm, setExpForm] = useState<Partial<Experience>>({
     company: "",
     role: "",
@@ -52,9 +74,34 @@ export default function ExperienceEducationSection({
     current: false,
     description: "",
     descriptionEn: "",
+    skills: [],
+    subperiods: [],
+  });
+  const [skillInput, setSkillInput] = useState("");
+
+  // Subperiod input in modal
+  const [newSubTitle, setNewSubTitle] = useState("");
+  const [newSubStart, setNewSubStart] = useState("");
+  const [newSubEnd, setNewSubEnd] = useState("");
+  const [newSubCurrent, setNewSubCurrent] = useState(false);
+  const [newSubDesc, setNewSubDesc] = useState("");
+
+  // --- Academic Activity Modal States ---
+  const [isActModalOpen, setIsActModalOpen] = useState(false);
+  const [editingAct, setEditingAct] = useState<AcademicActivity | null>(null);
+  const [actForm, setActForm] = useState<Partial<AcademicActivity>>({
+    name: "",
+    nameEn: "",
+    startDate: "",
+    endDate: "",
+    current: false,
+    description: "",
+    descriptionEn: "",
+    extraContent: "",
+    extraContentEn: "",
   });
 
-  // Education Modal States
+  // --- Education Modal States ---
   const [isEduModalOpen, setIsEduModalOpen] = useState(false);
   const [editingEdu, setEditingEdu] = useState<Education | null>(null);
   const [eduForm, setEduForm] = useState<Partial<Education>>({
@@ -70,9 +117,10 @@ export default function ExperienceEducationSection({
     descriptionEn: "",
   });
 
-  // --- Experience Handlers ---
+  // --- Research Experience Handlers ---
   const handleOpenExpAdd = () => {
     setEditingExp(null);
+    setExpError(null);
     setExpForm({
       company: "",
       role: "",
@@ -84,14 +132,19 @@ export default function ExperienceEducationSection({
       current: false,
       description: "",
       descriptionEn: "",
+      skills: [],
+      subperiods: [],
     });
+    setSkillInput("");
     setEditingLanguage(language);
     setIsExpModalOpen(true);
   };
 
   const handleOpenExpEdit = (exp: Experience) => {
     setEditingExp(exp);
-    setExpForm({ ...exp });
+    setExpError(null);
+    setExpForm({ ...exp, subperiods: exp.subperiods ? [...exp.subperiods] : [] });
+    setSkillInput(exp.skills ? exp.skills.join(", ") : "");
     setEditingLanguage(language);
     setIsExpModalOpen(true);
   };
@@ -99,29 +152,79 @@ export default function ExperienceEducationSection({
   const handleDeleteExp = (id: string) => {
     triggerConfirm(
       language === "en" ? "Delete Experience" : "Excluir Experiência",
-      language === "en" 
-        ? "Are you sure you want to delete this professional experience?" 
-        : "Deseja realmente excluir esta experiência profissional?",
+      language === "en"
+        ? "Are you sure you want to delete this research experience?"
+        : "Deseja realmente excluir esta experiência em pesquisa?",
       () => {
         onUpdateExperiences(experiences.filter((e) => e.id !== id));
       }
     );
   };
 
+  const handleAddSubperiod = () => {
+    if (!newSubStart && !newSubTitle) return;
+    const newSub: Subperiod = {
+      id: `sub-${Date.now()}`,
+      startDate: newSubStart,
+      endDate: newSubCurrent ? "" : newSubEnd,
+      current: newSubCurrent,
+      title: newSubTitle,
+      description: newSubDesc,
+    };
+    setExpForm((prev) => ({
+      ...prev,
+      subperiods: [...(prev.subperiods || []), newSub],
+    }));
+    setNewSubTitle("");
+    setNewSubStart("");
+    setNewSubEnd("");
+    setNewSubCurrent(false);
+    setNewSubDesc("");
+  };
+
+  const handleRemoveSubperiod = (subId: string) => {
+    setExpForm((prev) => ({
+      ...prev,
+      subperiods: (prev.subperiods || []).filter((s) => s.id !== subId),
+    }));
+  };
+
   const handleExpSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    const desc = expForm.description || "";
+
+    // Constraint: Block save if description < 40 characters
+    if (desc.trim().length < 40) {
+      setExpError(
+        language === "en"
+          ? "The description must be at least 40 characters long."
+          : "A descrição deve ter no mínimo 40 caracteres."
+      );
+      return;
+    }
+
+    setExpError(null);
+
+    const parsedSkills = skillInput
+      ? skillInput.split(",").map((s) => s.trim()).filter(Boolean)
+      : expForm.skills || [];
+
     const complete: Experience = {
       id: editingExp?.id || `exp-${Date.now()}`,
-      company: expForm.company || "Empresa",
-      role: expForm.role || "Cargo",
+      company: expForm.company || "CNPq · Instituição",
+      role: expForm.role || "Iniciação Científica",
       roleEn: expForm.roleEn || "",
       location: expForm.location || undefined,
       locationEn: expForm.locationEn || undefined,
       startDate: expForm.startDate || "",
       endDate: expForm.current ? "" : expForm.endDate || "",
       current: expForm.current || false,
-      description: expForm.description || "",
+      description: desc,
       descriptionEn: expForm.descriptionEn || "",
+      type: "research",
+      skills: parsedSkills,
+      subperiods: expForm.subperiods || [],
+      links: expForm.links || [],
     };
 
     if (editingExp) {
@@ -130,6 +233,72 @@ export default function ExperienceEducationSection({
       onUpdateExperiences([...experiences, complete]);
     }
     setIsExpModalOpen(false);
+  };
+
+  // --- Academic Activity Handlers ---
+  const handleOpenActAdd = () => {
+    setEditingAct(null);
+    setActForm({
+      name: "",
+      nameEn: "",
+      startDate: "",
+      endDate: "",
+      current: false,
+      description: "",
+      descriptionEn: "",
+      extraContent: "",
+      extraContentEn: "",
+    });
+    setEditingLanguage(language);
+    setIsActModalOpen(true);
+  };
+
+  const handleOpenActEdit = (act: AcademicActivity) => {
+    setEditingAct(act);
+    setActForm({ ...act });
+    setEditingLanguage(language);
+    setIsActModalOpen(true);
+  };
+
+  const handleDeleteAct = (id: string) => {
+    triggerConfirm(
+      language === "en" ? "Delete Academic Activity" : "Excluir Atividade Acadêmica",
+      language === "en"
+        ? "Are you sure you want to delete this activity?"
+        : "Deseja realmente excluir esta atividade acadêmica?",
+      () => {
+        if (onUpdateAcademicActivities) {
+          onUpdateAcademicActivities(academicActivities.filter((a) => a.id !== id));
+        }
+      }
+    );
+  };
+
+  const handleActSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const complete: AcademicActivity = {
+      id: editingAct?.id || `act-${Date.now()}`,
+      name: actForm.name || "Atividade",
+      nameEn: actForm.nameEn || "",
+      startDate: actForm.startDate || "",
+      endDate: actForm.current ? "" : actForm.endDate || "",
+      current: actForm.current || false,
+      description: actForm.description || "",
+      descriptionEn: actForm.descriptionEn || "",
+      extraContent: actForm.extraContent || "",
+      extraContentEn: actForm.extraContentEn || "",
+    };
+
+    if (onUpdateAcademicActivities) {
+      if (editingAct) {
+        onUpdateAcademicActivities(
+          academicActivities.map((item) => (item.id === editingAct.id ? complete : item))
+        );
+      } else {
+        onUpdateAcademicActivities([...academicActivities, complete]);
+      }
+    }
+    setIsActModalOpen(false);
   };
 
   // --- Education Handlers ---
@@ -161,8 +330,8 @@ export default function ExperienceEducationSection({
   const handleDeleteEdu = (id: string) => {
     triggerConfirm(
       language === "en" ? "Delete Education" : "Excluir Formação",
-      language === "en" 
-        ? "Are you sure you want to delete this academic background?" 
+      language === "en"
+        ? "Are you sure you want to delete this academic background?"
         : "Deseja realmente excluir esta formação acadêmica?",
       () => {
         onUpdateEducations(educations.filter((e) => e.id !== id));
@@ -194,133 +363,41 @@ export default function ExperienceEducationSection({
     setIsEduModalOpen(false);
   };
 
-  const formatDate = (dateStr: string) => {
+  const formatDate = (dateStr?: string) => {
     if (!dateStr) return "";
+    if (dateStr.length === 4) return dateStr; // e.g. "2024"
     const [year, month] = dateStr.split("-");
     const months = [
-      "Jan", "Fev", "Mar", "Abr", "Mai", "Jun",
-      "Jul", "Ago", "Set", "Out", "Nov", "Dez"
+      "jan", "fev", "mar", "abr", "mai", "jun",
+      "jul", "ago", "set", "out", "nov", "dez"
     ];
     if (month && parseInt(month, 10) >= 1 && parseInt(month, 10) <= 12) {
       return `${months[parseInt(month, 10) - 1]} ${year}`;
     }
-    return year;
+    return dateStr;
+  };
+
+  const formatPeriodDisplay = (start?: string, end?: string, isCurrent?: boolean) => {
+    const s = formatDate(start);
+    const e = isCurrent
+      ? language === "en" ? "present" : "presente"
+      : formatDate(end);
+    if (!s && !e) return "";
+    if (!s) return e;
+    if (!e) return s;
+    return `${s} — ${e}`;
   };
 
   return (
-    <div className="grid gap-8 lg:grid-cols-2 print:grid-cols-1 print:gap-6">
-      {/* EXPERIENCE COLUMN */}
-      <section id="pesquisa" className="scroll-mt-32 rounded-2xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 sm:p-8 md:p-10 shadow-xs print-border print-shadow-none print-m-0 transition-colors duration-300">
-        <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-5 mb-6">
+    <div className="space-y-10 print:space-y-8">
+      {/* SEÇÃO 1: FORMAÇÃO ACADÊMICA (Education Section) */}
+      <section
+        id="formacao"
+        className="scroll-mt-32 rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900/90 p-6 sm:p-8 md:p-10 shadow-xs transition-colors duration-300"
+      >
+        <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800/80 pb-5 mb-6">
           <div className="flex items-center gap-3">
-            <div className="rounded-xl bg-indigo-50 dark:bg-indigo-950/40 p-2.5 text-indigo-600 dark:text-indigo-400 print-border">
-              <Briefcase className="h-6 w-6" />
-            </div>
-            <div>
-              <h2 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white font-display">
-                {language === "en" ? "Professional Experience" : "Experiência Profissional"}
-              </h2>
-              <p className="text-sm text-slate-500 dark:text-slate-400 font-sans">
-                {language === "en" ? "My professional path and leadership roles." : "Minha trajetória profissional e funções de liderança."}
-              </p>
-            </div>
-          </div>
-
-          {isEditMode && (
-            <button
-              onClick={handleOpenExpAdd}
-              className="flex items-center gap-1 rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white shadow-xs transition-colors hover:bg-indigo-700 no-print print:hidden"
-              id="add-experience-btn"
-            >
-              <Plus className="h-3.5 w-3.5" />
-              {language === "en" ? "Add" : "Adicionar"}
-            </button>
-          )}
-        </div>
-
-        {experiences.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-slate-200 dark:border-slate-800 p-8 text-center font-sans">
-            <Briefcase className="mx-auto h-6 w-6 text-slate-300 dark:text-slate-700" />
-            <p className="mt-2 text-xs text-slate-400 dark:text-slate-500 font-medium">Nenhuma experiência adicionada.</p>
-          </div>
-        ) : (
-          <div className="relative border-l border-slate-100 dark:border-slate-800 ml-4 space-y-6">
-            {experiences.map((exp) => (
-              <div key={exp.id} className="relative pl-6 group print-break-inside-avoid">
-                {/* Timeline dot */}
-                {exp.current ? (
-                  <span className="absolute -left-[6px] top-1.5 h-3 w-3 rounded-full border-2 border-white dark:border-slate-900 bg-indigo-600 outline outline-1 outline-indigo-600 ring-2 ring-white dark:ring-slate-900">
-                    <span className="absolute -inset-[3px] rounded-full bg-indigo-600/30 animate-ping"></span>
-                    <span className="absolute inset-0 rounded-full bg-indigo-600 animate-pulse"></span>
-                  </span>
-                ) : (
-                  <span className="absolute -left-[6px] top-1.5 h-3 w-3 rounded-full border-2 border-white dark:border-slate-900 bg-indigo-600 outline outline-1 outline-indigo-600 ring-2 ring-white dark:ring-slate-900"></span>
-                )}
-
-                <div className="flex flex-col gap-1">
-                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-1">
-                    <div>
-                      <h3 className="text-base font-bold text-slate-900 dark:text-white font-display">
-                        {language === "en" && exp.roleEn ? exp.roleEn : exp.role}
-                      </h3>
-                      <p className="text-sm font-semibold text-indigo-600 dark:text-indigo-400 font-sans">
-                        {exp.company}
-                      </p>
-                    </div>
-
-                    {/* Actions and Dates */}
-                    <div className="flex items-center gap-2 sm:flex-col sm:items-end">
-                      <div className="flex items-center gap-1.5 text-slate-400 dark:text-slate-500 font-mono text-[11px] leading-none shrink-0 bg-slate-50 dark:bg-slate-950 px-2 py-1 rounded-md print:bg-transparent print:p-0">
-                        <Calendar className="h-3.5 w-3.5 text-slate-400 dark:text-slate-500 print:hidden" />
-                        <span>
-                          {formatDate(exp.startDate)} — {exp.current ? (language === "en" ? "Present" : "Atualmente") : formatDate(exp.endDate)}
-                        </span>
-                      </div>
-
-                      {/* Admin Tools */}
-                      {isEditMode && (
-                        <div className="flex items-center gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity no-print print:hidden">
-                          <button
-                            onClick={() => handleOpenExpEdit(exp)}
-                            className="rounded p-1 text-slate-400 dark:text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors cursor-pointer"
-                            title="Editar Experiência"
-                          >
-                            <Edit2 className="h-3.5 w-3.5" />
-                          </button>
-                          <button
-                            onClick={() => handleDeleteExp(exp.id)}
-                            className="rounded p-1 text-slate-400 dark:text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-rose-600 dark:hover:text-rose-400 transition-colors cursor-pointer"
-                            title="Excluir Experiência"
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {(exp.location || exp.locationEn) && (
-                    <div className="flex items-center gap-1.5 text-xs text-slate-400 dark:text-slate-500 font-sans mt-0.5">
-                      <MapPin className="h-3.5 w-3.5" />
-                      <span>{language === "en" ? (exp.locationEn || exp.location) : (exp.location || exp.locationEn)}</span>
-                    </div>
-                  )}
-
-                  <div className="mt-2 text-xs leading-relaxed text-slate-500 dark:text-slate-400 font-sans">
-                    <MarkdownRenderer content={language === "en" && exp.descriptionEn ? exp.descriptionEn : exp.description} className="text-xs text-slate-500 dark:text-slate-400 font-sans space-y-1" />
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </section>
-
-      {/* EDUCATION COLUMN */}
-      <section id="formacao" className="scroll-mt-32 rounded-2xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 sm:p-8 md:p-10 shadow-xs print-border print-shadow-none print-m-0 transition-colors duration-300">
-        <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-5 mb-6">
-          <div className="flex items-center gap-3">
-            <div className="rounded-xl bg-indigo-50 dark:bg-indigo-950/40 p-2.5 text-indigo-600 dark:text-indigo-400 print-border">
+            <div className="rounded-xl bg-indigo-50 dark:bg-indigo-950/50 p-2.5 text-indigo-600 dark:text-indigo-400 print-border">
               <GraduationCap className="h-6 w-6" />
             </div>
             <div>
@@ -328,7 +405,9 @@ export default function ExperienceEducationSection({
                 {language === "en" ? "Academic Background" : "Formação Acadêmica"}
               </h2>
               <p className="text-sm text-slate-500 dark:text-slate-400 font-sans">
-                {language === "en" ? "My degrees, postgraduate courses, and higher education." : "Minhas graduações, pós-graduações e ensino superior."}
+                {language === "en"
+                  ? "Degrees, higher education, and academic qualifications"
+                  : "Graduações, pós-graduações e ensino superior"}
               </p>
             </div>
           </div>
@@ -336,7 +415,7 @@ export default function ExperienceEducationSection({
           {isEditMode && (
             <button
               onClick={handleOpenEduAdd}
-              className="flex items-center gap-1 rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white shadow-xs transition-colors hover:bg-indigo-700 no-print print:hidden"
+              className="flex items-center gap-1 rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white shadow-xs transition-colors hover:bg-indigo-700 no-print print:hidden cursor-pointer"
               id="add-education-btn"
             >
               <Plus className="h-3.5 w-3.5" />
@@ -348,55 +427,50 @@ export default function ExperienceEducationSection({
         {educations.length === 0 ? (
           <div className="rounded-xl border border-dashed border-slate-200 dark:border-slate-800 p-8 text-center font-sans">
             <GraduationCap className="mx-auto h-6 w-6 text-slate-300 dark:text-slate-700" />
-            <p className="mt-2 text-xs text-slate-400 dark:text-slate-500 font-medium">Nenhuma formação adicionada.</p>
+            <p className="mt-2 text-xs text-slate-400 dark:text-slate-500 font-medium">
+              Nenhuma formação adicionada.
+            </p>
           </div>
         ) : (
-          <div className="relative border-l border-slate-100 dark:border-slate-800 ml-4 space-y-6">
-            {educations.map((edu) => (
-              <div key={edu.id} className="relative pl-6 group print-break-inside-avoid">
-                {/* Timeline dot */}
-                {edu.current ? (
-                  <span className="absolute -left-[6px] top-1.5 h-3 w-3 rounded-full border-2 border-white dark:border-slate-900 bg-indigo-600 outline outline-1 outline-indigo-600 ring-2 ring-white dark:ring-slate-900">
-                    <span className="absolute -inset-[3px] rounded-full bg-indigo-600/30 animate-ping"></span>
-                    <span className="absolute inset-0 rounded-full bg-indigo-600 animate-pulse"></span>
-                  </span>
-                ) : (
-                  <span className="absolute -left-[6px] top-1.5 h-3 w-3 rounded-full border-2 border-white dark:border-slate-900 bg-indigo-600 outline outline-1 outline-indigo-600 ring-2 ring-white dark:ring-slate-900"></span>
-                )}
+          <div className="space-y-6">
+            {educations.map((edu) => {
+              const degreeText = language === "en" && edu.degreeEn ? edu.degreeEn : edu.degree;
+              const fieldText = language === "en" && edu.fieldOfStudyEn ? edu.fieldOfStudyEn : edu.fieldOfStudy;
+              const instText = language === "en" && edu.institutionEn ? edu.institutionEn : edu.institution;
+              const descText = language === "en" && edu.descriptionEn ? edu.descriptionEn : edu.description;
 
-                <div className="flex flex-col gap-1">
-                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-1">
-                    <div>
+              return (
+                <div
+                  key={edu.id}
+                  className="rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-900/80 p-5 sm:p-6 transition-all"
+                >
+                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+                    <div className="space-y-1">
                       <h3 className="text-base font-bold text-slate-900 dark:text-white font-display">
-                        {language === "en" ? `${edu.degreeEn || edu.degree} in ${edu.fieldOfStudyEn || edu.fieldOfStudy}` : `${edu.degree} em ${edu.fieldOfStudy}`}
+                        {degreeText} em {fieldText}
                       </h3>
                       <p className="text-sm font-semibold text-indigo-600 dark:text-indigo-400 font-sans">
-                        {edu.institution}
+                        {instText}
                       </p>
                     </div>
 
-                    {/* Actions and Dates */}
-                    <div className="flex items-center gap-2 sm:flex-col sm:items-end">
-                      <div className="flex items-center gap-1.5 text-slate-400 dark:text-slate-500 font-mono text-[11px] leading-none shrink-0 bg-slate-50 dark:bg-slate-950 px-2 py-1 rounded-md print:bg-transparent print:p-0">
-                        <Calendar className="h-3.5 w-3.5 text-slate-400 dark:text-slate-500 print:hidden" />
-                        <span>
-                          {formatDate(edu.startDate)} — {edu.current ? (language === "en" ? "Present" : "Atualmente") : formatDate(edu.endDate)}
-                        </span>
+                    <div className="flex items-center gap-2 sm:flex-col sm:items-end shrink-0">
+                      <div className="font-mono text-xs text-slate-700 dark:text-slate-300 bg-slate-200/70 dark:bg-slate-800 px-2.5 py-1 rounded-md border border-slate-200/60 dark:border-slate-700/60">
+                        {formatPeriodDisplay(edu.startDate, edu.endDate, edu.current)}
                       </div>
 
-                      {/* Admin Tools */}
                       {isEditMode && (
-                        <div className="flex items-center gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity no-print print:hidden">
+                        <div className="flex items-center gap-1 no-print print:hidden">
                           <button
                             onClick={() => handleOpenEduEdit(edu)}
-                            className="rounded p-1 text-slate-400 dark:text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+                            className="rounded p-1 text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors cursor-pointer"
                             title="Editar Formação"
                           >
                             <Edit2 className="h-3.5 w-3.5" />
                           </button>
                           <button
                             onClick={() => handleDeleteEdu(edu.id)}
-                            className="rounded p-1 text-slate-400 dark:text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-rose-600 dark:hover:text-rose-400 transition-colors"
+                            className="rounded p-1 text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 hover:text-rose-600 dark:hover:text-rose-400 transition-colors cursor-pointer"
                             title="Excluir Formação"
                           >
                             <Trash2 className="h-3.5 w-3.5" />
@@ -406,158 +480,495 @@ export default function ExperienceEducationSection({
                     </div>
                   </div>
 
-                  {(edu.description || edu.descriptionEn) && (
-                    <div className="mt-2 text-xs leading-relaxed text-slate-500 dark:text-slate-400 font-sans">
-                      <MarkdownRenderer content={language === "en" ? (edu.descriptionEn || edu.description) : (edu.description || edu.descriptionEn)} className="text-xs text-slate-500 dark:text-slate-400 font-sans space-y-1" />
+                  {descText && (
+                    <div className="mt-3 text-xs leading-relaxed text-slate-600 dark:text-slate-400 font-sans">
+                      <MarkdownRenderer content={descText} className="text-xs text-slate-600 dark:text-slate-400 font-sans space-y-1" />
                     </div>
                   )}
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </section>
 
-      {/* Experience Form Modal */}
+      {/* SEÇÃO 2: EXPERIÊNCIA EM PESQUISA (Research Experience) */}
+      <section
+        id="pesquisa"
+        className="scroll-mt-32 rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900/90 p-6 sm:p-8 md:p-10 shadow-xs transition-colors duration-300"
+      >
+        <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800/80 pb-5 mb-6">
+          <div className="flex items-center gap-3">
+            <div className="rounded-xl bg-indigo-50 dark:bg-indigo-950/50 p-2.5 text-indigo-600 dark:text-indigo-400 print-border">
+              <FlaskConical className="h-6 w-6" />
+            </div>
+            <div>
+              <h2 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white font-display">
+                {language === "en" ? "Research Experience" : "Experiência em pesquisa"}
+              </h2>
+              <p className="text-sm text-slate-500 dark:text-slate-400 font-sans">
+                {language === "en" ? "Formal research affiliations" : "Vínculos formais de pesquisa"}
+              </p>
+            </div>
+          </div>
+
+          {isEditMode && (
+            <button
+              onClick={handleOpenExpAdd}
+              className="flex items-center gap-1 rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white shadow-xs transition-colors hover:bg-indigo-700 no-print print:hidden cursor-pointer"
+              id="add-research-btn"
+            >
+              <Plus className="h-3.5 w-3.5" />
+              {language === "en" ? "Add" : "Adicionar"}
+            </button>
+          )}
+        </div>
+
+        {experiences.length === 0 ? (
+          <div className="rounded-xl border border-dashed border-slate-200 dark:border-slate-800 p-8 text-center font-sans">
+            <FlaskConical className="mx-auto h-6 w-6 text-slate-300 dark:text-slate-700" />
+            <p className="mt-2 text-xs text-slate-400 dark:text-slate-500 font-medium">
+              Nenhuma experiência em pesquisa cadastrada.
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-6">
+            {experiences.map((exp) => {
+              const roleText = language === "en" && exp.roleEn ? exp.roleEn : exp.role;
+              const locationText = language === "en" && exp.locationEn ? exp.locationEn : exp.location;
+              const descText = language === "en" && exp.descriptionEn ? exp.descriptionEn : exp.description;
+              const hasDescription = descText && descText.trim().length > 0;
+
+              return (
+                <div
+                  key={exp.id}
+                  id={`research-${exp.id}`}
+                  className="rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-900/80 p-5 sm:p-6 transition-all duration-200 hover:border-slate-300 dark:hover:border-slate-700"
+                >
+                  {/* Top Row: Role, Company, Location & Period */}
+                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+                    <div className="space-y-1">
+                      {/* Cargo (15px, weight 500) */}
+                      <h3 className="text-[15px] font-medium text-slate-900 dark:text-white font-sans leading-snug">
+                        {roleText}
+                      </h3>
+
+                      {/* Instituição e sigla na cor de acento */}
+                      <p className="text-sm font-semibold text-indigo-600 dark:text-indigo-400 font-sans">
+                        {exp.company}
+                      </p>
+
+                      {/* Local e tipo de vínculo em cor apagada */}
+                      {locationText && (
+                        <p className="text-xs text-slate-500 dark:text-slate-400 font-sans">
+                          {locationText}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Right column: Period Pill & Admin controls */}
+                    <div className="flex items-center gap-2 sm:flex-col sm:items-end shrink-0">
+                      <div className="font-mono text-xs text-slate-700 dark:text-slate-300 bg-slate-200/70 dark:bg-slate-800 px-2.5 py-1 rounded-md border border-slate-200/60 dark:border-slate-700/60">
+                        {formatPeriodDisplay(exp.startDate, exp.endDate, exp.current)}
+                      </div>
+
+                      {isEditMode && (
+                        <div className="flex items-center gap-1 no-print print:hidden">
+                          <button
+                            onClick={() => handleOpenExpEdit(exp)}
+                            className="rounded p-1 text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors cursor-pointer"
+                            title="Editar Pesquisa"
+                          >
+                            <Edit2 className="h-3.5 w-3.5" />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteExp(exp.id)}
+                            className="rounded p-1 text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 hover:text-rose-600 dark:hover:text-rose-400 transition-colors cursor-pointer"
+                            title="Excluir Pesquisa"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Descrição Corrida */}
+                  <div className="mt-3.5 text-sm leading-relaxed text-slate-700 dark:text-slate-300 font-sans">
+                    {hasDescription ? (
+                      <MarkdownRenderer content={descText} className="text-sm text-slate-700 dark:text-slate-300 font-sans space-y-1" />
+                    ) : isEditMode ? (
+                      <p className="text-xs text-slate-400 dark:text-slate-500 italic">
+                        descrição pendente
+                      </p>
+                    ) : null}
+                  </div>
+
+                  {/* Subperíodos (quando houver) */}
+                  {exp.subperiods && exp.subperiods.length > 0 && (
+                    <div className="mt-4 border-l-2 border-slate-300 dark:border-slate-700 pl-[14px] space-y-3.5 my-3.5">
+                      {exp.subperiods.map((sub) => {
+                        const subTitleText = language === "en" && sub.titleEn ? sub.titleEn : sub.title;
+                        const subDescText = language === "en" && sub.descriptionEn ? sub.descriptionEn : sub.description;
+                        const subHasText = (subTitleText && subTitleText.trim()) || (subDescText && subDescText.trim());
+
+                        return (
+                          <div key={sub.id} className="space-y-0.5">
+                            {/* Período em monoespaçada 11px */}
+                            <span className="font-mono text-[11px] text-slate-500 dark:text-slate-400 block">
+                              {formatPeriodDisplay(sub.startDate, sub.endDate, sub.current)}
+                            </span>
+
+                            {/* Linha de descrição do subperíodo */}
+                            {subHasText ? (
+                              <p className="text-xs font-medium text-slate-800 dark:text-slate-200 font-sans">
+                                {subTitleText || subDescText}
+                              </p>
+                            ) : isEditMode ? (
+                              <p className="text-xs text-slate-400 dark:text-slate-500 italic font-sans">
+                                {subTitleText ? `${subTitleText} — ` : ""}descrição pendente
+                              </p>
+                            ) : null}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {/* Links de Produção (se houver) */}
+                  {exp.links && exp.links.length > 0 && (
+                    <div className="mt-3.5 flex flex-wrap gap-3">
+                      {exp.links.map((link, i) => (
+                        <a
+                          key={i}
+                          href={link.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1.5 text-xs text-indigo-600 dark:text-indigo-400 hover:underline font-sans font-medium"
+                        >
+                          <span>{link.title}</span>
+                          <ExternalLink className="h-3 w-3" />
+                        </a>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Competências como chips (chips separados por linha divisória de 0.5px) */}
+                  {exp.skills && exp.skills.length > 0 && (
+                    <div className="mt-4 border-t border-slate-200/80 dark:border-slate-800 pt-3.5 flex flex-wrap gap-2">
+                      {exp.skills.map((skill, i) => (
+                        <span
+                          key={i}
+                          className="bg-indigo-50 dark:bg-indigo-950/70 text-indigo-700 dark:text-indigo-300 border border-indigo-200/60 dark:border-indigo-900/60 rounded-full px-3 py-1 text-xs font-mono font-medium select-none"
+                        >
+                          {skill}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </section>
+
+      {/* SEÇÃO 2: ATIVIDADES ACADÊMICAS (Academic Activities Grid) */}
+      {(academicActivities.length > 0 || isEditMode) && (
+        <section
+          id="atividades-academicas"
+          className="scroll-mt-32 rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900/90 p-6 sm:p-8 md:p-10 shadow-xs transition-colors duration-300"
+        >
+          <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800/80 pb-5 mb-6">
+            <div className="flex items-center gap-3">
+              <div className="rounded-xl bg-indigo-50 dark:bg-indigo-950/50 p-2.5 text-indigo-600 dark:text-indigo-400 print-border">
+                <Users className="h-6 w-6" />
+              </div>
+              <div>
+                <h2 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white font-display">
+                  {language === "en" ? "Academic Activities" : "Atividades acadêmicas"}
+                </h2>
+                <p className="text-sm text-slate-500 dark:text-slate-400 font-sans">
+                  {language === "en"
+                    ? "Study groups, tutoring, and extension projects"
+                    : "Núcleos de estudo, monitorias e extensão — muitos simultâneos"}
+                </p>
+              </div>
+            </div>
+
+            {isEditMode && (
+              <button
+                onClick={handleOpenActAdd}
+                className="flex items-center gap-1 rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white shadow-xs transition-colors hover:bg-indigo-700 no-print print:hidden cursor-pointer"
+                id="add-academic-act-btn"
+              >
+                <Plus className="h-3.5 w-3.5" />
+                {language === "en" ? "Add" : "Adicionar"}
+              </button>
+            )}
+          </div>
+
+          {academicActivities.length === 0 ? (
+            <div className="rounded-xl border border-dashed border-slate-200 dark:border-slate-800 p-8 text-center font-sans">
+              <Users className="mx-auto h-6 w-6 text-slate-300 dark:text-slate-700" />
+              <p className="mt-2 text-xs text-slate-400 dark:text-slate-500 font-medium">
+                Nenhuma atividade acadêmica cadastrada.
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))" }}>
+              {academicActivities.map((act) => {
+                const actName = language === "en" && act.nameEn ? act.nameEn : act.name;
+                const actDesc = language === "en" && act.descriptionEn ? act.descriptionEn : act.description;
+                const actExtra = language === "en" && act.extraContentEn ? act.extraContentEn : act.extraContent;
+                const hasExtra = (actExtra && actExtra.trim().length > 0) || (act.links && act.links.length > 0);
+                const isExpanded = !!expandedActivities[act.id];
+
+                if (hasExtra) {
+                  // Interactive disclosure block (button)
+                  return (
+                    <div
+                      key={act.id}
+                      className="rounded-xl bg-slate-100/70 dark:bg-slate-900/40 p-4 transition-colors hover:bg-slate-200/60 dark:hover:bg-slate-800/60"
+                    >
+                      <button
+                        type="button"
+                        aria-expanded={isExpanded}
+                        onClick={() => toggleActivityExpand(act.id)}
+                        className="w-full text-left cursor-pointer focus:outline-hidden focus-visible:ring-2 focus-visible:ring-indigo-500 rounded-lg p-0.5"
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <h3 className="text-sm font-medium text-slate-900 dark:text-slate-200 font-sans">
+                            {actName}
+                          </h3>
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            <span className="font-mono text-xs text-slate-500 dark:text-slate-400">
+                              {formatPeriodDisplay(act.startDate, act.endDate, act.current)}
+                            </span>
+                            <ChevronDown
+                              className={`h-3.5 w-3.5 text-slate-400 transition-transform duration-160 ${
+                                isExpanded ? "rotate-180" : ""
+                              }`}
+                            />
+                          </div>
+                        </div>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 font-sans truncate line-clamp-1 mt-1">
+                          {actDesc}
+                        </p>
+                      </button>
+
+                      {/* Expanded extra content */}
+                      {isExpanded && (
+                        <div className="mt-3 pt-2.5 border-t border-slate-200 dark:border-slate-800 text-xs text-slate-600 dark:text-slate-300 space-y-2 transition-all duration-160">
+                          {actExtra && <p>{actExtra}</p>}
+                          {act.links && act.links.length > 0 && (
+                            <div className="flex flex-wrap gap-2 pt-1">
+                              {act.links.map((link, idx) => (
+                                <a
+                                  key={idx}
+                                  href={link.url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="inline-flex items-center gap-1 text-indigo-600 dark:text-indigo-400 hover:underline font-medium"
+                                >
+                                  <span>{link.title}</span>
+                                  <ExternalLink className="h-3 w-3" />
+                                </a>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Admin Controls */}
+                      {isEditMode && (
+                        <div className="mt-2 flex items-center justify-end gap-1 border-t border-slate-200/50 dark:border-slate-800/50 pt-2 no-print print:hidden">
+                          <button
+                            onClick={() => handleOpenActEdit(act)}
+                            className="rounded p-1 text-slate-400 hover:text-indigo-600 transition-colors cursor-pointer"
+                            title="Editar Atividade"
+                          >
+                            <Edit2 className="h-3.5 w-3.5" />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteAct(act.id)}
+                            className="rounded p-1 text-slate-400 hover:text-rose-600 transition-colors cursor-pointer"
+                            title="Excluir Atividade"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  );
+                }
+
+                // Static block (without extra content)
+                return (
+                  <div
+                    key={act.id}
+                    className="rounded-xl bg-slate-100/70 dark:bg-slate-900/40 p-4 transition-none"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <h3 className="text-sm font-medium text-slate-900 dark:text-slate-200 font-sans">
+                        {actName}
+                      </h3>
+                      <span className="font-mono text-xs text-slate-500 dark:text-slate-400 shrink-0">
+                        {formatPeriodDisplay(act.startDate, act.endDate, act.current)}
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 font-sans truncate line-clamp-1 mt-1">
+                      {actDesc}
+                    </p>
+
+                    {/* Admin Controls */}
+                    {isEditMode && (
+                      <div className="mt-2 flex items-center justify-end gap-1 border-t border-slate-200/50 dark:border-slate-800/50 pt-2 no-print print:hidden">
+                        <button
+                          onClick={() => handleOpenActEdit(act)}
+                          className="rounded p-1 text-slate-400 hover:text-indigo-600 transition-colors cursor-pointer"
+                          title="Editar Atividade"
+                        >
+                          <Edit2 className="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteAct(act.id)}
+                          className="rounded p-1 text-slate-400 hover:text-rose-600 transition-colors cursor-pointer"
+                          title="Excluir Atividade"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </section>
+      )}
+
+      {/* --- RESEARCH EXPERIENCE MODAL --- */}
       <EditModal
         isOpen={isExpModalOpen}
         onClose={() => setIsExpModalOpen(false)}
-        title={editingExp ? (language === "en" ? "Edit Professional Experience" : "Editar Experiência Profissional") : (language === "en" ? "Add Experience" : "Adicionar Experiência")}
-        size="xl"
+        title={
+          editingExp
+            ? language === "en" ? "Edit Research Experience" : "Editar Experiência em Pesquisa"
+            : language === "en" ? "Add Research Experience" : "Adicionar Experiência em Pesquisa"
+        }
       >
-        <form onSubmit={handleExpSubmit} className="space-y-4">
-          
-          {/* Editing Language Toggle */}
-          <div className="bg-slate-50 p-3 rounded-2xl border border-slate-200/60 mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div>
-              <p className="text-xs font-bold text-slate-700 font-sans">
-                {language === "en" ? "Language under Editing" : "Idioma em Edição"}
-              </p>
-              <p className="text-[10px] text-slate-400 font-sans">
-                {language === "en" 
-                  ? "Toggle to specify contents in Portuguese or English" 
-                  : "Alterne para preencher as informações em Português ou Inglês"}
-              </p>
+        <form onSubmit={handleExpSubmit} className="space-y-4 text-xs font-sans">
+          {expError && (
+            <div className="flex items-center gap-2 rounded-lg bg-rose-50 dark:bg-rose-950/50 p-3 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-900">
+              <AlertCircle className="h-4 w-4 shrink-0" />
+              <span>{expError}</span>
             </div>
-            <div className="bg-slate-200/70 p-1 rounded-xl flex gap-1 self-start sm:self-auto shrink-0 font-sans">
-              <button
-                type="button"
-                onClick={() => setEditingLanguage("pt")}
-                className={`rounded-lg px-3 py-1.5 text-xs font-bold transition-all flex items-center gap-1 cursor-pointer ${
-                  editingLanguage === "pt"
-                    ? "bg-white text-indigo-600 shadow-sm"
-                    : "text-slate-500 hover:text-slate-950"
-                }`}
-              >
-                PT
-              </button>
-              <button
-                type="button"
-                onClick={() => setEditingLanguage("en")}
-                className={`rounded-lg px-3 py-1.5 text-xs font-bold transition-all flex items-center gap-1 cursor-pointer ${
-                  editingLanguage === "en"
-                    ? "bg-white text-indigo-600 shadow-sm"
-                    : "text-slate-500 hover:text-slate-950"
-                }`}
-              >
-                EN
-              </button>
-            </div>
+          )}
+
+          <div className="flex gap-2 border-b border-slate-200 dark:border-slate-800 pb-2 mb-3">
+            <button
+              type="button"
+              onClick={() => setEditingLanguage("pt")}
+              className={`px-3 py-1 rounded text-xs font-medium cursor-pointer ${
+                editingLanguage === "pt"
+                  ? "bg-indigo-600 text-white"
+                  : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400"
+              }`}
+            >
+              Português
+            </button>
+            <button
+              type="button"
+              onClick={() => setEditingLanguage("en")}
+              className={`px-3 py-1 rounded text-xs font-medium cursor-pointer ${
+                editingLanguage === "en"
+                  ? "bg-indigo-600 text-white"
+                  : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400"
+              }`}
+            >
+              English
+            </button>
           </div>
 
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div>
+            <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
+              Cargo / Função {editingLanguage === "en" && "(English)"} *
+            </label>
+            <input
+              type="text"
+              required
+              value={editingLanguage === "en" ? expForm.roleEn || "" : expForm.role || ""}
+              onChange={(e) =>
+                setExpForm((prev) =>
+                  editingLanguage === "en"
+                    ? { ...prev, roleEn: e.target.value }
+                    : { ...prev, role: e.target.value }
+                )
+              }
+              placeholder="e.g. Iniciação científica — pesquisador bolsista"
+              className="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-slate-900 dark:text-white"
+            />
+          </div>
+
+          <div>
+            <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
+              Instituição / Órgão de Fomento *
+            </label>
+            <input
+              type="text"
+              required
+              value={expForm.company || ""}
+              onChange={(e) => setExpForm((prev) => ({ ...prev, company: e.target.value }))}
+              placeholder="e.g. CNPq · Universidade Federal de Lavras"
+              className="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-slate-900 dark:text-white"
+            />
+          </div>
+
+          <div>
+            <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
+              Local e Tipo de Vínculo
+            </label>
+            <input
+              type="text"
+              value={editingLanguage === "en" ? expForm.locationEn || "" : expForm.location || ""}
+              onChange={(e) =>
+                setExpForm((prev) =>
+                  editingLanguage === "en"
+                    ? { ...prev, locationEn: e.target.value }
+                    : { ...prev, location: e.target.value }
+                )
+              }
+              placeholder="e.g. Lavras, MG · bolsista"
+              className="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-slate-900 dark:text-white"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 font-mono mb-1">
-                {language === "en" ? "Company Name *" : "Nome da Empresa *"}
+              <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                Data Inicial (AAAA-MM ou AAAA)
               </label>
               <input
                 type="text"
-                required
-                value={expForm.company || ""}
-                onChange={(e) => setExpForm({ ...expForm, company: e.target.value })}
-                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-800 focus:border-indigo-500 focus:outline-hidden"
-              />
-            </div>
-            {editingLanguage === "pt" ? (
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 font-mono mb-1">
-                  Cargo / Função * (Português)
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={expForm.role || ""}
-                  onChange={(e) => setExpForm({ ...expForm, role: e.target.value })}
-                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-800 focus:border-indigo-500 focus:outline-hidden"
-                />
-              </div>
-            ) : (
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 font-mono mb-1">
-                  Job Role / Title * (English)
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={expForm.roleEn || ""}
-                  onChange={(e) => setExpForm({ ...expForm, roleEn: e.target.value })}
-                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-800 focus:border-indigo-500 focus:outline-hidden"
-                />
-              </div>
-            )}
-          </div>
-
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-            {editingLanguage === "pt" ? (
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 font-mono mb-1">
-                  Localização (Português)
-                </label>
-                <input
-                  type="text"
-                  placeholder="Ex: Remoto, São Paulo"
-                  value={expForm.location || ""}
-                  onChange={(e) => setExpForm({ ...expForm, location: e.target.value })}
-                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-800 focus:border-indigo-500 focus:outline-hidden"
-                />
-              </div>
-            ) : (
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 font-mono mb-1">
-                  Location (English)
-                </label>
-                <input
-                  type="text"
-                  placeholder="Ex: Remote, São Paulo"
-                  value={expForm.locationEn || ""}
-                  onChange={(e) => setExpForm({ ...expForm, locationEn: e.target.value })}
-                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-800 focus:border-indigo-500 focus:outline-hidden"
-                />
-              </div>
-            )}
-            <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 font-mono mb-1">
-                {language === "en" ? "Start Month/Year *" : "Mês/Ano de Início *"}
-              </label>
-              <input
-                type="month"
-                required
                 value={expForm.startDate || ""}
-                onChange={(e) => setExpForm({ ...expForm, startDate: e.target.value })}
-                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-800 focus:border-indigo-500 focus:outline-hidden"
+                onChange={(e) => setExpForm((prev) => ({ ...prev, startDate: e.target.value }))}
+                placeholder="2023-08"
+                className="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-slate-900 dark:text-white"
               />
             </div>
+
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 font-mono mb-1">
-                {language === "en" ? "End Month/Year" : "Mês/Ano de Término"}
+              <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                Data Final
               </label>
               <input
-                type="month"
-                required={!expForm.current}
+                type="text"
                 disabled={expForm.current}
                 value={expForm.current ? "" : expForm.endDate || ""}
-                onChange={(e) => setExpForm({ ...expForm, endDate: e.target.value })}
-                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-800 focus:border-indigo-500 focus:outline-hidden disabled:bg-slate-50"
+                onChange={(e) => setExpForm((prev) => ({ ...prev, endDate: e.target.value }))}
+                placeholder="2025-09"
+                className="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-slate-900 dark:text-white disabled:opacity-50"
               />
             </div>
           </div>
@@ -567,206 +978,335 @@ export default function ExperienceEducationSection({
               type="checkbox"
               id="exp-current"
               checked={expForm.current || false}
-              onChange={(e) => setExpForm({ ...expForm, current: e.target.checked })}
-              className="rounded text-indigo-600 focus:ring-indigo-500"
+              onChange={(e) => setExpForm((prev) => ({ ...prev, current: e.target.checked }))}
+              className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
             />
-            <label htmlFor="exp-current" className="text-xs font-semibold text-slate-600 font-mono uppercase tracking-wider cursor-pointer select-none">
-              {language === "en" ? "I currently work in this role" : "Trabalho atualmente nesta função"}
+            <label htmlFor="exp-current" className="text-slate-700 dark:text-slate-300 font-medium cursor-pointer">
+              {language === "en" ? "Currently active" : "Vínculo atual"}
             </label>
           </div>
 
-          {editingLanguage === "pt" ? (
-            <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 font-mono mb-1">
-                Descrição das Atividades e Conquistas (Português) *
-              </label>
-              <textarea
-                required
-                rows={5}
-                placeholder="Descreva suas responsabilidades, principais tecnologias e resultados alcançados..."
-                value={expForm.description || ""}
-                onChange={(e) => setExpForm({ ...expForm, description: e.target.value })}
-                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-800 focus:border-indigo-500 focus:outline-hidden resize-y"
-              />
-            </div>
-          ) : (
-            <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 font-mono mb-1">
-                Description of Activities & Achievements (English) *
-              </label>
-              <textarea
-                required
-                rows={5}
-                placeholder="Describe your responsibilities, main technologies, and results achieved in English..."
-                value={expForm.descriptionEn || ""}
-                onChange={(e) => setExpForm({ ...expForm, descriptionEn: e.target.value })}
-                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-800 focus:border-indigo-500 focus:outline-hidden resize-y"
-              />
-            </div>
-          )}
+          <div>
+            <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
+              Descrição Corrida (Mínimo 40 caracteres) *
+            </label>
+            <textarea
+              rows={4}
+              value={editingLanguage === "en" ? expForm.descriptionEn || "" : expForm.description || ""}
+              onChange={(e) => {
+                const val = e.target.value;
+                setExpForm((prev) =>
+                  editingLanguage === "en"
+                    ? { ...prev, descriptionEn: val }
+                    : { ...prev, description: val }
+                );
+                if (val.trim().length >= 40) setExpError(null);
+              }}
+              placeholder="Alinhamento de cavidades de lasers de femtossegundos e caracterização de meios ativos..."
+              className="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-slate-900 dark:text-white"
+            />
+            <span className="text-[10px] text-slate-400">
+              {(editingLanguage === "en" ? expForm.descriptionEn : expForm.description)?.length || 0}/40 caracteres
+            </span>
+          </div>
 
-          <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
+          {/* Subperíodos */}
+          <div className="border-t border-slate-200 dark:border-slate-800 pt-3">
+            <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-2">
+              Subperíodos (Renovação de bolsa / projetos aninhados)
+            </label>
+
+            {expForm.subperiods && expForm.subperiods.length > 0 && (
+              <div className="space-y-2 mb-3">
+                {expForm.subperiods.map((sub) => (
+                  <div key={sub.id} className="flex items-center justify-between bg-slate-100 dark:bg-slate-800 p-2 rounded text-xs">
+                    <div>
+                      <span className="font-mono text-[11px] font-semibold text-slate-600 dark:text-slate-400 block">
+                        {formatPeriodDisplay(sub.startDate, sub.endDate, sub.current)}
+                      </span>
+                      <span className="text-slate-800 dark:text-slate-200 font-medium">
+                        {sub.title || sub.description || "Subperíodo"}
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveSubperiod(sub.id)}
+                      className="text-rose-500 hover:text-rose-700 p-1 cursor-pointer"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <div className="bg-slate-50 dark:bg-slate-950 p-3 rounded-lg space-y-2">
+              <input
+                type="text"
+                placeholder="Título do subperíodo (e.g. Caracterização de meios ativos)"
+                value={newSubTitle}
+                onChange={(e) => setNewSubTitle(e.target.value)}
+                className="w-full rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-2.5 py-1.5 text-xs text-slate-900 dark:text-white"
+              />
+              <div className="grid grid-cols-2 gap-2">
+                <input
+                  type="text"
+                  placeholder="Início (AAAA-MM)"
+                  value={newSubStart}
+                  onChange={(e) => setNewSubStart(e.target.value)}
+                  className="w-full rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-2.5 py-1.5 text-xs text-slate-900 dark:text-white"
+                />
+                <input
+                  type="text"
+                  disabled={newSubCurrent}
+                  placeholder="Fim (AAAA-MM)"
+                  value={newSubEnd}
+                  onChange={(e) => setNewSubEnd(e.target.value)}
+                  className="w-full rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-2.5 py-1.5 text-xs text-slate-900 dark:text-white disabled:opacity-50"
+                />
+              </div>
+              <div className="flex items-center justify-between">
+                <label className="flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-400 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={newSubCurrent}
+                    onChange={(e) => setNewSubCurrent(e.target.checked)}
+                    className="rounded border-slate-300 text-indigo-600"
+                  />
+                  <span>Atual</span>
+                </label>
+                <button
+                  type="button"
+                  onClick={handleAddSubperiod}
+                  className="px-2.5 py-1 rounded bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold hover:bg-slate-300 cursor-pointer"
+                >
+                  + Adicionar subperíodo
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Competências / Chips */}
+          <div>
+            <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
+              Competências / Chips (separadas por vírgula)
+            </label>
+            <input
+              type="text"
+              value={skillInput}
+              onChange={(e) => setSkillInput(e.target.value)}
+              placeholder="Python, PyVISA, Óptica ultrarrápida, Automação"
+              className="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-slate-900 dark:text-white"
+            />
+          </div>
+
+          <div className="flex justify-end gap-2 pt-3 border-t border-slate-200 dark:border-slate-800">
             <button
               type="button"
               onClick={() => setIsExpModalOpen(false)}
-              className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-50"
+              className="rounded-lg border border-slate-300 dark:border-slate-700 px-4 py-2 font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
             >
-              {language === "en" ? "Cancel" : "Cancelar"}
+              Cancelar
             </button>
             <button
               type="submit"
-              className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-xs transition-colors hover:bg-indigo-700"
+              className="rounded-lg bg-indigo-600 px-4 py-2 font-medium text-white hover:bg-indigo-700 cursor-pointer"
             >
-              {language === "en" ? "Save Experience" : "Salvar Experiência"}
+              Salvar
             </button>
           </div>
         </form>
       </EditModal>
 
-      {/* Education Form Modal */}
+      {/* --- ACADEMIC ACTIVITY MODAL --- */}
       <EditModal
-        isOpen={isEduModalOpen}
-        onClose={() => setIsEduModalOpen(false)}
-        title={editingEdu ? (language === "en" ? "Edit Education or Course" : "Editar Formação ou Curso") : (language === "en" ? "Add Education or Course" : "Adicionar Formação ou Curso")}
-        size="xl"
+        isOpen={isActModalOpen}
+        onClose={() => setIsActModalOpen(false)}
+        title={
+          editingAct
+            ? language === "en" ? "Edit Academic Activity" : "Editar Atividade Acadêmica"
+            : language === "en" ? "Add Academic Activity" : "Adicionar Atividade Acadêmica"
+        }
       >
-        <form onSubmit={handleEduSubmit} className="space-y-4">
-          
-          {/* Editing Language Toggle */}
-          <div className="bg-slate-50 p-3 rounded-2xl border border-slate-200/60 mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <form onSubmit={handleActSubmit} className="space-y-4 text-xs font-sans">
+          <div>
+            <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
+              Nome da Atividade *
+            </label>
+            <input
+              type="text"
+              required
+              value={actForm.name || ""}
+              onChange={(e) => setActForm((prev) => ({ ...prev, name: e.target.value }))}
+              placeholder="e.g. Nexus / Monitoria / Projeto de extensão"
+              className="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-slate-900 dark:text-white"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
             <div>
-              <p className="text-xs font-bold text-slate-700 font-sans">
-                {language === "en" ? "Language under Editing" : "Idioma em Edição"}
-              </p>
-              <p className="text-[10px] text-slate-400 font-sans">
-                {language === "en" 
-                  ? "Toggle to specify contents in Portuguese or English" 
-                  : "Alterne para preencher as informações em Português ou Inglês"}
-              </p>
+              <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                Data/Ano Inicial
+              </label>
+              <input
+                type="text"
+                value={actForm.startDate || ""}
+                onChange={(e) => setActForm((prev) => ({ ...prev, startDate: e.target.value }))}
+                placeholder="2024"
+                className="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-slate-900 dark:text-white"
+              />
             </div>
-            <div className="bg-slate-200/70 p-1 rounded-xl flex gap-1 self-start sm:self-auto shrink-0 font-sans">
-              <button
-                type="button"
-                onClick={() => setEditingLanguage("pt")}
-                className={`rounded-lg px-3 py-1.5 text-xs font-bold transition-all flex items-center gap-1 cursor-pointer ${
-                  editingLanguage === "pt"
-                    ? "bg-white text-indigo-600 shadow-sm"
-                    : "text-slate-500 hover:text-slate-950"
-                }`}
-              >
-                PT
-              </button>
-              <button
-                type="button"
-                onClick={() => setEditingLanguage("en")}
-                className={`rounded-lg px-3 py-1.5 text-xs font-bold transition-all flex items-center gap-1 cursor-pointer ${
-                  editingLanguage === "en"
-                    ? "bg-white text-indigo-600 shadow-sm"
-                    : "text-slate-500 hover:text-slate-950"
-                }`}
-              >
-                EN
-              </button>
+            <div>
+              <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                Data/Ano Final
+              </label>
+              <input
+                type="text"
+                disabled={actForm.current}
+                value={actForm.current ? "" : actForm.endDate || ""}
+                onChange={(e) => setActForm((prev) => ({ ...prev, endDate: e.target.value }))}
+                placeholder="2025"
+                className="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-slate-900 dark:text-white disabled:opacity-50"
+              />
             </div>
           </div>
 
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              id="act-current"
+              checked={actForm.current || false}
+              onChange={(e) => setActForm((prev) => ({ ...prev, current: e.target.checked }))}
+              className="rounded border-slate-300 text-indigo-600"
+            />
+            <label htmlFor="act-current" className="text-slate-700 dark:text-slate-300 font-medium cursor-pointer">
+              Atividade atual (presente)
+            </label>
+          </div>
+
+          <div>
+            <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
+              Descrição Curta (Linha única por design) *
+            </label>
+            <input
+              type="text"
+              required
+              value={actForm.description || ""}
+              onChange={(e) => setActForm((prev) => ({ ...prev, description: e.target.value }))}
+              placeholder="Coordenação do grupo de estudos"
+              className="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-slate-900 dark:text-white"
+            />
+          </div>
+
+          <div>
+            <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
+              Conteúdo Extra (Opcional — habilita expansão do bloco)
+            </label>
+            <textarea
+              rows={3}
+              value={actForm.extraContent || ""}
+              onChange={(e) => setActForm((prev) => ({ ...prev, extraContent: e.target.value }))}
+              placeholder="Detalhes adicionais, projetos ou links relacionados..."
+              className="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-slate-900 dark:text-white"
+            />
+          </div>
+
+          <div className="flex justify-end gap-2 pt-3 border-t border-slate-200 dark:border-slate-800">
+            <button
+              type="button"
+              onClick={() => setIsActModalOpen(false)}
+              className="rounded-lg border border-slate-300 dark:border-slate-700 px-4 py-2 font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              className="rounded-lg bg-indigo-600 px-4 py-2 font-medium text-white hover:bg-indigo-700 cursor-pointer"
+            >
+              Salvar
+            </button>
+          </div>
+        </form>
+      </EditModal>
+
+      {/* --- EDUCATION MODAL --- */}
+      <EditModal
+        isOpen={isEduModalOpen}
+        onClose={() => setIsEduModalOpen(false)}
+        title={
+          editingEdu
+            ? language === "en" ? "Edit Education" : "Editar Formação"
+            : language === "en" ? "Add Education" : "Adicionar Formação"
+        }
+      >
+        <form onSubmit={handleEduSubmit} className="space-y-4 text-xs font-sans">
+          <div>
+            <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
+              Instituição *
+            </label>
+            <input
+              type="text"
+              required
+              value={eduForm.institution || ""}
+              onChange={(e) => setEduForm((prev) => ({ ...prev, institution: e.target.value }))}
+              placeholder="e.g. Universidade de São Paulo (USP)"
+              className="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-slate-900 dark:text-white"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 font-mono mb-1">
-                {language === "en" ? "Institution Name *" : "Nome da Instituição *"}
+              <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                Grau *
               </label>
               <input
                 type="text"
                 required
-                value={eduForm.institution || ""}
-                onChange={(e) => setEduForm({ ...eduForm, institution: e.target.value })}
-                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-800 focus:border-indigo-500 focus:outline-hidden"
+                value={eduForm.degree || ""}
+                onChange={(e) => setEduForm((prev) => ({ ...prev, degree: e.target.value }))}
+                placeholder="Bacharelado"
+                className="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-slate-900 dark:text-white"
               />
             </div>
-            {editingLanguage === "pt" ? (
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 font-mono mb-1">
-                  Curso / Campo de Estudo * (Português)
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="Ex: Engenharia de Software, Física"
-                  value={eduForm.fieldOfStudy || ""}
-                  onChange={(e) => setEduForm({ ...eduForm, fieldOfStudy: e.target.value })}
-                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-800 focus:border-indigo-500 focus:outline-hidden"
-                />
-              </div>
-            ) : (
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 font-mono mb-1">
-                  Course / Field of Study * (English)
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="Ex: Software Engineering, Physics"
-                  value={eduForm.fieldOfStudyEn || ""}
-                  onChange={(e) => setEduForm({ ...eduForm, fieldOfStudyEn: e.target.value })}
-                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-800 focus:border-indigo-500 focus:outline-hidden"
-                />
-              </div>
-            )}
+            <div>
+              <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                Curso / Área *
+              </label>
+              <input
+                type="text"
+                required
+                value={eduForm.fieldOfStudy || ""}
+                onChange={(e) => setEduForm((prev) => ({ ...prev, fieldOfStudy: e.target.value }))}
+                placeholder="Engenharia Física"
+                className="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-slate-900 dark:text-white"
+              />
+            </div>
           </div>
 
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-            {editingLanguage === "pt" ? (
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 font-mono mb-1">
-                  Grau Acadêmico / Tipo * (Português)
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="Ex: Bacharelado, Mestrado, Certificação"
-                  value={eduForm.degree || ""}
-                  onChange={(e) => setEduForm({ ...eduForm, degree: e.target.value })}
-                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-800 focus:border-indigo-500 focus:outline-hidden"
-                />
-              </div>
-            ) : (
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 font-mono mb-1">
-                  Academic Degree / Type * (English)
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="Ex: Bachelor's, Master's, Certification"
-                  value={eduForm.degreeEn || ""}
-                  onChange={(e) => setEduForm({ ...eduForm, degreeEn: e.target.value })}
-                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-800 focus:border-indigo-500 focus:outline-hidden"
-                />
-              </div>
-            )}
+          <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 font-mono mb-1">
-                {language === "en" ? "Start Month/Year *" : "Mês/Ano de Início *"}
+              <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                Início
               </label>
               <input
-                type="month"
-                required
+                type="text"
                 value={eduForm.startDate || ""}
-                onChange={(e) => setEduForm({ ...eduForm, startDate: e.target.value })}
-                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-800 focus:border-indigo-500 focus:outline-hidden"
+                onChange={(e) => setEduForm((prev) => ({ ...prev, startDate: e.target.value }))}
+                placeholder="2022-03"
+                className="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-slate-900 dark:text-white"
               />
             </div>
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 font-mono mb-1">
-                {language === "en" ? "End Month/Year" : "Mês/Ano de Conclusão"}
+              <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                Fim
               </label>
               <input
-                type="month"
-                required={!eduForm.current}
+                type="text"
                 disabled={eduForm.current}
                 value={eduForm.current ? "" : eduForm.endDate || ""}
-                onChange={(e) => setEduForm({ ...eduForm, endDate: e.target.value })}
-                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-800 focus:border-indigo-500 focus:outline-hidden disabled:bg-slate-50"
+                onChange={(e) => setEduForm((prev) => ({ ...prev, endDate: e.target.value }))}
+                placeholder="2027-12"
+                className="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-slate-900 dark:text-white disabled:opacity-50"
               />
             </div>
           </div>
@@ -776,69 +1316,42 @@ export default function ExperienceEducationSection({
               type="checkbox"
               id="edu-current"
               checked={eduForm.current || false}
-              onChange={(e) => setEduForm({ ...eduForm, current: e.target.checked })}
-              className="rounded text-indigo-600 focus:ring-indigo-500"
+              onChange={(e) => setEduForm((prev) => ({ ...prev, current: e.target.checked }))}
+              className="rounded border-slate-300 text-indigo-600"
             />
-            <label htmlFor="edu-current" className="text-xs font-semibold text-slate-600 font-mono uppercase tracking-wider cursor-pointer select-none">
-              {language === "en" ? "I am currently studying this" : "Estou cursando atualmente"}
+            <label htmlFor="edu-current" className="text-slate-700 dark:text-slate-300 font-medium cursor-pointer">
+              Em andamento
             </label>
           </div>
 
-          {editingLanguage === "pt" ? (
-            <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 font-mono mb-1">
-                Detalhes / Descrição Curta (Opcional) (Português)
-              </label>
-              <textarea
-                rows={5}
-                placeholder="Principais focos, prêmios ou disciplinas relevantes..."
-                value={eduForm.description || ""}
-                onChange={(e) => setEduForm({ ...eduForm, description: e.target.value })}
-                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-800 focus:border-indigo-500 focus:outline-hidden resize-y"
-              />
-            </div>
-          ) : (
-            <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 font-mono mb-1">
-                Details / Short Description (Optional) (English)
-              </label>
-              <textarea
-                rows={5}
-                placeholder="Main focus, awards or relevant subjects in English..."
-                value={eduForm.descriptionEn || ""}
-                onChange={(e) => setEduForm({ ...eduForm, descriptionEn: e.target.value })}
-                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-800 focus:border-indigo-500 focus:outline-hidden resize-y"
-              />
-            </div>
-          )}
-
-          <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
+          <div className="flex justify-end gap-2 pt-3 border-t border-slate-200 dark:border-slate-800">
             <button
               type="button"
               onClick={() => setIsEduModalOpen(false)}
-              className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-50"
+              className="rounded-lg border border-slate-300 dark:border-slate-700 px-4 py-2 font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
             >
-              {language === "en" ? "Cancel" : "Cancelar"}
+              Cancelar
             </button>
             <button
               type="submit"
-              className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-xs transition-colors hover:bg-indigo-700"
+              className="rounded-lg bg-indigo-600 px-4 py-2 font-medium text-white hover:bg-indigo-700 cursor-pointer"
             >
-              {language === "en" ? "Save Education" : "Salvar Formação"}
+              Salvar
             </button>
           </div>
         </form>
       </EditModal>
 
+      {/* CONFIRM MODAL */}
       <ConfirmModal
         isOpen={confirmOpen}
         onClose={() => setConfirmOpen(false)}
-        onConfirm={confirmCallback || (() => {})}
+        onConfirm={() => {
+          if (confirmCallback) confirmCallback();
+          setConfirmOpen(false);
+        }}
         title={confirmTitle}
         message={confirmMessage}
-        confirmText={language === "en" ? "Delete" : "Excluir"}
-        cancelText={language === "en" ? "Cancel" : "Cancelar"}
-        type="danger"
       />
     </div>
   );

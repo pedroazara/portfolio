@@ -127,23 +127,60 @@ export const initialResumeData: ResumeData = {
   experiences: [
     {
       id: "exp-1",
-      company: "Laboratório de Óptica Não-Linear - USP",
-      role: "Iniciação Científica (Pesquisador Bolsista)",
-      location: "São Paulo, SP",
+      company: "CNPq · Universidade Federal de Lavras",
+      role: "Iniciação científica — pesquisador bolsista",
+      location: "Lavras, MG · bolsista",
       startDate: "2023-08",
       endDate: "",
       current: true,
-      description: "Atuo no alinhamento de cavidades de lasers de femtossegundos, caracterização de meios ativos transparentes e automação completa da varredura de estágios motorizados de translação microscópica. Escrevi drivers Python (com PyVISA e bibliotecas nativas de USB) para osciloscópios, espectrômetros e matrizes CCD, centralizando o controle experimental."
+      description: "Alinhamento de cavidades de lasers de femtossegundos e caracterização de meios ativos transparentes. Automação completa da varredura de estágios motorizados de translação microscópica, com drivers em Python para osciloscópios, espectrômetros e matrizes CCD.",
+      type: "research",
+      skills: ["Python", "PyVISA", "Óptica ultrarrápida", "Automação de instrumentação"],
+      subperiods: [
+        {
+          id: "sub-1",
+          startDate: "2023-08",
+          endDate: "2025-09",
+          title: "Caracterização de meios ativos e instrumentação do laboratório",
+          description: "Caracterização de meios ativos e instrumentação do laboratório"
+        },
+        {
+          id: "sub-2",
+          startDate: "2025-09",
+          current: true,
+          title: "Renovação de bolsa",
+          description: ""
+        }
+      ]
+    }
+  ],
+  academicActivities: [
+    {
+      id: "act-1",
+      name: "Nexus",
+      startDate: "2024",
+      current: true,
+      description: "Coordenação do grupo de estudos"
     },
     {
-      id: "exp-2",
-      company: "PhysTech - Sensores & Metrologia Avançada",
-      role: "Estagiário de P&D Hardware e Firmware",
-      location: "São Carlos, SP (Híbrido)",
-      startDate: "2022-09",
-      endDate: "2023-07",
-      current: false,
-      description: "Desenvolvimento de firmwares embarcados (C/C++) para placas microcontroladas (ESP32) de monitoramento de sensores de pressão piezoelétricos. Colaborei no desenho de esquemáticos eletrônicos e na calibração fina de módulos analógico-digitais de alta amostragem."
+      id: "act-2",
+      name: "Núcleo de estudos",
+      startDate: "2023",
+      endDate: "2024",
+      description: "Uma linha sobre o foco do grupo"
+    },
+    {
+      id: "act-3",
+      name: "Monitoria",
+      startDate: "2025",
+      description: "Disciplina e carga horária"
+    },
+    {
+      id: "act-4",
+      name: "Projeto de extensão",
+      startDate: "2024",
+      current: true,
+      description: "Uma linha sobre a atuação"
     }
   ],
   educations: [

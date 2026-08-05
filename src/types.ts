@@ -43,6 +43,22 @@ export interface Project {
   blogPostId?: string; // Link direto para um artigo do blog
 }
 
+export interface Subperiod {
+  id: string;
+  startDate: string;
+  endDate?: string;
+  current?: boolean;
+  title: string;
+  titleEn?: string;
+  description?: string;
+  descriptionEn?: string;
+}
+
+export interface ExperienceLink {
+  title: string;
+  url: string;
+}
+
 export interface Experience {
   id: string;
   company: string;
@@ -52,10 +68,28 @@ export interface Experience {
   location?: string;
   locationEn?: string;
   startDate: string;
-  endDate: string;
-  current: boolean;
+  endDate?: string;
+  current?: boolean;
   description: string;
   descriptionEn?: string;
+  type?: "research" | "academic";
+  skills?: string[];
+  subperiods?: Subperiod[];
+  links?: ExperienceLink[];
+}
+
+export interface AcademicActivity {
+  id: string;
+  name: string;
+  nameEn?: string;
+  startDate: string;
+  endDate?: string;
+  current?: boolean;
+  description: string;
+  descriptionEn?: string;
+  extraContent?: string;
+  extraContentEn?: string;
+  links?: ExperienceLink[];
 }
 
 export interface Education {
@@ -115,6 +149,7 @@ export interface ResumeData {
   categories: ProjectCategory[];
   projects: Project[];
   experiences: Experience[];
+  academicActivities?: AcademicActivity[];
   educations: Education[];
   skills: Skill[];
   courses?: Course[];

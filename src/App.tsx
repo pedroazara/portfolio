@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { ResumeData, Profile, Project, ProjectCategory, Experience, Education, Skill, Course, BlogPost } from "./types";
+import { ResumeData, Profile, Project, ProjectCategory, Experience, AcademicActivity, Education, Skill, Course, BlogPost } from "./types";
 import { initialResumeData } from "./data/initialData";
 import ResumeHeader from "./components/ResumeHeader";
 import ProjectSection from "./components/ProjectSection";
@@ -48,6 +48,7 @@ const sanitizeResumeData = (data: any): ResumeData => {
     categories: Array.isArray(data?.categories) ? data.categories : (initialResumeData.categories || []),
     projects: Array.isArray(data?.projects) ? data.projects : (initialResumeData.projects || []),
     experiences: Array.isArray(data?.experiences) ? data.experiences : (initialResumeData.experiences || []),
+    academicActivities: Array.isArray(data?.academicActivities) ? data.academicActivities : (initialResumeData.academicActivities || []),
     educations: Array.isArray(data?.educations) ? data.educations : (initialResumeData.educations || []),
     skills: Array.isArray(data?.skills) ? data.skills : (initialResumeData.skills || []),
     courses: Array.isArray(data?.courses) ? data.courses : (initialResumeData.courses || []),
@@ -357,6 +358,10 @@ export default function App() {
     setResumeData((prev) => ({ ...prev, experiences: updatedExp }));
   };
 
+  const handleUpdateAcademicActivities = (updatedAct: AcademicActivity[]) => {
+    setResumeData((prev) => ({ ...prev, academicActivities: updatedAct }));
+  };
+
   const handleUpdateEducations = (updatedEdu: Education[]) => {
     setResumeData((prev) => ({ ...prev, educations: updatedEdu }));
   };
@@ -482,6 +487,18 @@ export default function App() {
               language={language}
             />
 
+            {/* Academic Background & Research Experience Sections */}
+            <ExperienceEducationSection
+              experiences={resumeData.experiences}
+              academicActivities={resumeData.academicActivities || []}
+              educations={resumeData.educations}
+              isEditMode={isEditMode}
+              onUpdateExperiences={handleUpdateExperiences}
+              onUpdateAcademicActivities={handleUpdateAcademicActivities}
+              onUpdateEducations={handleUpdateEducations}
+              language={language}
+            />
+
             {/* Project Showcase Section grouped by Different Areas */}
             <ProjectSection
               projects={resumeData.projects}
@@ -496,16 +513,6 @@ export default function App() {
               onSelectProject={handleSelectProject}
               searchQuery={searchQuery}
               onSearchChange={setSearchQuery}
-            />
-
-            {/* Dual Timeline (Experiences & Educations) */}
-            <ExperienceEducationSection
-              experiences={resumeData.experiences}
-              educations={resumeData.educations}
-              isEditMode={isEditMode}
-              onUpdateExperiences={handleUpdateExperiences}
-              onUpdateEducations={handleUpdateEducations}
-              language={language}
             />
 
             {/* Courses & Certifications Section */}
