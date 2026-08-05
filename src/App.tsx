@@ -80,12 +80,7 @@ export default function App() {
   // Load initial resume state from localStorage or template
   const [resumeData, setResumeData] = useState<ResumeData>(initialResumeData);
 
-  // Synchronize browser tab title dynamically with the profile name and language
-  useEffect(() => {
-    const name = resumeData?.profile?.name || "Pedro Henrique Almeida";
-    const titleSuffix = language === "en" ? "Portfolio & Blog" : "Currículo, Portfólio & Blog";
-    document.title = `${name} | ${titleSuffix}`;
-  }, [resumeData?.profile?.name, language]);
+  // Title effect handled dynamically by route meta effect below
 
   // Fetch initial data from Firestore or fallback to localStorage
   useEffect(() => {
@@ -194,6 +189,45 @@ export default function App() {
     navigate(`/blog/${encodeURIComponent(postId)}`);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
+
+  // Dynamic client-side document title, canonical link, and meta description synchronization
+  useEffect(() => {
+    const name = resumeData?.profile?.name || "Pedro Henrique Almeida";
+    let title = `${name} | Currículo, Portfólio & Blog`;
+    let description = resumeData?.profile?.bio || "";
+
+    if (location.pathname === "/curriculo") {
+      title = `Currículo | ${name}`;
+      description = `Currículo acadêmico e profissional de ${name} - Engenharia Física UFLA, Óptica e Instrumentação Científica.`;
+    } else if (location.pathname === "/blog") {
+      title = `Blog & Artigos | ${name}`;
+      description = "Artigos e notas técnicas sobre física computacional, óptica ultrarrápida, instrumentação e automação experimental.";
+    } else if (selectedBlogPostId) {
+      const post = resumeData.posts.find((p) => p.id === selectedBlogPostId);
+      if (post) {
+        title = `${language === "en" ? post.titleEn || post.title : post.title} | Blog de ${name}`;
+        description = (language === "en" ? post.summaryEn || post.summary : post.summary) || description;
+      }
+    } else if (selectedProjectId) {
+      const proj = resumeData.projects.find((p) => p.id === selectedProjectId);
+      if (proj) {
+        title = `${language === "en" ? proj.titleEn || proj.title : proj.title} | Projetos de ${name}`;
+        description = proj.description || description;
+      }
+    }
+
+    document.title = title;
+
+    const metaDesc = document.querySelector('meta[name="description"]');
+    if (metaDesc) {
+      metaDesc.setAttribute("content", description);
+    }
+
+    let canonical = document.querySelector('link[rel="canonical"]');
+    if (canonical) {
+      canonical.setAttribute("href", `https://pedroazara.vercel.app${location.pathname}`);
+    }
+  }, [location.pathname, selectedBlogPostId, selectedProjectId, resumeData, language]);
 
   // Sync resumeData changes with LocalStorage and Firestore (if authenticated)
   useEffect(() => {
