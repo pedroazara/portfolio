@@ -2,12 +2,9 @@ import { jsPDF } from "jspdf";
 import { ResumeData } from "../types";
 
 /**
- * Generates a high-fidelity, professional Curriculum Vitae PDF from resume data.
- * Features vector-drawn headers, standard margins, structured sections, word-wrapping,
- * and robust multi-page overflow page-breaking.
- */
-/**
  * Creates and returns the jsPDF document instance for the CV.
+ * Optimized for Latin-1 encoding (no non-Latin Unicode glyphs like stars or bullets),
+ * clean word-wrapping, active clickable links, and ATS compatibility.
  */
 export function createResumePDFDoc(data?: ResumeData): jsPDF | null {
   if (!data || !data.profile) {
@@ -78,26 +75,22 @@ export function createResumePDFDoc(data?: ResumeData): jsPDF | null {
     y += 6;
   }
 
-  // Contact Grid - Simple, compact contact metadata string
+  // Contact Grid - Simple, compact contact metadata string without trailing pipes
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8.5);
   doc.setTextColor(100, 116, 139); // slate-500
 
-  const contacts: string[] = [];
-  if (profile.location) contacts.push(profile.location);
-  if (profile.phone) contacts.push(profile.phone);
-  if (profile.email) contacts.push(profile.email);
-  if (profile.website) contacts.push(profile.website);
-  if (profile.linkedin) {
-    const cleanLinkedin = profile.linkedin.replace(/https?:\/\/(www\.)?/, "");
-    contacts.push(cleanLinkedin);
-  }
-  if (profile.github) {
-    const cleanGithub = profile.github.replace(/https?:\/\/(www\.)?/, "");
-    contacts.push(cleanGithub);
-  }
+  const rawContacts: (string | undefined)[] = [
+    profile.location,
+    profile.phone,
+    profile.email,
+    profile.website,
+    profile.linkedin ? profile.linkedin.replace(/^https?:\/\/(www\.)?/, "") : undefined,
+    profile.github ? profile.github.replace(/^https?:\/\/(www\.)?/, "") : undefined,
+  ];
+  const contacts = rawContacts.filter((item): item is string => Boolean(item && item.trim().length > 0));
 
-  // Draw contact strings grouped nicely
+  // Draw contact strings joined cleanly
   const contactText = contacts.join("  |  ");
   const contactLines = doc.splitTextToSize(contactText, CONTENT_WIDTH);
   
@@ -142,25 +135,44 @@ export function createResumePDFDoc(data?: ResumeData): jsPDF | null {
 
     sortedExp.forEach((exp, idx) => {
       ensureSpace(18); // Header of experience block
-      
-      // Role & Company
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(10.5);
-      doc.setTextColor(15, 23, 42); // slate-900
-      doc.text(`${exp.role} — ${exp.company}`, MARGIN_LEFT, y);
-      
-      // Date and location line (right aligned or on the same line)
+
+      const dateStr = `${exp.startDate} - ${exp.current ? "Presente" : exp.endDate}`;
+      const locationStr = exp.location ? ` | ${exp.location}` : "";
+      const metaStr = `${dateStr}${locationStr}`;
+
       doc.setFont("helvetica", "normal");
       doc.setFontSize(8.5);
       doc.setTextColor(100, 116, 139); // slate-500
-      
-      const dateStr = `${exp.startDate} – ${exp.current ? "Presente" : exp.endDate}`;
-      const locationStr = exp.location ? ` | ${exp.location}` : "";
-      const metaStr = `${dateStr}${locationStr}`;
-      
-      // Calculate right alignment for metaStr
       const metaWidth = doc.getTextWidth(metaStr);
+
+      const titleText = `${exp.role} - ${exp.company}`;
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(10.5);
+      doc.setTextColor(15, 23, 42); // slate-900
+
+      // Calculate max width for first line to prevent overlap with right-aligned meta
+      const maxTitleWidthLine1 = CONTENT_WIDTH - metaWidth - 4;
+      const titleLines = doc.splitTextToSize(titleText, maxTitleWidthLine1);
+
+      // Draw first line of title and right-aligned meta
+      doc.text(titleLines[0], MARGIN_LEFT, y);
+
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8.5);
+      doc.setTextColor(100, 116, 139);
       doc.text(metaStr, PAGE_WIDTH - MARGIN_RIGHT - metaWidth, y);
+
+      // Draw remaining lines of title if wrapped
+      if (titleLines.length > 1) {
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(10.5);
+        doc.setTextColor(15, 23, 42);
+        for (let i = 1; i < titleLines.length; i++) {
+          y += 4.5;
+          ensureSpace(4.5);
+          doc.text(titleLines[i], MARGIN_LEFT, y);
+        }
+      }
       
       y += 5;
 
@@ -197,22 +209,39 @@ export function createResumePDFDoc(data?: ResumeData): jsPDF | null {
     sortedEdu.forEach((edu, idx) => {
       ensureSpace(16);
 
-      // Degree, Field & Institution
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(10.5);
-      doc.setTextColor(15, 23, 42);
-      
-      const fieldStudy = edu.fieldOfStudy ? ` em ${edu.fieldOfStudy}` : "";
-      doc.text(`${edu.degree}${fieldStudy}`, MARGIN_LEFT, y);
-      
-      // Dates right aligned
+      const dateStr = `${edu.startDate} - ${edu.current ? "Presente" : edu.endDate}`;
       doc.setFont("helvetica", "normal");
       doc.setFontSize(8.5);
       doc.setTextColor(100, 116, 139);
-      
-      const dateStr = `${edu.startDate} – ${edu.current ? "Presente" : edu.endDate}`;
       const dateWidth = doc.getTextWidth(dateStr);
+
+      const fieldStudy = edu.fieldOfStudy ? ` em ${edu.fieldOfStudy}` : "";
+      const degreeField = `${edu.degree}${fieldStudy}`;
+
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(10.5);
+      doc.setTextColor(15, 23, 42);
+
+      const maxTitleWidthLine1 = CONTENT_WIDTH - dateWidth - 4;
+      const titleLines = doc.splitTextToSize(degreeField, maxTitleWidthLine1);
+
+      doc.text(titleLines[0], MARGIN_LEFT, y);
+
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8.5);
+      doc.setTextColor(100, 116, 139);
       doc.text(dateStr, PAGE_WIDTH - MARGIN_RIGHT - dateWidth, y);
+
+      if (titleLines.length > 1) {
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(10.5);
+        doc.setTextColor(15, 23, 42);
+        for (let i = 1; i < titleLines.length; i++) {
+          y += 4.5;
+          ensureSpace(4.5);
+          doc.text(titleLines[i], MARGIN_LEFT, y);
+        }
+      }
 
       y += 4.5;
 
@@ -220,8 +249,12 @@ export function createResumePDFDoc(data?: ResumeData): jsPDF | null {
       doc.setFont("helvetica", "bold");
       doc.setFontSize(9.5);
       doc.setTextColor(79, 70, 229); // Indigo
-      doc.text(edu.institution, MARGIN_LEFT, y);
-      y += 4.5;
+      const instLines = doc.splitTextToSize(edu.institution, CONTENT_WIDTH);
+      for (const line of instLines) {
+        ensureSpace(4.5);
+        doc.text(line, MARGIN_LEFT, y);
+        y += 4.5;
+      }
 
       // Short Description
       if (edu.description && edu.description.trim().length > 0) {
@@ -242,86 +275,117 @@ export function createResumePDFDoc(data?: ResumeData): jsPDF | null {
   }
 
   // ==========================================
-  // 5. PROJETOS RELEVANTES
+  // 5. PROJETOS RELEVANTES (Apenas Resumo e Link do Post no Blog)
   // ==========================================
-  const featuredProjects = data.projects ? data.projects.filter(p => p.featured) : [];
-  const projectsToRender = featuredProjects.length > 0 ? featuredProjects : (data.projects || []);
+  if (data.projects && data.projects.length > 0) {
+    const featuredProjects = data.projects.filter(p => p.featured);
+    const candidateProjects = featuredProjects.length > 0 ? featuredProjects : data.projects;
+    // Limit to top 3 or 4 main projects
+    const projectsToRender = candidateProjects.slice(0, 4);
 
-  if (projectsToRender.length > 0) {
-    renderSectionHeader("Projetos Relevantes");
+    if (projectsToRender.length > 0) {
+      renderSectionHeader("Projetos Relevantes");
 
-    projectsToRender.forEach((proj, idx) => {
-      ensureSpace(18);
+      const origin = typeof window !== "undefined" ? window.location.origin : "https://pedroazara.dev";
 
-      // Project Title
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(10.5);
-      doc.setTextColor(15, 23, 42);
-      
-      // Add featured badge indicator in text if featured
-      const isFeatured = proj.featured ? " [Destaque]" : "";
-      doc.text(`${proj.title}${isFeatured}`, MARGIN_LEFT, y);
+      projectsToRender.forEach((proj, idx) => {
+        ensureSpace(18);
 
-      // Links (Github / URL if any)
-      const projectLinks: string[] = [];
-      if (proj.projectUrl) projectLinks.push(proj.projectUrl.replace(/https?:\/\/(www\.)?/, ""));
-      if (proj.githubUrl) projectLinks.push(`github.com/${proj.githubUrl.replace(/https?:\/\/(www\.)?github\.com\//, "")}`);
-      
-      if (projectLinks.length > 0) {
-        doc.setFont("helvetica", "normal");
-        doc.setFontSize(8);
-        doc.setTextColor(100, 116, 139);
-        const linkStr = projectLinks.join("  |  ");
-        const linkWidth = doc.getTextWidth(linkStr);
-        doc.text(linkStr, PAGE_WIDTH - MARGIN_RIGHT - linkWidth, y);
-      }
-
-      y += 4.5;
-
-      // Project Tags / Technologies
-      if (proj.tags && proj.tags.length > 0) {
-        doc.setFont("helvetica", "normal");
-        doc.setFontSize(8);
-        doc.setTextColor(79, 70, 229); // Indigo
-        doc.text(`Tecnologias: ${proj.tags.join(", ")}`, MARGIN_LEFT, y);
-        y += 4;
-      }
-
-      // Description
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(9);
-      doc.setTextColor(51, 65, 85);
-
-      const mainDesc = proj.detailedDescription || proj.description;
-      const descLines = doc.splitTextToSize(mainDesc.trim(), CONTENT_WIDTH);
-      for (const line of descLines) {
-        ensureSpace(4.5);
-        doc.text(line, MARGIN_LEFT, y);
-        y += 4.5;
-      }
-
-      // Scientific relevance
-      if (proj.scientificRelevance && proj.scientificRelevance.trim().length > 0) {
-        ensureSpace(8);
-        y += 1;
-        doc.setFont("helvetica", "italic");
-        doc.setFontSize(8.5);
-        doc.setTextColor(71, 85, 105); // slate-600
-        
-        const scientificLines = doc.splitTextToSize(`Relevância Científica: ${proj.scientificRelevance.trim()}`, CONTENT_WIDTH);
-        for (const line of scientificLines) {
-          ensureSpace(4);
-          doc.text(line, MARGIN_LEFT, y);
-          y += 4;
+        // Determine Blog Post URL (link strictly to the blog post, NOT project/site URL)
+        let blogPostUrl: string | undefined = undefined;
+        if (proj.blogPostId) {
+          blogPostUrl = `${origin}/blog/${proj.blogPostId}`;
+        } else if (data.posts && data.posts.length > 0) {
+          const matchedPost = data.posts.find(p => p.id === proj.id || p.id === proj.blogPostId);
+          if (matchedPost) {
+            blogPostUrl = `${origin}/blog/${matchedPost.id}`;
+          }
         }
-      }
 
-      y += (idx < projectsToRender.length - 1) ? 5 : 3;
-    });
+        const projectTitle = `${proj.title}${proj.featured ? " [Destaque]" : ""}`;
+        const rightLabel = blogPostUrl ? "Ver Post no Blog" : "";
+
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(8);
+        doc.setTextColor(79, 70, 229);
+        const metaWidth = rightLabel ? doc.getTextWidth(rightLabel) : 0;
+
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(10.5);
+        doc.setTextColor(30, 58, 138); // Navy blue accent for link title
+
+        const maxTitleWidthLine1 = metaWidth > 0 ? (CONTENT_WIDTH - metaWidth - 5) : CONTENT_WIDTH;
+        const titleLines = doc.splitTextToSize(projectTitle, maxTitleWidthLine1);
+
+        // Draw line 1 of title
+        if (blogPostUrl) {
+          doc.textWithLink(titleLines[0], MARGIN_LEFT, y, { url: blogPostUrl });
+        } else {
+          doc.text(titleLines[0], MARGIN_LEFT, y);
+        }
+
+        // Display "Ver Post no Blog" on the right if blog post link exists
+        if (blogPostUrl && rightLabel) {
+          doc.setFont("helvetica", "normal");
+          doc.setFontSize(8);
+          doc.setTextColor(79, 70, 229);
+          doc.textWithLink(rightLabel, PAGE_WIDTH - MARGIN_RIGHT - metaWidth, y, { url: blogPostUrl });
+        }
+
+        // Draw subsequent lines of title if wrapped
+        if (titleLines.length > 1) {
+          doc.setFont("helvetica", "bold");
+          doc.setFontSize(10.5);
+          doc.setTextColor(30, 58, 138); // Navy blue accent for title
+          for (let i = 1; i < titleLines.length; i++) {
+            y += 4.5;
+            ensureSpace(4.5);
+            if (blogPostUrl) {
+              doc.textWithLink(titleLines[i], MARGIN_LEFT, y, { url: blogPostUrl });
+            } else {
+              doc.text(titleLines[i], MARGIN_LEFT, y);
+            }
+          }
+        }
+
+        y += 4.5;
+
+        // Project Tags / Technologies
+        if (proj.tags && proj.tags.length > 0) {
+          doc.setFont("helvetica", "normal");
+          doc.setFontSize(8);
+          doc.setTextColor(100, 116, 139); // Slate-500
+          const techText = `Tecnologias: ${proj.tags.join(", ")}`;
+          const techLines = doc.splitTextToSize(techText, CONTENT_WIDTH);
+          for (const line of techLines) {
+            ensureSpace(4);
+            doc.text(line, MARGIN_LEFT, y);
+            y += 4;
+          }
+        }
+
+        // Resumo Apenas (Usando proj.description curto, nunca texto completo)
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(9);
+        doc.setTextColor(51, 65, 85);
+
+        const summaryText = proj.description || "";
+        if (summaryText.trim().length > 0) {
+          const descLines = doc.splitTextToSize(summaryText.trim(), CONTENT_WIDTH);
+          for (const line of descLines) {
+            ensureSpace(4.5);
+            doc.text(line, MARGIN_LEFT, y);
+            y += 4.5;
+          }
+        }
+
+        y += (idx < projectsToRender.length - 1) ? 4 : 3;
+      });
+    }
   }
 
   // ==========================================
-  // 6. HABILIDADES TÉCNICAS
+  // 6. HABILIDADES TÉCNICAS (Com Latin-1 Seguro sem caracteres inválidos)
   // ==========================================
   if (data.skills && data.skills.length > 0) {
     renderSectionHeader("Habilidades Técnicas");
@@ -332,9 +396,8 @@ export function createResumePDFDoc(data?: ResumeData): jsPDF | null {
       if (!groupedSkills[skill.category]) {
         groupedSkills[skill.category] = [];
       }
-      // Formatting skill name with level (percentage/stars indicator)
-      const levelStar = "★".repeat(skill.level) + "☆".repeat(5 - skill.level);
-      groupedSkills[skill.category].push(`${skill.name} (${levelStar})`);
+      // Formatting skill name with clean ASCII level representation to prevent encoding issues
+      groupedSkills[skill.category].push(`${skill.name} (${skill.level}/5)`);
     });
 
     Object.entries(groupedSkills).forEach(([category, skillsList], idx) => {
@@ -347,12 +410,12 @@ export function createResumePDFDoc(data?: ResumeData): jsPDF | null {
       doc.text(category, MARGIN_LEFT, y);
       y += 4;
 
-      // List skills inline or in a block
+      // List skills inline
       doc.setFont("helvetica", "normal");
       doc.setFontSize(8.5);
       doc.setTextColor(51, 65, 85); // Slate-700
       
-      const skillsLineText = skillsList.join("  •  ");
+      const skillsLineText = skillsList.join("  |  ");
       const skillLines = doc.splitTextToSize(skillsLineText, CONTENT_WIDTH);
       
       for (const line of skillLines) {
@@ -375,18 +438,38 @@ export function createResumePDFDoc(data?: ResumeData): jsPDF | null {
       ensureSpace(12);
 
       // Course Name
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(10);
-      doc.setTextColor(15, 23, 42);
-      doc.text(course.name, MARGIN_LEFT, y);
-
-      // Issue Date right aligned
+      const dateStr = course.issueDate || "";
       doc.setFont("helvetica", "normal");
       doc.setFontSize(8.5);
       doc.setTextColor(100, 116, 139);
-      const dateStr = course.issueDate;
-      const dateWidth = doc.getTextWidth(dateStr);
-      doc.text(dateStr, PAGE_WIDTH - MARGIN_RIGHT - dateWidth, y);
+      const dateWidth = dateStr ? doc.getTextWidth(dateStr) : 0;
+
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(10);
+      doc.setTextColor(15, 23, 42);
+
+      const maxTitleWidthLine1 = dateWidth > 0 ? (CONTENT_WIDTH - dateWidth - 4) : CONTENT_WIDTH;
+      const titleLines = doc.splitTextToSize(course.name, maxTitleWidthLine1);
+
+      doc.text(titleLines[0], MARGIN_LEFT, y);
+
+      if (dateStr && dateWidth > 0) {
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(8.5);
+        doc.setTextColor(100, 116, 139);
+        doc.text(dateStr, PAGE_WIDTH - MARGIN_RIGHT - dateWidth, y);
+      }
+
+      if (titleLines.length > 1) {
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(10);
+        doc.setTextColor(15, 23, 42);
+        for (let i = 1; i < titleLines.length; i++) {
+          y += 4.5;
+          ensureSpace(4.5);
+          doc.text(titleLines[i], MARGIN_LEFT, y);
+        }
+      }
 
       y += 4.5;
 
@@ -418,13 +501,21 @@ export function createResumePDFDoc(data?: ResumeData): jsPDF | null {
 }
 
 /**
- * Downloads the resume PDF directly.
+ * Downloads the resume PDF directly with ATS-optimized, accent-free filename.
+ * E.g.: Pedro-Henrique-Azara-de-Almeida-CV.pdf
  */
 export function generateResumePDF(data?: ResumeData) {
   const doc = createResumePDFDoc(data);
   if (!doc) return;
-  const userNameClean = data?.profile?.name ? data.profile.name.toLowerCase().replace(/\s+/g, "_") : "curriculo";
-  doc.save(`curriculo_vitae_${userNameClean}.pdf`);
+  const rawName = data?.profile?.name || "Pedro Henrique Azara de Almeida";
+  const cleanName = rawName
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "") // remove accents (Ázara -> Azara)
+    .replace(/[^a-zA-Z0-9]+/g, "-") // replace spaces and special chars with dashes
+    .replace(/^-+|-+$/g, "");      // trim leading/trailing dashes
+  
+  const fileName = `${cleanName || "Curriculo"}-CV.pdf`;
+  doc.save(fileName);
 }
 
 /**
@@ -436,3 +527,4 @@ export function getResumePDFBlobUrl(data?: ResumeData): string | null {
   const blob = doc.output("blob");
   return URL.createObjectURL(blob);
 }
+

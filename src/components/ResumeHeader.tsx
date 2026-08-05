@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Profile } from "../types";
-import { Mail, Phone, MapPin, Globe, Github, Linkedin, Twitter, Edit3, Camera } from "lucide-react";
+import { Mail, Phone, MapPin, Globe, Github, Linkedin, Twitter, Edit3, Camera, Download } from "lucide-react";
 import EditModal from "./EditModal";
 import { motion, AnimatePresence } from "motion/react";
 import LocalImage from "./LocalImage";
@@ -12,9 +12,18 @@ interface ResumeHeaderProps {
   isEditMode: boolean;
   onUpdateProfile: (updatedProfile: Profile) => void;
   language?: Language;
+  isAuthenticated?: boolean;
+  onOpenPdfPreview?: () => void;
 }
 
-export default function ResumeHeader({ profile, isEditMode, onUpdateProfile, language = "pt" }: ResumeHeaderProps) {
+export default function ResumeHeader({
+  profile,
+  isEditMode,
+  onUpdateProfile,
+  language = "pt",
+  isAuthenticated = false,
+  onOpenPdfPreview,
+}: ResumeHeaderProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formData, setFormData] = useState<Profile>({ ...profile });
   const [copiedEmail, setCopiedEmail] = useState(false);
@@ -172,6 +181,35 @@ export default function ResumeHeader({ profile, isEditMode, onUpdateProfile, lan
                   Twitter
                 </a>
               )}
+            </div>
+          )}
+
+          {/* Hero Download CV CTA Button (Only when authenticated) */}
+          {isAuthenticated && (
+            <div className="mt-5 flex flex-wrap items-center justify-center md:justify-start gap-3 no-print print:hidden">
+              <button
+                type="button"
+                onClick={() => {
+                  if (onOpenPdfPreview) {
+                    onOpenPdfPreview();
+                  } else {
+                    const originalTitle = document.title;
+                    document.title = "Pedro-Henrique-Azara-de-Almeida-CV";
+                    window.print();
+                    setTimeout(() => {
+                      document.title = originalTitle;
+                    }, 1000);
+                  }
+                }}
+                className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 px-4 py-2.5 text-xs font-bold text-white shadow-md active:scale-95 transition-all cursor-pointer"
+                id="hero-download-cv-btn"
+              >
+                <Download className="h-4 w-4 shrink-0" />
+                <span>{language === "en" ? "Download CV (PDF)" : "Baixar CV (PDF)"}</span>
+              </button>
+              <span className="text-[11px] text-slate-500 dark:text-slate-400 font-sans italic">
+                ({language === "en" ? 'Select "Save as PDF" in print dialog' : 'Selecione "Salvar como PDF" no diálogo de impressão'})
+              </span>
             </div>
           )}
 

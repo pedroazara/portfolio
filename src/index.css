@@ -182,7 +182,7 @@ html {
 @media print {
   @page {
     size: A4;
-    margin: 12mm 15mm 12mm 15mm;
+    margin: 15mm;
   }
 
   /* Force browsers to print backgrounds and exact colors */
@@ -213,7 +213,10 @@ html {
   footer,
   aside,
   header.no-print,
+  #global-header,
+  #global-header-mobile,
   #print-resume-btn,
+  #hero-download-cv-btn,
   #discrete-panel-login-btn,
   #edit-profile-btn,
   #view-mode-toggle,
@@ -242,10 +245,15 @@ html {
     padding: 0 !important;
     margin: 0 0 16pt 0 !important;
     width: 100% !important;
-    page-break-inside: auto !important;
   }
 
-  /* Elegant LaTeX-style section headers for a premium academic/professional CV look */
+  /* Section headers break-after avoid to keep with next content */
+  h1, h2, h3, h4 {
+    page-break-after: avoid !important;
+    break-after: avoid !important;
+  }
+
+  /* Elegant section headers */
   h2 {
     font-size: 13pt !important;
     font-weight: 700 !important;
@@ -274,41 +282,35 @@ html {
   }
 
   /* Ensure items avoid breaking awkwardly mid-element */
-  .print-break-inside-avoid {
+  .print-break-inside-avoid,
+  article,
+  .experience-item,
+  .education-item,
+  .project-item {
     page-break-inside: avoid !important;
     break-inside: avoid !important;
   }
 
-  /* Format Project cards as elegant list items in physical print, avoiding bulky card boxes */
+  /* Format Project cards as elegant list items in physical print */
   article {
     border: none !important;
-    border-bottom: 1px dashed #e2e8f0 !important;
-    padding: 10pt 0 !important;
+    border-bottom: 1px dashed #cbd5e1 !important;
+    padding: 8pt 0 !important;
     margin: 0 !important;
     background: transparent !important;
     box-shadow: none !important;
-    page-break-inside: avoid !important;
-    break-inside: avoid !important;
   }
 
   article:last-child {
     border-bottom: none !important;
   }
 
-  /* Hide project images on print to save ink and maintain a professional document design */
+  /* Hide project images on print to save ink */
   .print\:hidden,
   img,
   iframe,
   canvas {
     display: none !important;
-  }
-
-  /* Custom styling for standard avatars in print */
-  .h-28.w-28.overflow-hidden {
-    border: 1px solid #e2e8f0 !important;
-    border-radius: 8px !important;
-    width: 1.8in !important;
-    height: 1.8in !important;
   }
 
   /* Tighten grids and lists for physical paper space constraints */
@@ -342,6 +344,14 @@ html {
   p, span, li, a {
     color: #334155 !important;
     word-wrap: break-word !important;
+  }
+
+  /* Show link target URLs on printable external links */
+  a[href^="http"]:not([href*="localhost"]):after {
+    content: " (" attr(href) ")";
+    font-size: 8pt;
+    color: #4f46e5 !important;
+    font-weight: normal;
   }
 
   /* Ensure email copying badges and hints are completely hidden */
