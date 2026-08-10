@@ -3,6 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { Project, ProjectCategory, BlogPost } from "../types";
 import { FolderKanban, Plus, Edit2, Trash2, ExternalLink, Github, Settings, Info, Eye, BookOpen, Image as ImageIcon, Check, RefreshCw, Search, ArrowLeft, Sparkles } from "lucide-react";
 import EditModal from "./EditModal";
+import ProjectEditorModal from "./ProjectEditorModal";
 import ConfirmModal from "./ConfirmModal";
 import ProjectDetailsModal from "./ProjectDetailsModal";
 import LocalImage from "./LocalImage";
@@ -10,6 +11,8 @@ import ImageSelectorInput from "./ImageSelectorInput";
 import { StoredImage, listImages } from "../utils/imageDb";
 import MarkdownRenderer from "./MarkdownRenderer";
 import { Language, translations } from "../lib/translations";
+import TranslateButton from "./TranslateButton";
+import { translateFields } from "../lib/translator";
 
 interface ProjectSectionProps {
   projects: Project[];
@@ -286,6 +289,44 @@ export default function ProjectSection({
     setIsProjectModalOpen(false);
   };
 
+  const handleAutoTranslateProject = async () => {
+    const fieldsToTranslate = {
+      titleEn: projectForm.title || "",
+      descriptionEn: projectForm.description || "",
+      detailedDescriptionEn: projectForm.detailedDescription || "",
+      scientificRelevanceEn: projectForm.scientificRelevance || "",
+    };
+
+    const translated = await translateFields(fieldsToTranslate);
+
+    setProjectForm((prev) => ({
+      ...prev,
+      titleEn: translated.titleEn || prev.titleEn || "",
+      descriptionEn: translated.descriptionEn || prev.descriptionEn || "",
+      detailedDescriptionEn: translated.detailedDescriptionEn || prev.detailedDescriptionEn || "",
+      scientificRelevanceEn: translated.scientificRelevanceEn || prev.scientificRelevanceEn || "",
+    }));
+
+    setEditingLanguage("en");
+  };
+
+  const handleAutoTranslateCategory = async () => {
+    const fieldsToTranslate = {
+      nameEn: categoryForm.name || "",
+      descriptionEn: categoryForm.description || "",
+    };
+
+    const translated = await translateFields(fieldsToTranslate);
+
+    setCategoryForm((prev) => ({
+      ...prev,
+      nameEn: translated.nameEn || prev.nameEn || "",
+      descriptionEn: translated.descriptionEn || prev.descriptionEn || "",
+    }));
+
+    setEditingLanguage("en");
+  };
+
   // --- Category Handlers ---
   const handleOpenCategoryAdd = () => {
     setEditingCategory(null);
@@ -528,7 +569,13 @@ export default function ProjectSection({
             return (
               <article
                 key={proj.id}
-                onClick={() => setSelectedProject(proj)}
+                onClick={() => {
+                  if (onSelectProject) {
+                    onSelectProject(proj.codigo || proj.id);
+                  } else {
+                    navigate(`/projetos/${encodeURIComponent(proj.codigo || proj.id)}`);
+                  }
+                }}
                 className="group relative flex flex-col overflow-hidden rounded-2xl border border-slate-100 dark:border-slate-800/80 bg-white dark:bg-slate-900/40 shadow-xs transition-all hover:shadow-lg hover:border-slate-200 dark:hover:border-slate-700 hover:-translate-y-1 cursor-pointer print-border print-shadow-none print-translate-none print-break-inside-avoid duration-300"
               >
                 {/* Project Image */}
@@ -586,27 +633,14 @@ export default function ProjectSection({
                   <div className="mt-auto pt-4 flex items-center justify-between border-t border-slate-50 dark:border-slate-800/80 no-print print:hidden">
                     <div className="flex items-center gap-2">
                       <span className="text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 flex items-center gap-1">
-                        {language === "en" ? "View details" : "Ver detalhes"}
+                        {language === "en" ? "View full post" : "Ler post completo"}
                       </span>
-                      {proj.blogPostId && onNavigateToBlogPost && (
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onNavigateToBlogPost(proj.blogPostId!);
-                          }}
-                          className="flex items-center gap-1 rounded-md bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-100/60 dark:border-indigo-900/40 px-2 py-0.5 text-[10px] font-bold text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 transition-all cursor-pointer"
-                          title="Ver explicação detalhada no Blog"
-                        >
-                          <BookOpen className="h-3 w-3" />
-                          <span>{language === "en" ? "Blog Explanation" : "Explicação no Blog"}</span>
-                        </button>
-                      )}
                     </div>
 
                     {/* Edit controls for Project */}
                     {isEditMode && (
                       <div className="flex items-center gap-1.5">
+                        {/* Toggle Featured Star Button */}
                         <button
                           onClick={(e) => handleOpenProjectEdit(proj, e)}
                           className="rounded-lg p-1.5 text-slate-400 dark:text-slate-500 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors cursor-pointer"
@@ -643,363 +677,27 @@ export default function ProjectSection({
           project={selectedProject}
           category={categories.find((c) => c.id === selectedProject.categoryId)}
           onClose={() => setSelectedProject(null)}
-          onNavigateToBlogPost={onNavigateToBlogPost}
           language={language}
         />
       )}
 
-      {/* Project Form Modal */}
-      <EditModal
+      {/* Project Form Modal - Natural Article-Style Editor */}
+      <ProjectEditorModal
         isOpen={isProjectModalOpen}
         onClose={() => setIsProjectModalOpen(false)}
-        title={editingProject ? (language === "en" ? "Edit Project" : "Editar Projeto") : (language === "en" ? "Add New Project" : "Adicionar Novo Projeto")}
-        size="2xl"
-      >
-        <form onSubmit={handleProjectSubmit} className="space-y-4">
-          
-          {/* Editing Language Toggle */}
-          <div className="bg-slate-50 p-3 rounded-2xl border border-slate-200/60 mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div>
-              <p className="text-xs font-bold text-slate-700 font-sans">
-                {language === "en" ? "Language under Editing" : "Idioma em Edição"}
-              </p>
-              <p className="text-[10px] text-slate-400 font-sans">
-                {language === "en" 
-                  ? "Toggle to specify contents in Portuguese or English" 
-                  : "Alterne para preencher as informações em Português ou Inglês"}
-              </p>
-            </div>
-            <div className="bg-slate-200/70 p-1 rounded-xl flex gap-1 self-start sm:self-auto shrink-0 font-sans">
-              <button
-                type="button"
-                onClick={() => setEditingLanguage("pt")}
-                className={`rounded-lg px-3 py-1.5 text-xs font-bold transition-all flex items-center gap-1 cursor-pointer ${
-                  editingLanguage === "pt"
-                    ? "bg-white text-indigo-600 shadow-sm"
-                    : "text-slate-500 hover:text-slate-950"
-                }`}
-              >
-                PT
-              </button>
-              <button
-                type="button"
-                onClick={() => setEditingLanguage("en")}
-                className={`rounded-lg px-3 py-1.5 text-xs font-bold transition-all flex items-center gap-1 cursor-pointer ${
-                  editingLanguage === "en"
-                    ? "bg-white text-indigo-600 shadow-sm"
-                    : "text-slate-500 hover:text-slate-950"
-                }`}
-              >
-                EN
-              </button>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            {editingLanguage === "pt" ? (
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 font-mono mb-1">
-                  Título do Projeto * (Português)
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={projectForm.title || ""}
-                  onChange={(e) => setProjectForm({ ...projectForm, title: e.target.value })}
-                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-800 focus:border-indigo-500 focus:outline-hidden"
-                />
-              </div>
-            ) : (
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 font-mono mb-1">
-                  Project Title * (English)
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={projectForm.titleEn || ""}
-                  onChange={(e) => setProjectForm({ ...projectForm, titleEn: e.target.value })}
-                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-800 focus:border-indigo-500 focus:outline-hidden"
-                />
-              </div>
-            )}
-            <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 font-mono mb-1">
-                {language === "en" ? "Area of Specialty (Category) *" : "Área de Atuação (Categoria) *"}
-              </label>
-              <select
-                required
-                value={projectForm.categoryId || ""}
-                onChange={(e) => setProjectForm({ ...projectForm, categoryId: e.target.value })}
-                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-800 focus:border-indigo-500 focus:outline-hidden bg-white"
-              >
-                {categories.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {language === "en" && c.nameEn ? c.nameEn : c.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 font-mono mb-1">
-              {language === "en" ? "Associated Blog Article (Optional)" : "Artigo de Blog Associado (Opcional - Redirecionamento ao Clicar)"}
-            </label>
-            <select
-              value={projectForm.blogPostId || ""}
-              onChange={(e) => setProjectForm({ ...projectForm, blogPostId: e.target.value || undefined })}
-              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-800 focus:border-indigo-500 focus:outline-hidden bg-white"
-            >
-              <option value="">{language === "en" ? "-- No Linked Article --" : "-- Sem Artigo Vinculado --"}</option>
-              {posts.map((post) => (
-                <option key={post.id} value={post.id}>
-                  {language === "en" && post.titleEn ? post.titleEn : post.title}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {editingLanguage === "pt" ? (
-            <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 font-mono mb-1">
-                Resumo Curto * (Português) (Exibido no Card)
-              </label>
-              <input
-                type="text"
-                required
-                value={projectForm.description || ""}
-                onChange={(e) => setProjectForm({ ...projectForm, description: e.target.value })}
-                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-800 focus:border-indigo-500 focus:outline-hidden"
-              />
-            </div>
-          ) : (
-            <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 font-mono mb-1">
-                Short Summary * (English) (Displayed on Card)
-              </label>
-              <input
-                type="text"
-                required
-                value={projectForm.descriptionEn || ""}
-                onChange={(e) => setProjectForm({ ...projectForm, descriptionEn: e.target.value })}
-                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-800 focus:border-indigo-500 focus:outline-hidden"
-              />
-            </div>
-          )}
-
-          {editingLanguage === "pt" ? (
-            <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 font-mono mb-1">
-                Descrição Longa / Detalhes de Abordagem Científica e Engenharia (Português)
-              </label>
-              <textarea
-                rows={5}
-                value={projectForm.detailedDescription || ""}
-                onChange={(e) => setProjectForm({ ...projectForm, detailedDescription: e.target.value })}
-                placeholder="Descreva detalhadamente a modelagem física, métodos experimentais, equações resolvidas e setup..."
-                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-800 focus:border-indigo-500 focus:outline-hidden resize-y"
-              />
-            </div>
-          ) : (
-            <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 font-mono mb-1">
-                Detailed Description / Scientific & Engineering Details (English)
-              </label>
-              <textarea
-                rows={5}
-                value={projectForm.detailedDescriptionEn || ""}
-                onChange={(e) => setProjectForm({ ...projectForm, detailedDescriptionEn: e.target.value })}
-                placeholder="Detail the physical modeling, experimental methods, equations solved, and setup in English..."
-                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-800 focus:border-indigo-500 focus:outline-hidden resize-y"
-              />
-            </div>
-          )}
-
-          {editingLanguage === "pt" ? (
-            <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 font-mono mb-1">
-                Relevância Científica & Aplicação Tecnológica (Opcional) (Português)
-              </label>
-              <textarea
-                rows={3}
-                value={projectForm.scientificRelevance || ""}
-                onChange={(e) => setProjectForm({ ...projectForm, scientificRelevance: e.target.value })}
-                placeholder="Ex: Como este projeto contribui para a ciência dos materiais, óptica integrada, criogenia, etc."
-                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-800 focus:border-indigo-500 focus:outline-hidden resize-y"
-              />
-            </div>
-          ) : (
-            <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 font-mono mb-1">
-                Scientific Relevance & Technological Application (Optional) (English)
-              </label>
-              <textarea
-                rows={3}
-                value={projectForm.scientificRelevanceEn || ""}
-                onChange={(e) => setProjectForm({ ...projectForm, scientificRelevanceEn: e.target.value })}
-                placeholder="Ex: How this project contributes to materials science, integrated optics, cryogenics, etc."
-                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-800 focus:border-indigo-500 focus:outline-hidden resize-y"
-              />
-            </div>
-          )}
-
-          <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 font-mono mb-1">
-              {language === "en" ? "Tags / Technologies (separated by comma)" : "Tags / Tecnologias (separadas por vírgula)"}
-            </label>
-            <input
-              type="text"
-              placeholder="React, Tailwind, Node.js, etc."
-              value={tagsInput}
-              onChange={(e) => setTagsInput(e.target.value)}
-              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-800 focus:border-indigo-500 focus:outline-hidden"
-            />
-          </div>
-
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 font-mono mb-1">
-                {language === "en" ? "Demo / Publication URL (Active Link)" : "URL de Demonstração / Publicação (Link Ativo)"}
-              </label>
-              <input
-                type="url"
-                placeholder="https://meuprojeto.com"
-                value={projectForm.projectUrl || ""}
-                onChange={(e) => setProjectForm({ ...projectForm, projectUrl: e.target.value })}
-                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-800 focus:border-indigo-500 focus:outline-hidden"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 font-mono mb-1">
-                {language === "en" ? "Repository URL (GitHub / GitLab)" : "URL do Repositório (GitHub / GitLab)"}
-              </label>
-              <input
-                type="text"
-                placeholder="https://github.com/usuario/projeto"
-                value={projectForm.githubUrl || ""}
-                onChange={(e) => setProjectForm({ ...projectForm, githubUrl: e.target.value })}
-                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-800 focus:border-indigo-500 focus:outline-hidden"
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <ImageSelectorInput
-              label={language === "en" ? "Project Cover Image" : "Imagem de Capa do Projeto"}
-              value={projectForm.imageUrl || ""}
-              onChange={(val) => setProjectForm({ ...projectForm, imageUrl: val })}
-              placeholder="https://images.unsplash.com/photo-..."
-              id="project-imageUrl"
-            />
-            <div>
-              <div className="flex items-center justify-between mb-1">
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 font-mono">
-                  {language === "en" ? "Gallery Images (comma separated)" : "Imagens da Galeria (separadas por vírgula)"}
-                </label>
-                <button
-                  type="button"
-                  onClick={handleToggleGalleryBank}
-                  className={`flex items-center gap-1 rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider transition-all cursor-pointer ${
-                    isGalleryBankOpen
-                      ? "bg-indigo-600 text-white shadow-xs"
-                      : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-                  }`}
-                >
-                  <ImageIcon className="h-3 w-3" />
-                  <span>{language === "en" ? "Media Bank" : "Banco de Mídia"}</span>
-                </button>
-              </div>
-              <input
-                type="text"
-                placeholder="https://unsplash-url-1, db:foto.png, https://unsplash-url-2"
-                value={galleryInput}
-                onChange={(e) => setGalleryInput(e.target.value)}
-                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-800 focus:border-indigo-500 focus:outline-hidden"
-              />
-
-              {/* Multi-select Image Bank panel for the gallery */}
-              {isGalleryBankOpen && (
-                <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-2 mt-2">
-                  <div className="flex items-center justify-between border-b border-slate-100 pb-1.5">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 font-mono">
-                      {language === "en" ? "Select from Media Bank (multiple)" : "Selecionar do Banco de Mídia (múltiplas)"}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => loadLocalImages()}
-                      title="Atualizar"
-                      className="p-1 hover:bg-slate-200 rounded text-slate-500 transition-colors cursor-pointer"
-                    >
-                      <RefreshCw className="h-3 w-3" />
-                    </button>
-                  </div>
-
-                  {isLoadingGalleryImages ? (
-                    <div className="flex items-center justify-center py-4 text-xs font-mono text-slate-400 gap-1.5 bg-white border border-slate-100 rounded-lg">
-                      <RefreshCw className="h-3.5 w-3.5 animate-spin text-slate-400" />
-                      <span>{language === "en" ? "Fetching files..." : "Buscando arquivos..."}</span>
-                    </div>
-                  ) : localImages.length === 0 ? (
-                    <div className="p-3 rounded-lg border border-dashed border-slate-200 bg-white text-center">
-                      <p className="text-[11px] font-medium text-slate-500">{language === "en" ? "No images in Media Bank." : "Nenhuma imagem no Banco de Mídia."}</p>
-                      <p className="text-[9px] text-slate-400 leading-normal max-w-xs mx-auto mt-1">
-                        {language === "en" ? "Use 'Image Bank' button in top menu to upload pictures first." : "Use o botão 'Banco de Imagens' no menu superior para enviar fotos primeiro."}
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-36 overflow-y-auto p-1 bg-white border border-slate-100 rounded-lg">
-                      {localImages.map((img) => {
-                        const selected = isSelectedInGallery(img.name);
-                        return (
-                          <button
-                            key={img.name}
-                            type="button"
-                            onClick={() => handleToggleGalleryImage(img.name)}
-                            className={`group relative flex items-center gap-2 p-1.5 rounded-lg border text-left transition-all cursor-pointer ${
-                              selected
-                                ? "border-indigo-500 bg-indigo-50/50 ring-1 ring-indigo-500"
-                                : "border-slate-200 bg-white hover:border-slate-300"
-                            }`}
-                          >
-                            <div className="relative h-7 w-7 rounded bg-slate-100 overflow-hidden flex items-center justify-center border border-slate-100 shrink-0">
-                              <img src={img.dataUrl} alt={img.name} className="h-full w-full object-cover" />
-                            </div>
-                            <span className="text-[10px] font-mono text-slate-700 truncate flex-1" title={img.name}>
-                              {img.name}
-                            </span>
-                            {selected && (
-                              <div className="absolute top-1 right-1 rounded-full bg-indigo-600 p-0.5 text-white">
-                                <Check className="h-2 w-2" />
-                              </div>
-                            )}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          </div>
-
-          <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
-            <button
-              type="button"
-              onClick={() => setIsProjectModalOpen(false)}
-              className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-50"
-            >
-              {language === "en" ? "Cancel" : "Cancelar"}
-            </button>
-            <button
-              type="submit"
-              className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-xs transition-colors hover:bg-indigo-700"
-            >
-              {language === "en" ? "Save Project" : "Salvar Projeto"}
-            </button>
-          </div>
-        </form>
-      </EditModal>
+        project={editingProject || projectForm}
+        categories={categories}
+        onSave={(savedProject) => {
+          if (editingProject) {
+            const updated = projects.map((p) => (p.id === editingProject.id ? savedProject : p));
+            onUpdateProjects(updated);
+          } else {
+            onUpdateProjects([...projects, savedProject]);
+          }
+          setIsProjectModalOpen(false);
+        }}
+        language={language}
+      />
 
       {/* Category (Area) Form Modal */}
       <EditModal
@@ -1021,29 +719,36 @@ export default function ProjectSection({
                   : "Alterne para preencher as informações em Português ou Inglês"}
               </p>
             </div>
-            <div className="bg-slate-200/70 p-1 rounded-xl flex gap-1 self-start sm:self-auto shrink-0 font-sans">
-              <button
-                type="button"
-                onClick={() => setEditingLanguage("pt")}
-                className={`rounded-lg px-3 py-1.5 text-xs font-bold transition-all flex items-center gap-1 cursor-pointer ${
-                  editingLanguage === "pt"
-                    ? "bg-white text-indigo-600 shadow-sm"
-                    : "text-slate-500 hover:text-slate-950"
-                }`}
-              >
-                PT
-              </button>
-              <button
-                type="button"
-                onClick={() => setEditingLanguage("en")}
-                className={`rounded-lg px-3 py-1.5 text-xs font-bold transition-all flex items-center gap-1 cursor-pointer ${
-                  editingLanguage === "en"
-                    ? "bg-white text-indigo-600 shadow-sm"
-                    : "text-slate-500 hover:text-slate-950"
-                }`}
-              >
-                EN
-              </button>
+            <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto shrink-0 font-sans">
+              <TranslateButton
+                onTranslate={handleAutoTranslateCategory}
+                label={language === "en" ? "Auto-Translate PT → EN" : "Traduzir PT → EN (Gemini AI)"}
+                size="sm"
+              />
+              <div className="bg-slate-200/70 p-1 rounded-xl flex gap-1">
+                <button
+                  type="button"
+                  onClick={() => setEditingLanguage("pt")}
+                  className={`rounded-lg px-3 py-1.5 text-xs font-bold transition-all flex items-center gap-1 cursor-pointer ${
+                    editingLanguage === "pt"
+                      ? "bg-white text-indigo-600 shadow-sm"
+                      : "text-slate-500 hover:text-slate-950"
+                  }`}
+                >
+                  PT
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setEditingLanguage("en")}
+                  className={`rounded-lg px-3 py-1.5 text-xs font-bold transition-all flex items-center gap-1 cursor-pointer ${
+                    editingLanguage === "en"
+                      ? "bg-white text-indigo-600 shadow-sm"
+                      : "text-slate-500 hover:text-slate-950"
+                  }`}
+                >
+                  EN
+                </button>
+              </div>
             </div>
           </div>
 

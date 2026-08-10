@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Download, Sun, Moon, Menu, X, Lock } from "lucide-react";
+import { Download, Sun, Moon, Menu, X, Lock, ChevronDown, ArrowRight } from "lucide-react";
 import { OrbitaIcon } from "./OrbitaIcon";
 import { generateResumePDF } from "../utils/pdfGenerator";
 import { ResumeData } from "../types";
@@ -129,6 +129,7 @@ export default function GlobalHeader({
             >
               {navItems.map((item) => {
                 const active = isRouteActive(item.path);
+
                 return (
                   <Link
                     key={item.path}

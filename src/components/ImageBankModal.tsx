@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { X, Upload, Trash2, Copy, Check, Image as ImageIcon, Sparkles, FileText, Search } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { StoredImage, listImages, saveImage, deleteImage } from "../utils/imageDb";
+import { optimizeImage } from "../utils/imageOptimizer";
 import ConfirmModal from "./ConfirmModal";
 
 interface ImageBankModalProps {
@@ -39,6 +40,27 @@ export default function ImageBankModal({ isOpen, onClose }: ImageBankModalProps)
     if (isOpen) {
       loadImages();
     }
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleWindowPaste = (e: ClipboardEvent) => {
+      const items = e.clipboardData?.items;
+      if (!items) return;
+      for (let i = 0; i < items.length; i++) {
+        if (items[i].type.indexOf("image") !== -1) {
+          const file = items[i].getAsFile();
+          if (file) {
+            handleFileSelect(file);
+          }
+          break;
+        }
+      }
+    };
+
+    window.addEventListener("paste", handleWindowPaste);
+    return () => window.removeEventListener("paste", handleWindowPaste);
   }, [isOpen]);
 
   const loadImages = async () => {
@@ -104,9 +126,12 @@ export default function ImageBankModal({ isOpen, onClose }: ImageBankModalProps)
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedFile || !previewUrl || !customName.trim()) return;
+    if (!selectedFile || !customName.trim()) return;
 
-    const finalName = customName.trim();
+    let finalName = customName.trim();
+    if (!finalName.endsWith(".webp")) {
+      finalName = finalName.replace(/\.[^/.]+$/, "") + ".webp";
+    }
 
     // Check duplicate
     if (images.some((img) => img.name === finalName)) {
@@ -116,7 +141,8 @@ export default function ImageBankModal({ isOpen, onClose }: ImageBankModalProps)
 
     setIsSaving(true);
     try {
-      await saveImage(finalName, previewUrl, selectedFile.size);
+      const optimized = await optimizeImage(selectedFile, 1600, 0.8);
+      await saveImage(finalName, optimized.dataUrl, optimized.size);
       await loadImages();
       
       // Reset states
@@ -125,7 +151,7 @@ export default function ImageBankModal({ isOpen, onClose }: ImageBankModalProps)
       setCustomName("");
       setErrorMsg("");
     } catch (err) {
-      setErrorMsg("Falha ao salvar imagem no banco de dados local.");
+      setErrorMsg(`Falha ao otimizar e salvar imagem: ${err instanceof Error ? err.message : String(err)}`);
     } finally {
       setIsSaving(false);
     }

@@ -25,22 +25,50 @@ export interface ProjectCategory {
 
 export interface Project {
   id: string;
+  codigo?: string; // Unique immutable code identifier (e.g. "yolocraft")
+  tipo?: "projeto";
   title: string;
   titleEn?: string;
   description: string;
   descriptionEn?: string;
   categoryId: string; // References ProjectCategory.id
+  category?: string;
+  categoryEn?: string;
   tags: string[];
-  projectUrl?: string;
-  githubUrl?: string;
-  imageUrl?: string;
-  galleryImages?: string[]; // Galeria de imagens adicionais
-  detailedDescription?: string; // Descrição longa e detalhada do projeto
+  projectUrl?: string; // Demo link
+  githubUrl?: string; // Repository link
+  repositoryUrl?: string;
+  imageUrl?: string; // Main cover
+  galleryImages?: string[]; // Additional gallery images
+  images?: string[]; // Alias for galleryImages
+  detailedDescription?: string; // Main MDX/Markdown content body
   detailedDescriptionEn?: string;
-  scientificRelevance?: string; // Relevância técnica e científica para Engenharia Física
+  longDescription?: string; // Alias for detailedDescription
+  longDescriptionEn?: string;
+  scientificRelevance?: string; // Technical & scientific relevance
   scientificRelevanceEn?: string;
   featured?: boolean;
-  blogPostId?: string; // Link direto para um artigo do blog
+  destaque?: boolean; // ETAPA 9 featured status
+  ordemDestaque?: number; // Ordering for featured items
+  blogPostId?: string; // Direct link to blog post
+  status?: string;
+  periodo?: string | {
+    inicio: string;
+    fim?: string;
+  };
+  stack?: string[]; // Technologies array
+  technologies?: string[]; // Alias for stack
+  repositorio?: string; // Alias for githubUrl
+  demo?: string; // Alias for projectUrl
+  liveUrl?: string;
+  demoUrl?: string;
+  link?: string;
+  documentationUrl?: string;
+  paperUrl?: string;
+  highlights?: string[];
+  highlightsEn?: string[];
+  data?: string;
+  draft?: boolean;
 }
 
 export interface Subperiod {
@@ -76,6 +104,7 @@ export interface Experience {
   skills?: string[];
   subperiods?: Subperiod[];
   links?: ExperienceLink[];
+  projetos?: string[]; // Array of project codes referenced
 }
 
 export interface AcademicActivity {
@@ -90,6 +119,7 @@ export interface AcademicActivity {
   extraContent?: string;
   extraContentEn?: string;
   links?: ExperienceLink[];
+  projetos?: string[]; // Array of project codes referenced
 }
 
 export interface Education {
@@ -130,6 +160,8 @@ export interface Course {
 
 export interface BlogPost {
   id: string;
+  codigo?: string; // Optional unique code identifier
+  tipo?: "artigo";
   title: string;
   titleEn?: string;
   content: string;
@@ -142,6 +174,8 @@ export interface BlogPost {
   readTime?: string;
   category?: string;
   categoryEn?: string;
+  projetos?: string[]; // Array of project codes referenced (ETAPA 9)
+  draft?: boolean;
 }
 
 export interface ResumeData {

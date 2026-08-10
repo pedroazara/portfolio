@@ -4,6 +4,8 @@ import { Award, Plus, Edit2, Trash2, Star } from "lucide-react";
 import EditModal from "./EditModal";
 import ConfirmModal from "./ConfirmModal";
 import { Language, translations } from "../lib/translations";
+import TranslateButton from "./TranslateButton";
+import { translateFields } from "../lib/translator";
 
 interface SkillsSectionProps {
   skills: Skill[];
@@ -34,6 +36,23 @@ export default function SkillsSection({ skills, isEditMode, onUpdateSkills, lang
     categoryEn: "",
     level: 4,
   });
+
+  const handleAutoTranslateSkill = async () => {
+    const fieldsToTranslate = {
+      nameEn: skillForm.name || "",
+      categoryEn: skillForm.category || "",
+    };
+
+    const translated = await translateFields(fieldsToTranslate);
+
+    setSkillForm((prev) => ({
+      ...prev,
+      nameEn: translated.nameEn || prev.nameEn || "",
+      categoryEn: translated.categoryEn || prev.categoryEn || "",
+    }));
+
+    setEditingLanguage("en");
+  };
 
   // Helper to translate categories
   const getCategoryName = (cat: string, lang: Language) => {
@@ -235,29 +254,36 @@ export default function SkillsSection({ skills, isEditMode, onUpdateSkills, lang
                   : "Alterne para preencher as informações em Português ou Inglês"}
               </p>
             </div>
-            <div className="bg-slate-200/70 p-1 rounded-xl flex gap-1 self-start sm:self-auto shrink-0 font-sans">
-              <button
-                type="button"
-                onClick={() => setEditingLanguage("pt")}
-                className={`rounded-lg px-3 py-1.5 text-xs font-bold transition-all flex items-center gap-1 cursor-pointer ${
-                  editingLanguage === "pt"
-                    ? "bg-white text-indigo-600 shadow-sm"
-                    : "text-slate-500 hover:text-slate-950"
-                }`}
-              >
-                PT
-              </button>
-              <button
-                type="button"
-                onClick={() => setEditingLanguage("en")}
-                className={`rounded-lg px-3 py-1.5 text-xs font-bold transition-all flex items-center gap-1 cursor-pointer ${
-                  editingLanguage === "en"
-                    ? "bg-white text-indigo-600 shadow-sm"
-                    : "text-slate-500 hover:text-slate-950"
-                }`}
-              >
-                EN
-              </button>
+            <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto shrink-0 font-sans">
+              <TranslateButton
+                onTranslate={handleAutoTranslateSkill}
+                label={language === "en" ? "Auto-Translate PT → EN" : "Traduzir PT → EN (Gemini AI)"}
+                size="sm"
+              />
+              <div className="bg-slate-200/70 p-1 rounded-xl flex gap-1">
+                <button
+                  type="button"
+                  onClick={() => setEditingLanguage("pt")}
+                  className={`rounded-lg px-3 py-1.5 text-xs font-bold transition-all flex items-center gap-1 cursor-pointer ${
+                    editingLanguage === "pt"
+                      ? "bg-white text-indigo-600 shadow-sm"
+                      : "text-slate-500 hover:text-slate-950"
+                  }`}
+                >
+                  PT
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setEditingLanguage("en")}
+                  className={`rounded-lg px-3 py-1.5 text-xs font-bold transition-all flex items-center gap-1 cursor-pointer ${
+                    editingLanguage === "en"
+                      ? "bg-white text-indigo-600 shadow-sm"
+                      : "text-slate-500 hover:text-slate-950"
+                  }`}
+                >
+                  EN
+                </button>
+              </div>
             </div>
           </div>
 

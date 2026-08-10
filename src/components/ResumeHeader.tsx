@@ -6,6 +6,8 @@ import { motion, AnimatePresence } from "motion/react";
 import LocalImage from "./LocalImage";
 import ImageSelectorInput from "./ImageSelectorInput";
 import { Language, translations } from "../lib/translations";
+import TranslateButton from "./TranslateButton";
+import { translateFields } from "../lib/translator";
 
 interface ResumeHeaderProps {
   profile: Profile;
@@ -50,6 +52,23 @@ export default function ResumeHeader({
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleAutoTranslateProfile = async () => {
+    const fieldsToTranslate = {
+      titleEn: formData.title || "",
+      bioEn: formData.bio || "",
+    };
+
+    const translated = await translateFields(fieldsToTranslate);
+
+    setFormData((prev) => ({
+      ...prev,
+      titleEn: translated.titleEn || prev.titleEn || "",
+      bioEn: translated.bioEn || prev.bioEn || "",
+    }));
+
+    setEditingLanguage("en");
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -112,7 +131,8 @@ export default function ResumeHeader({
                 <button
                   type="button"
                   onClick={handleCopyEmail}
-                  className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors truncate cursor-pointer text-left focus:outline-hidden"
+                  className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors truncate cursor-pointer text-left focus:outline-2 focus:outline-indigo-600 dark:focus:outline-indigo-400 focus:outline-offset-2 rounded-xs"
+                  aria-label={language === "en" ? "Copy email" : "Copiar e-mail de contato"}
                   title="Clique para copiar e-mail"
                 >
                   {profile.email}
@@ -237,29 +257,36 @@ export default function ResumeHeader({
                   : "Alterne para preencher as informações em Português ou Inglês"}
               </p>
             </div>
-            <div className="bg-slate-200/70 p-1 rounded-xl flex gap-1 self-start sm:self-auto shrink-0 font-sans">
-              <button
-                type="button"
-                onClick={() => setEditingLanguage("pt")}
-                className={`rounded-lg px-3 py-1.5 text-xs font-bold transition-all flex items-center gap-1 cursor-pointer ${
-                  editingLanguage === "pt"
-                    ? "bg-white text-indigo-600 shadow-sm"
-                    : "text-slate-500 hover:text-slate-950"
-                }`}
-              >
-                PT
-              </button>
-              <button
-                type="button"
-                onClick={() => setEditingLanguage("en")}
-                className={`rounded-lg px-3 py-1.5 text-xs font-bold transition-all flex items-center gap-1 cursor-pointer ${
-                  editingLanguage === "en"
-                    ? "bg-white text-indigo-600 shadow-sm"
-                    : "text-slate-500 hover:text-slate-950"
-                }`}
-              >
-                EN
-              </button>
+            <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto shrink-0 font-sans">
+              <TranslateButton
+                onTranslate={handleAutoTranslateProfile}
+                label={language === "en" ? "Auto-Translate PT → EN" : "Traduzir PT → EN (Gemini AI)"}
+                size="sm"
+              />
+              <div className="bg-slate-200/70 p-1 rounded-xl flex gap-1">
+                <button
+                  type="button"
+                  onClick={() => setEditingLanguage("pt")}
+                  className={`rounded-lg px-3 py-1.5 text-xs font-bold transition-all flex items-center gap-1 cursor-pointer ${
+                    editingLanguage === "pt"
+                      ? "bg-white text-indigo-600 shadow-sm"
+                      : "text-slate-500 hover:text-slate-950"
+                  }`}
+                >
+                  PT
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setEditingLanguage("en")}
+                  className={`rounded-lg px-3 py-1.5 text-xs font-bold transition-all flex items-center gap-1 cursor-pointer ${
+                    editingLanguage === "en"
+                      ? "bg-white text-indigo-600 shadow-sm"
+                      : "text-slate-500 hover:text-slate-950"
+                  }`}
+                >
+                  EN
+                </button>
+              </div>
             </div>
           </div>
 

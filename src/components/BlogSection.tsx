@@ -1,9 +1,10 @@
 import React, { useState } from "react";
-import { useSearchParams } from "react-router-dom";
-import { BlogPost } from "../types";
+import { useSearchParams, Link } from "react-router-dom";
+import { BlogPost, Project } from "../types";
 import { 
   BookOpen, Calendar, Clock, Plus, Edit2, Trash2, X, FileText, 
-  Tag, Image as ImageIcon, ArrowRight, User, Share2, Check
+  Tag, Image as ImageIcon, ArrowRight, User, Share2, Check,
+  Code, AlertCircle
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import EditModal from "./EditModal";
@@ -11,10 +12,14 @@ import ConfirmModal from "./ConfirmModal";
 import MarkdownRenderer from "./MarkdownRenderer";
 import LocalImage from "./LocalImage";
 import ImageSelectorInput from "./ImageSelectorInput";
+import ArticleContentEditor from "./ArticleContentEditor";
 import { Language, translations } from "../lib/translations";
+import TranslateButton from "./TranslateButton";
+import { translateFields } from "../lib/translator";
 
 interface BlogSectionProps {
   posts: BlogPost[];
+  projects?: Project[];
   isEditMode: boolean;
   onUpdatePosts: (updatedPosts: BlogPost[]) => void;
   authorName: string;
@@ -34,6 +39,7 @@ const CATEGORIES = [
 
 export default function BlogSection({
   posts = [],
+  projects = [],
   isEditMode,
   onUpdatePosts,
   authorName,
@@ -103,6 +109,25 @@ export default function BlogSection({
     category: "Instrumentação",
     categoryEn: "Instrumentation"
   });
+
+  const handleAutoTranslatePost = async () => {
+    const fieldsToTranslate = {
+      titleEn: postForm.title || "",
+      summaryEn: postForm.summary || "",
+      contentEn: postForm.content || "",
+    };
+
+    const translated = await translateFields(fieldsToTranslate);
+
+    setPostForm((prev) => ({
+      ...prev,
+      titleEn: translated.titleEn || prev.titleEn || "",
+      summaryEn: translated.summaryEn || prev.summaryEn || "",
+      contentEn: translated.contentEn || prev.contentEn || "",
+    }));
+
+    setEditingLanguage("en");
+  };
   const [tagsInput, setTagsInput] = useState("");
 
   const handleOpenAdd = () => {
@@ -553,10 +578,10 @@ export default function BlogSection({
                 className="relative w-full max-w-7xl overflow-hidden rounded-3xl bg-white dark:bg-slate-900 shadow-2xl border border-slate-100 dark:border-slate-800 text-slate-900 dark:text-slate-100"
               >
                 {/* Header Actions */}
-                <div className="absolute right-4 top-4 z-10 flex gap-2">
+                <div className="absolute right-4 top-4 z-20 flex gap-2">
                   <button
                     onClick={handleCopyLink}
-                    className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-900/40 text-white backdrop-blur-xs transition-all hover:bg-indigo-600 hover:scale-105"
+                    className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-900/60 text-white backdrop-blur-md transition-all hover:bg-indigo-600 hover:scale-105 shadow-md cursor-pointer"
                     title={copiedLink ? (language === "en" ? "Link Copied!" : "Link Copiado!") : (language === "en" ? "Copy Link" : "Copiar Link")}
                   >
                     {copiedLink ? <Check className="h-4.5 w-4.5 text-emerald-400" /> : <Share2 className="h-4.5 w-4.5" />}
@@ -564,7 +589,7 @@ export default function BlogSection({
                   {isEditMode && selectedPost && (
                     <button
                       onClick={(e) => handleOpenEdit(selectedPost, e)}
-                      className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-900/40 text-white backdrop-blur-xs transition-all hover:bg-indigo-600 hover:scale-105"
+                      className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-900/60 text-white backdrop-blur-md transition-all hover:bg-indigo-600 hover:scale-105 shadow-md cursor-pointer"
                       title="Editar Artigo"
                     >
                       <Edit2 className="h-4.5 w-4.5" />
@@ -572,27 +597,29 @@ export default function BlogSection({
                   )}
                   <button
                     onClick={() => setSelectedPost(null)}
-                    className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-900/40 text-white backdrop-blur-xs transition-colors hover:bg-slate-950/85"
+                    className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-900/60 text-white backdrop-blur-md transition-colors hover:bg-slate-950/90 shadow-md cursor-pointer"
                   >
                     <X className="h-5 w-5" />
                   </button>
                 </div>
 
-                {/* Banner Cover Image */}
-                {selectedPost.imageUrl && (
-                  <div className="relative h-80 sm:h-[440px] w-full overflow-hidden bg-slate-100 dark:bg-slate-950/50">
-                    <LocalImage
-                      src={selectedPost.imageUrl}
-                      alt={(language === "en" ? selectedPost.titleEn : selectedPost.title) || selectedPost.title}
-                      referrerPolicy="no-referrer"
-                      className="w-full h-full object-cover"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-transparent to-transparent" />
-                  </div>
-                )}
+                {/* Unified Scrollable Container - Header image scrolls up with page */}
+                <div className="max-h-[88vh] overflow-y-auto">
+                  {/* Banner Cover Image */}
+                  {selectedPost.imageUrl && (
+                    <div className="relative h-72 sm:h-[400px] lg:h-[440px] w-full overflow-hidden bg-slate-100 dark:bg-slate-950/50">
+                      <LocalImage
+                        src={selectedPost.imageUrl}
+                        alt={(language === "en" ? selectedPost.titleEn : selectedPost.title) || selectedPost.title}
+                        referrerPolicy="no-referrer"
+                        className="w-full h-full object-cover"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-transparent to-transparent" />
+                    </div>
+                  )}
 
-                {/* Article Contents */}
-                <div className="p-8 sm:p-12 lg:p-16 max-h-[72vh] overflow-y-auto">
+                  {/* Article Contents */}
+                  <div className="p-6 sm:p-10 lg:p-14">
                   {/* Category/Tags */}
                   <div className="flex flex-wrap gap-2 mb-4 items-center">
                     {getPostCategoryDisplay(selectedPost) && (
@@ -615,15 +642,8 @@ export default function BlogSection({
                     {(language === "en" ? selectedPost.titleEn : selectedPost.title) || selectedPost.title}
                   </h2>
 
-                  {/* Author / Date Info */}
+                  {/* Date & Reading Time Info */}
                   <div className="mt-6 flex flex-wrap items-center gap-4 border-b border-slate-100 dark:border-slate-800 pb-6 text-slate-400 dark:text-slate-500 font-mono text-xs sm:text-sm">
-                    <span className="flex items-center gap-2 font-sans font-semibold text-slate-700 dark:text-slate-300">
-                      <div className="h-7 w-7 rounded-full bg-indigo-600/10 dark:bg-indigo-500/20 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
-                        <User className="h-3.5 w-3.5" />
-                      </div>
-                      {authorName}
-                    </span>
-                    <span className="text-slate-200 dark:text-slate-800 hidden sm:inline">•</span>
                     <span className="flex items-center gap-1">
                       <Calendar className="h-4 w-4" />
                       {selectedPost.date}
@@ -641,7 +661,84 @@ export default function BlogSection({
                       content={(language === "en" ? selectedPost.contentEn : selectedPost.content) || selectedPost.content} 
                     />
                   </div>
+
+                  {/* Related Projects (ETAPA 9.4) */}
+                  {selectedPost.projetos && selectedPost.projetos.length > 0 && (
+                    <div className="mt-12 pt-8 border-t border-slate-200 dark:border-slate-800">
+                      <h3 className="text-lg font-bold text-slate-900 dark:text-white font-display mb-4 flex items-center gap-2">
+                        <Code className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
+                        <span>{language === "en" ? "Related Projects" : "Projetos Relacionados"}</span>
+                      </h3>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {selectedPost.projetos.map((code) => {
+                          const proj = projects.find((p) => p.codigo === code || p.id === code);
+
+                          if (!proj) {
+                            if (isEditMode) {
+                              return (
+                                <div key={code} className="rounded-xl border border-rose-300 dark:border-rose-800 bg-rose-50 dark:bg-rose-950/40 p-4 flex items-center gap-2 text-rose-700 dark:text-rose-300 text-xs font-mono">
+                                  <AlertCircle className="h-4 w-4 shrink-0 text-rose-500" />
+                                  <span>Código de projeto inexistente: [{code}]</span>
+                                </div>
+                              );
+                            }
+                            return null;
+                          }
+
+                          const projTitle = (language === "en" && proj.titleEn ? proj.titleEn : proj.title) || proj.title;
+                          const projDesc = (language === "en" && proj.descriptionEn ? proj.descriptionEn : proj.description) || proj.description;
+
+                          return (
+                            <Link
+                              key={proj.id}
+                              to={`/projetos/${proj.codigo || proj.id}`}
+                              onClick={() => setSelectedPost(null)}
+                              className="group flex flex-col sm:flex-row items-stretch gap-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/60 p-3.5 hover:border-indigo-500 dark:hover:border-indigo-500 hover:shadow-md transition-all cursor-pointer"
+                            >
+                              {proj.imageUrl && (
+                                <div className="w-full sm:w-28 h-24 rounded-lg overflow-hidden shrink-0 bg-slate-200 dark:bg-slate-800">
+                                  <LocalImage
+                                    src={proj.imageUrl}
+                                    alt={projTitle}
+                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                  />
+                                </div>
+                              )}
+                              <div className="flex-1 min-w-0 flex flex-col justify-between">
+                                <div>
+                                  <div className="flex items-center justify-between gap-2 mb-1">
+                                    <h4 className="text-sm font-bold text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors truncate font-display">
+                                      {projTitle}
+                                    </h4>
+                                  </div>
+                                  <p className="text-xs text-slate-600 dark:text-slate-400 line-clamp-2 font-sans mb-2">
+                                    {projDesc}
+                                  </p>
+                                </div>
+
+                                {/* Stack Chips */}
+                                {proj.technologies && proj.technologies.length > 0 && (
+                                  <div className="flex flex-wrap gap-1">
+                                    {proj.technologies.slice(0, 3).map((tech, idx) => (
+                                      <span key={idx} className="rounded bg-slate-200/80 dark:bg-slate-800 text-[10px] font-mono px-1.5 py-0.5 text-slate-700 dark:text-slate-300">
+                                        {tech}
+                                      </span>
+                                    ))}
+                                    {proj.technologies.length > 3 && (
+                                      <span className="text-[10px] text-slate-400 font-mono">+{proj.technologies.length - 3}</span>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
+                            </Link>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
                 </div>
+              </div>
 
                 {/* Footer Modal Action */}
                 <div className="bg-slate-50 dark:bg-slate-950/70 px-6 py-4 flex justify-between items-center border-t border-slate-100 dark:border-slate-800">
@@ -693,29 +790,36 @@ export default function BlogSection({
                   : "Alterne para preencher as informações em Português ou Inglês"}
               </p>
             </div>
-            <div className="bg-slate-200/70 p-1 rounded-xl flex gap-1 self-start sm:self-auto shrink-0 font-sans">
-              <button
-                type="button"
-                onClick={() => setEditingLanguage("pt")}
-                className={`rounded-lg px-3 py-1.5 text-xs font-bold transition-all flex items-center gap-1 cursor-pointer ${
-                  editingLanguage === "pt"
-                    ? "bg-white text-indigo-600 shadow-sm"
-                    : "text-slate-500 hover:text-slate-950"
-                }`}
-              >
-                PT
-              </button>
-              <button
-                type="button"
-                onClick={() => setEditingLanguage("en")}
-                className={`rounded-lg px-3 py-1.5 text-xs font-bold transition-all flex items-center gap-1 cursor-pointer ${
-                  editingLanguage === "en"
-                    ? "bg-white text-indigo-600 shadow-sm"
-                    : "text-slate-500 hover:text-slate-950"
-                }`}
-              >
-                EN
-              </button>
+            <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto shrink-0 font-sans">
+              <TranslateButton
+                onTranslate={handleAutoTranslatePost}
+                label={language === "en" ? "Auto-Translate PT → EN" : "Traduzir PT → EN (Gemini AI)"}
+                size="sm"
+              />
+              <div className="bg-slate-200/70 p-1 rounded-xl flex gap-1">
+                <button
+                  type="button"
+                  onClick={() => setEditingLanguage("pt")}
+                  className={`rounded-lg px-3 py-1.5 text-xs font-bold transition-all flex items-center gap-1 cursor-pointer ${
+                    editingLanguage === "pt"
+                      ? "bg-white text-indigo-600 shadow-sm"
+                      : "text-slate-500 hover:text-slate-950"
+                  }`}
+                >
+                  PT
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setEditingLanguage("en")}
+                  className={`rounded-lg px-3 py-1.5 text-xs font-bold transition-all flex items-center gap-1 cursor-pointer ${
+                    editingLanguage === "en"
+                      ? "bg-white text-indigo-600 shadow-sm"
+                      : "text-slate-500 hover:text-slate-950"
+                  }`}
+                >
+                  EN
+                </button>
+              </div>
             </div>
           </div>
 
@@ -772,19 +876,16 @@ export default function BlogSection({
               </div>
 
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 font-mono mb-1">
-                  Conteúdo Completo do Artigo (Português) *
-                </label>
-                <div className="text-[10px] text-slate-400 font-sans mb-1">
-                  Suporta LaTeX ($$equação$$ ou $equação$), títulos com ##, código com ``` e listas.
-                </div>
-                <textarea
+                <ArticleContentEditor
                   required
-                  rows={10}
+                  rows={12}
+                  label="Conteúdo Completo do Artigo (Português)"
+                  helpText="Suporta LaTeX ($$equação$$ ou $equação$), títulos com ##, código com ``` e imagens."
+                  language="pt"
+                  articleTitle={postForm.title || "artigo"}
                   value={postForm.content || ""}
-                  onChange={(e) => setPostForm({ ...postForm, content: e.target.value })}
+                  onChange={(val) => setPostForm({ ...postForm, content: val })}
                   placeholder="Escreva o conteúdo integral do artigo em português..."
-                  className="w-full rounded-lg border border-slate-200 px-3.5 py-2.5 text-sm text-slate-800 focus:border-indigo-500 focus:outline-hidden font-sans resize-y"
                 />
               </div>
             </div>
@@ -840,19 +941,16 @@ export default function BlogSection({
               </div>
 
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 font-mono mb-1">
-                  Full Article Content (English) *
-                </label>
-                <div className="text-[10px] text-slate-400 font-sans mb-1">
-                  Supports LaTeX ($$equation$$ or $equation$), headings with ##, code with ``` and lists.
-                </div>
-                <textarea
+                <ArticleContentEditor
                   required
-                  rows={10}
+                  rows={12}
+                  label="Full Article Content (English)"
+                  helpText="Supports LaTeX ($$equation$$ or $equation$), headings with ##, code with ``` and images."
+                  language="en"
+                  articleTitle={postForm.titleEn || postForm.title || "article"}
                   value={postForm.contentEn || ""}
-                  onChange={(e) => setPostForm({ ...postForm, contentEn: e.target.value })}
+                  onChange={(val) => setPostForm({ ...postForm, contentEn: val })}
                   placeholder="Write the full content of the article in English..."
-                  className="w-full rounded-lg border border-slate-200 px-3.5 py-2.5 text-sm text-slate-800 focus:border-indigo-500 focus:outline-hidden font-sans resize-y"
                 />
               </div>
             </div>

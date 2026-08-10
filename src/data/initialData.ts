@@ -3,8 +3,8 @@ import { ResumeData } from "../types";
 export const initialResumeData: ResumeData = {
   profile: {
     name: "Pedro Henrique Almeida",
-    title: "Estudante de Engenharia Física | Especialista em Instrumentação & Física Computacional",
-    titleEn: "Engineering Physics Student | Instrumentation & Computational Physics Specialist",
+    title: "Estudante de Engenharia Física | Instrumentação & Física Computacional",
+    titleEn: "Engineering Physics Student | Instrumentation & Computational Physics",
     bio: "Graduando em Engenharia Física apaixonado pela intersecção entre a física experimental avançada e a computação científica. Tenho experiência prática no desenvolvimento de instrumentação científica, simulação numérica de sistemas físicos, automação de laboratório e caracterização de semicondutores.",
     bioEn: "Engineering Physics undergraduate passionate about the intersection of advanced experimental physics and scientific computing. I have practical experience in developing scientific instrumentation, numerical simulation of physical systems, laboratory automation, and semiconductor characterization.",
     email: "PedroHenriqueAlmeida2004@gmail.com",
@@ -36,10 +36,17 @@ export const initialResumeData: ResumeData = {
   projects: [
     {
       id: "proj-1",
+      codigo: "simulador-optica",
+      tipo: "projeto",
       title: "Simulador de Óptica Quântica e Difração de Ondas",
       description: "Desenvolvimento de um simulador numérico em Python para calcular frentes de onda, padrões de difração de fenda dupla e modelar o colapso de estados coerentes em cavidades ressonantes tridimensionais.",
       categoryId: "fisica-comp",
       tags: ["Python", "NumPy", "SciPy", "Matplotlib", "Física Teórica"],
+      status: "concluído",
+      periodo: { inicio: "2023-03", fim: "2023-11" },
+      stack: ["Python", "NumPy", "SciPy", "Matplotlib"],
+      destaque: true,
+      ordemDestaque: 1,
       projectUrl: "https://quantum-sim.exemplo.com",
       githubUrl: "https://github.com/pedroalmeida/quantum-diffraction-sim",
       imageUrl: "https://images.unsplash.com/photo-1635070041078-e363dbe005cb?auto=format&fit=crop&w=800&q=80",
@@ -54,10 +61,17 @@ export const initialResumeData: ResumeData = {
     },
     {
       id: "proj-2",
+      codigo: "espectrofotometro",
+      tipo: "projeto",
       title: "Protótipo de Espectrofotômetro de Baixo Custo",
       description: "Concepção, circuito e firmware para um espectrofotômetro digital portátil. Utiliza uma grade de difração linear de alta densidade, sensor óptico CCD linear e aquisição de dados microcontrolada para espectroscopia de absorção de soluções líquidas.",
       categoryId: "instrumentacao",
       tags: ["Arduino", "C++", "Circuitos Analógicos", "Processamento de Sinais", "Óptica"],
+      status: "concluído",
+      periodo: { inicio: "2023-08", fim: "2024-02" },
+      stack: ["Arduino", "C++", "CCD", "Python"],
+      destaque: true,
+      ordemDestaque: 2,
       projectUrl: "https://spectro-diy.exemplo.com",
       githubUrl: "https://github.com/pedroalmeida/low-cost-spectrometer",
       imageUrl: "https://images.unsplash.com/photo-1507668077129-56e32842fceb?auto=format&fit=crop&w=800&q=80",
@@ -72,10 +86,16 @@ export const initialResumeData: ResumeData = {
     },
     {
       id: "proj-3",
+      codigo: "perovskita-sim",
+      tipo: "projeto",
       title: "Simulador de Células Fotovoltaicas de Perovskita",
       description: "Implementação de um modelo unidimensional de deriva-difusão para prever o perfil de transporte de portadores de carga e a eficiência de conversão quântica em junções de semicondutores de perovskita.",
       categoryId: "ciencia-materiais",
       tags: ["MATLAB", "Física do Estado Sólido", "Semicondutores", "Dispositivos Optoeletrônicos"],
+      status: "ativo",
+      periodo: { inicio: "2024-01" },
+      stack: ["MATLAB", "Discretização Gummel", "Física de Semicondutores"],
+      destaque: false,
       projectUrl: "https://perovskite-cell.exemplo.com",
       imageUrl: "https://images.unsplash.com/photo-1509391366360-2e959784a276?auto=format&fit=crop&w=800&q=80",
       featured: false,
@@ -90,10 +110,17 @@ export const initialResumeData: ResumeData = {
     },
     {
       id: "proj-4",
+      codigo: "controlador-pid-laser",
+      tipo: "projeto",
       title: "Controlador Térmico PID de Alta Estabilidade para Diodo Laser",
       description: "Projeto de hardware analógico e malha fechada digital baseada em PID para estabilizar a temperatura de um diodo laser de rubídio na casa dos milikelvins (mK) para experimentos de aprisionamento óptico.",
       categoryId: "instrumentacao",
       tags: ["Controle PID", "Sensores RTD", "LabVIEW", "Eletromagnetismo", "Hardware"],
+      status: "concluído",
+      periodo: { inicio: "2023-05", fim: "2023-10" },
+      stack: ["LabVIEW", "C++", "PID Digital", "Peltier TEC"],
+      destaque: true,
+      ordemDestaque: 3,
       projectUrl: "https://laser-stabilizer.exemplo.com",
       githubUrl: "https://github.com/pedroalmeida/laser-pid-controller",
       imageUrl: "https://images.unsplash.com/photo-1532187863486-abf9d39d66e8?auto=format&fit=crop&w=800&q=80",
@@ -109,10 +136,16 @@ export const initialResumeData: ResumeData = {
     },
     {
       id: "proj-5",
+      codigo: "fea-dissipadores",
+      tipo: "projeto",
       title: "Modelagem de Elementos Finitos (FEA) de Dissipadores Térmicos",
       description: "Análise térmica computacional para modelagem tridimensional de transferência de calor por condução e convecção em ligas de materiais expostas a gradientes severos de temperatura em ambiente de ultra-alto vácuo (UHV).",
       categoryId: "fisica-comp",
       tags: ["COMSOL Multiphysics", "Mecânica dos Fluidos", "Termodinâmica", "Elementos Finitos"],
+      status: "concluído",
+      periodo: { inicio: "2023-11", fim: "2024-03" },
+      stack: ["COMSOL Multiphysics", "FEA Tridimensional", "Aço 316L / OFHC"],
+      destaque: false,
       imageUrl: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=800&q=80",
       featured: false,
       detailedDescription: "Este projeto consistiu no modelamento computacional tridimensional da condução e radiação térmica sofridas por porta-amostras metálicos em câmaras de deposição em Ultra-Alto Vácuo (UHV). Sob vácuo extremo, a ausência de gás elimina a dissipação por convecção, restando apenas a condução sólida através das estruturas de fixação e a radiação térmica. Usando o software COMSOL Multiphysics, foram avaliados o tempo de resfriamento, a fadiga térmica mecânica e a anisotropia espacial da temperatura em materiais como cobre eletrolítico (OFHC), molibdênio e aço inoxidável 316L, otimizando as geometrias das aletas dissipadoras para evitar degradação de sensores piezoelétricos sensíveis acoplados.",
@@ -136,6 +169,7 @@ export const initialResumeData: ResumeData = {
       description: "Alinhamento de cavidades de lasers de femtossegundos e caracterização de meios ativos transparentes. Automação completa da varredura de estágios motorizados de translação microscópica, com drivers em Python para osciloscópios, espectrômetros e matrizes CCD.",
       type: "research",
       skills: ["Python", "PyVISA", "Óptica ultrarrápida", "Automação de instrumentação"],
+      projetos: ["controlador-pid-laser", "espectrofotometro"],
       subperiods: [
         {
           id: "sub-1",
@@ -160,7 +194,8 @@ export const initialResumeData: ResumeData = {
       name: "Nexus",
       startDate: "2024",
       current: true,
-      description: "Coordenação do grupo de estudos"
+      description: "Coordenação do grupo de estudos",
+      projetos: ["simulador-optica"]
     },
     {
       id: "act-2",
@@ -256,7 +291,10 @@ export const initialResumeData: ResumeData = {
       tags: ["Python", "Instrumentação", "Semicondutores", "SCPI"],
       imageUrl: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&w=800&q=80",
       readTime: "5 min read",
-      category: "Instrumentação"
+      category: "Instrumentação",
+      codigo: "automacao-medicoes",
+      tipo: "artigo",
+      projetos: ["controlador-pid-laser", "espectrofotometro"]
     },
     {
       id: "post-2",
@@ -270,7 +308,10 @@ export const initialResumeData: ResumeData = {
       tags: ["Ciência dos Materiais", "Semicondutores", "Fotovoltaica", "Física de Dispositivos"],
       imageUrl: "https://images.unsplash.com/photo-1509391366360-2e959784a276?auto=format&fit=crop&w=800&q=80",
       readTime: "7 min read",
-      category: "Ciência dos Materiais"
+      category: "Ciência dos Materiais",
+      codigo: "desvendando-perovskitas",
+      tipo: "artigo",
+      projetos: ["perovskita-sim"]
     }
   ]
 };

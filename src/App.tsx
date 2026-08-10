@@ -492,6 +492,7 @@ export default function App() {
               experiences={resumeData.experiences}
               academicActivities={resumeData.academicActivities || []}
               educations={resumeData.educations}
+              projects={resumeData.projects}
               isEditMode={isEditMode}
               onUpdateExperiences={handleUpdateExperiences}
               onUpdateAcademicActivities={handleUpdateAcademicActivities}
@@ -552,6 +553,7 @@ export default function App() {
           /* Blog / Publications Page Section */
           <BlogSection
             posts={resumeData.posts || []}
+            projects={resumeData.projects}
             isEditMode={isEditMode}
             onUpdatePosts={handleUpdatePosts}
             authorName={resumeData.profile.name || "Pedro Henrique Almeida"}

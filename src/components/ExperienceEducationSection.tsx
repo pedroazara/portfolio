@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { Experience, AcademicActivity, Education, Subperiod } from "../types";
+import { Link } from "react-router-dom";
+import { Experience, AcademicActivity, Education, Subperiod, Project } from "../types";
 import {
   FlaskConical,
   Users,
@@ -15,11 +16,14 @@ import EditModal from "./EditModal";
 import ConfirmModal from "./ConfirmModal";
 import MarkdownRenderer from "./MarkdownRenderer";
 import { Language } from "../lib/translations";
+import TranslateButton from "./TranslateButton";
+import { translateFields } from "../lib/translator";
 
 interface ExperienceEducationSectionProps {
   experiences: Experience[];
   academicActivities?: AcademicActivity[];
   educations: Education[];
+  projects?: Project[];
   isEditMode: boolean;
   onUpdateExperiences: (updated: Experience[]) => void;
   onUpdateAcademicActivities?: (updated: AcademicActivity[]) => void;
@@ -31,6 +35,7 @@ export default function ExperienceEducationSection({
   experiences,
   academicActivities = [],
   educations,
+  projects = [],
   isEditMode,
   onUpdateExperiences,
   onUpdateAcademicActivities,
@@ -44,6 +49,63 @@ export default function ExperienceEducationSection({
   const [confirmCallback, setConfirmCallback] = useState<(() => void) | null>(null);
   const [confirmTitle, setConfirmTitle] = useState("");
   const [confirmMessage, setConfirmMessage] = useState("");
+
+  // Helper to render project cross reference chips (ETAPA 9.4)
+  const renderProjectChips = (projectCodes?: string[]) => {
+    if (!projectCodes || projectCodes.length === 0) return null;
+
+    return (
+      <div className="mt-3.5 pt-2.5 border-t border-slate-200/60 dark:border-slate-800/80">
+        <div className="flex flex-wrap items-center gap-1.5 no-print print:hidden">
+          <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 font-sans">
+            {language === "en" ? "Related Projects:" : "Projetos relacionados:"}
+          </span>
+          {projectCodes.map((code) => {
+            const proj = projects.find((p) => p.codigo === code || p.id === code);
+
+            if (!proj) {
+              if (isEditMode) {
+                return (
+                  <span
+                    key={code}
+                    className="inline-flex items-center gap-1 rounded-md bg-rose-50 dark:bg-rose-950/60 border border-rose-300 dark:border-rose-800 text-rose-700 dark:text-rose-300 px-2 py-0.5 text-[11px] font-mono font-semibold"
+                    title="Código de projeto não encontrado"
+                  >
+                    <AlertCircle className="h-3 w-3 text-rose-500" />
+                    <span>Código inexistente: [{code}]</span>
+                  </span>
+                );
+              }
+              return (
+                <span
+                  key={code}
+                  className="inline-flex items-center rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 px-2 py-0.5 text-[11px] font-sans"
+                >
+                  {code}
+                </span>
+              );
+            }
+
+            return (
+              <Link
+                key={code}
+                to={`/projetos/${proj.codigo || proj.id}`}
+                className="inline-flex items-center gap-1 rounded-md bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200/80 dark:border-indigo-800/80 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 px-2.5 py-0.5 text-[11.5px] font-sans font-medium transition-colors"
+              >
+                <span>{language === "en" && proj.titleEn ? proj.titleEn : proj.title}</span>
+                <ExternalLink className="h-2.5 w-2.5 opacity-70" />
+              </Link>
+            );
+          })}
+        </div>
+        
+        {/* Printable view without links */}
+        <div className="hidden print:block text-xs text-slate-600 dark:text-slate-400 mt-1">
+          Projetos: {projectCodes.map((code) => projects.find((p) => p.codigo === code || p.id === code)?.title || code).join(", ")}
+        </div>
+      </div>
+    );
+  };
 
   const triggerConfirm = (title: string, message: string, onConfirm: () => void) => {
     setConfirmTitle(title);
@@ -187,6 +249,63 @@ export default function ExperienceEducationSection({
       ...prev,
       subperiods: (prev.subperiods || []).filter((s) => s.id !== subId),
     }));
+  };
+
+  const handleAutoTranslateExp = async () => {
+    const fieldsToTranslate = {
+      roleEn: expForm.role || "",
+      locationEn: expForm.location || "",
+      descriptionEn: expForm.description || "",
+    };
+
+    const translated = await translateFields(fieldsToTranslate);
+
+    setExpForm((prev) => ({
+      ...prev,
+      roleEn: translated.roleEn || prev.roleEn || "",
+      locationEn: translated.locationEn || prev.locationEn || "",
+      descriptionEn: translated.descriptionEn || prev.descriptionEn || "",
+    }));
+
+    setEditingLanguage("en");
+  };
+
+  const handleAutoTranslateAct = async () => {
+    const fieldsToTranslate = {
+      nameEn: actForm.name || "",
+      descriptionEn: actForm.description || "",
+      extraContentEn: actForm.extraContent || "",
+    };
+
+    const translated = await translateFields(fieldsToTranslate);
+
+    setActForm((prev) => ({
+      ...prev,
+      nameEn: translated.nameEn || prev.nameEn || "",
+      descriptionEn: translated.descriptionEn || prev.descriptionEn || "",
+      extraContentEn: translated.extraContentEn || prev.extraContentEn || "",
+    }));
+
+    setEditingLanguage("en");
+  };
+
+  const handleAutoTranslateEdu = async () => {
+    const fieldsToTranslate = {
+      degreeEn: eduForm.degree || "",
+      institutionEn: eduForm.institution || "",
+      descriptionEn: eduForm.description || "",
+    };
+
+    const translated = await translateFields(fieldsToTranslate);
+
+    setEduForm((prev) => ({
+      ...prev,
+      degreeEn: translated.degreeEn || prev.degreeEn || "",
+      institutionEn: translated.institutionEn || prev.institutionEn || "",
+      descriptionEn: translated.descriptionEn || prev.descriptionEn || "",
+    }));
+
+    setEditingLanguage("en");
   };
 
   const handleExpSubmit = (e: React.FormEvent) => {
@@ -367,10 +486,15 @@ export default function ExperienceEducationSection({
     if (!dateStr) return "";
     if (dateStr.length === 4) return dateStr; // e.g. "2024"
     const [year, month] = dateStr.split("-");
-    const months = [
+    const monthsPt = [
       "jan", "fev", "mar", "abr", "mai", "jun",
       "jul", "ago", "set", "out", "nov", "dez"
     ];
+    const monthsEn = [
+      "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+      "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+    ];
+    const months = language === "en" ? monthsEn : monthsPt;
     if (month && parseInt(month, 10) >= 1 && parseInt(month, 10) <= 12) {
       return `${months[parseInt(month, 10) - 1]} ${year}`;
     }
@@ -380,7 +504,7 @@ export default function ExperienceEducationSection({
   const formatPeriodDisplay = (start?: string, end?: string, isCurrent?: boolean) => {
     const s = formatDate(start);
     const e = isCurrent
-      ? language === "en" ? "present" : "presente"
+      ? language === "en" ? "Present" : "Presente"
       : formatDate(end);
     if (!s && !e) return "";
     if (!s) return e;
@@ -666,6 +790,9 @@ export default function ExperienceEducationSection({
                       ))}
                     </div>
                   )}
+
+                  {/* Projetos Relacionados (ETAPA 9.4) */}
+                  {renderProjectChips(exp.projetos)}
                 </div>
               );
             })}
@@ -780,6 +907,9 @@ export default function ExperienceEducationSection({
                         </div>
                       )}
 
+                      {/* Projetos Relacionados (ETAPA 9.4) */}
+                      {renderProjectChips(act.projetos)}
+
                       {/* Admin Controls */}
                       {isEditMode && (
                         <div className="mt-2 flex items-center justify-end gap-1 border-t border-slate-200/50 dark:border-slate-800/50 pt-2 no-print print:hidden">
@@ -820,6 +950,9 @@ export default function ExperienceEducationSection({
                     <p className="text-xs text-slate-500 dark:text-slate-400 font-sans truncate line-clamp-1 mt-1">
                       {actDesc}
                     </p>
+
+                    {/* Projetos Relacionados (ETAPA 9.4) */}
+                    {renderProjectChips(act.projetos)}
 
                     {/* Admin Controls */}
                     {isEditMode && (
@@ -866,29 +999,36 @@ export default function ExperienceEducationSection({
             </div>
           )}
 
-          <div className="flex gap-2 border-b border-slate-200 dark:border-slate-800 pb-2 mb-3">
-            <button
-              type="button"
-              onClick={() => setEditingLanguage("pt")}
-              className={`px-3 py-1 rounded text-xs font-medium cursor-pointer ${
-                editingLanguage === "pt"
-                  ? "bg-indigo-600 text-white"
-                  : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400"
-              }`}
-            >
-              Português
-            </button>
-            <button
-              type="button"
-              onClick={() => setEditingLanguage("en")}
-              className={`px-3 py-1 rounded text-xs font-medium cursor-pointer ${
-                editingLanguage === "en"
-                  ? "bg-indigo-600 text-white"
-                  : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400"
-              }`}
-            >
-              English
-            </button>
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 dark:border-slate-800 pb-2 mb-3">
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setEditingLanguage("pt")}
+                className={`px-3 py-1 rounded text-xs font-medium cursor-pointer ${
+                  editingLanguage === "pt"
+                    ? "bg-indigo-600 text-white"
+                    : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400"
+                }`}
+              >
+                Português
+              </button>
+              <button
+                type="button"
+                onClick={() => setEditingLanguage("en")}
+                className={`px-3 py-1 rounded text-xs font-medium cursor-pointer ${
+                  editingLanguage === "en"
+                    ? "bg-indigo-600 text-white"
+                    : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400"
+                }`}
+              >
+                English
+              </button>
+            </div>
+            <TranslateButton
+              onTranslate={handleAutoTranslateExp}
+              label={language === "en" ? "Auto-Translate PT → EN" : "Traduzir PT → EN (Gemini AI)"}
+              size="sm"
+            />
           </div>
 
           <div>
