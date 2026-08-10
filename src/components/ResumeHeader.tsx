@@ -470,6 +470,48 @@ export default function ResumeHeader({
             </div>
           </div>
 
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 font-mono mb-1">
+                {translations[language].lattesLabel}
+              </label>
+              <input
+                type="url"
+                name="lattesUrl"
+                value={formData.lattesUrl || ""}
+                onChange={handleChange}
+                placeholder="http://lattes.cnpq.br/..."
+                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-800 focus:border-indigo-500 focus:outline-hidden"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 font-mono mb-1">
+                {translations[language].orcidLabel}
+              </label>
+              <input
+                type="url"
+                name="orcidUrl"
+                value={formData.orcidUrl || ""}
+                onChange={handleChange}
+                placeholder="https://orcid.org/..."
+                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-800 focus:border-indigo-500 focus:outline-hidden"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 font-mono mb-1">
+                {translations[language].siteRepoLabel}
+              </label>
+              <input
+                type="url"
+                name="siteRepoUrl"
+                value={formData.siteRepoUrl || ""}
+                onChange={handleChange}
+                placeholder="https://github.com/..."
+                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-800 focus:border-indigo-500 focus:outline-hidden"
+              />
+            </div>
+          </div>
+
           <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
             <button
               type="button"

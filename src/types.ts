@@ -11,6 +11,9 @@ export interface Profile {
   github?: string;
   linkedin?: string;
   twitter?: string;
+  lattesUrl?: string;
+  orcidUrl?: string;
+  siteRepoUrl?: string;
   avatarUrl?: string;
   badgeIconUrl?: string;
 }

@@ -15,6 +15,7 @@ import LoginModal from "./components/LoginModal";
 import ImageBankModal from "./components/ImageBankModal";
 import ChangePasswordModal from "./components/ChangePasswordModal";
 import PdfPreviewModal from "./components/PdfPreviewModal";
+import Footer from "./components/Footer";
 import LocalImage from "./components/LocalImage";
 import { OrbitaIcon } from "./components/OrbitaIcon";
 import { Sparkles, CheckCircle2, Lock, Atom, FileText, BookOpen, Cloud, Sun, Moon } from "lucide-react";
@@ -43,6 +44,9 @@ const sanitizeResumeData = (data: any): ResumeData => {
       github: data?.profile?.github ?? initialResumeData.profile.github ?? "",
       linkedin: data?.profile?.linkedin ?? initialResumeData.profile.linkedin ?? "",
       twitter: data?.profile?.twitter ?? initialResumeData.profile.twitter ?? "",
+      lattesUrl: data?.profile?.lattesUrl ?? initialResumeData.profile.lattesUrl ?? "",
+      orcidUrl: data?.profile?.orcidUrl ?? initialResumeData.profile.orcidUrl ?? "",
+      siteRepoUrl: data?.profile?.siteRepoUrl ?? initialResumeData.profile.siteRepoUrl ?? "",
       avatarUrl: data?.profile?.avatarUrl ?? initialResumeData.profile.avatarUrl ?? "",
     },
     categories: Array.isArray(data?.categories) ? data.categories : (initialResumeData.categories || []),
@@ -409,17 +413,12 @@ export default function App() {
     return (
       <div className="min-h-screen bg-slate-50/50 dark:bg-slate-950 flex flex-col items-center justify-center p-4 transition-colors duration-300">
         <div className="flex flex-col items-center max-w-sm text-center">
-          <div className="flex h-16 w-16 items-center justify-center rounded-3xl bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 mb-6 shadow-xl shadow-indigo-100/50 dark:shadow-none">
-            <Atom className="h-8 w-8 animate-spin-slow text-indigo-600 dark:text-indigo-400" />
+          <div className="flex h-20 w-20 items-center justify-center rounded-3xl bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 mb-5 shadow-xl shadow-indigo-100/50 dark:shadow-none border border-indigo-100/50 dark:border-indigo-900/40">
+            <OrbitaIcon size={44} color="currentColor" className="text-indigo-600 dark:text-indigo-400 animate-pulse" />
           </div>
-          <h2 className="text-lg font-extrabold tracking-tight text-slate-900 dark:text-white font-display">
-            {language === "en" ? "Syncing Portfolio" : "Sincronizando Portfólio"}
+          <h2 className="text-base font-bold tracking-tight text-slate-800 dark:text-slate-200 font-sans">
+            Carregando site
           </h2>
-          <p className="mt-2 text-xs text-slate-400 dark:text-slate-500 font-sans leading-relaxed">
-            {language === "en" 
-              ? "Connecting to Firebase to fetch the latest CV details..." 
-              : "Conectando ao Firebase para obter os dados mais recentes..."}
-          </p>
         </div>
       </div>
     );
@@ -566,24 +565,11 @@ export default function App() {
       </main>
 
       {/* Footer Design */}
-      <footer className="no-print print:hidden mt-16 border-t border-slate-200 bg-white py-12 text-center">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <p className="text-sm font-semibold text-slate-700 font-display">
-            {resumeData.profile.name || (language === "en" ? "Your CV and Portfolio" : "Seu Currículo e Portfólio")}
-          </p>
-          <p className="mt-2 text-xs text-slate-400 font-sans">
-            {language === "en" 
-              ? "All changes are secure and automatically synchronized in the cloud in real-time via Firebase." 
-              : "Todas as alterações são seguras e sincronizadas na nuvem em tempo real via Firebase."}
-          </p>
-
-          <div className="mt-4 flex justify-center gap-4 text-xs text-slate-400 font-mono">
-            <span>PedroHenriqueAlmeida2004@gmail.com</span>
-            <span>•</span>
-            <span>{language === "en" ? "Developed with React + Tailwind CSS" : "Desenvolvido com React + Tailwind CSS"}</span>
-          </div>
-        </div>
-      </footer>
+      <Footer
+        profile={resumeData.profile}
+        language={language}
+        onOpenPdfPreview={() => setIsPdfPreviewOpen(true)}
+      />
 
       {/* Login Modal for Admin Access */}
       <LoginModal
