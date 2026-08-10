@@ -185,7 +185,7 @@ export default function MarkdownRenderer({ content, className = "max-w-[75ch] te
       return <hr className="my-6 border-t border-slate-200 dark:border-slate-800" />;
     },
     p({ children }: any) {
-      return <p className="whitespace-pre-line leading-relaxed">{children}</p>;
+      return <div className="whitespace-pre-line leading-relaxed my-3">{children}</div>;
     }
   };
 
@@ -194,6 +194,7 @@ export default function MarkdownRenderer({ content, className = "max-w-[75ch] te
       <ReactMarkdown
         remarkPlugins={[remarkMath, remarkGfm]}
         rehypePlugins={[rehypeKatex]}
+        urlTransform={(url) => url}
         components={renderers}
       >
         {content}

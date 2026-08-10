@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { getImage } from "../utils/imageDb";
+import { getImage, getSyncImage } from "../utils/imageDb";
 
 interface LocalImageProps {
   src?: string;
@@ -12,8 +12,20 @@ interface LocalImageProps {
 }
 
 export default function LocalImage({ src, fallback, ...props }: LocalImageProps) {
-  const [resolvedSrc, setResolvedSrc] = useState<string | undefined>(undefined);
-  const [isLoading, setIsLoading] = useState(true);
+  const [resolvedSrc, setResolvedSrc] = useState<string | undefined>(() => {
+    if (src && src.startsWith("db:")) {
+      const cached = getSyncImage(src.substring(3));
+      if (cached) return cached;
+    }
+    return src && !src.startsWith("db:") ? src : undefined;
+  });
+  const [isLoading, setIsLoading] = useState<boolean>(() => {
+    if (!src) return false;
+    if (src.startsWith("db:")) {
+      return !getSyncImage(src.substring(3));
+    }
+    return false;
+  });
 
   useEffect(() => {
     if (!src) {
@@ -23,8 +35,15 @@ export default function LocalImage({ src, fallback, ...props }: LocalImageProps)
     }
 
     if (src.startsWith("db:")) {
-      setIsLoading(true);
       const dbKey = src.substring(3); // remove "db:" prefix
+      const syncVal = getSyncImage(dbKey);
+      if (syncVal) {
+        setResolvedSrc(syncVal);
+        setIsLoading(false);
+        return;
+      }
+
+      setIsLoading(true);
       getImage(dbKey)
         .then((dataUrl) => {
           if (dataUrl) {

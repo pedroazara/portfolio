@@ -620,7 +620,8 @@ export default function BlogSection({
 
                   {/* Article Contents */}
                   <div className="p-6 sm:p-10 lg:p-14">
-                  {/* Category/Tags */}
+                    <div className="max-w-4xl mx-auto">
+                      {/* Category/Tags */}
                   <div className="flex flex-wrap gap-2 mb-4 items-center">
                     {getPostCategoryDisplay(selectedPost) && (
                       <span className="rounded-full bg-indigo-600 dark:bg-indigo-500 px-4 py-1 text-xs font-bold text-white font-sans uppercase tracking-wider shadow-sm">
@@ -739,6 +740,7 @@ export default function BlogSection({
                   )}
                 </div>
               </div>
+            </div>
 
                 {/* Footer Modal Action */}
                 <div className="bg-slate-50 dark:bg-slate-950/70 px-6 py-4 flex justify-between items-center border-t border-slate-100 dark:border-slate-800">

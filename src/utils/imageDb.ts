@@ -84,17 +84,29 @@ async function listLocalImages(): Promise<StoredImage[]> {
 
 // Exported high-level functions with Firestore Synchronization
 
+// In-memory cache for instant synchronous/microtask retrieval
+const memoryImageCache = new Map<string, string>();
+
+/**
+ * Gets an image data URL synchronously from the in-memory cache if available.
+ */
+export function getSyncImage(name: string): string | null {
+  return memoryImageCache.get(name) || null;
+}
+
 /**
  * Saves an image to local storage (IndexedDB) and synchronizes it to the Firestore cloud database.
  */
 export async function saveImage(name: string, dataUrl: string, size: number): Promise<void> {
   const addedAt = Date.now();
   
-  // 1. Save locally first (instant success for high performance)
+  // 0. Update in-memory cache for instant 0ms retrieval
+  memoryImageCache.set(name, dataUrl);
+
+  // 1. Save locally first (guaranteed instant success)
   await saveLocalImage(name, dataUrl, size, addedAt);
 
-  // 2. Synchronize to Firestore cloud
-  const fullPath = `portfolio_images/${name}`;
+  // 2. Try synchronizing to Firestore cloud (ignore errors if unauthenticated or offline)
   try {
     const docRef = doc(db, "portfolio_images", name);
     await setDoc(docRef, {
@@ -104,33 +116,47 @@ export async function saveImage(name: string, dataUrl: string, size: number): Pr
       addedAt
     });
   } catch (error) {
-    handleFirestoreError(error, OperationType.WRITE, fullPath);
+    console.warn("Firestore sync warning (image saved locally):", error);
   }
 }
 
 /**
- * Gets the image data URL by name, trying the local cache first, and falling back to Firestore if missing.
+ * Gets the image data URL by name, trying the in-memory cache first, local cache (IndexedDB) second, and falling back to Firestore if missing.
  */
 export async function getImage(name: string): Promise<string | null> {
+  // 0. Check fast in-memory cache first
+  if (memoryImageCache.has(name)) {
+    return memoryImageCache.get(name)!;
+  }
+
   // 1. Check local cache (IndexedDB)
-  const localData = await getLocalImage(name);
-  if (localData) {
-    return localData;
+  try {
+    const localData = await getLocalImage(name);
+    if (localData) {
+      memoryImageCache.set(name, localData);
+      return localData;
+    }
+  } catch (err) {
+    console.warn("Local IndexedDB read failed:", err);
   }
 
   // 2. Fetch from Firestore cloud database
-  const fullPath = `portfolio_images/${name}`;
   try {
     const docRef = doc(db, "portfolio_images", name);
     const docSnap = await getDoc(docRef);
     if (docSnap.exists()) {
       const data = docSnap.data() as StoredImage;
+      memoryImageCache.set(data.name, data.dataUrl);
       // Populate local cache for fast future retrieval
-      await saveLocalImage(data.name, data.dataUrl, data.size, data.addedAt);
+      try {
+        await saveLocalImage(data.name, data.dataUrl, data.size, data.addedAt);
+      } catch (cacheErr) {
+        console.warn("Failed to populate local cache:", cacheErr);
+      }
       return data.dataUrl;
     }
   } catch (error) {
-    handleFirestoreError(error, OperationType.GET, fullPath);
+    console.warn("Firestore image fetch warning (operating in local mode):", error);
   }
 
   return null;

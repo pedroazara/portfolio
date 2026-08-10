@@ -13,6 +13,127 @@ export interface OptimizedImageResult {
   height: number;
 }
 
+export interface FormatPreservedImageResult {
+  dataUrl: string;
+  extension: string;
+  mimeType: string;
+  size: number;
+  width?: number;
+  height?: number;
+}
+
+/**
+ * Processes an image File while preserving its exact original format (PNG stays PNG, JPG stays JPG, GIF stays GIF, SVG stays SVG).
+ */
+export async function processImagePreservingFormat(
+  file: File,
+  maxDimension: number = 1600
+): Promise<FormatPreservedImageResult> {
+  const mimeType = file.type || "image/png";
+  
+  // Extension mapping
+  let extension = "png";
+  if (mimeType.includes("jpeg") || mimeType.includes("jpg")) {
+    extension = "jpg";
+  } else if (mimeType.includes("gif")) {
+    extension = "gif";
+  } else if (mimeType.includes("webp")) {
+    extension = "webp";
+  } else if (mimeType.includes("svg")) {
+    extension = "svg";
+  } else if (mimeType.includes("png")) {
+    extension = "png";
+  } else {
+    // try reading extension from file name
+    const match = file.name.match(/\.([a-zA-Z0-9]+)$/);
+    if (match) {
+      extension = match[1].toLowerCase();
+    }
+  }
+
+  // For GIFs, SVGs, or smaller files (< 1.2MB), preserve original file content 100% directly
+  if (extension === "gif" || extension === "svg" || file.size <= 1200000) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        if (e.target?.result) {
+          const dataUrl = e.target.result as string;
+          resolve({
+            dataUrl,
+            extension,
+            mimeType,
+            size: file.size,
+          });
+        } else {
+          reject(new Error("Erro ao ler arquivo da imagem."));
+        }
+      };
+      reader.onerror = () => reject(new Error("Erro na leitura do arquivo."));
+      reader.readAsDataURL(file);
+    });
+  }
+
+  // For larger files (> 1.2MB), resize via Canvas preserving original mimeType format
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+
+    img.onload = () => {
+      try {
+        let width = img.width;
+        let height = img.height;
+
+        if (width > maxDimension || height > maxDimension) {
+          if (width > height) {
+            height = Math.round((height * maxDimension) / width);
+            width = maxDimension;
+          } else {
+            width = Math.round((width * maxDimension) / height);
+            height = maxDimension;
+          }
+        }
+
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+
+        const ctx = canvas.getContext("2d");
+        if (!ctx) {
+          reject(new Error("Não foi possível inicializar o Canvas."));
+          return;
+        }
+
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = "high";
+        ctx.drawImage(img, 0, 0, width, height);
+
+        const targetFormat = extension === "jpg" ? "image/jpeg" : "image/png";
+        const dataUrl = canvas.toDataURL(targetFormat, 0.88);
+        const size = Math.round((dataUrl.length * 3) / 4);
+
+        resolve({
+          dataUrl,
+          extension,
+          mimeType: targetFormat,
+          size,
+          width,
+          height,
+        });
+      } catch (err) {
+        reject(err);
+      }
+    };
+
+    img.onerror = () => reject(new Error("Erro ao processar imagem no Canvas."));
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      if (e.target?.result) img.src = e.target.result as string;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
 /**
  * Optimizes an image File or Data URL to fit within max 1600px and compress to ~80% quality WebP.
  */
