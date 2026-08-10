@@ -10,10 +10,10 @@ interface FooterProps {
   buildDate?: string;
 }
 
-export function Footer({ profile, language, buildDate = "2026-08-10" }: FooterProps) {
+export function Footer({ profile, language, buildDate }: FooterProps) {
   const currentYear = new Date().getFullYear();
 
-  // Format build date according to active locale
+  // Format build date according to active locale (defaults to current date if omitted)
   const formattedBuildDate = React.useMemo(() => {
     try {
       const date = buildDate ? new Date(buildDate) : new Date();
@@ -35,7 +35,10 @@ export function Footer({ profile, language, buildDate = "2026-08-10" }: FooterPr
     return trimmed.startsWith("http://") || trimmed.startsWith("https://") ? trimmed : `${defaultPrefix}${trimmed}`;
   };
 
-  const siteRepoUrl = formatUrl(profile.siteRepoUrl) || "https://github.com/pedroazara/portfolio";
+  const rawRepoUrl = (profile.siteRepoUrl && !profile.siteRepoUrl.includes("pedroalmeida/portfolio"))
+    ? profile.siteRepoUrl
+    : "https://github.com/pedroazara/portfolio";
+  const siteRepoUrl = formatUrl(rawRepoUrl);
 
   const isEn = language === "en";
 

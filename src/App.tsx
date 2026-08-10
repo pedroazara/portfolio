@@ -44,9 +44,11 @@ const sanitizeResumeData = (data: any): ResumeData => {
       github: data?.profile?.github ?? initialResumeData.profile.github ?? "",
       linkedin: data?.profile?.linkedin ?? initialResumeData.profile.linkedin ?? "",
       twitter: data?.profile?.twitter ?? initialResumeData.profile.twitter ?? "",
-      lattesUrl: data?.profile?.lattesUrl ?? initialResumeData.profile.lattesUrl ?? "",
+      lattesUrl: data?.profile?.lattesUrl || initialResumeData.profile.lattesUrl || "http://lattes.cnpq.br/",
       orcidUrl: data?.profile?.orcidUrl ?? initialResumeData.profile.orcidUrl ?? "",
-      siteRepoUrl: data?.profile?.siteRepoUrl ?? initialResumeData.profile.siteRepoUrl ?? "",
+      siteRepoUrl: (data?.profile?.siteRepoUrl && !data.profile.siteRepoUrl.includes("pedroalmeida/portfolio")) 
+        ? data.profile.siteRepoUrl 
+        : "https://github.com/pedroazara/portfolio",
       avatarUrl: data?.profile?.avatarUrl ?? initialResumeData.profile.avatarUrl ?? "",
     },
     categories: Array.isArray(data?.categories) ? data.categories : (initialResumeData.categories || []),

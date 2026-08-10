@@ -14,7 +14,7 @@ export const initialResumeData: ResumeData = {
     github: "https://github.com/pedroalmeida",
     linkedin: "https://linkedin.com/in/pedroalmeida",
     twitter: "https://twitter.com/pedro_physics",
-    lattesUrl: "",
+    lattesUrl: "http://lattes.cnpq.br/",
     orcidUrl: "",
     siteRepoUrl: "https://github.com/pedroazara/portfolio",
     avatarUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=300&h=300&q=80"
