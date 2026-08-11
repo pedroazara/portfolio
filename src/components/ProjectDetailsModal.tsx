@@ -12,7 +12,8 @@ import { Language } from "../lib/translations";
 
 interface ProjectDetailsModalProps {
   project: Project | null;
-  category: ProjectCategory | undefined;
+  category?: ProjectCategory | undefined;
+  categories?: ProjectCategory[];
   onClose: () => void;
   language?: Language;
 }
@@ -20,6 +21,7 @@ interface ProjectDetailsModalProps {
 export default function ProjectDetailsModal({
   project,
   category,
+  categories,
   onClose,
   language = "pt",
 }: ProjectDetailsModalProps) {
@@ -106,6 +108,12 @@ export default function ProjectDetailsModal({
   const displayScientificRelevance = (language === "en" && project.scientificRelevanceEn) 
     ? project.scientificRelevanceEn 
     : project.scientificRelevance;
+  const projCatIds = project.categoryIds && project.categoryIds.length > 0
+    ? project.categoryIds
+    : (project.categoryId ? [project.categoryId] : []);
+  const selectedCategories = categories
+    ? categories.filter((c) => projCatIds.includes(c.id))
+    : (category ? [category] : []);
   const displayCategoryName = category 
     ? ((language === "en" && category.nameEn) ? category.nameEn : category.name) 
     : (project.categoryEn && language === "en" ? project.categoryEn : project.category || (language === "en" ? "Physics Project" : "Projeto de Física"));
@@ -260,12 +268,24 @@ export default function ProjectDetailsModal({
                 <div className="max-w-4xl mx-auto">
                   {/* Category, Status & Period Badges */}
                   <div className="flex flex-wrap items-center gap-2.5 mb-6">
-                    {/* Category Pill */}
-                    {displayCategoryName && (
-                      <span className="inline-flex items-center gap-1.5 rounded-full bg-indigo-600 text-white px-3.5 py-1 text-xs font-bold font-sans uppercase tracking-wider shadow-xs">
-                        <Layers className="h-3.5 w-3.5" />
-                        {displayCategoryName}
-                      </span>
+                    {/* Category Pills */}
+                    {selectedCategories.length > 0 ? (
+                      selectedCategories.map((cat) => {
+                        const catName = (language === "en" && cat.nameEn) ? cat.nameEn : cat.name;
+                        return (
+                          <span key={`modal-cat-${cat.id}`} className="inline-flex items-center gap-1.5 rounded-full bg-indigo-600 text-white px-3.5 py-1 text-xs font-bold font-sans uppercase tracking-wider shadow-xs">
+                            <Layers className="h-3.5 w-3.5" />
+                            {catName}
+                          </span>
+                        );
+                      })
+                    ) : (
+                      displayCategoryName && (
+                        <span className="inline-flex items-center gap-1.5 rounded-full bg-indigo-600 text-white px-3.5 py-1 text-xs font-bold font-sans uppercase tracking-wider shadow-xs">
+                          <Layers className="h-3.5 w-3.5" />
+                          {displayCategoryName}
+                        </span>
+                      )
                     )}
 
                     {/* Status Badge */}

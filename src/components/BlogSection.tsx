@@ -241,7 +241,10 @@ export default function BlogSection({
     .map((p) => getPostCategoryDisplay(p))
     .filter((cat): cat is string => !!cat);
 
-  const availableCategories = ["Todos", ...Array.from(new Set([...defaultCats, ...postsCategories]))];
+  const availableCategories = [
+    "Todos",
+    ...Array.from(new Set([...defaultCats, ...postsCategories].filter((c) => c !== "Todos" && c !== "All"))),
+  ];
 
   // Filter posts
   const activeCategoryFilter = urlCategory !== "Todos" ? urlCategory : selectedCategory;
@@ -300,12 +303,12 @@ export default function BlogSection({
 
       {/* Category Tabs */}
       <div className="mb-8 flex flex-wrap gap-2 border-b border-slate-200/50 dark:border-slate-800/80 pb-4">
-        {availableCategories.map((cat) => {
+        {availableCategories.map((cat, idx) => {
           const isActive = selectedCategory === cat || (selectedCategory === "Todos" && cat === "Todos");
           const displayLabel = cat === "Todos" ? (language === "en" ? "All" : "Todos") : cat;
           return (
             <button
-              key={cat}
+              key={`blog-cat-${cat}-${idx}`}
               onClick={() => setSelectedCategory(cat)}
               className={`rounded-full px-4 py-1.5 text-xs font-bold transition-all cursor-pointer ${
                 isActive
@@ -672,13 +675,13 @@ export default function BlogSection({
                       </h3>
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {selectedPost.projetos.map((code) => {
+                        {selectedPost.projetos.map((code, idx) => {
                           const proj = projects.find((p) => p.codigo === code || p.id === code);
 
                           if (!proj) {
                             if (isEditMode) {
                               return (
-                                <div key={code} className="rounded-xl border border-rose-300 dark:border-rose-800 bg-rose-50 dark:bg-rose-950/40 p-4 flex items-center gap-2 text-rose-700 dark:text-rose-300 text-xs font-mono">
+                                <div key={`blog-code-${code}-${idx}`} className="rounded-xl border border-rose-300 dark:border-rose-800 bg-rose-50 dark:bg-rose-950/40 p-4 flex items-center gap-2 text-rose-700 dark:text-rose-300 text-xs font-mono">
                                   <AlertCircle className="h-4 w-4 shrink-0 text-rose-500" />
                                   <span>Código de projeto inexistente: [{code}]</span>
                                 </div>

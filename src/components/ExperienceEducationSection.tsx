@@ -60,14 +60,14 @@ export default function ExperienceEducationSection({
           <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 font-sans">
             {language === "en" ? "Related Projects:" : "Projetos relacionados:"}
           </span>
-          {projectCodes.map((code) => {
+          {projectCodes.map((code, idx) => {
             const proj = projects.find((p) => p.codigo === code || p.id === code);
 
             if (!proj) {
               if (isEditMode) {
                 return (
                   <span
-                    key={code}
+                    key={`exp-code-err-${code}-${idx}`}
                     className="inline-flex items-center gap-1 rounded-md bg-rose-50 dark:bg-rose-950/60 border border-rose-300 dark:border-rose-800 text-rose-700 dark:text-rose-300 px-2 py-0.5 text-[11px] font-mono font-semibold"
                     title="Código de projeto não encontrado"
                   >
@@ -78,7 +78,7 @@ export default function ExperienceEducationSection({
               }
               return (
                 <span
-                  key={code}
+                  key={`exp-code-${code}-${idx}`}
                   className="inline-flex items-center rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 px-2 py-0.5 text-[11px] font-sans"
                 >
                   {code}
@@ -88,7 +88,7 @@ export default function ExperienceEducationSection({
 
             return (
               <Link
-                key={code}
+                key={`exp-code-proj-${code}-${idx}`}
                 to={`/projetos/${proj.codigo || proj.id}`}
                 className="inline-flex items-center gap-1 rounded-md bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200/80 dark:border-indigo-800/80 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 px-2.5 py-0.5 text-[11.5px] font-sans font-medium transition-colors"
               >

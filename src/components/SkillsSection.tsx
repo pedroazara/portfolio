@@ -156,11 +156,11 @@ export default function SkillsSection({ skills, isEditMode, onUpdateSkills, lang
         </div>
       ) : (
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4 print:grid-cols-2 print:gap-4">
-          {categories.map((cat) => {
+          {categories.map((cat, idx) => {
             const catSkills = skills.filter((s) => s.category === cat);
             return (
               <div
-                key={cat}
+                key={`skill-cat-${cat}-${idx}`}
                 className="rounded-xl border border-slate-100/50 dark:border-slate-800/80 bg-slate-50/50 dark:bg-slate-950/20 p-5 print-border print-bg-transparent print-break-inside-avoid"
               >
                 <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 font-mono mb-4 border-b border-slate-100 dark:border-slate-800 pb-1">

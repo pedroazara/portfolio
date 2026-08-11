@@ -309,11 +309,11 @@ export default function ImageSelectorInput({
                 </div>
               ) : (
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-36 overflow-y-auto p-1 bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800 rounded-xl">
-                  {filteredImages.map((img) => {
+                  {filteredImages.map((img, idx) => {
                     const isSelected = selectedDbName === img.name;
                     return (
                       <button
-                        key={img.name}
+                        key={`img-sel-${img.name}-${idx}`}
                         type="button"
                         onClick={() => onChange(`db:${img.name}`)}
                         className={`group relative flex items-center gap-2 p-1.5 rounded-lg border text-left transition-all cursor-pointer ${

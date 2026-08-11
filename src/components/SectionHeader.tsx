@@ -395,9 +395,9 @@ export default function SectionHeader({
             {/* Right side: Tech tags as chips */}
             {projectItem?.tags && (
               <div className="hidden md:flex items-center gap-1 overflow-x-auto shrink-0">
-                {projectItem.tags.slice(0, 4).map((tech) => (
+                {projectItem.tags.slice(0, 4).map((tech, idx) => (
                   <span
-                    key={tech}
+                    key={`tech-${tech}-${idx}`}
                     className="inline-flex items-center gap-1 rounded bg-[var(--surface)] px-2 py-0.5 text-[10px] font-mono font-medium text-[var(--text-muted)] border border-[var(--border)]"
                   >
                     <Tag className="h-2.5 w-2.5 text-[var(--accent)]" />

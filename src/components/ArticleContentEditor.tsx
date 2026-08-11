@@ -341,9 +341,9 @@ export default function ArticleContentEditor({
               </div>
 
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 max-h-40 overflow-y-auto p-1">
-                {filteredMediaImages.map((img) => (
+                {filteredMediaImages.map((img, idx) => (
                   <button
-                    key={img.name}
+                    key={`editor-img-${img.name}-${idx}`}
                     type="button"
                     onClick={() => {
                       insertImageMarkdown(`db:${img.name}`, img.name);

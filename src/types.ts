@@ -35,6 +35,7 @@ export interface Project {
   description: string;
   descriptionEn?: string;
   categoryId: string; // References ProjectCategory.id
+  categoryIds?: string[]; // Multiple ProjectCategory.id references
   category?: string;
   categoryEn?: string;
   tags: string[];

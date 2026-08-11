@@ -1,48 +1,53 @@
-import express from "express";
-import path from "path";
-import { createServer as createViteServer } from "vite";
 import { GoogleGenAI } from "@google/genai";
 
-const app = express();
-const PORT = 3000;
+export default async function handler(req: any, res: any) {
+  // Set CORS headers for Vercel Serverless Function
+  res.setHeader("Access-Control-Allow-Credentials", "true");
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "GET,OPTIONS,PATCH,DELETE,POST,PUT");
+  res.setHeader(
+    "Access-Control-Allow-Headers",
+    "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version"
+  );
 
-app.use(express.json({ limit: "5mb" }));
-
-// Helper to get GoogleGenAI client
-function getGeminiClient(): GoogleGenAI {
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) {
-    throw new Error("GEMINI_API_KEY environment variable is missing.");
+  if (req.method === "OPTIONS") {
+    return res.status(200).end();
   }
-  return new GoogleGenAI({
-    apiKey,
-    httpOptions: {
-      headers: {
-        "User-Agent": "aistudio-build",
-      },
-    },
-  });
-}
 
-// API endpoint for AI translation using Gemini AI
-app.post("/api/translate", async (req, res) => {
+  if (req.method !== "POST") {
+    return res.status(405).json({ error: "Método não permitido. Use POST." });
+  }
+
   try {
-    const { text, texts } = req.body;
+    const { text, texts } = req.body || {};
 
     if (!text && (!texts || typeof texts !== "object" || Object.keys(texts).length === 0)) {
       return res.status(400).json({ error: "Nenhum texto fornecido para tradução." });
     }
 
-    const ai = getGeminiClient();
+    const apiKey = process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY;
+    if (!apiKey) {
+      return res.status(500).json({
+        error: "Chave GEMINI_API_KEY não encontrada nas variáveis de ambiente da Vercel. Adicione GEMINI_API_KEY no painel da Vercel (Settings -> Environment Variables).",
+      });
+    }
+
+    const ai = new GoogleGenAI({
+      apiKey,
+      httpOptions: {
+        headers: {
+          "User-Agent": "aistudio-build",
+        },
+      },
+    });
 
     if (texts && typeof texts === "object") {
-      // Filter out empty string fields to save tokens and avoid empty translations
       const filteredEntries = Object.entries(texts).filter(
-        ([_, val]) => typeof val === "string" && val.trim().length > 0
+        ([_, val]) => typeof val === "string" && (val as string).trim().length > 0
       );
 
       if (filteredEntries.length === 0) {
-        return res.json({ translations: {} });
+        return res.status(200).json({ translations: {} });
       }
 
       const inputMap = Object.fromEntries(filteredEntries);
@@ -73,7 +78,7 @@ ${JSON.stringify(inputMap, null, 2)}`;
         console.error("Erro ao interpretar JSON de resposta do Gemini:", responseText);
       }
 
-      return res.json({ translations: parsed });
+      return res.status(200).json({ translations: parsed });
     } else if (text) {
       const prompt = `Traduza o seguinte texto do Português (PT-BR) para um Inglês profissional e fluente para currículo/portfólio. Mantenha a precisão técnica e termos acadêmicos. Retorne APENAS o texto traduzido, sem aspas adicionais, explicações ou notas.
 
@@ -88,40 +93,12 @@ ${text}`;
         },
       });
 
-      return res.json({ translation: response.text?.trim() || "" });
+      return res.status(200).json({ translation: response.text?.trim() || "" });
     }
   } catch (error: any) {
-    console.error("Erro na rota /api/translate:", error);
+    console.error("Erro na API Vercel /api/translate:", error);
     return res.status(500).json({
       error: error.message || "Erro interno ao processar tradução com Gemini AI.",
     });
   }
-});
-
-// Health check endpoint
-app.get("/api/health", (req, res) => {
-  res.json({ status: "ok", geminiKeyConfigured: Boolean(process.env.GEMINI_API_KEY) });
-});
-
-async function startServer() {
-  // Vite middleware for development vs static serve for production
-  if (process.env.NODE_ENV !== "production") {
-    const vite = await createViteServer({
-      server: { middlewareMode: true },
-      appType: "spa",
-    });
-    app.use(vite.middlewares);
-  } else {
-    const distPath = path.join(process.cwd(), "dist");
-    app.use(express.static(distPath));
-    app.get("*", (req, res) => {
-      res.sendFile(path.join(distPath, "index.html"));
-    });
-  }
-
-  app.listen(PORT, "0.0.0.0", () => {
-    console.log(`Server running on http://0.0.0.0:${PORT}`);
-  });
 }
-
-startServer();

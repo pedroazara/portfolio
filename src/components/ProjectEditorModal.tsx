@@ -19,6 +19,7 @@ interface ProjectEditorModalProps {
   onClose: () => void;
   project: Partial<Project> | null;
   categories: ProjectCategory[];
+  onUpdateCategories?: (categories: ProjectCategory[]) => void;
   onSave: (project: Project) => void;
   language?: Language;
 }
@@ -41,6 +42,7 @@ export default function ProjectEditorModal({
     description: "",
     descriptionEn: "",
     categoryId: categories[0]?.id || "",
+    categoryIds: categories[0] ? [categories[0].id] : [],
     tags: [],
     projectUrl: "",
     githubUrl: "",
@@ -63,15 +65,25 @@ export default function ProjectEditorModal({
 
   useEffect(() => {
     if (project) {
-      setFormData({ ...project });
+      const initialCategoryIds = project.categoryIds && project.categoryIds.length > 0
+        ? project.categoryIds
+        : (project.categoryId ? [project.categoryId] : (categories[0] ? [categories[0].id] : []));
+
+      setFormData({
+        ...project,
+        categoryIds: initialCategoryIds,
+        categoryId: initialCategoryIds[0] || project.categoryId || (categories[0]?.id || ""),
+      });
       setTagsInput((project.tags || []).join(", "));
     } else {
+      const defaultCatId = categories[0]?.id || "";
       setFormData({
         title: "",
         titleEn: "",
         description: "",
         descriptionEn: "",
-        categoryId: categories[0]?.id || "",
+        categoryId: defaultCatId,
+        categoryIds: defaultCatId ? [defaultCatId] : [],
         tags: [],
         projectUrl: "",
         githubUrl: "",
@@ -152,13 +164,18 @@ export default function ProjectEditorModal({
       .map((t) => t.trim())
       .filter((t) => t.length > 0);
 
+    const selectedCategoryIds = (formData.categoryIds && formData.categoryIds.length > 0)
+      ? formData.categoryIds
+      : (formData.categoryId ? [formData.categoryId] : (categories[0] ? [categories[0].id] : []));
+
     const completeProject: Project = {
       id: formData.id || `proj-${Date.now()}`,
       title: formData.title || "Novo Projeto",
       titleEn: formData.titleEn || "",
       description: formData.description || "",
       descriptionEn: formData.descriptionEn || "",
-      categoryId: formData.categoryId || (categories[0]?.id || ""),
+      categoryId: selectedCategoryIds[0] || (categories[0]?.id || ""),
+      categoryIds: selectedCategoryIds,
       tags: tagsArray,
       projectUrl: formData.projectUrl || undefined,
       githubUrl: formData.githubUrl || undefined,
@@ -182,11 +199,11 @@ export default function ProjectEditorModal({
 
   if (!isOpen) return null;
 
-  // Selected Category Object
-  const selectedCatObj = categories.find((c) => c.id === formData.categoryId);
-  const categoryDisplayName = editingLanguage === "en" && selectedCatObj?.nameEn
-    ? selectedCatObj.nameEn
-    : selectedCatObj?.name || "";
+  // Selected Category Objects for preview
+  const selectedCategoryIds = (formData.categoryIds && formData.categoryIds.length > 0)
+    ? formData.categoryIds
+    : (formData.categoryId ? [formData.categoryId] : []);
+  const selectedCatObjs = categories.filter((c) => selectedCategoryIds.includes(c.id));
 
   // Content for preview mode
   const displayTitle = editingLanguage === "en" && formData.titleEn ? formData.titleEn : formData.title || "Título do Projeto";
@@ -332,23 +349,48 @@ export default function ProjectEditorModal({
                   <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-800/80 space-y-4">
                     <div className="flex flex-wrap items-center justify-between gap-3">
                       
-                      {/* Category Selector */}
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-bold uppercase font-mono tracking-wider text-slate-500 dark:text-slate-400">
-                          {language === "en" ? "Specialty Area:" : "Área de Atuação:"}
-                        </span>
-                        <select
-                          required
-                          value={formData.categoryId || ""}
-                          onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
-                          className="rounded-xl border border-indigo-200 dark:border-indigo-900/60 bg-indigo-50/80 dark:bg-indigo-950/80 text-indigo-700 dark:text-indigo-300 px-3 py-1.5 text-xs font-bold font-sans focus:outline-hidden focus:ring-2 focus:ring-indigo-500 cursor-pointer"
-                        >
-                          {categories.map((c) => (
-                            <option key={c.id} value={c.id} className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">
-                              {language === "en" && c.nameEn ? c.nameEn : c.name}
-                            </option>
-                          ))}
-                        </select>
+                      {/* Multi-Category Selector */}
+                      <div className="w-full space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-bold uppercase font-mono tracking-wider text-slate-500 dark:text-slate-400">
+                            {language === "en" ? "Specialty Areas (Multiple Selection):" : "Áreas de Atuação (Seleção Múltipla):"}
+                          </span>
+                          <span className="text-[11px] font-mono text-slate-400 font-semibold">
+                            {(formData.categoryIds || []).length} {language === "en" ? "selected" : "selecionada(s)"}
+                          </span>
+                        </div>
+
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          {categories.map((c) => {
+                            const isSelected = (formData.categoryIds || []).includes(c.id);
+                            const catName = (editingLanguage === "en" && c.nameEn) ? c.nameEn : c.name;
+                            return (
+                              <button
+                                key={`cat-select-${c.id}`}
+                                type="button"
+                                onClick={() => {
+                                  const current = formData.categoryIds || [];
+                                  const next = current.includes(c.id)
+                                    ? current.filter((id) => id !== c.id)
+                                    : [...current, c.id];
+                                  setFormData({
+                                    ...formData,
+                                    categoryIds: next,
+                                    categoryId: next[0] || (categories[0]?.id || ""),
+                                  });
+                                }}
+                                className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold transition-all cursor-pointer border ${
+                                  isSelected
+                                    ? "bg-indigo-600 text-white border-indigo-600 shadow-xs"
+                                    : "bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-indigo-400"
+                                }`}
+                              >
+                                {isSelected && <Check className="h-3.5 w-3.5 shrink-0 text-white" />}
+                                <span>{catName}</span>
+                              </button>
+                            );
+                          })}
+                        </div>
                       </div>
 
                       {/* Featured Toggle */}
@@ -629,12 +671,12 @@ export default function ProjectEditorModal({
                           <p className="text-xs text-slate-500 text-center py-4">Nenhuma imagem no banco local.</p>
                         ) : (
                           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 max-h-48 overflow-y-auto p-1">
-                            {localImages.map((img) => {
+                            {localImages.map((img, idx) => {
                               const dbKey = `db:${img.name}`;
                               const isSelected = (formData.galleryImages || []).includes(dbKey);
                               return (
                                 <button
-                                  key={img.name}
+                                  key={`local-img-${img.name}-${idx}`}
                                   type="button"
                                   onClick={() => handleToggleGalleryImage(img.name)}
                                   className={`relative group rounded-xl overflow-hidden border p-1 text-left transition-all cursor-pointer aspect-video bg-white dark:bg-slate-900 ${
@@ -691,9 +733,20 @@ export default function ProjectEditorModal({
                   {/* Header Meta */}
                   <div className="space-y-4">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="rounded-full bg-indigo-50 dark:bg-indigo-950/80 px-3.5 py-1 text-xs font-bold uppercase tracking-wider text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 font-mono">
-                        {categoryDisplayName || "Especialidade"}
-                      </span>
+                      {selectedCatObjs.length > 0 ? (
+                        selectedCatObjs.map((cat) => {
+                          const catName = (editingLanguage === "en" && cat.nameEn) ? cat.nameEn : cat.name;
+                          return (
+                            <span key={`preview-cat-${cat.id}`} className="rounded-full bg-indigo-50 dark:bg-indigo-950/80 px-3.5 py-1 text-xs font-bold uppercase tracking-wider text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 font-mono">
+                              {catName}
+                            </span>
+                          );
+                        })
+                      ) : (
+                        <span className="rounded-full bg-slate-100 dark:bg-slate-800 px-3.5 py-1 text-xs font-bold uppercase tracking-wider text-slate-500 font-mono">
+                          {language === "en" ? "Uncategorized" : "Sem Categoria"}
+                        </span>
+                      )}
                       {formData.featured && (
                         <span className="rounded-full bg-amber-500/10 px-3 py-1 text-xs font-bold text-amber-600 dark:text-amber-400 border border-amber-500/30 flex items-center gap-1">
                           <Star className="h-3 w-3 fill-amber-500" />

@@ -431,9 +431,9 @@ export default function ImageCropModal({
               </div>
 
               <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-thin">
-                {bankImages.map((img) => (
+                {bankImages.map((img, idx) => (
                   <button
-                    key={img.name}
+                    key={`crop-bank-${img.name}-${idx}`}
                     type="button"
                     onClick={() => {
                       setActiveSrc(`db:${img.name}`);

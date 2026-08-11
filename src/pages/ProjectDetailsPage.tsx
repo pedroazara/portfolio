@@ -64,7 +64,12 @@ export default function ProjectDetailsPage({
   const title = (language === "en" && project.titleEn ? project.titleEn : project.title) || project.title;
   const description = (language === "en" && project.descriptionEn ? project.descriptionEn : project.description) || project.description;
   const longDescription = (language === "en" && project.longDescriptionEn ? project.longDescriptionEn : project.longDescription) || project.longDescription || description;
-  const category = (language === "en" && project.categoryEn ? project.categoryEn : project.category) || project.category;
+  
+  const projCatIds = project.categoryIds && project.categoryIds.length > 0
+    ? project.categoryIds
+    : (project.categoryId ? [project.categoryId] : []);
+  const projectCategories = (resumeData.categories || []).filter((c) => projCatIds.includes(c.id));
+  const fallbackCategory = (language === "en" && project.categoryEn ? project.categoryEn : project.category) || project.category;
   const highlights = (language === "en" && project.highlightsEn ? project.highlightsEn : project.highlights) || project.highlights || [];
   const stack = project.stack || project.technologies || [];
 
@@ -122,11 +127,22 @@ export default function ProjectDetailsPage({
       {/* Main Header Block */}
       <header className="mb-8 space-y-3">
         <div className="flex flex-wrap items-center gap-2">
-          {/* Category Tag */}
-          {category && (
-            <span className="rounded-md bg-slate-100 dark:bg-slate-800 px-2.5 py-1 text-xs font-semibold text-slate-700 dark:text-slate-300 font-sans">
-              {category}
-            </span>
+          {/* Category Tags */}
+          {projectCategories.length > 0 ? (
+            projectCategories.map((c) => {
+              const cName = (language === "en" && c.nameEn) ? c.nameEn : c.name;
+              return (
+                <span key={`pdp-cat-${c.id}`} className="rounded-md bg-slate-100 dark:bg-slate-800 px-2.5 py-1 text-xs font-semibold text-slate-700 dark:text-slate-300 font-sans">
+                  {cName}
+                </span>
+              );
+            })
+          ) : (
+            fallbackCategory && (
+              <span className="rounded-md bg-slate-100 dark:bg-slate-800 px-2.5 py-1 text-xs font-semibold text-slate-700 dark:text-slate-300 font-sans">
+                {fallbackCategory}
+              </span>
+            )
           )}
 
           {/* Status Badge */}
@@ -262,15 +278,28 @@ export default function ProjectDetailsPage({
               {language === "en" ? "Project Metadata" : "Metadados do Projeto"}
             </h3>
 
-            {/* Category */}
-            {category && (
+            {/* Categories */}
+            {(projectCategories.length > 0 || fallbackCategory) && (
               <div>
                 <span className="text-xs text-slate-500 dark:text-slate-400 font-sans block mb-1">
-                  {language === "en" ? "Category" : "Categoria"}
+                  {language === "en" ? "Category / Specialties" : "Categorias / Especialidades"}
                 </span>
-                <span className="text-sm font-semibold text-slate-800 dark:text-slate-200 font-sans">
-                  {category}
-                </span>
+                <div className="flex flex-wrap gap-1">
+                  {projectCategories.length > 0 ? (
+                    projectCategories.map((c) => {
+                      const cName = (language === "en" && c.nameEn) ? c.nameEn : c.name;
+                      return (
+                        <span key={`sidebar-cat-${c.id}`} className="text-xs font-semibold text-slate-800 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 rounded px-2 py-0.5">
+                          {cName}
+                        </span>
+                      );
+                    })
+                  ) : (
+                    <span className="text-xs font-semibold text-slate-800 dark:text-slate-200 font-sans">
+                      {fallbackCategory}
+                    </span>
+                  )}
+                </div>
               </div>
             )}
 

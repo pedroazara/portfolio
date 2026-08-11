@@ -177,8 +177,11 @@ export default function ProjectSection({
 
   // Filters projects based on selected tab/area and search query
   const filteredProjects = projects.filter((p) => {
-    if (activeCategory !== "all" && p.categoryId !== activeCategory) {
-      return false;
+    if (activeCategory !== "all") {
+      const pCatIds = p.categoryIds && p.categoryIds.length > 0 ? p.categoryIds : (p.categoryId ? [p.categoryId] : []);
+      if (!pCatIds.includes(activeCategory)) {
+        return false;
+      }
     }
     if (localSearch.trim()) {
       const q = localSearch.toLowerCase().trim();
@@ -494,7 +497,10 @@ export default function ProjectSection({
             {language === "en" ? `All Projects (${projects.length})` : `Todos os Projetos (${projects.length})`}
           </button>
           {categories.map((cat) => {
-            const count = projects.filter((p) => p.categoryId === cat.id).length;
+            const count = projects.filter((p) => {
+              const pCatIds = p.categoryIds && p.categoryIds.length > 0 ? p.categoryIds : (p.categoryId ? [p.categoryId] : []);
+              return pCatIds.includes(cat.id);
+            }).length;
             return (
               <div key={cat.id} className="relative flex items-center group">
                 <button
@@ -565,7 +571,10 @@ export default function ProjectSection({
       ) : (
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 print:grid-cols-1 print:gap-4">
           {filteredProjects.map((proj) => {
-            const cat = categories.find((c) => c.id === proj.categoryId);
+            const projCatIds = proj.categoryIds && proj.categoryIds.length > 0
+              ? proj.categoryIds
+              : (proj.categoryId ? [proj.categoryId] : []);
+            const projCategories = categories.filter((c) => projCatIds.includes(c.id));
             return (
               <article
                 key={proj.id}
@@ -599,9 +608,22 @@ export default function ProjectSection({
                 {/* Project Body */}
                 <div className="flex flex-1 flex-col p-5">
                   <div className="flex items-center justify-between gap-2">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 font-mono">
-                      {cat ? ((language === "en" && cat.nameEn) ? cat.nameEn : cat.name) : (language === "en" ? "Uncategorized" : "Sem Categoria")}
-                    </span>
+                    <div className="flex flex-wrap items-center gap-1">
+                      {projCategories.length > 0 ? (
+                        projCategories.map((c) => (
+                          <span
+                            key={`card-cat-${proj.id}-${c.id}`}
+                            className="text-[10px] font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 font-mono bg-indigo-50/80 dark:bg-indigo-950/60 border border-indigo-200/50 dark:border-indigo-800/50 rounded-md px-1.5 py-0.5"
+                          >
+                            {(language === "en" && c.nameEn) ? c.nameEn : c.name}
+                          </span>
+                        ))
+                      ) : (
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 font-mono">
+                          {language === "en" ? "Uncategorized" : "Sem Categoria"}
+                        </span>
+                      )}
+                    </div>
 
                     {(proj.emAndamento || proj.status === "Em andamento" || proj.status === "em_andamento" || proj.status === "In Progress") && (
                       <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 px-2 py-0.5 text-[9.5px] font-bold text-emerald-600 dark:text-emerald-400 font-mono">
@@ -624,7 +646,7 @@ export default function ProjectSection({
                     <div className="mt-4 flex flex-wrap gap-1">
                       {proj.tags.slice(0, 4).map((tag, idx) => (
                         <span
-                          key={idx}
+                          key={`proj-card-tag-${proj.id}-${idx}`}
                           className="rounded bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 text-[9px] font-medium text-slate-600 dark:text-slate-400 font-mono"
                         >
                           {tag}
@@ -685,6 +707,7 @@ export default function ProjectSection({
         <ProjectDetailsModal
           project={selectedProject}
           category={categories.find((c) => c.id === selectedProject.categoryId)}
+          categories={categories}
           onClose={() => setSelectedProject(null)}
           language={language}
         />
@@ -696,6 +719,7 @@ export default function ProjectSection({
         onClose={() => setIsProjectModalOpen(false)}
         project={editingProject || projectForm}
         categories={categories}
+        onUpdateCategories={onUpdateCategories}
         onSave={(savedProject) => {
           if (editingProject) {
             const updated = projects.map((p) => (p.id === editingProject.id ? savedProject : p));

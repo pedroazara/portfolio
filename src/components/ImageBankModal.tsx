@@ -374,9 +374,9 @@ export default function ImageBankModal({ isOpen, onClose }: ImageBankModalProps)
               </div>
             ) : (
               <div className="flex-1 overflow-y-auto pr-1 space-y-3 max-h-[50vh] md:max-h-[60vh]">
-                {filteredImages.map((img) => (
+                {filteredImages.map((img, idx) => (
                   <div
-                    key={img.name}
+                    key={`bank-img-${img.name}-${idx}`}
                     className="group flex items-center justify-between p-3 rounded-xl border border-slate-100 hover:border-slate-200 bg-slate-50/50 hover:bg-slate-50 transition-all"
                   >
                     <div className="flex items-center gap-3 overflow-hidden">
