@@ -598,9 +598,18 @@ export default function ProjectSection({
 
                 {/* Project Body */}
                 <div className="flex flex-1 flex-col p-5">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 font-mono">
-                    {cat ? ((language === "en" && cat.nameEn) ? cat.nameEn : cat.name) : (language === "en" ? "Uncategorized" : "Sem Categoria")}
-                  </span>
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 font-mono">
+                      {cat ? ((language === "en" && cat.nameEn) ? cat.nameEn : cat.name) : (language === "en" ? "Uncategorized" : "Sem Categoria")}
+                    </span>
+
+                    {(proj.emAndamento || proj.status === "Em andamento" || proj.status === "em_andamento" || proj.status === "In Progress") && (
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 px-2 py-0.5 text-[9.5px] font-bold text-emerald-600 dark:text-emerald-400 font-mono">
+                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                        {language === "en" ? "In Progress" : "Em Andamento"}
+                      </span>
+                    )}
+                  </div>
 
                   <h3 className="mt-1.5 text-base font-bold text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors font-display leading-tight">
                     {(language === "en" && proj.titleEn) ? proj.titleEn : proj.title}

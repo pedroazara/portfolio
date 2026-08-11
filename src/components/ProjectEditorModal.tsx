@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { 
   X, PenTool, Eye, Sparkles, FolderKanban, Check, ExternalLink, Github, 
-  ImageIcon, FlaskConical, BookOpen, Star, Plus, Trash2, RefreshCw, Link2, Share2
+  ImageIcon, FlaskConical, BookOpen, Star, Plus, Trash2, RefreshCw, Link2, Share2, Clock
 } from "lucide-react";
 import { Project, ProjectCategory } from "../types";
 import { Language } from "../lib/translations";
@@ -169,6 +169,10 @@ export default function ProjectEditorModal({
       scientificRelevanceEn: formData.scientificRelevanceEn || "",
       galleryImages: formData.galleryImages || [],
       featured: formData.featured || false,
+      emAndamento: formData.emAndamento || formData.status === "Em andamento" || formData.status === "In Progress",
+      status: formData.emAndamento || formData.status === "Em andamento"
+        ? "Em andamento"
+        : (formData.status || undefined),
       blogPostId: formData.blogPostId || undefined,
     };
 
@@ -359,6 +363,35 @@ export default function ProjectEditorModal({
                       >
                         <Star className={`h-3.5 w-3.5 ${formData.featured ? "fill-amber-500 text-amber-500" : ""}`} />
                         <span>{language === "en" ? "Featured Project" : "Projeto em Destaque"}</span>
+                      </button>
+
+                      {/* Em Andamento Toggle */}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const isCurrentlyInProgress = formData.emAndamento || formData.status === "Em andamento" || formData.status === "In Progress";
+                          const nextInProgress = !isCurrentlyInProgress;
+                          setFormData({
+                            ...formData,
+                            emAndamento: nextInProgress,
+                            status: nextInProgress
+                              ? "Em andamento"
+                              : undefined,
+                          });
+                        }}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer border ${
+                          formData.emAndamento || formData.status === "Em andamento" || formData.status === "In Progress"
+                            ? "bg-emerald-500/15 border-emerald-500/40 text-emerald-700 dark:text-emerald-300 font-bold"
+                            : "bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
+                        }`}
+                      >
+                        <span className={`h-2 w-2 rounded-full ${formData.emAndamento || formData.status === "Em andamento" || formData.status === "In Progress" ? "bg-emerald-500 animate-pulse" : "bg-slate-400"}`} />
+                        <Clock className="h-3.5 w-3.5" />
+                        <span>
+                          {language === "en"
+                            ? (formData.emAndamento || formData.status === "Em andamento" || formData.status === "In Progress" ? "In Progress" : "Mark as In Progress")
+                            : (formData.emAndamento || formData.status === "Em andamento" || formData.status === "In Progress" ? "Em Andamento" : "Em Andamento")}
+                        </span>
                       </button>
 
                       {/* Links Drawer Toggle */}

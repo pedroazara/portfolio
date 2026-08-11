@@ -55,6 +55,7 @@ export interface Project {
   ordemDestaque?: number; // Ordering for featured items
   blogPostId?: string; // Direct link to blog post
   status?: string;
+  emAndamento?: boolean;
   periodo?: string | {
     inicio: string;
     fim?: string;

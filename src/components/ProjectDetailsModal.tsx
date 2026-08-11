@@ -269,10 +269,18 @@ export default function ProjectDetailsModal({
                     )}
 
                     {/* Status Badge */}
-                    {project.status && (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 px-3 py-1 text-xs font-semibold text-emerald-700 dark:text-emerald-300">
-                        <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
-                        <span>{project.status}</span>
+                    {(project.emAndamento || project.status) && (
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 px-3 py-1 text-xs font-semibold text-emerald-700 dark:text-emerald-300">
+                        {project.emAndamento || project.status === "Em andamento" || project.status === "In Progress" ? (
+                          <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                        ) : (
+                          <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
+                        )}
+                        <span>
+                          {project.emAndamento
+                            ? (language === "en" ? "In Progress" : "Em andamento")
+                            : project.status}
+                        </span>
                       </span>
                     )}
 

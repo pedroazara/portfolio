@@ -196,6 +196,7 @@ export default function ExperienceEducationSection({
       descriptionEn: "",
       skills: [],
       subperiods: [],
+      projetos: [],
     });
     setSkillInput("");
     setEditingLanguage(language);
@@ -205,7 +206,7 @@ export default function ExperienceEducationSection({
   const handleOpenExpEdit = (exp: Experience) => {
     setEditingExp(exp);
     setExpError(null);
-    setExpForm({ ...exp, subperiods: exp.subperiods ? [...exp.subperiods] : [] });
+    setExpForm({ ...exp, subperiods: exp.subperiods ? [...exp.subperiods] : [], projetos: exp.projetos || [] });
     setSkillInput(exp.skills ? exp.skills.join(", ") : "");
     setEditingLanguage(language);
     setIsExpModalOpen(true);
@@ -344,6 +345,7 @@ export default function ExperienceEducationSection({
       skills: parsedSkills,
       subperiods: expForm.subperiods || [],
       links: expForm.links || [],
+      projetos: expForm.projetos || [],
     };
 
     if (editingExp) {
@@ -367,6 +369,7 @@ export default function ExperienceEducationSection({
       descriptionEn: "",
       extraContent: "",
       extraContentEn: "",
+      projetos: [],
     });
     setEditingLanguage(language);
     setIsActModalOpen(true);
@@ -374,7 +377,7 @@ export default function ExperienceEducationSection({
 
   const handleOpenActEdit = (act: AcademicActivity) => {
     setEditingAct(act);
-    setActForm({ ...act });
+    setActForm({ ...act, projetos: act.projetos || [] });
     setEditingLanguage(language);
     setIsActModalOpen(true);
   };
@@ -406,6 +409,7 @@ export default function ExperienceEducationSection({
       descriptionEn: actForm.descriptionEn || "",
       extraContent: actForm.extraContent || "",
       extraContentEn: actForm.extraContentEn || "",
+      projetos: actForm.projetos || [],
     };
 
     if (onUpdateAcademicActivities) {
@@ -1240,6 +1244,55 @@ export default function ExperienceEducationSection({
             />
           </div>
 
+          {/* Linkar Projetos Relacionados */}
+          <div className="border-t border-slate-200 dark:border-slate-800 pt-3">
+            <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+              {language === "en" ? "Link Related Projects" : "Linkar Projetos Relacionados"}
+            </label>
+            
+            {projects.length > 0 && (
+              <div className="mb-2 flex flex-wrap gap-1.5 p-2 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800">
+                {projects.map((p) => {
+                  const pIdentifier = p.codigo || p.id;
+                  const isSelected = (expForm.projetos || []).includes(pIdentifier);
+                  return (
+                    <button
+                      key={p.id}
+                      type="button"
+                      onClick={() => {
+                        const currentProjs = expForm.projetos || [];
+                        const updatedProjs = isSelected
+                          ? currentProjs.filter((id) => id !== pIdentifier)
+                          : [...currentProjs, pIdentifier];
+                        setExpForm((prev) => ({ ...prev, projetos: updatedProjs }));
+                      }}
+                      className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-all cursor-pointer border ${
+                        isSelected
+                          ? "bg-indigo-600 text-white border-indigo-600 shadow-xs"
+                          : "bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-indigo-400"
+                      }`}
+                    >
+                      {isSelected ? "✓ " : "+ "}
+                      {language === "en" && p.titleEn ? p.titleEn : p.title}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
+            <input
+              type="text"
+              value={(expForm.projetos || []).join(", ")}
+              onChange={(e) => {
+                const val = e.target.value;
+                const parsed = val.split(",").map((s) => s.trim()).filter(Boolean);
+                setExpForm((prev) => ({ ...prev, projetos: parsed }));
+              }}
+              placeholder="Códigos de projetos separados por vírgula (ex: yolocraft, laser-sim)"
+              className="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-slate-900 dark:text-white font-mono text-[11px]"
+            />
+          </div>
+
           <div className="flex justify-end gap-2 pt-3 border-t border-slate-200 dark:border-slate-800">
             <button
               type="button"
@@ -1349,6 +1402,60 @@ export default function ExperienceEducationSection({
               placeholder="Detalhes adicionais, projetos ou links relacionados..."
               className="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-slate-900 dark:text-white"
             />
+          </div>
+
+          {/* Linkar Projetos Relacionados */}
+          <div className="border-t border-slate-200 dark:border-slate-800 pt-3">
+            <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+              {language === "en" ? "Link Related Projects" : "Linkar Projetos Relacionados"}
+            </label>
+            
+            {projects.length > 0 && (
+              <div className="mb-2 flex flex-wrap gap-1.5 p-2 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800">
+                {projects.map((p) => {
+                  const pIdentifier = p.codigo || p.id;
+                  const isSelected = (actForm.projetos || []).includes(pIdentifier);
+                  return (
+                    <button
+                      key={p.id}
+                      type="button"
+                      onClick={() => {
+                        const currentProjs = actForm.projetos || [];
+                        const updatedProjs = isSelected
+                          ? currentProjs.filter((id) => id !== pIdentifier)
+                          : [...currentProjs, pIdentifier];
+                        setActForm((prev) => ({ ...prev, projetos: updatedProjs }));
+                      }}
+                      className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-all cursor-pointer border ${
+                        isSelected
+                          ? "bg-indigo-600 text-white border-indigo-600 shadow-xs"
+                          : "bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-indigo-400"
+                      }`}
+                    >
+                      {isSelected ? "✓ " : "+ "}
+                      {language === "en" && p.titleEn ? p.titleEn : p.title}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
+            <input
+              type="text"
+              value={(actForm.projetos || []).join(", ")}
+              onChange={(e) => {
+                const val = e.target.value;
+                const parsed = val.split(",").map((s) => s.trim()).filter(Boolean);
+                setActForm((prev) => ({ ...prev, projetos: parsed }));
+              }}
+              placeholder="Códigos de projetos separados por vírgula (ex: yolocraft, laser-sim)"
+              className="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-slate-900 dark:text-white font-mono text-[11px]"
+            />
+            <span className="text-[10px] text-slate-400 mt-1 block">
+              {language === "en"
+                ? "Click project pills above or type project codes separated by commas."
+                : "Clique nas pílulas acima ou digite os códigos dos projetos separados por vírgula."}
+            </span>
           </div>
 
           <div className="flex justify-end gap-2 pt-3 border-t border-slate-200 dark:border-slate-800">

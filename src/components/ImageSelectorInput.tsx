@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Link, Image as ImageIcon, Check, RefreshCw, Search, X, Upload } from "lucide-react";
+import { Link, Image as ImageIcon, Check, RefreshCw, Search, X, Upload, Crop } from "lucide-react";
 import { StoredImage, listImages, saveImage } from "../utils/imageDb";
 import { optimizeImage, generateOgImage } from "../utils/imageOptimizer";
+import ImageCropModal from "./ImageCropModal";
+import LocalImage from "./LocalImage";
 
 interface ImageSelectorInputProps {
   label: string;
@@ -25,6 +27,7 @@ export default function ImageSelectorInput({
   const [isUploading, setIsUploading] = useState(false);
   const [dragActive, setDragActive] = useState(false);
   const [statusMsg, setStatusMsg] = useState("");
+  const [isCropModalOpen, setIsCropModalOpen] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -355,6 +358,49 @@ export default function ImageSelectorInput({
             </div>
           )}
         </div>
+      )}
+
+      {/* Selected Image Framing / Cover Crop Bar */}
+      {value && (
+        <div className="flex items-center justify-between gap-2 p-2 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs mt-2">
+          <div className="flex items-center gap-2 overflow-hidden">
+            <div className="h-9 w-12 rounded-lg bg-slate-950 overflow-hidden shrink-0 border border-slate-200 dark:border-slate-800 flex items-center justify-center">
+              <LocalImage src={value} className="h-full w-full object-cover" />
+            </div>
+            <div className="min-w-0">
+              <span className="text-[10px] font-mono font-bold uppercase text-indigo-600 dark:text-indigo-400 block">
+                Capa Selecionada
+              </span>
+              <span className="text-[11px] font-mono text-slate-600 dark:text-slate-300 truncate block">
+                {value.startsWith("db:") ? value.substring(3) : value}
+              </span>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setIsCropModalOpen(true)}
+            className="flex items-center gap-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 text-xs font-bold transition-all shadow-xs shrink-0 cursor-pointer active:scale-95"
+            title="Ajustar enquadramento e proporção da imagem de capa"
+          >
+            <Crop className="h-3.5 w-3.5" />
+            <span>Enquadrar Capa</span>
+          </button>
+        </div>
+      )}
+
+      {/* Image Crop Modal */}
+      {isCropModalOpen && value && (
+        <ImageCropModal
+          isOpen={isCropModalOpen}
+          onClose={() => setIsCropModalOpen(false)}
+          imageSrc={value}
+          onSave={(croppedSrc) => {
+            onChange(croppedSrc);
+            loadLocalImages();
+            setIsCropModalOpen(false);
+          }}
+        />
       )}
     </div>
   );
