@@ -257,7 +257,7 @@ routes.forEach(route => {
   pageHtml = pageHtml.replace(/<head>/i, `<head>\n${headTags}`);
   pageHtml = pageHtml.replace(
     `<div id="root"></div>`,
-    `<div id="root">${route.prerenderContent}</div>`
+    `<div id="root"><noscript>${route.prerenderContent}</noscript></div>`
   );
 
   let targetFilePath: string;
