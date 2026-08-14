@@ -38,7 +38,14 @@
           "description": "A collection of blog publications."
         }
       },
-      "required": ["profile", "categories", "projects", "experiences", "educations", "skills"]
+      "required": [
+        "profile",
+        "categories",
+        "projects",
+        "experiences",
+        "educations",
+        "skills"
+      ]
     },
     "StoredImage": {
       "title": "StoredImage",
@@ -58,18 +65,12 @@
           "type": "number"
         }
       },
-      "required": ["name", "dataUrl", "size", "addedAt"]
-    },
-    "SecuritySettings": {
-      "title": "SecuritySettings",
-      "description": "Administrative access key settings for editing the portfolio data.",
-      "type": "object",
-      "properties": {
-        "password": {
-          "type": "string"
-        }
-      },
-      "required": ["password"]
+      "required": [
+        "name",
+        "dataUrl",
+        "size",
+        "addedAt"
+      ]
     }
   },
   "firestore": {
@@ -80,10 +81,6 @@
     "portfolio_images/{imageName}": {
       "schema": "StoredImage",
       "description": "Collection of uploaded images for blog and resume illustrations."
-    },
-    "portfolio_settings/security": {
-      "schema": "SecuritySettings",
-      "description": "Document containing the admin control password."
     }
   }
 }

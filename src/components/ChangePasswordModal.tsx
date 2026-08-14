@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { X, KeyRound, Loader2, AlertCircle, CheckCircle2 } from "lucide-react";
-import { getAdminPassword, updateAdminPassword } from "../lib/firebaseService";
+import { changePassword, describeAuthError } from "../lib/auth";
 
 interface ChangePasswordModalProps {
   isOpen: boolean;
@@ -50,21 +50,14 @@ export default function ChangePasswordModal({ isOpen, onClose }: ChangePasswordM
     setIsLoading(true);
 
     try {
-      const dbPassword = await getAdminPassword();
-      if (currentPassword !== dbPassword) {
-        setError("A senha atual digitada está incorreta.");
-        setIsLoading(false);
-        return;
-      }
-
-      await updateAdminPassword(newPassword);
+      await changePassword(currentPassword, newPassword);
       setSuccess(true);
       setCurrentPassword("");
       setNewPassword("");
       setConfirmNewPassword("");
     } catch (err) {
-      console.error(err);
-      setError("Erro ao atualizar senha no Firestore. Verifique sua conexão.");
+      console.warn("Falha ao alterar senha:", (err as { code?: string })?.code);
+      setError(describeAuthError(err));
     } finally {
       setIsLoading(false);
     }

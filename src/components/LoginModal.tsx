@@ -1,7 +1,7 @@
 import React, { useState } from "react";
-import { X, Lock, KeyRound, Eye, EyeOff, AlertCircle, Loader2 } from "lucide-react";
+import { X, Lock, KeyRound, Mail, Eye, EyeOff, AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
-import { getAdminPassword } from "../lib/firebaseService";
+import { describeAuthError, login, requestPasswordReset } from "../lib/auth";
 
 interface LoginModalProps {
   isOpen: boolean;
@@ -10,37 +10,68 @@ interface LoginModalProps {
 }
 
 export default function LoginModal({ isOpen, onClose, onLoginSuccess }: LoginModalProps) {
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+
+  const resetFields = () => {
+    setPassword("");
+    setError("");
+    setNotice("");
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!password.trim()) {
-      setError("Por favor, insira a chave de acesso.");
+    if (!email.trim() || !password) {
+      setError("Informe o e-mail e a senha de administrador.");
       return;
     }
 
     setIsLoading(true);
     setError("");
+    setNotice("");
 
     try {
-      const correctPassword = await getAdminPassword();
-      if (password === correctPassword) {
-        onLoginSuccess();
-        setPassword("");
-        setError("");
-        onClose();
-      } else {
-        setError("Senha incorreta. Tente novamente!");
-      }
+      await login(email, password);
+      resetFields();
+      onLoginSuccess();
+      onClose();
     } catch (err) {
-      console.error(err);
-      setError("Erro ao verificar senha. Verifique sua conexão com o Firestore.");
+      console.warn("Falha de autenticação:", (err as { code?: string })?.code);
+      setError(describeAuthError(err));
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handlePasswordReset = async () => {
+    if (!email.trim()) {
+      setError("Digite seu e-mail para receber o link de redefinição.");
+      return;
+    }
+
+    setIsLoading(true);
+    setError("");
+    setNotice("");
+
+    try {
+      await requestPasswordReset(email);
+      setNotice("Se este e-mail estiver cadastrado, o link de redefinição chegará em instantes.");
+    } catch (err) {
+      console.warn("Falha ao enviar redefinição:", (err as { code?: string })?.code);
+      setError(describeAuthError(err));
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleClose = () => {
+    if (isLoading) return;
+    resetFields();
+    onClose();
   };
 
   if (!isOpen) return null;
@@ -53,7 +84,7 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }: LoginMod
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          onClick={isLoading ? undefined : onClose}
+          onClick={isLoading ? undefined : handleClose}
           className="fixed inset-0 bg-slate-950/40 backdrop-blur-md transition-opacity"
         />
 
@@ -69,7 +100,7 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }: LoginMod
             {/* Header */}
             <div className="absolute right-4 top-4">
               <button
-                onClick={onClose}
+                onClick={handleClose}
                 disabled={isLoading}
                 className="rounded-full p-1.5 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-600 dark:hover:text-slate-300 transition-colors cursor-pointer disabled:opacity-50"
                 id="close-login-btn"
@@ -88,7 +119,7 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }: LoginMod
                 Área de Administração
               </h2>
               <p className="mt-1 text-xs text-slate-500 dark:text-slate-400 font-sans max-w-xs">
-                Insira sua chave de acesso para ativar o modo de personalização e edição do currículo.
+                Entre com sua conta de administrador para ativar o modo de edição do currículo.
               </p>
             </div>
 
@@ -101,21 +132,65 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }: LoginMod
                 </div>
               )}
 
+              {/* Success / info notice */}
+              {notice && (
+                <div className="flex items-center gap-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/20 p-3 text-xs text-emerald-700 dark:text-emerald-300 border border-emerald-100 dark:border-emerald-900/50 font-sans">
+                  <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" />
+                  <span>{notice}</span>
+                </div>
+              )}
+
+              {/* Email Input */}
+              <div className="space-y-1">
+                <label htmlFor="admin-email" className="text-xs font-semibold text-slate-600 dark:text-slate-300 font-sans">
+                  E-mail
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400 dark:text-slate-500 pointer-events-none">
+                    <Mail className="h-4 w-4" />
+                  </div>
+                  <input
+                    id="admin-email"
+                    type="email"
+                    required
+                    autoFocus
+                    autoComplete="username"
+                    disabled={isLoading}
+                    value={email}
+                    onChange={(e) => {
+                      setEmail(e.target.value);
+                      if (error) setError("");
+                    }}
+                    placeholder="seu@email.com"
+                    className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-slate-900 dark:text-white py-2.5 pl-10 pr-3 text-sm font-sans focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-hidden disabled:opacity-75"
+                  />
+                </div>
+              </div>
+
               {/* Password Input */}
               <div className="space-y-1">
                 <div className="flex items-center justify-between">
-                  <label className="text-xs font-semibold text-slate-600 dark:text-slate-300 font-sans">
-                    Chave de Acesso (Senha)
+                  <label htmlFor="admin-password" className="text-xs font-semibold text-slate-600 dark:text-slate-300 font-sans">
+                    Senha
                   </label>
+                  <button
+                    type="button"
+                    onClick={handlePasswordReset}
+                    disabled={isLoading}
+                    className="text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer disabled:opacity-50"
+                  >
+                    Esqueci minha senha
+                  </button>
                 </div>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400 dark:text-slate-500 pointer-events-none">
                     <KeyRound className="h-4 w-4" />
                   </div>
                   <input
+                    id="admin-password"
                     type={showPassword ? "text" : "password"}
                     required
-                    autoFocus
+                    autoComplete="current-password"
                     disabled={isLoading}
                     value={password}
                     onChange={(e) => {
@@ -140,7 +215,7 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }: LoginMod
               <div className="pt-2 flex gap-2">
                 <button
                   type="button"
-                  onClick={onClose}
+                  onClick={handleClose}
                   disabled={isLoading}
                   className="flex-1 rounded-xl border border-slate-200 dark:border-slate-800 py-2.5 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer disabled:opacity-50"
                 >

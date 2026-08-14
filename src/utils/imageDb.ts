@@ -1,10 +1,15 @@
 import { doc, setDoc, getDoc, deleteDoc, collection, getDocs } from "firebase/firestore";
-import { db } from "../firebase";
+import { auth, db } from "../firebase";
 import { handleFirestoreError, OperationType } from "../lib/firebaseService";
 
 const DB_NAME = "portfolio-image-store";
 const STORE_NAME = "images";
 const DB_VERSION = 1;
+
+// Um documento do Firestore não pode passar de ~1 MiB. Como a imagem vai
+// embutida como data URL, recusamos antes de tentar gravar — assim o erro
+// aparece na interface em vez de a imagem ficar só neste navegador.
+const MAX_DATA_URL_BYTES = 900_000;
 
 export interface StoredImage {
   name: string;
@@ -96,28 +101,34 @@ export function getSyncImage(name: string): string | null {
 
 /**
  * Saves an image to local storage (IndexedDB) and synchronizes it to the Firestore cloud database.
+ * Lança erro se a gravação na nuvem falhar, para que a interface avise em vez de
+ * dar a imagem como salva quando ela existe apenas neste navegador.
  */
 export async function saveImage(name: string, dataUrl: string, size: number): Promise<void> {
   const addedAt = Date.now();
-  
+
+  if (dataUrl.length > MAX_DATA_URL_BYTES) {
+    throw new Error(
+      `A imagem tem ${Math.round(dataUrl.length / 1024)}KB e ultrapassa o limite de ` +
+      `${Math.round(MAX_DATA_URL_BYTES / 1024)}KB por documento do Firestore. ` +
+      `Reduza a resolução ou a qualidade e tente de novo.`
+    );
+  }
+
   // 0. Update in-memory cache for instant 0ms retrieval
   memoryImageCache.set(name, dataUrl);
 
   // 1. Save locally first (guaranteed instant success)
   await saveLocalImage(name, dataUrl, size, addedAt);
 
-  // 2. Try synchronizing to Firestore cloud (ignore errors if unauthenticated or offline)
-  try {
-    const docRef = doc(db, "portfolio_images", name);
-    await setDoc(docRef, {
-      name,
-      dataUrl,
-      size,
-      addedAt
-    });
-  } catch (error) {
-    console.warn("Firestore sync warning (image saved locally):", error);
-  }
+  // 2. Sincroniza com a nuvem
+  const docRef = doc(db, "portfolio_images", name);
+  await setDoc(docRef, {
+    name,
+    dataUrl,
+    size,
+    addedAt
+  });
 }
 
 /**
@@ -210,8 +221,10 @@ export async function listImages(): Promise<StoredImage[]> {
     const firestoreMap = new Map(firestoreImages.map(img => [img.name, img]));
     let synchronized = false;
 
-    // 2. Upload local-only images to Firestore to synchronize them to the cloud
-    for (const localImg of localImages) {
+    // 2. Upload local-only images to Firestore to synchronize them to the cloud.
+    // Só o administrador autenticado pode gravar; para os visitantes essa etapa
+    // é ignorada (as regras do Firestore recusariam a escrita de qualquer forma).
+    for (const localImg of (auth.currentUser ? localImages : [])) {
       if (!firestoreMap.has(localImg.name)) {
         console.log(`Syncing local-only image to Firestore: ${localImg.name}`);
         const docRef = doc(db, "portfolio_images", localImg.name);

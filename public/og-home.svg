@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <rect width="1200" height="630" fill="#0f172a" />
+  <circle cx="1100" cy="100" r="300" fill="#4f46e5" opacity="0.15" />
+  <circle cx="100" cy="530" r="250" fill="#06b6d4" opacity="0.1" />
+  <text x="80" y="220" font-family="sans-serif" font-size="52" font-weight="900" fill="#ffffff">Pedro Henrique Almeida</text>
+  <text x="80" y="290" font-family="sans-serif" font-size="28" font-weight="600" fill="#818cf8">Engenharia Física - UFLA | Pesquisador CNPq</text>
+  <text x="80" y="360" font-family="sans-serif" font-size="22" fill="#94a3b8">Óptica Ultrarrápida • Instrumentação Científica • Física Computacional</text>
+  <rect x="80" y="440" width="340" height="60" rx="12" fill="#4f46e5" />
+  <text x="250" y="478" font-family="sans-serif" font-size="20" font-weight="bold" fill="#ffffff" text-anchor="middle">pedroazara.vercel.app</text>
+</svg>

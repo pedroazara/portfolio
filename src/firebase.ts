@@ -1,4 +1,5 @@
 import { initializeApp } from "firebase/app";
+import { getAuth } from "firebase/auth";
 import { initializeFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
@@ -12,6 +13,10 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 
+// Firebase Authentication. Persistence defaults to browserLocalPersistence,
+// so the admin session survives page reloads until an explicit sign-out.
+export const auth = getAuth(app);
+
 // Initialize Firestore with long polling fallback support and ignore undefined properties
 export const db = initializeFirestore(
   app,
@@ -21,4 +26,3 @@ export const db = initializeFirestore(
   },
   "ai-studio-3dd2fc48-171e-4247-9594-2287a0634df5"
 );
-

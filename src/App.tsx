@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { ResumeData, Profile, Project, ProjectCategory, Experience, AcademicActivity, Education, Skill, Course, BlogPost } from "./types";
 import { initialResumeData } from "./data/initialData";
@@ -18,16 +18,20 @@ import PdfPreviewModal from "./components/PdfPreviewModal";
 import Footer from "./components/Footer";
 import LocalImage from "./components/LocalImage";
 import { OrbitaIcon } from "./components/OrbitaIcon";
-import { Sparkles, CheckCircle2, Lock, Atom, FileText, BookOpen, Cloud, Sun, Moon } from "lucide-react";
+import { Sparkles, CheckCircle2, Lock, Atom, FileText, BookOpen, Cloud, CloudOff, Sun, Moon } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { Language, translations } from "./lib/translations";
 import { fetchResumeData, saveResumeData } from "./lib/firebaseService";
+import { observeAuth, logout } from "./lib/auth";
 import { listImages } from "./utils/imageDb";
 
 const STORAGE_KEY = "curriculo_portfolio_data_v1";
 const EDIT_MODE_KEY = "curriculo_portfolio_edit_mode_v1";
-const AUTH_KEY = "curriculo_portfolio_auth_v1";
 const LANG_KEY = "curriculo_portfolio_lang_v1";
+
+// Intervalo de espera antes de gravar no Firestore, para que uma sequência de
+// digitação vire uma única escrita em vez de uma por tecla.
+const CLOUD_SAVE_DEBOUNCE_MS = 1200;
 
 const sanitizeResumeData = (data: any): ResumeData => {
   return {
@@ -86,6 +90,11 @@ export default function App() {
   const [isLoading, setIsLoading] = useState(true);
   const [isFirebaseLoaded, setIsFirebaseLoaded] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  // Quando a leitura inicial da nuvem falha, não sabemos o que já existe lá.
+  // Bloqueamos a gravação nesta sessão para não sobrescrever dados na nuvem
+  // com uma cópia local possivelmente desatualizada.
+  const [cloudReadFailed, setCloudReadFailed] = useState(false);
 
   // Load initial resume state from localStorage or template
   const [resumeData, setResumeData] = useState<ResumeData>(initialResumeData);
@@ -94,33 +103,29 @@ export default function App() {
 
   // Fetch initial data from Firestore or fallback to localStorage
   useEffect(() => {
+    function loadFromLocalStorage() {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (!saved) return;
+      try {
+        setResumeData(sanitizeResumeData(JSON.parse(saved)));
+      } catch (err) {
+        console.error("Erro ao ler dados salvos no LocalStorage:", err);
+      }
+    }
+
     async function loadData() {
       try {
         const firestoreData = await fetchResumeData();
         if (firestoreData) {
           setResumeData(sanitizeResumeData(firestoreData));
         } else {
-          // Fallback to local storage if document doesn't exist in Firestore
-          const saved = localStorage.getItem(STORAGE_KEY);
-          if (saved) {
-            try {
-              setResumeData(sanitizeResumeData(JSON.parse(saved)));
-            } catch (err) {
-              console.error("Erro ao ler dados salvos no LocalStorage:", err);
-            }
-          }
+          // O documento ainda não existe na nuvem: usa a cópia local, se houver.
+          loadFromLocalStorage();
         }
       } catch (err) {
         console.error("Erro ao carregar dados do Firebase:", err);
-        // Fallback to local storage
-        const saved = localStorage.getItem(STORAGE_KEY);
-        if (saved) {
-          try {
-            setResumeData(sanitizeResumeData(JSON.parse(saved)));
-          } catch (e) {
-            console.error(e);
-          }
-        }
+        setCloudReadFailed(true);
+        loadFromLocalStorage();
       } finally {
         setIsLoading(false);
         setIsFirebaseLoaded(true);
@@ -140,16 +145,29 @@ export default function App() {
       });
   }, []);
 
-  // Load authentication status
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
-    return localStorage.getItem(AUTH_KEY) === "true";
-  });
+  // Estado de autenticação vem do Firebase Auth — nunca do localStorage.
+  // A sessão é um token assinado pelo Firebase; as regras do Firestore
+  // reavaliam esse token no servidor a cada gravação.
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuthReady, setIsAuthReady] = useState(false);
 
-  // Load edit mode preference (only enabled if authenticated)
-  const [isEditMode, setIsEditMode] = useState<boolean>(() => {
-    const isAuth = localStorage.getItem(AUTH_KEY) === "true";
-    return isAuth && localStorage.getItem(EDIT_MODE_KEY) === "true";
-  });
+  const [isEditMode, setIsEditMode] = useState(false);
+
+  useEffect(() => {
+    return observeAuth((user) => {
+      const signedIn = user !== null;
+      setIsAuthenticated(signedIn);
+      setIsAuthReady(true);
+      if (signedIn) {
+        // Restaura a preferência de modo de edição da sessão anterior.
+        setIsEditMode(localStorage.getItem(EDIT_MODE_KEY) === "true");
+      } else {
+        setIsEditMode(false);
+        setSaveError(null);
+        setIsSaving(false); // descarta um salvamento pendente interrompido pelo logout
+      }
+    });
+  }, []);
 
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isImageBankOpen, setIsImageBankOpen] = useState(false);
@@ -158,6 +176,10 @@ export default function App() {
   const [showAutoSaveBanner, setShowAutoSaveBanner] = useState(false);
   const [isGlobalCollapsed, setIsGlobalCollapsed] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+
+  // Última versão confirmada na nuvem, para não regravar dados idênticos.
+  const lastSyncedRef = useRef<string | null>(null);
+  const bannerTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Router hooks for URL deep linking and SPA routes
   const location = useLocation();
@@ -184,12 +206,13 @@ export default function App() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Open login modal when visiting /admin if not authenticated
+  // Open login modal when visiting /admin if not authenticated.
+  // Espera o Firebase resolver a sessão para não piscar o modal em quem já está logado.
   useEffect(() => {
-    if (location.pathname === "/admin" && !isAuthenticated) {
+    if (location.pathname === "/admin" && isAuthReady && !isAuthenticated) {
       setIsLoginModalOpen(true);
     }
-  }, [location.pathname, isAuthenticated]);
+  }, [location.pathname, isAuthReady, isAuthenticated]);
 
   const isBlog = location.pathname.startsWith("/blog");
   const isProjects = location.pathname.startsWith("/projetos") || location.pathname.startsWith("/project");
@@ -289,47 +312,65 @@ export default function App() {
     }
   }, [location.pathname, selectedBlogPostId, selectedProjectId, resumeData, language]);
 
-  // Sync resumeData changes with LocalStorage and Firestore (if authenticated)
+  // Cópia local: gravada imediatamente a cada alteração.
   useEffect(() => {
     if (!isFirebaseLoaded) return; // Prevent overwriting during initialization
-
     localStorage.setItem(STORAGE_KEY, JSON.stringify(resumeData));
-    
-    // Quick status indicator for UX
-    setShowAutoSaveBanner(true);
-    const timer = setTimeout(() => {
-      setShowAutoSaveBanner(false);
-    }, 1500);
+  }, [resumeData, isFirebaseLoaded]);
 
-    // Write to Firestore if authenticated
-    if (isAuthenticated) {
-      setIsSaving(true);
-      saveResumeData(resumeData)
-        .then(() => {
-          setIsSaving(false);
-        })
-        .catch((err) => {
-          console.error("Erro ao salvar dados no Firestore:", err);
-          setIsSaving(false);
-        });
+  // Cópia na nuvem: agrupada por debounce, para que uma sequência de digitação
+  // gere uma única gravação no Firestore em vez de uma por tecla.
+  useEffect(() => {
+    if (!isFirebaseLoaded || !isAuthenticated || cloudReadFailed) return;
+
+    const serialized = JSON.stringify(resumeData);
+    if (lastSyncedRef.current === null) {
+      // Primeira passagem após o carregamento: ainda não houve edição.
+      lastSyncedRef.current = serialized;
+      return;
     }
+    if (lastSyncedRef.current === serialized) return;
+
+    setIsSaving(true);
+    const timer = setTimeout(async () => {
+      try {
+        await saveResumeData(resumeData);
+        lastSyncedRef.current = serialized;
+        setSaveError(null);
+        setShowAutoSaveBanner(true);
+        if (bannerTimerRef.current) clearTimeout(bannerTimerRef.current);
+        bannerTimerRef.current = setTimeout(() => setShowAutoSaveBanner(false), 1500);
+      } catch (err) {
+        console.error("Erro ao salvar dados no Firestore:", err);
+        setSaveError("Não foi possível salvar na nuvem. Suas alterações continuam guardadas neste navegador.");
+      } finally {
+        setIsSaving(false);
+      }
+    }, CLOUD_SAVE_DEBOUNCE_MS);
 
     return () => clearTimeout(timer);
-  }, [resumeData, isFirebaseLoaded, isAuthenticated]);
+  }, [resumeData, isFirebaseLoaded, isAuthenticated, cloudReadFailed]);
 
-  // Sync edit mode with LocalStorage, ensuring it remains disabled if not authenticated
+  // Se a leitura inicial da nuvem falhou, a gravação fica bloqueada nesta sessão.
+  // O admin precisa saber disso — caso contrário editaria achando que está salvando.
   useEffect(() => {
-    if (!isAuthenticated) {
-      setIsEditMode(false);
-    } else {
-      localStorage.setItem(EDIT_MODE_KEY, isEditMode.toString());
+    if (isAuthenticated && cloudReadFailed) {
+      setSaveError("Não foi possível ler os dados da nuvem. As edições estão sendo guardadas só neste navegador — recarregue a página para tentar de novo.");
     }
-  }, [isEditMode, isAuthenticated]);
+  }, [isAuthenticated, cloudReadFailed]);
 
-  // Sync authentication with LocalStorage
+  // Limpa o timer do aviso de salvamento ao desmontar.
   useEffect(() => {
-    localStorage.setItem(AUTH_KEY, isAuthenticated.toString());
-  }, [isAuthenticated]);
+    return () => {
+      if (bannerTimerRef.current) clearTimeout(bannerTimerRef.current);
+    };
+  }, []);
+
+  // Guarda a preferência de modo de edição (só faz sentido para o admin logado).
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    localStorage.setItem(EDIT_MODE_KEY, isEditMode.toString());
+  }, [isEditMode, isAuthenticated]);
 
   // Sync language with LocalStorage
   useEffect(() => {
@@ -337,13 +378,19 @@ export default function App() {
   }, [language]);
 
   const handleLoginSuccess = () => {
-    setIsAuthenticated(true);
-    setIsEditMode(true); // Automatically enter edit mode upon login
+    // O estado de autenticação em si vem do observador do Firebase Auth.
+    // Aqui só ativamos o modo de edição logo após entrar.
+    localStorage.setItem(EDIT_MODE_KEY, "true");
+    setIsEditMode(true);
   };
 
-  const handleLogout = () => {
-    setIsAuthenticated(false);
-    setIsEditMode(false);
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } catch (err) {
+      console.error("Erro ao encerrar a sessão:", err);
+    }
+    localStorage.setItem(EDIT_MODE_KEY, "false");
   };
 
 
@@ -572,6 +619,22 @@ export default function App() {
         language={language}
         onOpenPdfPreview={() => setIsPdfPreviewOpen(true)}
       />
+
+      {/* Aviso persistente de falha de salvamento na nuvem */}
+      <AnimatePresence>
+        {isAuthenticated && saveError && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+            role="status"
+            className="fixed bottom-4 left-1/2 z-100 flex -translate-x-1/2 items-center gap-2 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs font-semibold text-amber-900 shadow-xl dark:border-amber-900/50 dark:bg-amber-950/60 dark:text-amber-200 no-print"
+          >
+            <CloudOff className="h-4 w-4 shrink-0" />
+            <span className="max-w-xs">{saveError}</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Login Modal for Admin Access */}
       <LoginModal
