@@ -85,15 +85,18 @@ export const initialResumeData: ResumeData = {
       description: "Projeto de visão computacional usando arquitetura YOLO para detecção de objetos em imagens.",
       descriptionEn: "Computer vision project using a YOLO architecture for object detection in images.",
       categoryId: "software",
-      tags: ["Python", "Visão Computacional", "YOLO", "Deep Learning"],
+      // `tags` são os temas; `stack`, as ferramentas. Sem sobreposição, para os
+      // dois blocos não aparecerem repetidos na página do projeto.
+      tags: ["Visão Computacional", "Deep Learning"],
       status: "concluído",
-      periodo: { inicio: "2025-01" },
+      // Sem `periodo`: eu não sei as datas reais. Um período aberto aqui faria
+      // a página exibir "Presente", contradizendo o status "concluído".
       stack: ["Python", "YOLO", "OpenCV"],
       destaque: true,
       ordemDestaque: 2,
       featured: true,
-      imageUrl: "db:yolocraft.png",
-      // As imagens deste projeto já estão no banco (yolocraft-deteccao-e-*.webp).
+      imageUrl: "db:projects/yolocraft/yolocraft.png",
+      // As imagens deste projeto estão em projects/yolocraft/ no Storage.
       // Complete a descrição detalhada e a galeria pelo painel.
       detailedDescription: "",
       scientificRelevance: "",

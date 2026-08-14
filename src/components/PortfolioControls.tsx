@@ -78,7 +78,7 @@ export default function PortfolioControls({
   };
 
   const handlePrint = () => {
-    generateResumePDF(resumeData);
+    generateResumePDF(resumeData).catch((err) => console.error("Erro ao gerar PDF:", err));
   };
 
   return (

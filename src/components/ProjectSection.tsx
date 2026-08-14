@@ -13,6 +13,7 @@ import MarkdownRenderer from "./MarkdownRenderer";
 import { Language, translations } from "../lib/translations";
 import TranslateButton from "./TranslateButton";
 import { translateFields } from "../lib/translator";
+import { findBySlug, slugOf } from "../utils/slug";
 
 interface ProjectSectionProps {
   projects: Project[];
@@ -62,13 +63,15 @@ export default function ProjectSection({
     }
   };
 
-  const selectedProject = selectedProjectId !== undefined 
-    ? (projects.find((p) => p.id === selectedProjectId) || null)
+  // O trecho da URL pode ser o `codigo` (usado nos links) ou o `id` (links
+  // antigos e rotas pré-renderizadas). `findBySlug` aceita os dois.
+  const selectedProject = selectedProjectId !== undefined
+    ? findBySlug(projects, selectedProjectId)
     : localSelectedProject;
 
   const setSelectedProject = (proj: Project | null) => {
     if (onSelectProject) {
-      onSelectProject(proj ? proj.id : null);
+      onSelectProject(proj ? slugOf(proj) : null);
     } else {
       setLocalSelectedProject(proj);
     }
@@ -200,42 +203,15 @@ export default function ProjectSection({
   });
 
   // --- Project Handlers ---
+  // A edição acontece em página dedicada (/admin/projetos/...), onde cabe também
+  // a galeria que sobe imagens direto para a pasta do projeto no Storage.
   const handleOpenProjectAdd = () => {
-    setEditingProject(null);
-    setProjectForm({
-      title: "",
-      titleEn: "",
-      description: "",
-      descriptionEn: "",
-      categoryId: categories[0]?.id || "",
-      tags: [],
-      projectUrl: "",
-      githubUrl: "",
-      imageUrl: "",
-      detailedDescription: "",
-      detailedDescriptionEn: "",
-      scientificRelevance: "",
-      scientificRelevanceEn: "",
-      galleryImages: [],
-      featured: false,
-      blogPostId: "",
-    });
-    setTagsInput("");
-    setGalleryInput("");
-    setEditingLanguage(language);
-    setIsGalleryBankOpen(false);
-    setIsProjectModalOpen(true);
+    navigate("/admin/projetos/novo");
   };
 
   const handleOpenProjectEdit = (proj: Project, e: React.MouseEvent) => {
     e.stopPropagation();
-    setEditingProject(proj);
-    setProjectForm({ ...proj });
-    setTagsInput(proj.tags.join(", "));
-    setGalleryInput((proj.galleryImages || []).join(", "));
-    setEditingLanguage(language);
-    setIsGalleryBankOpen(false);
-    setIsProjectModalOpen(true);
+    navigate(`/admin/projetos/${encodeURIComponent(slugOf(proj))}`);
   };
 
   const handleDeleteProject = (projId: string, e: React.MouseEvent) => {
@@ -585,9 +561,9 @@ export default function ProjectSection({
                 key={proj.id}
                 onClick={() => {
                   if (onSelectProject) {
-                    onSelectProject(proj.codigo || proj.id);
+                    onSelectProject(slugOf(proj));
                   } else {
-                    navigate(`/projetos/${encodeURIComponent(proj.codigo || proj.id)}`);
+                    navigate(`/projetos/${encodeURIComponent(slugOf(proj))}`);
                   }
                 }}
                 className="group relative flex flex-col overflow-hidden rounded-2xl border border-slate-100 dark:border-slate-800/80 bg-white dark:bg-slate-900/40 shadow-xs transition-all hover:shadow-lg hover:border-slate-200 dark:hover:border-slate-700 hover:-translate-y-1 cursor-pointer print-border print-shadow-none print-translate-none print-break-inside-avoid duration-300"

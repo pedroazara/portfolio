@@ -4,7 +4,7 @@ import {
   X, Crop, ZoomIn, ZoomOut, RotateCw, Check, RefreshCw, 
   Move, Sliders, Layout, Sparkles, Image as ImageIcon, Upload, ImageDown
 } from "lucide-react";
-import { getImage, saveImage, listImages, StoredImage } from "../utils/imageDb";
+import { getImage, saveImage, listImages, StoredImage, fileNameOf } from "../utils/imageDb";
 import { Language } from "../lib/translations";
 
 interface ImageCropModalProps {
@@ -447,7 +447,7 @@ export default function ImageCropModal({
                   >
                     <img src={img.url} alt={img.name} className="h-full w-full object-cover" />
                     <span className="absolute bottom-0 inset-x-0 bg-slate-950/80 text-[8px] font-mono text-white truncate px-1">
-                      {img.name}
+                      {fileNameOf(img.name)}
                     </span>
                   </button>
                 ))}

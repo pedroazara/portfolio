@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useSearchParams, Link } from "react-router-dom";
+import { useSearchParams, useNavigate, Link } from "react-router-dom";
 import { BlogPost, Project } from "../types";
 import { 
   BookOpen, Calendar, Clock, Plus, Edit2, Trash2, X, FileText, 
@@ -17,6 +17,7 @@ import { Language, translations } from "../lib/translations";
 import TranslateButton from "./TranslateButton";
 import { translateFields } from "../lib/translator";
 import { estimateReadTime } from "../utils/readTime";
+import { findBySlug, slugOf } from "../utils/slug";
 
 interface BlogSectionProps {
   posts: BlogPost[];
@@ -50,6 +51,7 @@ export default function BlogSection({
   searchQuery = "",
 }: BlogSectionProps) {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const urlCategory = searchParams.get("categoria") || "Todos";
   const [localSelectedPost, setLocalSelectedPost] = useState<BlogPost | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string>("Todos");
@@ -69,19 +71,20 @@ export default function BlogSection({
 
   const handleCopyLink = () => {
     if (!selectedPost) return;
-    const url = `${window.location.origin}/blog/${selectedPost.id}`;
+    const url = `${window.location.origin}/blog/${slugOf(selectedPost)}`;
     navigator.clipboard.writeText(url);
     setCopiedLink(true);
     setTimeout(() => setCopiedLink(false), 2000);
   };
 
-  const selectedPost = selectedPostId !== undefined 
-    ? (posts.find((p) => p.id === selectedPostId) || null)
-    : (localSelectedPost ? (posts.find((p) => p.id === localSelectedPost.id) || null) : null);
+  // Aceita tanto o `codigo` quanto o `id` no trecho da URL.
+  const selectedPost = selectedPostId !== undefined
+    ? findBySlug(posts, selectedPostId)
+    : (localSelectedPost ? findBySlug(posts, localSelectedPost.id) : null);
 
   const setSelectedPost = (post: BlogPost | null) => {
     if (onSelectPost) {
-      onSelectPost(post ? post.id : null);
+      onSelectPost(post ? slugOf(post) : null);
     } else {
       setLocalSelectedPost(post);
     }
@@ -131,35 +134,15 @@ export default function BlogSection({
   };
   const [tagsInput, setTagsInput] = useState("");
 
+  // A edição acontece em página dedicada (/admin/posts/...), não mais em modal:
+  // dá espaço para pré-visualização lado a lado e faz o botão voltar funcionar.
   const handleOpenAdd = () => {
-    setEditingPost(null);
-    setPostForm({
-      title: "",
-      titleEn: "",
-      summary: "",
-      summaryEn: "",
-      content: "",
-      contentEn: "",
-      tags: [],
-      imageUrl: "",
-      readTime: "",
-      date: new Date().toISOString().split("T")[0],
-      draft: false,
-      category: "Instrumentação",
-      categoryEn: "Instrumentation"
-    });
-    setTagsInput("");
-    setEditingLanguage(language);
-    setIsFormModalOpen(true);
+    navigate("/admin/posts/novo");
   };
 
   const handleOpenEdit = (post: BlogPost, e: React.MouseEvent) => {
     e.stopPropagation();
-    setEditingPost(post);
-    setPostForm({ ...post });
-    setTagsInput(post.tags.join(", "));
-    setEditingLanguage(language);
-    setIsFormModalOpen(true);
+    navigate(`/admin/posts/${encodeURIComponent(slugOf(post))}`);
   };
 
   const handleDelete = (id: string, e: React.MouseEvent) => {
@@ -710,7 +693,7 @@ export default function BlogSection({
                           return (
                             <Link
                               key={proj.id}
-                              to={`/projetos/${proj.codigo || proj.id}`}
+                              to={`/projetos/${slugOf(proj)}`}
                               onClick={() => setSelectedPost(null)}
                               className="group flex flex-col sm:flex-row items-stretch gap-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/60 p-3.5 hover:border-indigo-500 dark:hover:border-indigo-500 hover:shadow-md transition-all cursor-pointer"
                             >

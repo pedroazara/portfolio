@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Link, Image as ImageIcon, Check, RefreshCw, Search, X, Upload, Crop } from "lucide-react";
-import { StoredImage, listImages, saveImage } from "../utils/imageDb";
+import { StoredImage, listImages, saveImage, fileNameOf } from "../utils/imageDb";
 import { optimizeImage, generateOgImage } from "../utils/imageOptimizer";
 import ImageCropModal from "./ImageCropModal";
 import LocalImage from "./LocalImage";
@@ -326,7 +326,7 @@ export default function ImageSelectorInput({
                           <img src={img.url} alt={img.name} className="h-full w-full object-cover" />
                         </div>
                         <span className="text-[10px] font-mono text-slate-700 dark:text-slate-300 truncate flex-1" title={img.name}>
-                          {img.name}
+                          {fileNameOf(img.name)}
                         </span>
                         {isSelected && (
                           <div className="absolute top-1 right-1 rounded-full bg-indigo-600 p-0.5 text-white">

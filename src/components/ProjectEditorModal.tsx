@@ -11,7 +11,7 @@ import ArticleContentEditor from "./ArticleContentEditor";
 import MarkdownRenderer from "./MarkdownRenderer";
 import TranslateButton from "./TranslateButton";
 import { translateFields } from "../lib/translator";
-import { StoredImage, listImages } from "../utils/imageDb";
+import { StoredImage, listImages, fileNameOf } from "../utils/imageDb";
 import LocalImage from "./LocalImage";
 
 interface ProjectEditorModalProps {
@@ -22,6 +22,11 @@ interface ProjectEditorModalProps {
   onUpdateCategories?: (categories: ProjectCategory[]) => void;
   onSave: (project: Project) => void;
   language?: Language;
+  /**
+   * Renderiza o editor como página, e não como modal sobreposto.
+   * O formulário é o mesmo nos dois casos — muda só o invólucro externo.
+   */
+  asPage?: boolean;
 }
 
 export default function ProjectEditorModal({
@@ -31,6 +36,7 @@ export default function ProjectEditorModal({
   categories,
   onSave,
   language = "pt",
+  asPage = false,
 }: ProjectEditorModalProps) {
   const [activeTab, setActiveTab] = useState<"edit" | "preview">("edit");
   const [editingLanguage, setEditingLanguage] = useState<Language>(language);
@@ -211,27 +217,10 @@ export default function ProjectEditorModal({
   const displayDetailedDescription = editingLanguage === "en" && formData.detailedDescriptionEn ? formData.detailedDescriptionEn : formData.detailedDescription || "";
   const displayScientificRelevance = editingLanguage === "en" && formData.scientificRelevanceEn ? formData.scientificRelevanceEn : formData.scientificRelevance || "";
 
-  return (
-    <AnimatePresence>
-      <div className="fixed inset-0 z-50 overflow-y-auto no-print">
-        {/* Backdrop */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          onClick={onClose}
-          className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm transition-opacity"
-        />
-
-        {/* Modal Container */}
-        <div className="flex min-h-screen items-center justify-center p-2 sm:p-4 lg:p-6">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.97, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.97, y: 20 }}
-            transition={{ duration: 0.2, ease: "easeOut" }}
-            className="relative w-full max-w-5xl rounded-3xl bg-slate-50 dark:bg-slate-950 shadow-2xl border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 overflow-hidden flex flex-col my-4 max-h-[92vh]"
-          >
+  // O conteúdo é idêntico nos dois modos; só o invólucro muda. Como página, a
+  // altura não é limitada a 92vh e o scroll é o da própria janela.
+  const body = (
+    <>
             {/* Top Toolbar / Header */}
             <div className="shrink-0 flex flex-wrap items-center justify-between gap-3 bg-white dark:bg-slate-900 px-4 sm:px-6 py-3.5 border-b border-slate-200/80 dark:border-slate-800 shadow-xs z-10">
               <div className="flex items-center gap-2.5">
@@ -687,7 +676,7 @@ export default function ProjectEditorModal({
                                 >
                                   <img src={img.url} alt={img.name} className="h-full w-full object-cover rounded-lg" />
                                   <div className="absolute inset-x-0 bottom-0 bg-slate-950/70 p-1 text-[9px] font-mono text-white truncate">
-                                    {img.name}
+                                    {fileNameOf(img.name)}
                                   </div>
                                   {isSelected && (
                                     <div className="absolute top-1.5 right-1.5 rounded-full bg-indigo-600 text-white p-1 shadow-md">
@@ -839,6 +828,39 @@ export default function ProjectEditorModal({
                 </div>
               )}
             </div>
+    </>
+  );
+
+  if (asPage) {
+    return (
+      <div className="mx-auto w-full max-w-5xl overflow-hidden rounded-3xl border border-slate-200 bg-slate-50 text-slate-900 shadow-sm dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100 no-print">
+        {body}
+      </div>
+    );
+  }
+
+  return (
+    <AnimatePresence>
+      <div className="fixed inset-0 z-50 overflow-y-auto no-print">
+        {/* Backdrop */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          onClick={onClose}
+          className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm transition-opacity"
+        />
+
+        {/* Modal Container */}
+        <div className="flex min-h-screen items-center justify-center p-2 sm:p-4 lg:p-6">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.97, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.97, y: 20 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
+            className="relative w-full max-w-5xl rounded-3xl bg-slate-50 dark:bg-slate-950 shadow-2xl border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 overflow-hidden flex flex-col my-4 max-h-[92vh]"
+          >
+            {body}
           </motion.div>
         </div>
       </div>

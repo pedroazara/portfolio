@@ -1,6 +1,7 @@
 import fs from "fs";
 import path from "path";
 import { initialResumeData } from "../src/data/initialData";
+import { slugOf } from "../src/utils/slug";
 
 const BASE_URL = "https://pedroazara.vercel.app";
 const DIST_DIR = path.resolve(process.cwd(), "dist");
@@ -145,7 +146,7 @@ routes.push({
       <section>
         ${publishedPosts.map(post => `
           <article>
-            <h2><a href="/blog/${post.id}">${post.title || ""}</a></h2>
+            <h2><a href="/blog/${slugOf(post)}">${post.title || ""}</a></h2>
             <p>${post.summary || ""}</p>
             <time>${post.date || ""}</time>
           </article>
@@ -174,12 +175,12 @@ publishedPosts.forEach(post => {
     },
     "mainEntityOfPage": {
       "@type": "WebPage",
-      "@id": `${BASE_URL}/blog/${post.id}`
+      "@id": `${BASE_URL}/blog/${slugOf(post)}`
     }
   };
 
   routes.push({
-    urlPath: `/blog/${post.id}`,
+    urlPath: `/blog/${slugOf(post)}`,
     title: `${post.title || "Artigo"} | Blog de ${authorName}`,
     description: post.summary || "",
     type: "article",
@@ -203,7 +204,7 @@ publishedPosts.forEach(post => {
 // 4. Project Routes
 publishedProjects.forEach(project => {
   routes.push({
-    urlPath: `/projetos/${project.id}`,
+    urlPath: `/projetos/${slugOf(project)}`,
     title: `${project.title || "Projeto"} | Projetos de ${initialResumeData.profile.name || "Pedro Henrique Almeida"}`,
     description: project.description || "",
     type: "website",
@@ -220,7 +221,7 @@ publishedProjects.forEach(project => {
 
   // Alias for /project/:id
   routes.push({
-    urlPath: `/project/${project.id}`,
+    urlPath: `/project/${slugOf(project)}`,
     title: `${project.title || "Projeto"} | Projetos de ${initialResumeData.profile.name || "Pedro Henrique Almeida"}`,
     description: project.description || "",
     type: "website",

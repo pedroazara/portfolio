@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import LocalImage from "./LocalImage";
+import { resolveImageSrc } from "../utils/imageDb";
 import MarkdownRenderer from "./MarkdownRenderer";
 import { Language } from "../lib/translations";
 
@@ -99,6 +100,14 @@ export default function ProjectDetailsModal({
     setCopiedLink(true);
     setTimeout(() => setCopiedLink(false), 2000);
   };
+
+  // Um projeto está em andamento por `emAndamento` ou pelo texto do status.
+  // Qualquer outro status preenchido significa que ele terminou.
+  const isInProgress =
+    Boolean(project.emAndamento) ||
+    project.status === "Em andamento" ||
+    project.status === "In Progress";
+  const isConcluded = Boolean(project.status) && !isInProgress;
 
   const displayTitle = (language === "en" && project.titleEn) ? project.titleEn : project.title;
   const displayDescription = (language === "en" && project.descriptionEn) ? project.descriptionEn : project.description;
@@ -202,7 +211,7 @@ export default function ProjectDetailsModal({
                   {/* Background blurred ambiance */}
                   <div 
                     className="absolute inset-0 bg-cover bg-center blur-2xl opacity-30 scale-110 pointer-events-none"
-                    style={{ backgroundImage: `url(${images[activeImageIdx]})` }}
+                    style={{ backgroundImage: `url(${resolveImageSrc(images[activeImageIdx]) ?? ""})` }}
                   />
                   
                   {/* Main Foreground Image */}
@@ -309,9 +318,16 @@ export default function ProjectDetailsModal({
                       <span className="inline-flex items-center gap-1 font-mono text-xs text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-full">
                         <Calendar className="h-3.5 w-3.5 text-slate-400" />
                         <span>
-                          {typeof project.periodo === "string" 
-                            ? project.periodo 
-                            : `${project.periodo.inicio}${project.periodo.fim ? ` - ${project.periodo.fim}` : " - Presente"}`}
+                          {typeof project.periodo === "string"
+                            ? project.periodo
+                            : project.periodo.fim
+                              ? `${project.periodo.inicio} - ${project.periodo.fim}`
+                              // Sem data de fim: "Presente" só faz sentido se o projeto
+                              // segue ativo. Num projeto concluído isso se contradizia
+                              // com o próprio selo de status ao lado.
+                              : isConcluded
+                                ? `${language === "en" ? "Started in" : "Início em"} ${project.periodo.inicio}`
+                                : `${project.periodo.inicio} - ${language === "en" ? "Present" : "Presente"}`}
                         </span>
                       </span>
                     )}

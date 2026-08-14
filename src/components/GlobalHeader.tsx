@@ -83,7 +83,7 @@ export default function GlobalHeader({
     if (onOpenPdfPreview) {
       onOpenPdfPreview();
     } else {
-      generateResumePDF(resumeData);
+      generateResumePDF(resumeData).catch((err) => console.error("Erro ao gerar PDF:", err));
     }
   };
 

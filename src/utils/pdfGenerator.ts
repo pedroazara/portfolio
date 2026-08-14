@@ -1,17 +1,28 @@
-import { jsPDF } from "jspdf";
+import type { jsPDF } from "jspdf";
 import { ResumeData } from "../types";
+
+/**
+ * O jsPDF pesa mais de 150 KB e só serve para exportar o currículo. Carregá-lo
+ * sob demanda tira esse peso do carregamento inicial de quem só quer ler o site.
+ * O `import type` acima é apagado na compilação — não custa nada em runtime.
+ */
+async function loadJsPDF() {
+  const mod = await import("jspdf");
+  return mod.jsPDF;
+}
 
 /**
  * Creates and returns the jsPDF document instance for the CV.
  * Optimized for Latin-1 encoding (no non-Latin Unicode glyphs like stars or bullets),
  * clean word-wrapping, active clickable links, and ATS compatibility.
  */
-export function createResumePDFDoc(data?: ResumeData): jsPDF | null {
+export async function createResumePDFDoc(data?: ResumeData): Promise<jsPDF | null> {
   if (!data || !data.profile) {
     console.error("Dados de currículo não encontrados para geração de PDF.");
     return null;
   }
-  const doc = new jsPDF({
+  const JsPDF = await loadJsPDF();
+  const doc = new JsPDF({
     orientation: "portrait",
     unit: "mm",
     format: "a4",
@@ -495,8 +506,8 @@ export function createResumePDFDoc(data?: ResumeData): jsPDF | null {
  * Downloads the resume PDF directly with ATS-optimized, accent-free filename.
  * E.g.: Pedro-Henrique-Azara-de-Almeida-CV.pdf
  */
-export function generateResumePDF(data?: ResumeData) {
-  const doc = createResumePDFDoc(data);
+export async function generateResumePDF(data?: ResumeData) {
+  const doc = await createResumePDFDoc(data);
   if (!doc) return;
   const rawName = data?.profile?.name || "Pedro Henrique Azara de Almeida";
   const cleanName = rawName
@@ -512,8 +523,8 @@ export function generateResumePDF(data?: ResumeData) {
 /**
  * Returns a Blob URL for previewing the generated PDF.
  */
-export function getResumePDFBlobUrl(data?: ResumeData): string | null {
-  const doc = createResumePDFDoc(data);
+export async function getResumePDFBlobUrl(data?: ResumeData): Promise<string | null> {
+  const doc = await createResumePDFDoc(data);
   if (!doc) return null;
   const blob = doc.output("blob");
   return URL.createObjectURL(blob);

@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Upload, ImageIcon, Check, RefreshCw, Search, X, Clipboard, Trash2, ZoomIn, Plus } from "lucide-react";
-import { StoredImage, listImages, saveImage } from "../utils/imageDb";
+import { StoredImage, listImages, saveImage, fileNameOf } from "../utils/imageDb";
 import { processImagePreservingFormat } from "../utils/imageOptimizer";
 import { Language } from "../lib/translations";
 import LocalImage from "./LocalImage";
@@ -359,7 +359,7 @@ export default function ArticleContentEditor({
                       <img src={img.url} alt={img.name} className="h-full w-full object-cover group-hover:scale-105 transition-transform" />
                     </div>
                     <span className="text-[10px] font-mono text-slate-700 dark:text-slate-300 truncate w-full text-center">
-                      {img.name}
+                      {fileNameOf(img.name)}
                     </span>
                   </button>
                 ))}

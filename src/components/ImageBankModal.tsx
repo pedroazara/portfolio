@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { X, Upload, Trash2, Copy, Check, Image as ImageIcon, Sparkles, FileText, Search } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
-import { StoredImage, listImages, saveImage, deleteImage } from "../utils/imageDb";
+import { StoredImage, listImages, saveImage, deleteImage, fileNameOf } from "../utils/imageDb";
 import { optimizeImage } from "../utils/imageOptimizer";
 import ConfirmModal from "./ConfirmModal";
 
@@ -391,7 +391,7 @@ export default function ImageBankModal({ isOpen, onClose }: ImageBankModalProps)
                       
                       <div className="overflow-hidden">
                         <div className="text-xs font-bold text-slate-800 font-mono truncate" title={img.name}>
-                          {img.name}
+                          {fileNameOf(img.name)}
                         </div>
                         <div className="flex items-center gap-2 text-[10px] text-slate-400 font-mono mt-0.5">
                           <span>{formatSize(img.size)}</span>

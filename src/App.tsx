@@ -23,6 +23,9 @@ import { motion, AnimatePresence } from "motion/react";
 import { Language, translations } from "./lib/translations";
 import { fetchResumeData, saveResumeData } from "./lib/dataService";
 import { observeAuth, logout } from "./lib/auth";
+import { findBySlug } from "./utils/slug";
+import PostEditorPage from "./pages/PostEditorPage";
+import ProjectEditorPage from "./pages/ProjectEditorPage";
 
 const STORAGE_KEY = "curriculo_portfolio_data_v1";
 const EDIT_MODE_KEY = "curriculo_portfolio_edit_mode_v1";
@@ -202,8 +205,14 @@ export default function App() {
     }
   }, [location.pathname, isAuthReady, isAuthenticated]);
 
-  const isBlog = location.pathname.startsWith("/blog");
-  const isProjects = location.pathname.startsWith("/projetos") || location.pathname.startsWith("/project");
+  // Rotas de edição em página. Ficam antes das demais porque `/admin/posts/x`
+  // não deve ser interpretado como a página pública de posts.
+  const postEditorMatch = location.pathname.match(/^\/admin\/posts\/(.+)$/);
+  const projectEditorMatch = location.pathname.match(/^\/admin\/projetos\/(.+)$/);
+  const isEditorRoute = Boolean(postEditorMatch || projectEditorMatch);
+
+  const isBlog = !isEditorRoute && location.pathname.startsWith("/blog");
+  const isProjects = !isEditorRoute && (location.pathname.startsWith("/projetos") || location.pathname.startsWith("/project"));
   const activePage: "cv" | "projetos" | "blog" = isBlog ? "blog" : isProjects ? "projetos" : "cv";
 
   let selectedBlogPostId: string | null = null;
@@ -274,13 +283,13 @@ export default function App() {
       title = `Blog & Artigos | ${name}`;
       description = "Artigos e notas técnicas sobre física computacional, óptica ultrarrápida, instrumentação e automação experimental.";
     } else if (selectedBlogPostId) {
-      const post = resumeData.posts.find((p) => p.id === selectedBlogPostId);
+      const post = findBySlug(resumeData.posts, selectedBlogPostId);
       if (post) {
         title = `${language === "en" ? post.titleEn || post.title : post.title} | Blog de ${name}`;
         description = (language === "en" ? post.summaryEn || post.summary : post.summary) || description;
       }
     } else if (selectedProjectId) {
-      const proj = resumeData.projects.find((p) => p.id === selectedProjectId);
+      const proj = findBySlug(resumeData.projects, selectedProjectId);
       if (proj) {
         title = `${language === "en" ? proj.titleEn || proj.title : proj.title} | Projetos de ${name}`;
         description = proj.description || description;
@@ -511,7 +520,45 @@ export default function App() {
 
       {/* Main Content Area */}
       <main id="conteudo-principal" className="mx-auto max-w-[1600px] px-4 py-8 sm:px-8 lg:px-12 print:p-0 print:max-w-none focus:outline-hidden">
-        {activePage === "cv" ? (
+        {isEditorRoute ? (
+          /* Editores em página dedicada. Exigem sessão ativa: sem ela, mostramos
+             o aviso em vez do formulário — as políticas RLS recusariam a gravação
+             de qualquer forma, e é melhor dizer isso antes de a pessoa digitar. */
+          !isAuthReady ? (
+            <div className="py-20 text-center text-sm text-slate-400">
+              {language === "en" ? "Checking session…" : "Verificando sessão…"}
+            </div>
+          ) : !isAuthenticated ? (
+            <div className="mx-auto max-w-md rounded-3xl border border-slate-200 bg-white p-10 text-center dark:border-slate-800 dark:bg-slate-900">
+              <Lock className="mx-auto mb-3 h-9 w-9 text-slate-300 dark:text-slate-700" />
+              <h1 className="font-display text-base font-bold text-slate-900 dark:text-white">
+                {language === "en" ? "Sign in to edit" : "Entre para editar"}
+              </h1>
+              <button
+                onClick={() => setIsLoginModalOpen(true)}
+                className="mt-5 rounded-xl bg-indigo-600 px-5 py-2.5 text-xs font-bold text-white transition-colors hover:bg-indigo-700"
+              >
+                {language === "en" ? "Sign in" : "Entrar"}
+              </button>
+            </div>
+          ) : postEditorMatch ? (
+            <PostEditorPage
+              slug={decodeURIComponent(postEditorMatch[1])}
+              posts={resumeData.posts || []}
+              onUpdatePosts={handleUpdatePosts}
+              language={language}
+            />
+          ) : (
+            <ProjectEditorPage
+              slug={decodeURIComponent(projectEditorMatch![1])}
+              projects={resumeData.projects}
+              categories={resumeData.categories}
+              onUpdateProjects={handleUpdateProjects}
+              onUpdateCategories={handleUpdateCategories}
+              language={language}
+            />
+          )
+        ) : activePage === "cv" ? (
           /* High-Fidelity Active Resume / Portfolio View */
           <div className="space-y-8 print:space-y-6">
             

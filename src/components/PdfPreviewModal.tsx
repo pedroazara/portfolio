@@ -29,17 +29,31 @@ export default function PdfPreviewModal({
     }
 
     setIsLoading(true);
+
+    // A geração agora é assíncrona (o jsPDF é carregado sob demanda). O modal
+    // pode fechar antes de ela terminar, então descartamos o resultado tardio
+    // em vez de guardar uma URL que ninguém vai revogar.
     let url: string | null = null;
-    try {
-      url = getResumePDFBlobUrl(resumeData);
-      setPdfUrl(url);
-    } catch (err) {
-      console.error("Erro ao gerar preview do PDF:", err);
-    } finally {
-      setIsLoading(false);
-    }
+    let cancelled = false;
+
+    getResumePDFBlobUrl(resumeData)
+      .then((generated) => {
+        if (cancelled) {
+          if (generated) URL.revokeObjectURL(generated);
+          return;
+        }
+        url = generated;
+        setPdfUrl(generated);
+      })
+      .catch((err) => {
+        console.error("Erro ao gerar preview do PDF:", err);
+      })
+      .finally(() => {
+        if (!cancelled) setIsLoading(false);
+      });
 
     return () => {
+      cancelled = true;
       if (url) {
         URL.revokeObjectURL(url);
       }
@@ -49,7 +63,9 @@ export default function PdfPreviewModal({
   if (!isOpen) return null;
 
   const handleDownload = () => {
-    generateResumePDF(resumeData);
+    generateResumePDF(resumeData).catch((err) => {
+      console.error("Erro ao baixar o PDF:", err);
+    });
   };
 
   return (
