@@ -26,6 +26,7 @@ import { observeAuth, logout } from "./lib/auth";
 import { findBySlug } from "./utils/slug";
 import PostEditorPage from "./pages/PostEditorPage";
 import ProjectEditorPage from "./pages/ProjectEditorPage";
+import PostPage from "./pages/PostPage";
 
 const STORAGE_KEY = "curriculo_portfolio_data_v1";
 const EDIT_MODE_KEY = "curriculo_portfolio_edit_mode_v1";
@@ -283,14 +284,16 @@ export default function App() {
       title = `Blog & Artigos | ${name}`;
       description = "Artigos e notas técnicas sobre física computacional, óptica ultrarrápida, instrumentação e automação experimental.";
     } else if (selectedBlogPostId) {
+      // Rascunhos não emprestam título nem descrição para quem não está editando:
+      // a página em si já os esconde, e o título da aba vazaria o mesmo conteúdo.
       const post = findBySlug(resumeData.posts, selectedBlogPostId);
-      if (post) {
+      if (post && (!post.draft || isEditMode)) {
         title = `${language === "en" ? post.titleEn || post.title : post.title} | Blog de ${name}`;
         description = (language === "en" ? post.summaryEn || post.summary : post.summary) || description;
       }
     } else if (selectedProjectId) {
       const proj = findBySlug(resumeData.projects, selectedProjectId);
-      if (proj) {
+      if (proj && (!proj.draft || isEditMode)) {
         title = `${language === "en" ? proj.titleEn || proj.title : proj.title} | Projetos de ${name}`;
         description = proj.description || description;
       }
@@ -307,7 +310,7 @@ export default function App() {
     if (canonical) {
       canonical.setAttribute("href", `https://pedroazara.vercel.app${location.pathname}`);
     }
-  }, [location.pathname, selectedBlogPostId, selectedProjectId, resumeData, language]);
+  }, [location.pathname, selectedBlogPostId, selectedProjectId, resumeData, language, isEditMode]);
 
   // Cópia local: gravada imediatamente a cada alteração.
   useEffect(() => {
@@ -634,17 +637,30 @@ export default function App() {
           />
         ) : (
           /* Blog / Publications Page Section */
-          <BlogSection
-            posts={resumeData.posts || []}
-            projects={resumeData.projects}
-            isEditMode={isEditMode}
-            onUpdatePosts={handleUpdatePosts}
-            authorName={resumeData.profile.name || "Pedro Henrique Almeida"}
-            selectedPostId={selectedBlogPostId}
-            onSelectPost={handleSelectBlogPost}
-            language={language}
-            searchQuery={searchQuery}
-          />
+          /* Com um artigo na URL, a leitura ocupa a página inteira; sem ele,
+             mostramos a listagem. Antes o artigo abria sobreposto à lista. */
+          selectedBlogPostId ? (
+            <PostPage
+              slug={selectedBlogPostId}
+              posts={resumeData.posts || []}
+              projects={resumeData.projects}
+              authorName={resumeData.profile.name || "Pedro Henrique Almeida"}
+              isEditMode={isEditMode}
+              language={language}
+            />
+          ) : (
+            <BlogSection
+              posts={resumeData.posts || []}
+              projects={resumeData.projects}
+              isEditMode={isEditMode}
+              onUpdatePosts={handleUpdatePosts}
+              authorName={resumeData.profile.name || "Pedro Henrique Almeida"}
+              selectedPostId={selectedBlogPostId}
+              onSelectPost={handleSelectBlogPost}
+              language={language}
+              searchQuery={searchQuery}
+            />
+          )
         )}
       </main>
 
