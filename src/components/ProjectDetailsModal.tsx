@@ -17,6 +17,12 @@ interface ProjectDetailsModalProps {
   categories?: ProjectCategory[];
   onClose: () => void;
   language?: Language;
+  /**
+   * Renderiza os detalhes como página, e não como modal sobreposto.
+   * Sem backdrop, sem travamento de scroll do body e sem armadilha de foco —
+   * a navegação de página cuida disso.
+   */
+  asPage?: boolean;
 }
 
 export default function ProjectDetailsModal({
@@ -25,13 +31,14 @@ export default function ProjectDetailsModal({
   categories,
   onClose,
   language = "pt",
+  asPage = false,
 }: ProjectDetailsModalProps) {
   const [copiedLink, setCopiedLink] = useState(false);
   const [activeImageIdx, setActiveImageIdx] = useState(0);
   const modalRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!project) return;
+    if (!project || asPage) return;
 
     // Save previous active element to restore focus on close
     const previousActiveElement = document.activeElement as HTMLElement | null;
@@ -90,7 +97,7 @@ export default function ProjectDetailsModal({
         previousActiveElement.focus();
       }
     };
-  }, [project, onClose]);
+  }, [project, onClose, asPage]);
 
   if (!project) return null;
 
@@ -152,34 +159,8 @@ export default function ProjectDetailsModal({
   const totalWords = (displayTitle + " " + displayDescription + " " + displayDetailedDescription).split(/\s+/).length;
   const readTimeMinutes = Math.max(1, Math.ceil(totalWords / 180));
 
-  return (
-    <AnimatePresence>
-      <div 
-        className="fixed inset-0 z-50 overflow-y-auto" 
-        aria-labelledby="modal-project-title" 
-        role="dialog" 
-        aria-modal="true"
-      >
-        {/* Backdrop overlay */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          onClick={onClose}
-          className="fixed inset-0 bg-slate-900/80 backdrop-blur-md transition-opacity"
-        />
-
-        {/* Scrollable Container */}
-        <div className="flex min-h-screen items-center justify-center p-3 sm:p-6 lg:p-8">
-          <motion.div
-            ref={modalRef}
-            tabIndex={-1}
-            initial={{ opacity: 0, scale: 0.96, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.96, y: 20 }}
-            transition={{ type: "spring", duration: 0.4 }}
-            className="relative w-full max-w-6xl overflow-hidden rounded-3xl bg-white dark:bg-slate-900 shadow-2xl border border-slate-200/80 dark:border-slate-800 text-slate-900 dark:text-slate-100 my-4 sm:my-8 outline-none"
-          >
+  const body = (
+    <>
             {/* Header / Control Bar */}
             <div className="absolute right-4 top-4 z-20 flex items-center gap-2">
               <button
@@ -191,20 +172,25 @@ export default function ProjectDetailsModal({
               >
                 {copiedLink ? <Check className="h-4.5 w-4.5 text-emerald-400" /> : <Share2 className="h-4.5 w-4.5" />}
               </button>
-              <button
-                type="button"
-                onClick={onClose}
-                className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-900/60 text-white backdrop-blur-md transition-colors hover:bg-slate-950/90 cursor-pointer shadow-md"
-                id="close-details-btn"
-                aria-label={language === "en" ? "Close modal" : "Fechar modal"}
-                title={language === "en" ? "Close" : "Fechar"}
-              >
-                <X className="h-5 w-5" />
-              </button>
+              {/* Como página não há o que fechar: a navegação já tem o botão
+                  "Todos os projetos" e o voltar do navegador. */}
+              {!asPage && (
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-900/60 text-white backdrop-blur-md transition-colors hover:bg-slate-950/90 cursor-pointer shadow-md"
+                  id="close-details-btn"
+                  aria-label={language === "en" ? "Close modal" : "Fechar modal"}
+                  title={language === "en" ? "Close" : "Fechar"}
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              )}
             </div>
 
-            {/* Unified Scrollable Container - Header cover gallery scrolls up with page */}
-            <div className="max-h-[88vh] overflow-y-auto">
+            {/* Como modal, o conteúdo rola dentro da caixa; como página, quem
+                rola é a janela — limitar a altura aqui recriaria o modal. */}
+            <div className={asPage ? "" : "max-h-[88vh] overflow-y-auto"}>
               {/* Banner Cover / Gallery Section */}
               {images.length > 0 && (
                 <div className="relative w-full h-72 sm:h-[400px] lg:h-[460px] bg-slate-950 overflow-hidden group">
@@ -492,6 +478,46 @@ export default function ProjectDetailsModal({
             </div>
           </div>
         </div>
+    </>
+  );
+
+  if (asPage) {
+    return (
+      <article className="relative mx-auto w-full max-w-6xl overflow-hidden rounded-3xl border border-slate-200/80 bg-white text-slate-900 shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100">
+        {body}
+      </article>
+    );
+  }
+
+  return (
+    <AnimatePresence>
+      <div
+        className="fixed inset-0 z-50 overflow-y-auto"
+        aria-labelledby="modal-project-title"
+        role="dialog"
+        aria-modal="true"
+      >
+        {/* Backdrop overlay */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          onClick={onClose}
+          className="fixed inset-0 bg-slate-900/80 backdrop-blur-md transition-opacity"
+        />
+
+        {/* Scrollable Container */}
+        <div className="flex min-h-screen items-center justify-center p-3 sm:p-6 lg:p-8">
+          <motion.div
+            ref={modalRef}
+            tabIndex={-1}
+            initial={{ opacity: 0, scale: 0.96, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.96, y: 20 }}
+            transition={{ type: "spring", duration: 0.4 }}
+            className="relative w-full max-w-6xl overflow-hidden rounded-3xl bg-white dark:bg-slate-900 shadow-2xl border border-slate-200/80 dark:border-slate-800 text-slate-900 dark:text-slate-100 my-4 sm:my-8 outline-none"
+          >
+            {body}
       </motion.div>
         </div>
       </div>

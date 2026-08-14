@@ -1,4 +1,5 @@
 import React from "react";
+import { useEscapeKey } from "../hooks/useEscapeKey";
 import { motion, AnimatePresence } from "motion/react";
 import { X } from "lucide-react";
 
@@ -11,6 +12,9 @@ interface EditModalProps {
 }
 
 export default function EditModal({ isOpen, onClose, title, children, size = "md" }: EditModalProps) {
+  // Fecha com Escape enquanto o modal estiver aberto.
+  useEscapeKey(isOpen, onClose);
+
   // Prevent body scroll when modal is open
   React.useEffect(() => {
     if (isOpen) {

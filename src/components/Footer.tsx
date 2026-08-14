@@ -91,16 +91,9 @@ export function Footer({ profile, language, buildDate }: FooterProps) {
             ) : null}
 
             <span className="hidden sm:inline opacity-40">•</span>
-            <a
-              href="https://ai.google.dev/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 text-indigo-600 dark:text-indigo-400 hover:underline font-semibold transition-colors"
-            >
-              <span>{isEn ? "Built with Google AI Studio" : "Construído com Google AI Studio"}</span>
-              <ExternalLink className="h-3 w-3 shrink-0 opacity-70" aria-hidden="true" />
-              <span className="sr-only">({isEn ? "opens in new tab" : "abre em nova aba"})</span>
-            </a>
+            <span className="text-slate-500 dark:text-slate-400">
+              React · Vite · Supabase
+            </span>
           </div>
 
         </div>

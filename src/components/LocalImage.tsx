@@ -74,6 +74,11 @@ export default function LocalImage({ src, fallback, ...props }: LocalImageProps)
   return (
     <img
       src={resolvedSrc}
+      // Padrões de desempenho: o navegador só baixa a imagem ao aproximá-la do
+      // viewport e decodifica fora da thread principal. Props explícitas nos
+      // usos individuais (ex.: a capa de um artigo) sobrescrevem os dois.
+      loading="lazy"
+      decoding="async"
       {...props}
       onError={(e) => {
         if (props.onError) props.onError(e);

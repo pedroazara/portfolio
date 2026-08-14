@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useEscapeKey } from "../hooks/useEscapeKey";
 import { X, Download, FileText, ExternalLink, Loader2, Printer } from "lucide-react";
 import { ResumeData } from "../types";
 import { generateResumePDF, getResumePDFBlobUrl } from "../utils/pdfGenerator";
@@ -16,6 +17,9 @@ export default function PdfPreviewModal({
   resumeData,
   language = "pt",
 }: PdfPreviewModalProps) {
+  // Fecha com Escape enquanto o modal estiver aberto.
+  useEscapeKey(isOpen, onClose);
+
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 

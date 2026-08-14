@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { useEscapeKey } from "../hooks/useEscapeKey";
 import { X, Upload, Trash2, Copy, Check, Image as ImageIcon, Sparkles, FileText, Search } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { StoredImage, listImages, saveImage, deleteImage, fileNameOf } from "../utils/imageDb";
@@ -11,6 +12,9 @@ interface ImageBankModalProps {
 }
 
 export default function ImageBankModal({ isOpen, onClose }: ImageBankModalProps) {
+  // Fecha com Escape enquanto o modal estiver aberto.
+  useEscapeKey(isOpen, onClose);
+
   const [images, setImages] = useState<StoredImage[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [copiedName, setCopiedName] = useState<string | null>(null);

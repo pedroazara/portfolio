@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { useEscapeKey } from "../hooks/useEscapeKey";
 import { motion, AnimatePresence } from "motion/react";
 import { 
   X, Crop, ZoomIn, ZoomOut, RotateCw, Check, RefreshCw, 
@@ -37,6 +38,9 @@ export default function ImageCropModal({
   language = "pt",
   title,
 }: ImageCropModalProps) {
+  // Fecha com Escape enquanto o modal estiver aberto.
+  useEscapeKey(isOpen, onClose);
+
   const [activeSrc, setActiveSrc] = useState<string>(imageSrc);
   const [resolvedUrl, setResolvedUrl] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(true);

@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useEscapeKey } from "../hooks/useEscapeKey";
 import { X, Lock, KeyRound, Mail, Eye, EyeOff, AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { describeAuthError, login, requestPasswordReset } from "../lib/auth";
@@ -73,6 +74,9 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }: LoginMod
     resetFields();
     onClose();
   };
+
+  // Fecha com Escape enquanto o modal estiver aberto.
+  useEscapeKey(isOpen, handleClose);
 
   if (!isOpen) return null;
 

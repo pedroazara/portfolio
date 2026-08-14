@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useEscapeKey } from "../hooks/useEscapeKey";
 import { motion, AnimatePresence } from "motion/react";
 import { X, KeyRound, Loader2, AlertCircle, CheckCircle2 } from "lucide-react";
 import { changePassword, describeAuthError } from "../lib/auth";
@@ -72,6 +73,9 @@ export default function ChangePasswordModal({ isOpen, onClose }: ChangePasswordM
     setConfirmNewPassword("");
     onClose();
   };
+
+  // Fecha com Escape enquanto o modal estiver aberto.
+  useEscapeKey(isOpen, handleClose);
 
   return (
     <AnimatePresence>

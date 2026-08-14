@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
-  ArrowLeft, Calendar, Clock, Share2, Check, Edit2, Code, AlertCircle, FileText,
+  ArrowLeft, ArrowRight, Calendar, Clock, Share2, Check, Edit2, Code, AlertCircle, FileText,
 } from "lucide-react";
 import { BlogPost, Project } from "../types";
 import { Language } from "../lib/translations";
@@ -87,6 +87,15 @@ export default function PostPage({
     setCopiedLink(true);
     setTimeout(() => setCopiedLink(false), 2000);
   };
+
+  // Navegação anterior/próximo entre posts publicados, do mais novo ao mais
+  // antigo. "Anterior" é o post mais recente que este; "próximo", o seguinte.
+  const published = posts
+    .filter((p) => !p.draft || isEditMode)
+    .sort((a, b) => (b.date || "").localeCompare(a.date || ""));
+  const currentIndex = published.findIndex((p) => p.id === post.id);
+  const newerPost = currentIndex > 0 ? published[currentIndex - 1] : null;
+  const olderPost = currentIndex >= 0 && currentIndex < published.length - 1 ? published[currentIndex + 1] : null;
 
   return (
     <article className="mx-auto max-w-4xl">
@@ -257,6 +266,45 @@ export default function PostPage({
             })}
           </div>
         </div>
+      )}
+
+      {/* Anterior / próximo */}
+      {(newerPost || olderPost) && (
+        <nav
+          aria-label={language === "en" ? "More articles" : "Mais artigos"}
+          className="mt-12 grid grid-cols-1 gap-3 border-t border-slate-200 pt-8 sm:grid-cols-2 dark:border-slate-800 no-print"
+        >
+          {newerPost ? (
+            <Link
+              to={`/blog/${slugOf(newerPost)}`}
+              className="group rounded-2xl border border-slate-200 p-4 transition-all hover:border-indigo-500 hover:shadow-md dark:border-slate-800 dark:hover:border-indigo-500"
+            >
+              <span className="flex items-center gap-1 font-mono text-[11px] uppercase tracking-wider text-slate-400">
+                <ArrowLeft className="h-3 w-3" />
+                {language === "en" ? "Newer" : "Mais recente"}
+              </span>
+              <span className="mt-1 block font-display text-sm font-bold text-slate-900 transition-colors group-hover:text-indigo-600 dark:text-white dark:group-hover:text-indigo-400">
+                {(language === "en" ? newerPost.titleEn : newerPost.title) || newerPost.title}
+              </span>
+            </Link>
+          ) : (
+            <span aria-hidden="true" />
+          )}
+          {olderPost && (
+            <Link
+              to={`/blog/${slugOf(olderPost)}`}
+              className="group rounded-2xl border border-slate-200 p-4 text-right transition-all hover:border-indigo-500 hover:shadow-md dark:border-slate-800 dark:hover:border-indigo-500"
+            >
+              <span className="flex items-center justify-end gap-1 font-mono text-[11px] uppercase tracking-wider text-slate-400">
+                {language === "en" ? "Older" : "Mais antigo"}
+                <ArrowRight className="h-3 w-3" />
+              </span>
+              <span className="mt-1 block font-display text-sm font-bold text-slate-900 transition-colors group-hover:text-indigo-600 dark:text-white dark:group-hover:text-indigo-400">
+                {(language === "en" ? olderPost.titleEn : olderPost.title) || olderPost.title}
+              </span>
+            </Link>
+          )}
+        </nav>
       )}
 
       <footer className="mt-12 border-t border-slate-100 pt-6 font-mono text-xs text-slate-400 dark:border-slate-800 dark:text-slate-500">

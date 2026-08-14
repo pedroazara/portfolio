@@ -1,4 +1,5 @@
 import React from "react";
+import { useEscapeKey } from "../hooks/useEscapeKey";
 import { motion, AnimatePresence } from "motion/react";
 import { AlertTriangle, Trash2, X } from "lucide-react";
 
@@ -23,6 +24,9 @@ export default function ConfirmModal({
   cancelText = "Cancelar",
   type = "danger",
 }: ConfirmModalProps) {
+  // Fecha com Escape enquanto o modal estiver aberto.
+  useEscapeKey(isOpen, onClose);
+
   // Prevent body scroll when modal is open
   React.useEffect(() => {
     if (isOpen) {

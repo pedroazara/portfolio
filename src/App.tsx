@@ -21,12 +21,13 @@ import { OrbitaIcon } from "./components/OrbitaIcon";
 import { Sparkles, CheckCircle2, Lock, Atom, FileText, BookOpen, Cloud, CloudOff, Sun, Moon } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { Language, translations } from "./lib/translations";
-import { fetchResumeData, saveResumeData } from "./lib/dataService";
+import { fetchResumeData, saveResumeData, StaleWriteError } from "./lib/dataService";
 import { observeAuth, logout } from "./lib/auth";
 import { findBySlug } from "./utils/slug";
 import PostEditorPage from "./pages/PostEditorPage";
 import ProjectEditorPage from "./pages/ProjectEditorPage";
 import PostPage from "./pages/PostPage";
+import ProjectPage from "./pages/ProjectPage";
 
 const STORAGE_KEY = "curriculo_portfolio_data_v1";
 const EDIT_MODE_KEY = "curriculo_portfolio_edit_mode_v1";
@@ -118,7 +119,8 @@ export default function App() {
 
     async function loadData() {
       try {
-        const cloudData = await fetchResumeData();
+        const { data: cloudData, version } = await fetchResumeData();
+        cloudVersionRef.current = version;
         if (cloudData) {
           setResumeData(sanitizeResumeData(cloudData));
         } else {
@@ -171,6 +173,9 @@ export default function App() {
 
   // Última versão confirmada na nuvem, para não regravar dados idênticos.
   const lastSyncedRef = useRef<string | null>(null);
+  // Carimbo `updated_at` da linha lida. Vai em cada gravação para detectar que
+  // outra aba escreveu no meio-tempo, em vez de sobrescrever cegamente.
+  const cloudVersionRef = useRef<string | null>(null);
   const bannerTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Router hooks for URL deep linking and SPA routes
@@ -334,7 +339,7 @@ export default function App() {
     setIsSaving(true);
     const timer = setTimeout(async () => {
       try {
-        await saveResumeData(resumeData);
+        cloudVersionRef.current = await saveResumeData(resumeData, cloudVersionRef.current);
         lastSyncedRef.current = serialized;
         setSaveError(null);
         setShowAutoSaveBanner(true);
@@ -342,7 +347,15 @@ export default function App() {
         bannerTimerRef.current = setTimeout(() => setShowAutoSaveBanner(false), 1500);
       } catch (err) {
         console.error("Erro ao salvar dados na nuvem:", err);
-        setSaveError("Não foi possível salvar na nuvem. Suas alterações continuam guardadas neste navegador.");
+        if (err instanceof StaleWriteError) {
+          // Outra aba gravou depois desta carregar. Não sobrescrevemos: seria
+          // apagar o trabalho dela. Recarregar traz a versão nova.
+          setSaveError(
+            "Outra aba salvou alterações mais recentes. Recarregue a página para continuar a partir delas — o que você digitou aqui está guardado neste navegador."
+          );
+        } else {
+          setSaveError("Não foi possível salvar na nuvem. Suas alterações continuam guardadas neste navegador.");
+        }
       } finally {
         setIsSaving(false);
       }
@@ -372,9 +385,11 @@ export default function App() {
     localStorage.setItem(EDIT_MODE_KEY, isEditMode.toString());
   }, [isEditMode, isAuthenticated]);
 
-  // Sync language with LocalStorage
+  // Sync language with LocalStorage e com o atributo lang do documento,
+  // que leitores de tela e tradutores automáticos usam para escolher a voz.
   useEffect(() => {
     localStorage.setItem(LANG_KEY, language);
+    document.documentElement.lang = language === "en" ? "en" : "pt-BR";
   }, [language]);
 
   const handleLoginSuccess = () => {
@@ -619,22 +634,33 @@ export default function App() {
             />
           </div>
         ) : activePage === "projetos" ? (
-          /* Standalone Projects & Innovations Page Section */
-          <ProjectSection
-            projects={resumeData.projects}
-            categories={resumeData.categories}
-            isEditMode={isEditMode}
-            onUpdateProjects={handleUpdateProjects}
-            onUpdateCategories={handleUpdateCategories}
-            posts={resumeData.posts || []}
-            onNavigateToBlogPost={handleNavigateToBlogPost}
-            language={language}
-            selectedProjectId={selectedProjectId}
-            onSelectProject={handleSelectProject}
-            isStandalonePage={true}
-            searchQuery={searchQuery}
-            onSearchChange={setSearchQuery}
-          />
+          /* Com um projeto na URL, os detalhes ocupam a página inteira; sem ele,
+             a grade. Antes os detalhes abriam num modal sobre a grade. */
+          selectedProjectId ? (
+            <ProjectPage
+              slug={selectedProjectId}
+              projects={resumeData.projects}
+              categories={resumeData.categories}
+              isEditMode={isEditMode}
+              language={language}
+            />
+          ) : (
+            <ProjectSection
+              projects={resumeData.projects}
+              categories={resumeData.categories}
+              isEditMode={isEditMode}
+              onUpdateProjects={handleUpdateProjects}
+              onUpdateCategories={handleUpdateCategories}
+              posts={resumeData.posts || []}
+              onNavigateToBlogPost={handleNavigateToBlogPost}
+              language={language}
+              selectedProjectId={null}
+              onSelectProject={handleSelectProject}
+              isStandalonePage={true}
+              searchQuery={searchQuery}
+              onSearchChange={setSearchQuery}
+            />
+          )
         ) : (
           /* Blog / Publications Page Section */
           /* Com um artigo na URL, a leitura ocupa a página inteira; sem ele,

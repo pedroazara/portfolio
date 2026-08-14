@@ -14,6 +14,17 @@ import { translateFields } from "../lib/translator";
 import { StoredImage, listImages, fileNameOf } from "../utils/imageDb";
 import LocalImage from "./LocalImage";
 
+/** Slug de URL a partir de um título: minúsculas, sem acentos, hífens. */
+function slugify(text: string): string {
+  return text
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 60);
+}
+
 interface ProjectEditorModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -175,7 +186,15 @@ export default function ProjectEditorModal({
       : (formData.categoryId ? [formData.categoryId] : (categories[0] ? [categories[0].id] : []));
 
     const completeProject: Project = {
+      // Preserva os campos que o formulário não edita (codigo, draft, periodo,
+      // stack, tipo, destaque...). Sem este spread, salvar um projeto apagava
+      // silenciosamente esses campos — foi o que quebrou os links por `codigo`
+      // e chegou a publicar rascunhos, já que `draft` também se perdia.
+      ...formData,
       id: formData.id || `proj-${Date.now()}`,
+      // Projeto novo ganha um slug legível derivado do título, para a URL
+      // sair /project/meu-projeto em vez de /project/proj-1755....
+      codigo: formData.codigo || slugify(formData.title || "") || undefined,
       title: formData.title || "Novo Projeto",
       titleEn: formData.titleEn || "",
       description: formData.description || "",

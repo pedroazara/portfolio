@@ -1,9 +1,29 @@
 import fs from "fs";
 import path from "path";
+import dotenv from "dotenv";
 import { initialResumeData } from "../src/data/initialData";
 import { slugOf } from "../src/utils/slug";
 
+dotenv.config();
+
 const BASE_URL = "https://pedroazara.vercel.app";
+
+// URL publica do Storage, para transformar referencias `db:` em URLs absolutas.
+// Sem a variavel de ambiente, caimos no banner generico em vez de emitir um
+// og:image quebrado com o esquema db: cru.
+const SUPABASE_URL = process.env.VITE_SUPABASE_URL
+  ?.trim()
+  .replace(/\/(rest|auth|storage|realtime)\/v1\/?$/, "")
+  .replace(/\/+$/, "");
+
+function resolveOgImage(src: string | undefined, fallback: string): string {
+  if (!src) return fallback;
+  if (src.startsWith("db:")) {
+    if (!SUPABASE_URL) return fallback;
+    return `${SUPABASE_URL}/storage/v1/object/public/images/${src.slice(3)}`;
+  }
+  return src;
+}
 const DIST_DIR = path.resolve(process.cwd(), "dist");
 
 if (!fs.existsSync(DIST_DIR)) {
@@ -184,7 +204,7 @@ publishedPosts.forEach(post => {
     title: `${post.title || "Artigo"} | Blog de ${authorName}`,
     description: post.summary || "",
     type: "article",
-    ogImage: post.imageUrl || `${BASE_URL}/og-home.svg`,
+    ogImage: resolveOgImage(post.imageUrl, `${BASE_URL}/og-home.svg`),
     jsonLd: blogJsonLd,
     prerenderContent: `
       <article>
@@ -208,7 +228,7 @@ publishedProjects.forEach(project => {
     title: `${project.title || "Projeto"} | Projetos de ${initialResumeData.profile.name || "Pedro Henrique Almeida"}`,
     description: project.description || "",
     type: "website",
-    ogImage: project.imageUrl || `${BASE_URL}/og-home.svg`,
+    ogImage: resolveOgImage(project.imageUrl, `${BASE_URL}/og-home.svg`),
     prerenderContent: `
       <article>
         <h1>${project.title || ""}</h1>
@@ -225,7 +245,7 @@ publishedProjects.forEach(project => {
     title: `${project.title || "Projeto"} | Projetos de ${initialResumeData.profile.name || "Pedro Henrique Almeida"}`,
     description: project.description || "",
     type: "website",
-    ogImage: project.imageUrl || `${BASE_URL}/og-home.svg`,
+    ogImage: resolveOgImage(project.imageUrl, `${BASE_URL}/og-home.svg`),
     prerenderContent: `
       <article>
         <h1>${project.title || ""}</h1>
@@ -243,6 +263,7 @@ routes.forEach(route => {
     <title>${escapeXml(route.title || "")}</title>
     <meta name="description" content="${escapeXml(route.description || "")}" />
     <link rel="canonical" href="${canonicalUrl}" />
+    <link rel="alternate" type="application/rss+xml" title="Blog RSS" href="${BASE_URL}/feed.xml" />
     <link rel="alternate" hreflang="pt-BR" href="${canonicalUrl}" />
     <link rel="alternate" hreflang="en" href="${canonicalUrl}?lang=en" />
     <meta property="og:title" content="${escapeXml(route.title || "")}" />
@@ -289,11 +310,17 @@ Sitemap: ${BASE_URL}/sitemap.xml
 fs.writeFileSync(path.join(DIST_DIR, "robots.txt"), robotsTxt, "utf-8");
 
 // Generate sitemap.xml
+const buildDate = new Date().toISOString().split("T")[0];
 const sitemapUrls = routes.map(r => {
   const loc = `${BASE_URL}${r.urlPath === "/" ? "" : r.urlPath}`;
   const priority = r.urlPath === "/" ? "1.0" : r.urlPath.startsWith("/blog/") ? "0.8" : "0.7";
+  // Posts levam a data de publicação; as demais rotas, a data do build.
+  const post = r.urlPath.startsWith("/blog/")
+    ? publishedPosts.find(p => `/blog/${slugOf(p)}` === r.urlPath)
+    : undefined;
   return `  <url>
     <loc>${loc}</loc>
+    <lastmod>${post?.date || buildDate}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>${priority}</priority>
   </url>`;
@@ -320,6 +347,33 @@ const ogSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630"
 
 fs.writeFileSync(path.join(DIST_DIR, "og-home.svg"), ogSvg, "utf-8");
 fs.writeFileSync(path.resolve(process.cwd(), "public/og-home.svg"), ogSvg, "utf-8");
+
+// Generate RSS feed for the blog
+const authorName = initialResumeData.profile.name || "Pedro Henrique Almeida";
+const feedItems = [...publishedPosts]
+  .sort((a, b) => (b.date || "").localeCompare(a.date || ""))
+  .map(post => `    <item>
+      <title>${escapeXml(post.title)}</title>
+      <link>${BASE_URL}/blog/${slugOf(post)}</link>
+      <guid isPermaLink="true">${BASE_URL}/blog/${slugOf(post)}</guid>
+      <description>${escapeXml(post.summary)}</description>
+      <pubDate>${post.date ? new Date(`${post.date}T12:00:00Z`).toUTCString() : ""}</pubDate>
+    </item>`)
+  .join("\n");
+
+const rssXml = `<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Blog de ${escapeXml(authorName)}</title>
+    <link>${BASE_URL}/blog</link>
+    <atom:link href="${BASE_URL}/feed.xml" rel="self" type="application/rss+xml" />
+    <description>Artigos e notas técnicas sobre física computacional, instrumentação e automação experimental.</description>
+    <language>pt-BR</language>
+${feedItems}
+  </channel>
+</rss>`;
+
+fs.writeFileSync(path.join(DIST_DIR, "feed.xml"), rssXml, "utf-8");
 
 console.log(`Prerender complete! ${routes.length} routes prerendered to dist/ with sitemap.xml, robots.txt, and metadata.`);
 
