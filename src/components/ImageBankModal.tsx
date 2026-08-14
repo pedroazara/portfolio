@@ -383,7 +383,7 @@ export default function ImageBankModal({ isOpen, onClose }: ImageBankModalProps)
                       {/* Image Preview Thumb */}
                       <div className="relative h-12 w-12 rounded-lg overflow-hidden bg-slate-950/5 border border-slate-200/60 flex items-center justify-center shrink-0">
                         <img
-                          src={img.dataUrl}
+                          src={img.url}
                           alt={img.name}
                           className="object-cover h-full w-full"
                         />

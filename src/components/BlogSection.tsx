@@ -16,6 +16,7 @@ import ArticleContentEditor from "./ArticleContentEditor";
 import { Language, translations } from "../lib/translations";
 import TranslateButton from "./TranslateButton";
 import { translateFields } from "../lib/translator";
+import { estimateReadTime } from "../utils/readTime";
 
 interface BlogSectionProps {
   posts: BlogPost[];
@@ -141,8 +142,9 @@ export default function BlogSection({
       contentEn: "",
       tags: [],
       imageUrl: "",
-      readTime: "5 min",
+      readTime: "",
       date: new Date().toISOString().split("T")[0],
+      draft: false,
       category: "Instrumentação",
       categoryEn: "Instrumentation"
     });
@@ -184,20 +186,27 @@ export default function BlogSection({
       .map((t) => t.trim())
       .filter((t) => t.length > 0);
 
+    const content = postForm.content || "";
+
     const completePost: BlogPost = {
+      // Preserva campos que o formulário não edita (codigo, tipo, projetos...).
+      // Sem isto, editar um post existente apagava silenciosamente essas ligações.
+      ...editingPost,
       id: editingPost?.id || `post-${Date.now()}`,
       title: postForm.title || "Publicação Sem Título",
       titleEn: postForm.titleEn || "",
       summary: postForm.summary || "",
       summaryEn: postForm.summaryEn || "",
-      content: postForm.content || "",
+      content,
       contentEn: postForm.contentEn || "",
       date: postForm.date || new Date().toISOString().split("T")[0],
       tags: tagsArray,
       imageUrl: postForm.imageUrl || undefined,
-      readTime: postForm.readTime || "5 min read",
+      // Campo em branco vira estimativa automática a partir do texto.
+      readTime: postForm.readTime?.trim() || estimateReadTime(content, "pt"),
       category: postForm.category || "Instrumentação",
-      categoryEn: postForm.categoryEn || "Instrumentation"
+      categoryEn: postForm.categoryEn || "Instrumentation",
+      draft: postForm.draft ?? false,
     };
 
     let updatedPosts: BlogPost[];
@@ -250,7 +259,7 @@ export default function BlogSection({
   const activeCategoryFilter = urlCategory !== "Todos" ? urlCategory : selectedCategory;
   const filteredPosts = posts.filter((post) => {
     // Hide drafts for public users if not in edit mode
-    if (!isEditMode && (post as any).draft) return false;
+    if (!isEditMode && post.draft) return false;
 
     // Search query matching
     if (searchQuery.trim()) {
@@ -385,7 +394,7 @@ export default function BlogSection({
                         <span>•</span>
                         <span className="flex items-center gap-1">
                           <Clock className="h-3.5 w-3.5" />
-                          {featuredPost.readTime || "5 min read"}
+                          {featuredPost.readTime || estimateReadTime(featuredPost.content, language)}
                         </span>
                       </div>
 
@@ -494,8 +503,13 @@ export default function BlogSection({
                           <span className="text-slate-200 dark:text-slate-800">•</span>
                           <span className="flex items-center gap-1">
                             <Clock className="h-3.5 w-3.5" />
-                            {post.readTime || "5 min read"}
+                            {post.readTime || estimateReadTime(post.content, language)}
                           </span>
+                          {post.draft && (
+                            <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-amber-800 dark:bg-amber-950/60 dark:text-amber-300">
+                              {language === "en" ? "Draft" : "Rascunho"}
+                            </span>
+                          )}
                         </div>
 
                         {/* Title & Summary */}
@@ -655,7 +669,7 @@ export default function BlogSection({
                     <span className="text-slate-200 dark:text-slate-800">•</span>
                     <span className="flex items-center gap-1">
                       <Clock className="h-4 w-4" />
-                      {selectedPost.readTime || "5 min read"}
+                      {selectedPost.readTime || estimateReadTime(selectedPost.content, language)}
                     </span>
                   </div>
 
@@ -1006,13 +1020,38 @@ export default function BlogSection({
               </label>
               <input
                 type="text"
-                placeholder="Ex: 5 min read"
+                placeholder={estimateReadTime(postForm.content || "", language)}
                 value={postForm.readTime || ""}
                 onChange={(e) => setPostForm({ ...postForm, readTime: e.target.value })}
                 className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-800 focus:border-indigo-500 focus:outline-hidden font-sans"
               />
+              <p className="mt-1 text-[11px] text-slate-400 font-sans">
+                {language === "en"
+                  ? "Leave blank to calculate from the text."
+                  : "Deixe em branco para calcular a partir do texto."}
+              </p>
             </div>
           </div>
+
+          {/* Rascunho: visível só para você enquanto estiver ligado */}
+          <label className="flex items-start gap-3 rounded-xl border border-slate-200 bg-slate-50/60 p-3 cursor-pointer hover:bg-slate-50 transition-colors">
+            <input
+              type="checkbox"
+              checked={postForm.draft ?? false}
+              onChange={(e) => setPostForm({ ...postForm, draft: e.target.checked })}
+              className="mt-0.5 h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+            />
+            <span className="text-xs font-sans">
+              <span className="font-bold text-slate-700 block">
+                {language === "en" ? "Save as draft" : "Salvar como rascunho"}
+              </span>
+              <span className="text-slate-500">
+                {language === "en"
+                  ? "Only you see it, and only while in edit mode. Visitors never see drafts."
+                  : "Só você enxerga, e apenas no modo de edição. Visitantes nunca veem rascunhos."}
+              </span>
+            </span>
+          </label>
 
           <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
             <button

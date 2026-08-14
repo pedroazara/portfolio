@@ -176,7 +176,12 @@ export default function ProjectSection({
   });
 
   // Filters projects based on selected tab/area and search query
-  const filteredProjects = projects.filter((p) => {
+  // Rascunhos ficam visíveis só para o admin no modo de edição. Os contadores
+  // das abas contam a partir desta lista, e não de `projects`, para não anunciar
+  // "5 projetos" a um visitante que enxerga 2 cartões.
+  const visibleProjects = projects.filter((p) => isEditMode || !p.draft);
+
+  const filteredProjects = visibleProjects.filter((p) => {
     if (activeCategory !== "all") {
       const pCatIds = p.categoryIds && p.categoryIds.length > 0 ? p.categoryIds : (p.categoryId ? [p.categoryId] : []);
       if (!pCatIds.includes(activeCategory)) {
@@ -494,10 +499,10 @@ export default function ProjectSection({
                 : "bg-slate-50 dark:bg-slate-950 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
             }`}
           >
-            {language === "en" ? `All Projects (${projects.length})` : `Todos os Projetos (${projects.length})`}
+            {language === "en" ? `All Projects (${visibleProjects.length})` : `Todos os Projetos (${visibleProjects.length})`}
           </button>
           {categories.map((cat) => {
-            const count = projects.filter((p) => {
+            const count = visibleProjects.filter((p) => {
               const pCatIds = p.categoryIds && p.categoryIds.length > 0 ? p.categoryIds : (p.categoryId ? [p.categoryId] : []);
               return pCatIds.includes(cat.id);
             }).length;
@@ -587,6 +592,14 @@ export default function ProjectSection({
                 }}
                 className="group relative flex flex-col overflow-hidden rounded-2xl border border-slate-100 dark:border-slate-800/80 bg-white dark:bg-slate-900/40 shadow-xs transition-all hover:shadow-lg hover:border-slate-200 dark:hover:border-slate-700 hover:-translate-y-1 cursor-pointer print-border print-shadow-none print-translate-none print-break-inside-avoid duration-300"
               >
+                {/* Marca de rascunho — só aparece porque o filtro acima já
+                    escondeu estes cartões de quem não está editando. */}
+                {proj.draft && (
+                  <div className="absolute right-3 top-3 z-10 rounded-full bg-amber-100 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-amber-800 shadow-sm dark:bg-amber-950/80 dark:text-amber-300 no-print">
+                    {language === "en" ? "Draft" : "Rascunho"}
+                  </div>
+                )}
+
                 {/* Project Image */}
                 {proj.imageUrl && (
                   <div className="relative aspect-video w-full overflow-hidden bg-slate-50 dark:bg-slate-950/30 print:hidden rounded-t-2xl">

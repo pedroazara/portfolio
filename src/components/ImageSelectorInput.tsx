@@ -323,7 +323,7 @@ export default function ImageSelectorInput({
                         }`}
                       >
                         <div className="relative h-7 w-7 rounded bg-slate-100 dark:bg-slate-800 overflow-hidden flex items-center justify-center border border-slate-100 dark:border-slate-800 shrink-0">
-                          <img src={img.dataUrl} alt={img.name} className="h-full w-full object-cover" />
+                          <img src={img.url} alt={img.name} className="h-full w-full object-cover" />
                         </div>
                         <span className="text-[10px] font-mono text-slate-700 dark:text-slate-300 truncate flex-1" title={img.name}>
                           {img.name}

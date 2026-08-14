@@ -341,7 +341,7 @@ export default function ImageCropModal({
       const dataUrl = canvas.toDataURL("image/webp", 0.90);
       const approxSize = Math.round((dataUrl.length * 3) / 4);
 
-      // Save to IndexedDB / Firestore
+      // Envia para o banco de imagens
       const fileName = `cropped-cover-${Date.now()}.webp`;
       await saveImage(fileName, dataUrl, approxSize);
 
@@ -445,7 +445,7 @@ export default function ImageCropModal({
                         : "border-slate-300 dark:border-slate-700 hover:border-indigo-400"
                     }`}
                   >
-                    <img src={img.dataUrl} alt={img.name} className="h-full w-full object-cover" />
+                    <img src={img.url} alt={img.name} className="h-full w-full object-cover" />
                     <span className="absolute bottom-0 inset-x-0 bg-slate-950/80 text-[8px] font-mono text-white truncate px-1">
                       {img.name}
                     </span>

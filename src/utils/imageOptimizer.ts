@@ -2,7 +2,7 @@
  * Client-side Image Optimization and Resizing Utilities
  * - Max 1600px on largest dimension
  * - WebP / JPEG compression (~80% quality)
- * - Safe payload size limit (< 700KB for Firestore documents)
+ * - Safe payload size limit (< 700KB)
  * - OG Image (1200x630) crop generation
  */
 

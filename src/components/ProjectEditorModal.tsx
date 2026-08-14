@@ -685,7 +685,7 @@ export default function ProjectEditorModal({
                                       : "border-slate-200 dark:border-slate-700 hover:border-slate-400"
                                   }`}
                                 >
-                                  <img src={img.dataUrl} alt={img.name} className="h-full w-full object-cover rounded-lg" />
+                                  <img src={img.url} alt={img.name} className="h-full w-full object-cover rounded-lg" />
                                   <div className="absolute inset-x-0 bottom-0 bg-slate-950/70 p-1 text-[9px] font-mono text-white truncate">
                                     {img.name}
                                   </div>

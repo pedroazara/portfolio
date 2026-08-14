@@ -21,15 +21,14 @@ import { OrbitaIcon } from "./components/OrbitaIcon";
 import { Sparkles, CheckCircle2, Lock, Atom, FileText, BookOpen, Cloud, CloudOff, Sun, Moon } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { Language, translations } from "./lib/translations";
-import { fetchResumeData, saveResumeData } from "./lib/firebaseService";
+import { fetchResumeData, saveResumeData } from "./lib/dataService";
 import { observeAuth, logout } from "./lib/auth";
-import { listImages } from "./utils/imageDb";
 
 const STORAGE_KEY = "curriculo_portfolio_data_v1";
 const EDIT_MODE_KEY = "curriculo_portfolio_edit_mode_v1";
 const LANG_KEY = "curriculo_portfolio_lang_v1";
 
-// Intervalo de espera antes de gravar no Firestore, para que uma sequência de
+// Intervalo de espera antes de gravar na nuvem, para que uma sequência de
 // digitação vire uma única escrita em vez de uma por tecla.
 const CLOUD_SAVE_DEBOUNCE_MS = 1200;
 
@@ -88,7 +87,7 @@ export default function App() {
   }, [darkMode]);
 
   const [isLoading, setIsLoading] = useState(true);
-  const [isFirebaseLoaded, setIsFirebaseLoaded] = useState(false);
+  const [isDataLoaded, setIsDataLoaded] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   // Quando a leitura inicial da nuvem falha, não sabemos o que já existe lá.
@@ -101,7 +100,7 @@ export default function App() {
 
   // Title effect handled dynamically by route meta effect below
 
-  // Fetch initial data from Firestore or fallback to localStorage
+  // Busca os dados na nuvem, com queda para a cópia local
   useEffect(() => {
     function loadFromLocalStorage() {
       const saved = localStorage.getItem(STORAGE_KEY);
@@ -115,39 +114,28 @@ export default function App() {
 
     async function loadData() {
       try {
-        const firestoreData = await fetchResumeData();
-        if (firestoreData) {
-          setResumeData(sanitizeResumeData(firestoreData));
+        const cloudData = await fetchResumeData();
+        if (cloudData) {
+          setResumeData(sanitizeResumeData(cloudData));
         } else {
           // O documento ainda não existe na nuvem: usa a cópia local, se houver.
           loadFromLocalStorage();
         }
       } catch (err) {
-        console.error("Erro ao carregar dados do Firebase:", err);
+        console.error("Erro ao carregar dados da nuvem:", err);
         setCloudReadFailed(true);
         loadFromLocalStorage();
       } finally {
         setIsLoading(false);
-        setIsFirebaseLoaded(true);
+        setIsDataLoaded(true);
       }
     }
     loadData();
   }, []);
 
-  // Trigger background sync of media library/images on application startup
-  useEffect(() => {
-    listImages()
-      .then(() => {
-        console.log("Background media library synchronization completed.");
-      })
-      .catch((err) => {
-        console.warn("Background media library synchronization failed:", err);
-      });
-  }, []);
-
-  // Estado de autenticação vem do Firebase Auth — nunca do localStorage.
-  // A sessão é um token assinado pelo Firebase; as regras do Firestore
-  // reavaliam esse token no servidor a cada gravação.
+  // Estado de autenticação vem do Supabase Auth — nunca do localStorage.
+  // A sessão é um JWT assinado pelo Supabase; as políticas RLS reavaliam
+  // esse token no servidor a cada gravação.
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isAuthReady, setIsAuthReady] = useState(false);
 
@@ -207,7 +195,7 @@ export default function App() {
   }, []);
 
   // Open login modal when visiting /admin if not authenticated.
-  // Espera o Firebase resolver a sessão para não piscar o modal em quem já está logado.
+  // Espera o Supabase resolver a sessão para não piscar o modal em quem já está logado.
   useEffect(() => {
     if (location.pathname === "/admin" && isAuthReady && !isAuthenticated) {
       setIsLoginModalOpen(true);
@@ -314,14 +302,14 @@ export default function App() {
 
   // Cópia local: gravada imediatamente a cada alteração.
   useEffect(() => {
-    if (!isFirebaseLoaded) return; // Prevent overwriting during initialization
+    if (!isDataLoaded) return; // Prevent overwriting during initialization
     localStorage.setItem(STORAGE_KEY, JSON.stringify(resumeData));
-  }, [resumeData, isFirebaseLoaded]);
+  }, [resumeData, isDataLoaded]);
 
   // Cópia na nuvem: agrupada por debounce, para que uma sequência de digitação
-  // gere uma única gravação no Firestore em vez de uma por tecla.
+  // gere uma única gravação no Supabase em vez de uma por tecla.
   useEffect(() => {
-    if (!isFirebaseLoaded || !isAuthenticated || cloudReadFailed) return;
+    if (!isDataLoaded || !isAuthenticated || cloudReadFailed) return;
 
     const serialized = JSON.stringify(resumeData);
     if (lastSyncedRef.current === null) {
@@ -341,7 +329,7 @@ export default function App() {
         if (bannerTimerRef.current) clearTimeout(bannerTimerRef.current);
         bannerTimerRef.current = setTimeout(() => setShowAutoSaveBanner(false), 1500);
       } catch (err) {
-        console.error("Erro ao salvar dados no Firestore:", err);
+        console.error("Erro ao salvar dados na nuvem:", err);
         setSaveError("Não foi possível salvar na nuvem. Suas alterações continuam guardadas neste navegador.");
       } finally {
         setIsSaving(false);
@@ -349,7 +337,7 @@ export default function App() {
     }, CLOUD_SAVE_DEBOUNCE_MS);
 
     return () => clearTimeout(timer);
-  }, [resumeData, isFirebaseLoaded, isAuthenticated, cloudReadFailed]);
+  }, [resumeData, isDataLoaded, isAuthenticated, cloudReadFailed]);
 
   // Se a leitura inicial da nuvem falhou, a gravação fica bloqueada nesta sessão.
   // O admin precisa saber disso — caso contrário editaria achando que está salvando.
@@ -378,7 +366,7 @@ export default function App() {
   }, [language]);
 
   const handleLoginSuccess = () => {
-    // O estado de autenticação em si vem do observador do Firebase Auth.
+    // O estado de autenticação em si vem do observador do Supabase Auth.
     // Aqui só ativamos o modo de edição logo após entrar.
     localStorage.setItem(EDIT_MODE_KEY, "true");
     setIsEditMode(true);

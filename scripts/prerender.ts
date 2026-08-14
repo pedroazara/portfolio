@@ -25,6 +25,13 @@ interface RouteMeta {
 
 const routes: RouteMeta[] = [];
 
+// Rascunhos existem só para o autor, dentro do modo de edição. O pré-render
+// gera HTML estático e entradas de sitemap que os buscadores leem sem executar
+// JavaScript nenhum — se os rascunhos passassem por aqui, o filtro do cliente
+// seria inútil e as fichas em branco acabariam indexadas. Filtramos na origem.
+const publishedProjects = (initialResumeData.projects || []).filter((p) => !p.draft);
+const publishedPosts = (initialResumeData.posts || []).filter((p) => !p.draft);
+
 // Helper for dates
 const formatDates = (start?: string, end?: string, current?: boolean) => {
   if (!start) return "";
@@ -77,7 +84,7 @@ routes.push({
       </section>
       <section id="projetos">
         <h2>Projetos de Destaque</h2>
-        ${(initialResumeData.projects || []).map(p => `
+        ${publishedProjects.map(p => `
           <article>
             <h3>${p.title || ""}</h3>
             <p>${p.description || ""}</p>
@@ -136,7 +143,7 @@ routes.push({
       <h1>Blog & Artigos de Física & Instrumentação</h1>
       <p>Acompanhe publicações, simulações numéricas e notas técnicas.</p>
       <section>
-        ${(initialResumeData.posts || []).map(post => `
+        ${publishedPosts.map(post => `
           <article>
             <h2><a href="/blog/${post.id}">${post.title || ""}</a></h2>
             <p>${post.summary || ""}</p>
@@ -149,7 +156,7 @@ routes.push({
 });
 
 // 3. Blog Post Routes
-(initialResumeData.posts || []).forEach(post => {
+publishedPosts.forEach(post => {
   const authorName = initialResumeData.profile.name || "Pedro Henrique Almeida";
   const blogJsonLd = {
     "@context": "https://schema.org",
@@ -194,7 +201,7 @@ routes.push({
 });
 
 // 4. Project Routes
-(initialResumeData.projects || []).forEach(project => {
+publishedProjects.forEach(project => {
   routes.push({
     urlPath: `/projetos/${project.id}`,
     title: `${project.title || "Projeto"} | Projetos de ${initialResumeData.profile.name || "Pedro Henrique Almeida"}`,

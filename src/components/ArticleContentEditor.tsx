@@ -356,7 +356,7 @@ export default function ArticleContentEditor({
                     className="group relative flex flex-col items-center p-1.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 hover:border-indigo-500 transition-all cursor-pointer"
                   >
                     <div className="h-16 w-full rounded-lg bg-slate-100 dark:bg-slate-800 overflow-hidden mb-1 flex items-center justify-center">
-                      <img src={img.dataUrl} alt={img.name} className="h-full w-full object-cover group-hover:scale-105 transition-transform" />
+                      <img src={img.url} alt={img.name} className="h-full w-full object-cover group-hover:scale-105 transition-transform" />
                     </div>
                     <span className="text-[10px] font-mono text-slate-700 dark:text-slate-300 truncate w-full text-center">
                       {img.name}
