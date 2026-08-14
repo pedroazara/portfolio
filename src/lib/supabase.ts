@@ -1,7 +1,21 @@
 import { createClient } from "@supabase/supabase-js";
 
-const url = import.meta.env.VITE_SUPABASE_URL as string | undefined;
+const rawUrl = import.meta.env.VITE_SUPABASE_URL as string | undefined;
 const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
+
+/**
+ * O painel do Supabase mostra a URL do projeto e a do endpoint REST lado a
+ * lado, e é fácil copiar a errada. O `supabase-js` acrescenta `/rest/v1` (ou
+ * `/storage/v1`, `/auth/v1`) por conta própria, então uma URL já terminada em
+ * `/rest/v1` produziria caminhos duplicados e falhas silenciosas. Normalizamos
+ * aqui em vez de depender de todo mundo copiar a linha certa.
+ */
+function normalizeSupabaseUrl(value?: string): string | undefined {
+  if (!value) return value;
+  return value.trim().replace(/\/(rest|auth|storage|realtime)\/v1\/?$/, "").replace(/\/+$/, "");
+}
+
+const url = normalizeSupabaseUrl(rawUrl);
 
 /**
  * Indica se as credenciais do Supabase foram fornecidas. Quando falso, o site

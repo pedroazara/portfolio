@@ -34,7 +34,12 @@ const FIRESTORE_BASE =
   `/databases/${FIREBASE_DATABASE_ID}/documents`;
 
 // --- Destino: Supabase ----------------------------------------------------
-const SUPABASE_URL = process.env.VITE_SUPABASE_URL;
+// O painel mostra a URL do projeto e a do endpoint REST lado a lado; se vier a
+// segunda, o supabase-js duplicaria o caminho. Normalizamos como no cliente.
+const SUPABASE_URL = process.env.VITE_SUPABASE_URL
+  ?.trim()
+  .replace(/\/(rest|auth|storage|realtime)\/v1\/?$/, "")
+  .replace(/\/+$/, "");
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
 
 if (!SUPABASE_URL || !SERVICE_KEY) {
@@ -164,63 +169,151 @@ function bufferFromDataUrl(dataUrl: string): Buffer {
     : Buffer.from(decodeURIComponent(payload), "utf-8");
 }
 
-async function migrateImages(): Promise<void> {
-  console.log("\n[2/2] Migrando imagens...");
+/**
+ * Nomes observados no banco antes de as regras do Firestore passarem a negar
+ * `list`. Servem de semente para o plano B — sem poder listar a coleção, não
+ * há como descobrir nomes que ninguém registrou em lugar nenhum.
+ *
+ * Se você liberar `list` nas regras (veja o aviso impresso na execução), o
+ * caminho rápido assume e esta lista deixa de ser usada.
+ */
+const KNOWN_IMAGE_NAMES = [
+  "yolocraft.png",
+  "yolocraft-deteccao-e-129381.webp",
+  "yolocraft-deteccao-e-140099.webp",
+  "yolocraft-deteccao-e-162076.png",
+  "yolocraft-deteccao-e-227966.png",
+  "yolocraft-deteccao-e-330729.webp",
+  "yolocraft-deteccao-e-358861.webp",
+  "yolocraft-deteccao-e-598018.webp",
+  "yolocraft-deteccao-e-611274.webp",
+  "yolocraft-deteccao-e-666555.webp",
+  "yolocraft-deteccao-e-672426.webp",
+  "yolocraft-deteccao-e-742025.webp",
+  "yolocraft-deteccao-e-852408.webp",
+];
 
+/**
+ * Enumera os nomes das imagens listando a coleção `portfolio_images`.
+ * É o caminho rápido, mas depende de as regras do Firestore permitirem `list`.
+ */
+async function listImageNamesByQuery(): Promise<string[] | null> {
+  const names: string[] = [];
   let pageToken: string | undefined;
-  let migrated = 0;
-  let skipped = 0;
-  let failed = 0;
 
   do {
-    const params: Record<string, string> = { pageSize: "10" };
+    const params: Record<string, string> = { pageSize: "300", "mask.fieldPaths": "name" };
     if (pageToken) params.pageToken = pageToken;
 
     let page: any;
     try {
       page = await firestoreGet("portfolio_images", params);
     } catch (err) {
-      console.error("  Falha ao listar imagens:", (err as Error).message);
-      return;
+      const message = (err as Error).message;
+      if (message.includes("403") || message.includes("PERMISSION_DENIED")) {
+        return null; // sinaliza para o chamador usar o plano B
+      }
+      throw err;
     }
 
     for (const doc of page.documents ?? []) {
-      const fields = decodeFields(doc.fields ?? {}) as {
-        name?: string;
-        dataUrl?: string;
-      };
-
-      const name = fields.name || String(doc.name).split("/").pop();
-      if (!name || !fields.dataUrl) {
-        console.warn(`  ignorada (sem nome ou conteúdo): ${name ?? "?"}`);
-        skipped++;
-        continue;
-      }
-
-      try {
-        const body = bufferFromDataUrl(fields.dataUrl);
-        const { error } = await supabase.storage
-          .from("images")
-          .upload(name, body, {
-            contentType: mimeFromDataUrl(fields.dataUrl),
-            upsert: true,
-            cacheControl: "31536000",
-          });
-
-        if (error) throw error;
-
-        migrated++;
-        console.log(`  ok  ${name} (${Math.round(body.length / 1024)} KB)`);
-      } catch (err) {
-        failed++;
-        console.error(`  ERRO ${name}: ${(err as Error).message}`);
-      }
+      const id = String(doc.name).split("/").pop();
+      if (id) names.push(decodeURIComponent(id));
     }
-
     pageToken = page.nextPageToken;
   } while (pageToken);
 
-  console.log(`\n  Imagens: ${migrated} migradas, ${skipped} ignoradas, ${failed} com erro.`);
+  return names;
+}
+
+/**
+ * Plano B, quando as regras negam `list` mas permitem `get`.
+ *
+ * Todas as imagens usadas pelo site aparecem no documento do portfólio como
+ * referências `db:nome-do-arquivo`. Varremos o JSON inteiro atrás desse padrão
+ * e buscamos cada documento pelo nome — operação de `get`, que é permitida.
+ */
+async function listImageNamesFromPortfolio(): Promise<string[]> {
+  const names = new Set<string>(KNOWN_IMAGE_NAMES);
+
+  try {
+    const doc = await firestoreGet("portfolio_data/main");
+    const data = decodeFields(doc.fields ?? {});
+    const serialized = JSON.stringify(data);
+
+    for (const match of serialized.matchAll(/db:([^"',\s\\]+)/g)) {
+      names.add(match[1]);
+    }
+  } catch (err) {
+    console.warn(`  Não foi possível ler o documento do portfólio: ${(err as Error).message}`);
+  }
+
+  // Variantes para prévias de link são geradas com prefixo `og-` e podem não
+  // estar referenciadas em lugar nenhum. Sondamos; as inexistentes são puladas.
+  for (const name of [...names]) {
+    names.add(`og-${name}`);
+  }
+
+  return [...names];
+}
+
+async function migrateImages(): Promise<void> {
+  console.log("\n[2/2] Migrando imagens...");
+
+  let names = await listImageNamesByQuery();
+
+  if (names === null) {
+    console.warn(
+      "  As regras do Firestore negam listar a coleção (`list`), mas permitem\n" +
+      "  ler documentos avulsos (`get`). Extraindo os nomes das imagens a partir\n" +
+      "  das referências `db:` no documento do portfólio."
+    );
+    names = await listImageNamesFromPortfolio();
+  }
+
+  console.log(`  ${names.length} nomes de imagem a verificar.\n`);
+
+  let migrated = 0;
+  let missing = 0;
+  let failed = 0;
+
+  for (const name of names) {
+    let fields: { name?: string; dataUrl?: string };
+    try {
+      const doc = await firestoreGet(`portfolio_images/${encodeURIComponent(name)}`);
+      fields = decodeFields(doc.fields ?? {}) as { name?: string; dataUrl?: string };
+    } catch (err) {
+      // Um nome deduzido pode simplesmente não existir (caso dos `og-`).
+      missing++;
+      continue;
+    }
+
+    if (!fields.dataUrl) {
+      missing++;
+      continue;
+    }
+
+    try {
+      const body = bufferFromDataUrl(fields.dataUrl);
+      const { error } = await supabase.storage
+        .from("images")
+        .upload(name, body, {
+          contentType: mimeFromDataUrl(fields.dataUrl),
+          upsert: true,
+          cacheControl: "31536000",
+        });
+
+      if (error) throw error;
+
+      migrated++;
+      console.log(`  ok  ${name} (${Math.round(body.length / 1024)} KB)`);
+    } catch (err) {
+      failed++;
+      console.error(`  ERRO ${name}: ${(err as Error).message}`);
+    }
+  }
+
+  console.log(`\n  Imagens: ${migrated} migradas, ${missing} inexistentes, ${failed} com erro.`);
 }
 
 // -------------------------------------------------------------------------
