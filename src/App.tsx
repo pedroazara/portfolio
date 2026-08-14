@@ -24,6 +24,7 @@ import { Language, translations } from "./lib/translations";
 import { fetchResumeData, saveResumeData, StaleWriteError } from "./lib/dataService";
 import { observeAuth, logout } from "./lib/auth";
 import { findBySlug } from "./utils/slug";
+import { isDevPreview } from "./lib/devPreview";
 import PostEditorPage from "./pages/PostEditorPage";
 import ProjectEditorPage from "./pages/ProjectEditorPage";
 import PostPage from "./pages/PostPage";
@@ -147,6 +148,15 @@ export default function App() {
 
   const [isEditMode, setIsEditMode] = useState(false);
 
+  // Modo de teste local (?dev). Libera a edição sem sessão, mas nunca grava na
+  // nuvem — as alterações ficam só no localStorage deste navegador.
+  const [devPreview] = useState(() => isDevPreview());
+
+  useEffect(() => {
+    if (!devPreview) return;
+    setIsEditMode(true);
+  }, [devPreview]);
+
   useEffect(() => {
     return observeAuth((user) => {
       const signedIn = user !== null;
@@ -156,12 +166,12 @@ export default function App() {
         // Restaura a preferência de modo de edição da sessão anterior.
         setIsEditMode(localStorage.getItem(EDIT_MODE_KEY) === "true");
       } else {
-        setIsEditMode(false);
+        setIsEditMode(devPreview);
         setSaveError(null);
         setIsSaving(false); // descarta um salvamento pendente interrompido pelo logout
       }
     });
-  }, []);
+  }, [devPreview]);
 
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isImageBankOpen, setIsImageBankOpen] = useState(false);
@@ -546,7 +556,7 @@ export default function App() {
             <div className="py-20 text-center text-sm text-slate-400">
               {language === "en" ? "Checking session…" : "Verificando sessão…"}
             </div>
-          ) : !isAuthenticated ? (
+          ) : !(isAuthenticated || devPreview) ? (
             <div className="mx-auto max-w-md rounded-3xl border border-slate-200 bg-white p-10 text-center dark:border-slate-800 dark:bg-slate-900">
               <Lock className="mx-auto mb-3 h-9 w-9 text-slate-300 dark:text-slate-700" />
               <h1 className="font-display text-base font-bold text-slate-900 dark:text-white">
@@ -697,6 +707,21 @@ export default function App() {
         language={language}
         onOpenPdfPreview={() => setIsPdfPreviewOpen(true)}
       />
+
+      {/* Faixa do modo de teste. O `import.meta.env.DEV` vira `false` literal no
+          build de produção, e o minificador elimina o bloco inteiro — sem ele,
+          o JSX continuaria no bundle publicado, ainda que nunca renderizasse. */}
+      {import.meta.env.DEV && devPreview && (
+        <div className="fixed bottom-4 left-4 z-100 flex items-center gap-2 rounded-2xl border border-amber-300 bg-amber-100 px-4 py-2.5 text-xs font-bold text-amber-900 shadow-lg dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200 no-print">
+          <Atom className="h-4 w-4 shrink-0" />
+          <span>
+            Modo de teste — edição liberada sem login, sem gravar na nuvem.{" "}
+            <a href="?dev=0" className="underline">
+              sair
+            </a>
+          </span>
+        </div>
+      )}
 
       {/* Aviso persistente de falha de salvamento na nuvem */}
       <AnimatePresence>
