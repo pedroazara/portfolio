@@ -7,6 +7,7 @@ import "katex/dist/katex.min.css";
 import { ZoomIn, X, Copy, Check } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import LocalImage from "./LocalImage";
+import { headingIdsByLine } from "../utils/toc";
 
 interface MarkdownRendererProps {
   content: string;
@@ -60,6 +61,19 @@ export default function MarkdownRenderer({ content, className = "max-w-[75ch] te
   const handleImageClick = (url: string, alt: string) => {
     setZoomedImage({ url, alt });
   };
+
+  /**
+   * Ids das âncoras, indexados pela linha de origem no Markdown.
+   *
+   * Derivar o id da posição — e não de um contador que avança a cada título
+   * renderizado — mantém o resultado idêntico entre o sumário e o HTML. Um
+   * contador mutável durante o render era incrementado duas vezes pelo
+   * StrictMode, e as âncoras saíam com sufixo indevido.
+   */
+  const headingIds = React.useMemo(() => headingIdsByLine(content), [content]);
+
+  const anchorFor = (node: any): string | undefined =>
+    headingIds.get(node?.position?.start?.line);
 
   const renderers = {
     // Custom code block
@@ -119,16 +133,23 @@ export default function MarkdownRenderer({ content, className = "max-w-[75ch] te
         </h1>
       );
     },
-    h2({ children }: any) {
+    h2({ node, children }: any) {
       return (
-        <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white font-display pt-4 pb-1 tracking-tight border-b border-slate-100 dark:border-slate-800">
+        // `scroll-mt-24` compensa o cabeçalho fixo ao pular pela âncora.
+        <h2
+          id={anchorFor(node)}
+          className="scroll-mt-24 text-xl sm:text-2xl font-black text-slate-900 dark:text-white font-display pt-4 pb-1 tracking-tight border-b border-slate-100 dark:border-slate-800"
+        >
           {children}
         </h2>
       );
     },
-    h3({ children }: any) {
+    h3({ node, children }: any) {
       return (
-        <h3 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white font-display pt-3 tracking-tight">
+        <h3
+          id={anchorFor(node)}
+          className="scroll-mt-24 text-lg sm:text-xl font-bold text-slate-900 dark:text-white font-display pt-3 tracking-tight"
+        >
           {children}
         </h3>
       );

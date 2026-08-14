@@ -641,6 +641,7 @@ export default function App() {
               slug={selectedProjectId}
               projects={resumeData.projects}
               categories={resumeData.categories}
+              posts={resumeData.posts || []}
               isEditMode={isEditMode}
               language={language}
             />

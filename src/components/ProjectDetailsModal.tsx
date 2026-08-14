@@ -17,12 +17,6 @@ interface ProjectDetailsModalProps {
   categories?: ProjectCategory[];
   onClose: () => void;
   language?: Language;
-  /**
-   * Renderiza os detalhes como página, e não como modal sobreposto.
-   * Sem backdrop, sem travamento de scroll do body e sem armadilha de foco —
-   * a navegação de página cuida disso.
-   */
-  asPage?: boolean;
 }
 
 export default function ProjectDetailsModal({
@@ -31,14 +25,13 @@ export default function ProjectDetailsModal({
   categories,
   onClose,
   language = "pt",
-  asPage = false,
 }: ProjectDetailsModalProps) {
   const [copiedLink, setCopiedLink] = useState(false);
   const [activeImageIdx, setActiveImageIdx] = useState(0);
   const modalRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!project || asPage) return;
+    if (!project) return;
 
     // Save previous active element to restore focus on close
     const previousActiveElement = document.activeElement as HTMLElement | null;
@@ -97,7 +90,7 @@ export default function ProjectDetailsModal({
         previousActiveElement.focus();
       }
     };
-  }, [project, onClose, asPage]);
+  }, [project, onClose]);
 
   if (!project) return null;
 
@@ -172,25 +165,19 @@ export default function ProjectDetailsModal({
               >
                 {copiedLink ? <Check className="h-4.5 w-4.5 text-emerald-400" /> : <Share2 className="h-4.5 w-4.5" />}
               </button>
-              {/* Como página não há o que fechar: a navegação já tem o botão
-                  "Todos os projetos" e o voltar do navegador. */}
-              {!asPage && (
-                <button
-                  type="button"
-                  onClick={onClose}
-                  className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-900/60 text-white backdrop-blur-md transition-colors hover:bg-slate-950/90 cursor-pointer shadow-md"
-                  id="close-details-btn"
-                  aria-label={language === "en" ? "Close modal" : "Fechar modal"}
-                  title={language === "en" ? "Close" : "Fechar"}
-                >
-                  <X className="h-5 w-5" />
-                </button>
-              )}
+              <button
+                type="button"
+                onClick={onClose}
+                className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-900/60 text-white backdrop-blur-md transition-colors hover:bg-slate-950/90 cursor-pointer shadow-md"
+                id="close-details-btn"
+                aria-label={language === "en" ? "Close modal" : "Fechar modal"}
+                title={language === "en" ? "Close" : "Fechar"}
+              >
+                <X className="h-5 w-5" />
+              </button>
             </div>
 
-            {/* Como modal, o conteúdo rola dentro da caixa; como página, quem
-                rola é a janela — limitar a altura aqui recriaria o modal. */}
-            <div className={asPage ? "" : "max-h-[88vh] overflow-y-auto"}>
+            <div className="max-h-[88vh] overflow-y-auto">
               {/* Banner Cover / Gallery Section */}
               {images.length > 0 && (
                 <div className="relative w-full h-72 sm:h-[400px] lg:h-[460px] bg-slate-950 overflow-hidden group">
@@ -480,14 +467,6 @@ export default function ProjectDetailsModal({
         </div>
     </>
   );
-
-  if (asPage) {
-    return (
-      <article className="relative mx-auto w-full max-w-6xl overflow-hidden rounded-3xl border border-slate-200/80 bg-white text-slate-900 shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100">
-        {body}
-      </article>
-    );
-  }
 
   return (
     <AnimatePresence>
