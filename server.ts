@@ -5,7 +5,9 @@ import { createServer as createViteServer } from "vite";
 import { GoogleGenAI } from "@google/genai";
 
 const app = express();
-const PORT = 3000;
+// A porta vem do ambiente quando definida, para que duas instâncias possam
+// rodar lado a lado sem disputar a mesma; 3000 continua sendo o padrão.
+const PORT = Number(process.env.PORT) || 3000;
 
 app.use(express.json({ limit: "5mb" }));
 

@@ -222,14 +222,24 @@ export async function listFolders(prefix = ""): Promise<string[]> {
  * mostra. Com um prefixo (`projects/yolocraft`), devolve só o que está ali,
  * que é o modo usado pelo editor de cada projeto.
  *
+ * Os recortes de capa ficam de fora por padrão: eles são versões derivadas de
+ * outra imagem, não itens próprios, e apareciam como duplicatas na hora de
+ * escolher uma imagem. Passe `includeCrops` para vê-los (limpeza, auditoria).
+ *
  * Traz apenas metadados; os bytes só descem quando um `<img>` aponta para a URL.
  */
-export async function listImages(prefix?: string): Promise<StoredImage[]> {
+export async function listImages(
+  prefix?: string,
+  options: { includeCrops?: boolean } = {}
+): Promise<StoredImage[]> {
   if (!isSupabaseConfigured) return [];
+
+  const keep = (files: StoredImage[]) =>
+    options.includeCrops ? files : files.filter((f) => !isCoverCrop(f.name));
 
   if (prefix !== undefined) {
     const { files } = await listEntries(prefix);
-    return files.sort((a, b) => b.addedAt - a.addedAt);
+    return keep(files).sort((a, b) => b.addedAt - a.addedAt);
   }
 
   // Varredura completa. A profundidade é limitada porque a convenção de pastas
@@ -247,5 +257,5 @@ export async function listImages(prefix?: string): Promise<StoredImage[]> {
 
   await walk("", 0);
 
-  return all.sort((a, b) => b.addedAt - a.addedAt);
+  return keep(all).sort((a, b) => b.addedAt - a.addedAt);
 }

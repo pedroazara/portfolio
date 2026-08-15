@@ -4,6 +4,7 @@ import { StoredImage, listImages, saveImage, fileNameOf, joinPath, GENERAL_FOLDE
 import { processImagePreservingFormat } from "../utils/imageOptimizer";
 import { Language } from "../lib/translations";
 import { isDevPreview } from "../lib/devPreview";
+import MarkdownHighlight, { EDITOR_TEXT_CLASS } from "./MarkdownHighlight";
 
 interface ArticleContentEditorProps {
   value: string;
@@ -73,6 +74,24 @@ export default function ArticleContentEditor({
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const highlightRef = useRef<HTMLPreElement>(null);
+
+  /**
+   * Ajusta a altura do campo ao conteúdo.
+   *
+   * Sem rolagem interna, o textarea não reserva espaço para a barra e as duas
+   * camadas ficam com a mesma largura útil — condição para as linhas quebrarem
+   * nos mesmos pontos. Também dispensa sincronizar posições de rolagem.
+   */
+  const fitHeight = () => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+    textarea.style.height = "auto";
+    textarea.style.height = `${textarea.scrollHeight}px`;
+  };
+
+  // Reajusta quando o texto muda por fora (troca de idioma, imagem inserida).
+  useEffect(fitHeight, [value]);
 
   const embedded = findEmbeddedImages(value);
 
@@ -212,18 +231,27 @@ export default function ArticleContentEditor({
         }}
         className="relative"
       >
-        <textarea
-          ref={textareaRef}
-          required={required}
-          rows={rows}
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          onPaste={handlePaste}
-          placeholder={placeholder}
-          className={`w-full resize-y rounded-xl border bg-white px-4 py-3 font-mono text-sm leading-relaxed text-slate-800 transition-colors focus:border-indigo-500 focus:outline-hidden dark:bg-slate-900 dark:text-slate-200 ${
+        <div
+          className={`relative overflow-hidden rounded-xl border bg-white transition-colors focus-within:border-indigo-500 dark:bg-slate-900 ${
             isDragging ? "border-indigo-500 ring-2 ring-indigo-200" : "border-slate-200 dark:border-slate-800"
           }`}
-        />
+        >
+          <MarkdownHighlight ref={highlightRef} value={value} />
+
+          {/* Texto transparente: o que se enxerga é a camada acima. O cursor e a
+              seleção continuam sendo os nativos do textarea. */}
+          <textarea
+            ref={textareaRef}
+            required={required}
+            rows={rows}
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            onPaste={handlePaste}
+            placeholder={placeholder}
+            spellCheck={false}
+            className={`relative block w-full resize-none overflow-hidden bg-transparent text-transparent caret-slate-800 placeholder:text-slate-400 focus:outline-hidden dark:caret-white ${EDITOR_TEXT_CLASS}`}
+          />
+        </div>
 
         <span className="pointer-events-none absolute bottom-2.5 right-3 font-mono text-[10px] text-slate-300 dark:text-slate-600">
           {value.length}

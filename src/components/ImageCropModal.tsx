@@ -75,6 +75,11 @@ export default function ImageCropModal({
   const [zoom, setZoom] = useState(1);
   const [offset, setOffset] = useState({ x: 0, y: 0 });
 
+  // Dimensões reais da imagem e largura do quadro. Sem elas não dá para
+  // desenhar a imagem transbordando o quadro na proporção certa.
+  const [natural, setNatural] = useState({ w: 0, h: 0 });
+  const [frameWidth, setFrameWidth] = useState(0);
+
   const frameRef = useRef<HTMLDivElement>(null);
   const imageRef = useRef<HTMLImageElement | null>(null);
   const dragRef = useRef<{ startX: number; startY: number; originX: number; originY: number } | null>(null);
@@ -116,6 +121,19 @@ export default function ImageCropModal({
     resolve();
     return () => { cancelled = true; };
   }, [isOpen, imageSrc, originalSrc, language]);
+
+  // O quadro acompanha a largura do modal; remedimos quando ela muda.
+  useEffect(() => {
+    const el = frameRef.current;
+    if (!el || !isOpen) return;
+
+    const measure = () => setFrameWidth(el.getBoundingClientRect().width);
+    measure();
+
+    const observer = new ResizeObserver(measure);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [isOpen, status]);
 
   // Arrastar para reposicionar, com ponteiro (funciona no mouse e no toque).
   const handlePointerDown = (e: React.PointerEvent) => {
@@ -223,6 +241,17 @@ export default function ImageCropModal({
     }
   }, [status, url, zoom, offset, imageSrc, onSave, language]);
 
+  // Mesma fórmula usada na exportação: a escala que faz a imagem cobrir o
+  // quadro, multiplicada pelo zoom. Manter as duas iguais é o que garante que
+  // o recorte salvo seja exatamente o que está dentro do quadro.
+  const frameHeight = frameWidth / ASPECT;
+  const coverScale =
+    natural.w && natural.h && frameWidth
+      ? Math.max(frameWidth / natural.w, frameHeight / natural.h)
+      : 0;
+  const imageWidth = natural.w * coverScale * zoom;
+  const imageHeight = natural.h * coverScale * zoom;
+
   if (!isOpen) return null;
 
   return (
@@ -257,35 +286,59 @@ export default function ImageCropModal({
             </div>
           ) : (
             <>
-              {/* Quadro 16:9 — o que aparece aqui é exatamente o que será salvo */}
+              {/*
+                Palco de enquadramento.
+
+                A imagem é desenhada inteira e pode transbordar o quadro; o véu
+                escurece o que fica de fora. Antes ela era cortada pelo próprio
+                quadro, e não havia como ver o que estava sendo descartado.
+              */}
               <div
-                ref={frameRef}
                 onPointerDown={handlePointerDown}
                 onPointerMove={handlePointerMove}
                 onPointerUp={handlePointerUp}
                 onPointerCancel={handlePointerUp}
-                style={{ aspectRatio: String(ASPECT) }}
-                className="relative w-full cursor-grab touch-none select-none overflow-hidden rounded-2xl bg-slate-900 active:cursor-grabbing"
+                className="relative cursor-grab touch-none select-none overflow-hidden rounded-2xl bg-slate-900 p-8 active:cursor-grabbing sm:p-10"
               >
-                {status === "loading" && (
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <Loader2 className="h-6 w-6 animate-spin text-slate-500" />
-                  </div>
-                )}
+                <div
+                  ref={frameRef}
+                  style={{ aspectRatio: String(ASPECT) }}
+                  className="relative w-full"
+                >
+                  {status === "loading" && (
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <Loader2 className="h-6 w-6 animate-spin text-slate-500" />
+                    </div>
+                  )}
 
-                {url && (
-                  <img
-                    ref={imageRef}
-                    src={url}
-                    alt=""
-                    draggable={false}
-                    referrerPolicy="no-referrer"
-                    style={{
-                      transform: `translate(${offset.x}px, ${offset.y}px) scale(${zoom})`,
-                    }}
-                    className="h-full w-full object-cover"
+                  {url && (
+                    <img
+                      ref={imageRef}
+                      src={url}
+                      alt=""
+                      draggable={false}
+                      referrerPolicy="no-referrer"
+                      onLoad={(e) =>
+                        setNatural({
+                          w: e.currentTarget.naturalWidth,
+                          h: e.currentTarget.naturalHeight,
+                        })
+                      }
+                      style={{
+                        width: imageWidth || undefined,
+                        height: imageHeight || undefined,
+                        transform: `translate(calc(-50% + ${offset.x}px), calc(-50% + ${offset.y}px))`,
+                      }}
+                      className="absolute left-1/2 top-1/2 max-w-none"
+                    />
+                  )}
+
+                  {/* Véu: a sombra gigante escurece tudo fora do quadro. */}
+                  <div
+                    className="pointer-events-none absolute inset-0 rounded-lg ring-1 ring-white/70"
+                    style={{ boxShadow: "0 0 0 9999px rgba(2, 6, 23, 0.7)" }}
                   />
-                )}
+                </div>
               </div>
 
               {/* Zoom — o único ajuste além de arrastar */}
