@@ -1,14 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Project, ProjectCategory, BlogPost } from "../types";
-import { FolderKanban, Plus, Edit2, Trash2, ExternalLink, Github, Settings, Info, Eye, BookOpen, Image as ImageIcon, Check, RefreshCw, Search, ArrowLeft, Sparkles } from "lucide-react";
+import { FolderKanban, Plus, Edit2, Trash2, ExternalLink, Github, Settings, Info, Eye, BookOpen, Image as ImageIcon, Check, RefreshCw, Search, ArrowLeft } from "lucide-react";
 import EditModal from "./EditModal";
-import ProjectEditorModal from "./ProjectEditorModal";
 import ConfirmModal from "./ConfirmModal";
 import ProjectDetailsModal from "./ProjectDetailsModal";
 import LocalImage from "./LocalImage";
-import ImageSelectorInput from "./ImageSelectorInput";
-import { StoredImage, listImages } from "../utils/imageDb";
 import MarkdownRenderer from "./MarkdownRenderer";
 import { Language, translations } from "../lib/translations";
 import TranslateButton from "./TranslateButton";
@@ -77,36 +74,6 @@ export default function ProjectSection({
     }
   };
 
-  // Project Modal States
-  const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
-  const [editingProject, setEditingProject] = useState<Project | null>(null);
-  const [editingLanguage, setEditingLanguage] = useState<Language>("pt");
-  const [projectForm, setProjectForm] = useState<Partial<Project>>({
-    title: "",
-    titleEn: "",
-    description: "",
-    descriptionEn: "",
-    categoryId: "",
-    tags: [],
-    projectUrl: "",
-    githubUrl: "",
-    imageUrl: "",
-    detailedDescription: "",
-    detailedDescriptionEn: "",
-    scientificRelevance: "",
-    scientificRelevanceEn: "",
-    galleryImages: [],
-    featured: false,
-    blogPostId: "",
-  });
-  const [tagsInput, setTagsInput] = useState("");
-  const [galleryInput, setGalleryInput] = useState("");
-
-  // Gallery Image Bank State
-  const [isGalleryBankOpen, setIsGalleryBankOpen] = useState(false);
-  const [localImages, setLocalImages] = useState<StoredImage[]>([]);
-  const [isLoadingGalleryImages, setIsLoadingGalleryImages] = useState(false);
-
   // Confirm Modal States
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [confirmCallback, setConfirmCallback] = useState<(() => void) | null>(null);
@@ -124,51 +91,9 @@ export default function ProjectSection({
     setConfirmOpen(true);
   };
 
-  const loadLocalImages = async () => {
-    setIsLoadingGalleryImages(true);
-    try {
-      const list = await listImages();
-      setLocalImages(list);
-    } catch (err) {
-      console.error("Erro ao buscar imagens locais:", err);
-    } finally {
-      setIsLoadingGalleryImages(false);
-    }
-  };
-
-  const handleToggleGalleryImage = (imgName: string) => {
-    const dbKey = `db:${imgName}`;
-    const currentImages = galleryInput
-      .split(",")
-      .map((x) => x.trim())
-      .filter((x) => x.length > 0);
-
-    if (currentImages.includes(dbKey)) {
-      const filtered = currentImages.filter((x) => x !== dbKey);
-      setGalleryInput(filtered.join(", "));
-    } else {
-      currentImages.push(dbKey);
-      setGalleryInput(currentImages.join(", "));
-    }
-  };
-
-  const isSelectedInGallery = (imgName: string) => {
-    const dbKey = `db:${imgName}`;
-    const currentImages = galleryInput
-      .split(",")
-      .map((x) => x.trim());
-    return currentImages.includes(dbKey);
-  };
-
-  const handleToggleGalleryBank = () => {
-    const nextVal = !isGalleryBankOpen;
-    setIsGalleryBankOpen(nextVal);
-    if (nextVal) {
-      loadLocalImages();
-    }
-  };
-
   // Category Modal States
+  // `editingLanguage` alterna entre os campos PT e EN da categoria em edição.
+  const [editingLanguage, setEditingLanguage] = useState<Language>("pt");
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<ProjectCategory | null>(null);
   const [categoryForm, setCategoryForm] = useState<Partial<ProjectCategory>>({
@@ -228,70 +153,6 @@ export default function ProjectSection({
       language === "en" ? "Cancel" : "Cancelar",
       "danger"
     );
-  };
-
-  const handleProjectSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const tagsArray = tagsInput
-      .split(",")
-      .map((tag) => tag.trim())
-      .filter((tag) => tag.length > 0);
-
-    const galleryArray = galleryInput
-      .split(",")
-      .map((url) => url.trim())
-      .filter((url) => url.length > 0);
-
-    const completeProject: Project = {
-      id: editingProject?.id || `proj-${Date.now()}`,
-      title: projectForm.title || "Novo Projeto",
-      titleEn: projectForm.titleEn || "",
-      description: projectForm.description || "",
-      descriptionEn: projectForm.descriptionEn || "",
-      categoryId: projectForm.categoryId || (categories[0]?.id || ""),
-      tags: tagsArray,
-      projectUrl: projectForm.projectUrl || undefined,
-      githubUrl: projectForm.githubUrl || undefined,
-      imageUrl: projectForm.imageUrl || undefined,
-      detailedDescription: projectForm.detailedDescription || "",
-      detailedDescriptionEn: projectForm.detailedDescriptionEn || "",
-      scientificRelevance: projectForm.scientificRelevance || "",
-      scientificRelevanceEn: projectForm.scientificRelevanceEn || "",
-      galleryImages: galleryArray,
-      featured: projectForm.featured || false,
-      blogPostId: projectForm.blogPostId || undefined,
-    };
-
-    if (editingProject) {
-      // Edit existing
-      const updated = projects.map((p) => (p.id === editingProject.id ? completeProject : p));
-      onUpdateProjects(updated);
-    } else {
-      // Add new
-      onUpdateProjects([...projects, completeProject]);
-    }
-    setIsProjectModalOpen(false);
-  };
-
-  const handleAutoTranslateProject = async () => {
-    const fieldsToTranslate = {
-      titleEn: projectForm.title || "",
-      descriptionEn: projectForm.description || "",
-      detailedDescriptionEn: projectForm.detailedDescription || "",
-      scientificRelevanceEn: projectForm.scientificRelevance || "",
-    };
-
-    const translated = await translateFields(fieldsToTranslate);
-
-    setProjectForm((prev) => ({
-      ...prev,
-      titleEn: translated.titleEn || prev.titleEn || "",
-      descriptionEn: translated.descriptionEn || prev.descriptionEn || "",
-      detailedDescriptionEn: translated.detailedDescriptionEn || prev.detailedDescriptionEn || "",
-      scientificRelevanceEn: translated.scientificRelevanceEn || prev.scientificRelevanceEn || "",
-    }));
-
-    setEditingLanguage("en");
   };
 
   const handleAutoTranslateCategory = async () => {
@@ -386,45 +247,41 @@ export default function ProjectSection({
             className="inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 mb-4 transition-colors"
           >
             <ArrowLeft className="h-3.5 w-3.5" />
-            <span>{language === "en" ? "Back to Curriculum" : "Voltar ao Currículo Completo"}</span>
+            <span>{language === "en" ? "Back to résumé" : "Voltar ao currículo"}</span>
           </Link>
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <div>
-              <div className="flex items-center gap-2 mb-1">
-                <span className="inline-flex items-center gap-1 rounded-full bg-indigo-50 dark:bg-indigo-950/60 px-3 py-1 text-xs font-bold text-indigo-600 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-900/50">
-                  <Sparkles className="h-3.5 w-3.5" />
-                  {language === "en" ? "Engineering Physics Portfolio" : "Portfólio de Engenharia Física"}
-                </span>
-              </div>
-              <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900 dark:text-white font-display">
-                {language === "en" ? "Projects & Innovations" : "Projetos & Inovações Tecnológicas"}
-              </h1>
-              <p className="mt-1 text-sm text-slate-500 dark:text-slate-400 max-w-2xl font-sans">
-                {language === "en"
-                  ? "Computational physics models, simulation tools, web platforms, and scientific research projects."
-                  : "Modelos de física computacional, ferramentas de simulação, plataformas digitais e pesquisas científicas."}
-              </p>
-            </div>
-          </div>
+          <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900 dark:text-white font-display">
+            {language === "en" ? "Projects" : "Projetos"}
+          </h1>
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400 max-w-2xl font-sans">
+            {language === "en"
+              ? "My main works organized by specialty areas."
+              : "Meus principais trabalhos organizados por áreas de atuação."}
+          </p>
         </div>
       )}
 
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-slate-100 dark:border-slate-800 pb-5 mb-6">
-        <div className="flex items-center gap-3">
-          <div className="rounded-xl bg-indigo-50 dark:bg-indigo-950/40 p-2.5 text-indigo-600 dark:text-indigo-400 print-border">
-            <FolderKanban className="h-6 w-6" />
+        {/* Na página dedicada o cabeçalho acima já diz isto; repetir aqui só
+            duplicaria o mesmo texto duas vezes na mesma tela. */}
+        {isStandalonePage ? (
+          <span />
+        ) : (
+          <div className="flex items-center gap-3">
+            <div className="rounded-xl bg-indigo-50 dark:bg-indigo-950/40 p-2.5 text-indigo-600 dark:text-indigo-400 print-border">
+              <FolderKanban className="h-6 w-6" />
+            </div>
+            <div>
+              <h2 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white font-display">
+                {language === "en" ? "Projects" : "Projetos"}
+              </h2>
+              <p className="text-sm text-slate-500 dark:text-slate-400 font-sans">
+                {language === "en"
+                  ? "My main works organized by specialty areas."
+                  : "Meus principais trabalhos organizados por áreas de atuação."}
+              </p>
+            </div>
           </div>
-          <div>
-            <h2 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white font-display">
-              {language === "en" ? "Projects by Specialty Area" : "Projetos por Área de Especialidade"}
-            </h2>
-            <p className="text-sm text-slate-500 dark:text-slate-400 font-sans">
-              {language === "en" 
-                ? "My main works organized by specialty areas. Click on projects to see detailed information and pictures." 
-                : "Meus principais trabalhos organizados por áreas de atuação. Clique nos projetos para ver mais informações e fotos."}
-            </p>
-          </div>
-        </div>
+        )}
 
         {/* Search & Admin Controls */}
         <div className="flex flex-wrap items-center gap-2.5 no-print print:hidden">
@@ -702,24 +559,8 @@ export default function ProjectSection({
         />
       )}
 
-      {/* Project Form Modal - Natural Article-Style Editor */}
-      <ProjectEditorModal
-        isOpen={isProjectModalOpen}
-        onClose={() => setIsProjectModalOpen(false)}
-        project={editingProject || projectForm}
-        categories={categories}
-        onUpdateCategories={onUpdateCategories}
-        onSave={(savedProject) => {
-          if (editingProject) {
-            const updated = projects.map((p) => (p.id === editingProject.id ? savedProject : p));
-            onUpdateProjects(updated);
-          } else {
-            onUpdateProjects([...projects, savedProject]);
-          }
-          setIsProjectModalOpen(false);
-        }}
-        language={language}
-      />
+      {/* A edição acontece em /admin/projetos/<slug>, não mais aqui. */}
+
 
       {/* Category (Area) Form Modal */}
       <EditModal

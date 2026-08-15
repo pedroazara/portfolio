@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { X, Loader2, AlertCircle, Move } from "lucide-react";
 import { useEscapeKey } from "../hooks/useEscapeKey";
-import { getImage, saveImage, fileNameOf, folderOf, joinPath } from "../utils/imageDb";
+import { getImage, saveImage, joinPath, coverPathFor, originalPathFor } from "../utils/imageDb";
 import { Language } from "../lib/translations";
 import { isDevPreview } from "../lib/devPreview";
 
@@ -10,6 +10,12 @@ interface ImageCropModalProps {
   onClose: () => void;
   /** Imagem a enquadrar: URL comum ou referência `db:caminho/arquivo`. */
   imageSrc: string;
+  /**
+   * Original explícito, quando o chamador o conhece e ele não pode ser deduzido
+   * do caminho — é o caso do modo de teste, em que as imagens são embutidas e
+   * não têm caminho no banco. Em uso normal a convenção de nomes basta.
+   */
+  originalSrc?: string;
   /** Recebe a referência `db:` da imagem recortada já salva no banco. */
   onSave: (croppedRef: string) => void;
   language?: Language;
@@ -25,6 +31,11 @@ interface ImageCropModalProps {
  * A versão anterior oferecia quatro proporções, rotação, um banco de imagens
  * embutido, upload e um painel de pré-visualização separado — controles que
  * competiam entre si sem que nenhum resolvesse o caso comum.
+ *
+ * O recorte parte sempre da imagem **original**, nunca de um recorte anterior:
+ * reenquadrar é uma decisão reversível, e a parte que ficou fora do quadro
+ * continua disponível. O resultado vai sempre para o mesmo caminho derivado,
+ * então reenquadrar substitui o recorte em vez de acumular arquivos.
  */
 
 const ASPECT = 16 / 9;
@@ -49,6 +60,7 @@ export default function ImageCropModal({
   isOpen,
   onClose,
   imageSrc,
+  originalSrc,
   onSave,
   language = "pt",
 }: ImageCropModalProps) {
@@ -78,9 +90,12 @@ export default function ImageCropModal({
 
     const resolve = async () => {
       try {
-        const resolved = imageSrc.startsWith("db:")
-          ? await getImage(imageSrc.slice(3))
-          : imageSrc;
+        // Preferimos o original informado; senão, um `db:` que aponte para um
+        // recorte é remontado para o caminho da imagem cheia.
+        const base = originalSrc || imageSrc;
+        const resolved = base.startsWith("db:")
+          ? await getImage(originalPathFor(base.slice(3)))
+          : base;
 
         if (cancelled) return;
         if (!resolved) {
@@ -100,7 +115,7 @@ export default function ImageCropModal({
 
     resolve();
     return () => { cancelled = true; };
-  }, [isOpen, imageSrc, language]);
+  }, [isOpen, imageSrc, originalSrc, language]);
 
   // Arrastar para reposicionar, com ponteiro (funciona no mouse e no toque).
   const handlePointerDown = (e: React.PointerEvent) => {
@@ -188,11 +203,12 @@ export default function ImageCropModal({
         return;
       }
 
-      // Salva ao lado do original, com sufixo, para não sobrescrever a fonte.
-      const originalPath = imageSrc.startsWith("db:") ? imageSrc.slice(3) : "";
-      const baseName = (originalPath ? fileNameOf(originalPath) : "capa").replace(/\.[^.]+$/, "");
-      const folder = originalPath ? folderOf(originalPath) : "geral";
-      const path = joinPath(folder, `${baseName}-capa-${Date.now().toString().slice(-5)}.webp`);
+      // Caminho derivado do original: reenquadrar substitui este arquivo em
+      // vez de criar um novo a cada ajuste.
+      const originalPath = imageSrc.startsWith("db:")
+        ? originalPathFor(imageSrc.slice(3))
+        : joinPath("geral", `capa-${Date.now().toString().slice(-6)}.png`);
+      const path = coverPathFor(originalPath);
 
       await saveImage(path, dataUrl, dataUrl.length);
       onSave(`db:${path}`);

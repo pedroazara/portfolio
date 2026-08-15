@@ -1,11 +1,11 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, FolderKanban } from "lucide-react";
+import { FolderKanban } from "lucide-react";
 import { Project, ProjectCategory } from "../types";
 import { Language } from "../lib/translations";
 import { findBySlug, slugOf } from "../utils/slug";
-import ProjectEditorModal from "../components/ProjectEditorModal";
-import ProjectGalleryManager from "../components/ProjectGalleryManager";
+import ProjectForm from "../components/ProjectForm";
+import EditorActionRail from "../components/EditorActionRail";
 
 interface ProjectEditorPageProps {
   /** Trecho da URL: o `codigo`/`id` do projeto, ou "novo". */
@@ -16,6 +16,8 @@ interface ProjectEditorPageProps {
   onUpdateCategories: (categories: ProjectCategory[]) => void;
   language: Language;
 }
+
+const FORM_ID = "project-editor-form";
 
 export default function ProjectEditorPage({
   slug,
@@ -30,17 +32,48 @@ export default function ProjectEditorPage({
   const isNew = slug === "novo";
   const existing = useMemo(() => (isNew ? null : findBySlug(projects, slug)), [projects, slug, isNew]);
 
-  // O projeto pode chegar depois, quando os dados da nuvem terminam de carregar.
-  const [ready, setReady] = useState(isNew || Boolean(existing));
+  const [view, setView] = useState<"edit" | "preview">("edit");
+  const [isDirty, setIsDirty] = useState(false);
+  // Projeto novo nasce rascunho: publicar é uma decisão, não um efeito colateral.
+  const [isDraft, setIsDraft] = useState(() => existing?.draft ?? true);
+
   useEffect(() => {
-    if (existing) setReady(true);
+    if (existing) setIsDraft(existing.draft ?? false);
   }, [existing]);
 
+  /**
+   * Qual botão pediu o envio. O formulário é submetido de fora, pela barra de
+   * ações, então a intenção precisa chegar por aqui em vez de por um argumento.
+   */
+  const draftIntentRef = useRef<boolean | null>(null);
+
+  useEffect(() => {
+    if (!isDirty) return;
+    const warn = (e: BeforeUnloadEvent) => e.preventDefault();
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [isDirty]);
+
+  const submitAs = (draft: boolean) => {
+    draftIntentRef.current = draft;
+    const form = document.getElementById(FORM_ID) as HTMLFormElement | null;
+    form?.requestSubmit();
+  };
+
   const handleSave = (project: Project) => {
+    const draft = draftIntentRef.current ?? isDraft;
+    draftIntentRef.current = null;
+
+    const saved: Project = { ...project, draft };
     onUpdateProjects(
-      existing ? projects.map((p) => (p.id === existing.id ? project : p)) : [project, ...projects]
+      existing ? projects.map((p) => (p.id === existing.id ? saved : p)) : [saved, ...projects]
     );
-    navigate(`/project/${slugOf(project)}`);
+
+    setIsDraft(draft);
+    setIsDirty(false);
+
+    // Um rascunho não tem página pública; ficamos no editor para continuar.
+    if (!draft) navigate(`/project/${slugOf(saved)}`);
   };
 
   if (!isNew && !existing) {
@@ -51,10 +84,9 @@ export default function ProjectEditorPage({
           {language === "en" ? "Project not found" : "Projeto não encontrado"}
         </h1>
         <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-          {ready
-            ? language === "en" ? "It may have been deleted, or the link is wrong."
-                                : "Ele pode ter sido excluído, ou o link está errado."
-            : language === "en" ? "Loading…" : "Carregando…"}
+          {language === "en"
+            ? "It may have been deleted, or the link is wrong."
+            : "Ele pode ter sido excluído, ou o link está errado."}
         </p>
         <button
           onClick={() => navigate("/projetos")}
@@ -67,39 +99,37 @@ export default function ProjectEditorPage({
   }
 
   return (
-    <div className="no-print space-y-6">
-      <div className="flex items-center gap-3">
-        <button
-          type="button"
-          onClick={() => navigate("/projetos")}
-          className="flex items-center gap-1.5 rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-600 transition-colors hover:bg-slate-50 dark:border-slate-800 dark:text-slate-300 dark:hover:bg-slate-800"
-        >
-          <ArrowLeft className="h-3.5 w-3.5" />
-          {language === "en" ? "Back" : "Voltar"}
-        </button>
-        <h1 className="font-display text-sm font-bold text-slate-900 sm:text-base dark:text-white">
-          {isNew
-            ? language === "en" ? "New project" : "Novo projeto"
-            : language === "en" ? "Edit project" : "Editar projeto"}
-        </h1>
+    <div className="no-print mx-auto grid max-w-[1500px] gap-6 lg:grid-cols-[minmax(0,1fr)_15rem]">
+      <div className="min-w-0 lg:order-1">
+        <ProjectForm
+          project={existing}
+          categories={categories}
+          onUpdateCategories={onUpdateCategories}
+          onSave={handleSave}
+          language={language}
+          view={view}
+          onDirtyChange={setIsDirty}
+        />
       </div>
 
-      <ProjectEditorModal
-        asPage
-        isOpen
-        onClose={() => navigate("/projetos")}
-        project={existing}
-        categories={categories}
-        onUpdateCategories={onUpdateCategories}
-        onSave={handleSave}
-        language={language}
-      />
-
-      {/* Galeria do projeto: sobe direto para a pasta dele no Storage.
-          Só faz sentido depois que o projeto tem um código definido. */}
-      {existing?.codigo && (
-        <ProjectGalleryManager projectCodigo={existing.codigo} language={language} />
-      )}
+      <aside className="lg:order-2">
+        <EditorActionRail
+          title={
+            isNew
+              ? language === "en" ? "New project" : "Novo projeto"
+              : language === "en" ? "Edit project" : "Editar projeto"
+          }
+          isDirty={isDirty}
+          isDraft={isDraft}
+          onBack={() => navigate("/projetos")}
+          onSaveDraft={() => submitAs(true)}
+          onPublish={() => submitAs(false)}
+          views={["edit", "preview"]}
+          view={view}
+          onViewChange={(v) => setView(v === "preview" ? "preview" : "edit")}
+          language={language}
+        />
+      </aside>
     </div>
   );
 }

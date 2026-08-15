@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { ImagePlus, Crop, Trash2, Loader2, Link as LinkIcon, X } from "lucide-react";
-import { StoredImage, listImages, saveImage, fileNameOf, joinPath, GENERAL_FOLDER } from "../utils/imageDb";
+import { StoredImage, listImages, saveImage, fileNameOf, joinPath, GENERAL_FOLDER, originalPathFor, isCoverCrop } from "../utils/imageDb";
 import { optimizeImage } from "../utils/imageOptimizer";
 import ImageCropModal from "./ImageCropModal";
 import LocalImage from "./LocalImage";
@@ -25,6 +25,11 @@ interface ImageSelectorInputProps {
  * um botão de upload, campo de busca sempre visível, e cada envio gravava duas
  * cópias (a imagem e uma variante `og-`). O link continua disponível, mas
  * recolhido: é o caso raro.
+ *
+ * Ao enviar uma imagem, o enquadramento abre em seguida: as capas aparecem em
+ * 16:9 e, sem essa etapa, o corte ficava por conta do `object-cover`, sem que
+ * ninguém decidisse o que sair do quadro. O original permanece salvo, então
+ * reenquadrar depois não parte de uma imagem já cortada.
  */
 export default function ImageSelectorInput({
   label,
@@ -42,6 +47,9 @@ export default function ImageSelectorInput({
   const [error, setError] = useState("");
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  // Original desta escolha, para reenquadrar sempre da imagem cheia mesmo
+  // quando ela não tem caminho no banco (modo de teste).
+  const originalRef = useRef<string>("");
 
   const loadImages = useCallback(async () => {
     try {
@@ -70,8 +78,10 @@ export default function ImageSelectorInput({
       // Modo de teste: sem sessão o Storage recusaria o envio, então a imagem
       // fica embutida e visível só neste navegador.
       if (isDevPreview()) {
+        originalRef.current = optimized.dataUrl;
         onChange(optimized.dataUrl);
         setIsPicking(false);
+        setIsCropping(true);
         return;
       }
 
@@ -88,8 +98,12 @@ export default function ImageSelectorInput({
       );
 
       await saveImage(path, optimized.dataUrl, optimized.size);
+      originalRef.current = `db:${path}`;
       onChange(`db:${path}`);
       setIsPicking(false);
+      // Decidir o enquadramento faz parte de escolher a capa, não é um passo
+      // extra opcional — abrimos direto, com a imagem cheia à vista.
+      setIsCropping(true);
     } catch (err) {
       setError(`Falha ao enviar: ${err instanceof Error ? err.message : String(err)}`);
     } finally {
@@ -158,7 +172,9 @@ export default function ImageSelectorInput({
               Remover
             </button>
             <span className="ml-auto truncate font-mono text-[10px] text-slate-400" title={value}>
-              {value.startsWith("db:") ? fileNameOf(value.slice(3)) : "link externo"}
+              {value.startsWith("db:")
+                ? `${fileNameOf(originalPathFor(value.slice(3)))}${isCoverCrop(value.slice(3)) ? " · enquadrada" : ""}`
+                : "link externo"}
             </span>
           </div>
         </div>
@@ -271,8 +287,10 @@ export default function ImageSelectorInput({
                   key={img.name}
                   type="button"
                   onClick={() => {
+                    originalRef.current = `db:${img.name}`;
                     onChange(`db:${img.name}`);
                     setIsPicking(false);
+                    setIsCropping(true);
                   }}
                   className={`overflow-hidden rounded-xl border-2 text-left transition-all hover:border-indigo-400 ${
                     value === `db:${img.name}` ? "border-indigo-600" : "border-transparent"
@@ -296,6 +314,7 @@ export default function ImageSelectorInput({
           isOpen={isCropping}
           onClose={() => setIsCropping(false)}
           imageSrc={value}
+          originalSrc={originalRef.current || undefined}
           onSave={(ref) => {
             onChange(ref);
             setIsCropping(false);

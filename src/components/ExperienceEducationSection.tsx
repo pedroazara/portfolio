@@ -822,7 +822,7 @@ export default function ExperienceEducationSection({
                 <p className="text-sm text-slate-500 dark:text-slate-400 font-sans">
                   {language === "en"
                     ? "Study groups, tutoring, and extension projects"
-                    : "Núcleos de estudo, monitorias e extensão — muitos simultâneos"}
+                    : "Núcleos de estudo e atividades extracurriculares"}
                 </p>
               </div>
             </div>

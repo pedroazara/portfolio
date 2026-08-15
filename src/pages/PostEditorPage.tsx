@@ -1,6 +1,6 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Save, Eye, PenTool, Columns2, FileText } from "lucide-react";
+import { FileText } from "lucide-react";
 import { BlogPost } from "../types";
 import { Language } from "../lib/translations";
 import { findBySlug, slugOf } from "../utils/slug";
@@ -9,6 +9,7 @@ import ArticleContentEditor from "../components/ArticleContentEditor";
 import ImageSelectorInput from "../components/ImageSelectorInput";
 import MarkdownRenderer from "../components/MarkdownRenderer";
 import TranslateButton from "../components/TranslateButton";
+import EditorActionRail from "../components/EditorActionRail";
 import { translateFields } from "../lib/translator";
 
 const CATEGORIES = [
@@ -51,8 +52,22 @@ export default function PostEditorPage({ slug, posts, onUpdatePosts, language }:
   const [form, setForm] = useState<Partial<BlogPost>>(() => existing ? { ...existing } : emptyPost());
   const [tagsInput, setTagsInput] = useState(() => (existing?.tags || []).join(", "));
   const [editingLanguage, setEditingLanguage] = useState<Language>(language);
-  const [view, setView] = useState<"split" | "edit" | "preview">("split");
+  const [view, setView] = useState<"edit" | "preview">("edit");
   const [isDirty, setIsDirty] = useState(false);
+  // Artigo novo nasce rascunho: publicar é uma decisão, não um efeito colateral.
+  const [isDraft, setIsDraft] = useState(() => existing?.draft ?? true);
+
+  /**
+   * Qual botão pediu o envio. O formulário é submetido pela barra lateral, que
+   * está fora dele, então a intenção chega por aqui e não por um argumento.
+   */
+  const draftIntentRef = useRef<boolean | null>(null);
+
+  const submitAs = (draft: boolean) => {
+    draftIntentRef.current = draft;
+    const form = document.getElementById("post-editor-form") as HTMLFormElement | null;
+    form?.requestSubmit();
+  };
 
   // O artigo pode chegar depois do primeiro render, quando os dados da nuvem
   // terminam de carregar. Só sincronizamos enquanto nada foi editado, para não
@@ -61,6 +76,7 @@ export default function PostEditorPage({ slug, posts, onUpdatePosts, language }:
     if (existing && !isDirty) {
       setForm({ ...existing });
       setTagsInput((existing.tags || []).join(", "));
+      setIsDraft(existing.draft ?? false);
     }
   }, [existing, isDirty]);
 
@@ -135,15 +151,20 @@ export default function PostEditorPage({ slug, posts, onUpdatePosts, language }:
       readTime: form.readTime?.trim() || estimateReadTime(content, "pt"),
       category: form.category || "Instrumentação",
       categoryEn: form.categoryEn || "Instrumentation",
-      draft: form.draft ?? false,
+      draft: draftIntentRef.current ?? isDraft,
     };
 
     onUpdatePosts(
       existing ? posts.map((p) => (p.id === existing.id ? complete : p)) : [complete, ...posts]
     );
 
+    const draft = complete.draft ?? false;
+    draftIntentRef.current = null;
+    setIsDraft(draft);
     setIsDirty(false);
-    navigate(`/blog/${slugOf(complete)}`);
+
+    // Um rascunho não tem página pública; ficamos no editor para continuar.
+    if (!draft) navigate(`/blog/${slugOf(complete)}`);
   };
 
   const isEn = editingLanguage === "en";
@@ -156,74 +177,15 @@ export default function PostEditorPage({ slug, posts, onUpdatePosts, language }:
     "mb-1 block font-mono text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400";
 
   return (
-    <div className="no-print">
-      {/* Barra de ações fixa */}
-      <div className="sticky top-0 z-30 -mx-4 mb-6 flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 bg-white/90 px-4 py-3 backdrop-blur-md sm:-mx-8 sm:px-8 dark:border-slate-800 dark:bg-slate-950/90">
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={() => navigate("/blog")}
-            className="flex items-center gap-1.5 rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-600 transition-colors hover:bg-slate-50 dark:border-slate-800 dark:text-slate-300 dark:hover:bg-slate-800"
-          >
-            <ArrowLeft className="h-3.5 w-3.5" />
-            {language === "en" ? "Back" : "Voltar"}
-          </button>
-          <div>
-            <h1 className="font-display text-sm font-bold text-slate-900 sm:text-base dark:text-white">
-              {isNew
-                ? language === "en" ? "New article" : "Novo artigo"
-                : language === "en" ? "Edit article" : "Editar artigo"}
-            </h1>
-            {isDirty && (
-              <p className="text-[11px] font-semibold text-amber-600 dark:text-amber-400">
-                {language === "en" ? "Unsaved changes" : "Alterações não salvas"}
-              </p>
-            )}
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2">
-          {/* Alternância de visualização */}
-          <div className="hidden items-center gap-1 rounded-xl border border-slate-200 bg-slate-100 p-1 md:flex dark:border-slate-700 dark:bg-slate-800/80">
-            {([
-              ["edit", PenTool, language === "en" ? "Write" : "Escrever"],
-              ["split", Columns2, language === "en" ? "Split" : "Dividido"],
-              ["preview", Eye, language === "en" ? "Preview" : "Prévia"],
-            ] as const).map(([mode, Icon, label]) => (
-              <button
-                key={mode}
-                type="button"
-                onClick={() => setView(mode)}
-                title={label}
-                className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[11px] font-bold transition-colors ${
-                  view === mode
-                    ? "bg-white text-indigo-600 shadow-xs dark:bg-slate-950 dark:text-indigo-400"
-                    : "text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
-                }`}
-              >
-                <Icon className="h-3.5 w-3.5" />
-                <span className="hidden lg:inline">{label}</span>
-              </button>
-            ))}
-          </div>
-
-          <TranslateButton onTranslate={handleAutoTranslate} size="sm" />
-
-          <button
-            type="submit"
-            form="post-editor-form"
-            className="flex items-center gap-1.5 rounded-xl bg-indigo-600 px-5 py-2.5 text-xs font-bold text-white shadow-md transition-colors hover:bg-indigo-700"
-          >
-            <Save className="h-3.5 w-3.5" />
-            {language === "en" ? "Save" : "Salvar"}
-          </button>
-        </div>
-      </div>
-
-      <div className={`grid gap-6 ${view === "split" ? "lg:grid-cols-2" : "grid-cols-1"}`}>
-        {/* Formulário */}
-        {view !== "preview" && (
-          <form id="post-editor-form" onSubmit={handleSave} className="space-y-5">
+    <div className="no-print mx-auto grid max-w-[1500px] gap-6 lg:grid-cols-[minmax(0,1fr)_15rem]">
+      <div className="min-w-0 lg:order-1">
+        {/* Escondido, e não desmontado, na prévia: a barra lateral submete este
+            formulário pelo id, e um formulário fora do DOM não seria alcançado. */}
+        <form
+          id="post-editor-form"
+          onSubmit={handleSave}
+          className={view === "edit" ? "space-y-5" : "hidden"}
+        >
             {/* Alternância pt/en */}
             <div className="flex items-center gap-1 rounded-xl border border-slate-200 bg-slate-100 p-1 dark:border-slate-700 dark:bg-slate-800/80">
               {(["pt", "en"] as const).map((lang) => (
@@ -337,30 +299,12 @@ export default function PostEditorPage({ slug, posts, onUpdatePosts, language }:
               </div>
             </div>
 
-            <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-slate-200 bg-slate-50/60 p-3 transition-colors hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900/40">
-              <input
-                type="checkbox"
-                checked={form.draft ?? false}
-                onChange={(e) => update({ draft: e.target.checked })}
-                className="mt-0.5 h-4 w-4 cursor-pointer rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
-              />
-              <span className="font-sans text-xs">
-                <span className="block font-bold text-slate-700 dark:text-slate-200">
-                  {language === "en" ? "Draft" : "Rascunho"}
-                </span>
-                <span className="text-slate-500 dark:text-slate-400">
-                  {language === "en"
-                    ? "Only you see it, and only in edit mode."
-                    : "Só você enxerga, e apenas no modo de edição."}
-                </span>
-              </span>
-            </label>
-          </form>
-        )}
+            {/* O estado de rascunho é decidido pelos botões da barra lateral —
+                uma caixa aqui seria um segundo jeito de dizer a mesma coisa. */}
+        </form>
 
-        {/* Pré-visualização */}
-        {view !== "edit" && (
-          <div className="lg:sticky lg:top-24 lg:max-h-[calc(100vh-8rem)] lg:overflow-y-auto">
+        {view === "preview" && (
+          <div>
             <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-xs sm:p-8 dark:border-slate-800 dark:bg-slate-900">
               <p className="mb-4 font-mono text-[11px] font-bold uppercase tracking-wider text-slate-400">
                 {language === "en" ? "Preview" : "Pré-visualização"}
@@ -388,6 +332,27 @@ export default function PostEditorPage({ slug, posts, onUpdatePosts, language }:
           </div>
         )}
       </div>
+
+      <aside className="lg:order-2">
+        <EditorActionRail
+          title={
+            isNew
+              ? language === "en" ? "New article" : "Novo artigo"
+              : language === "en" ? "Edit article" : "Editar artigo"
+          }
+          isDirty={isDirty}
+          isDraft={isDraft}
+          onBack={() => navigate("/blog")}
+          onSaveDraft={() => submitAs(true)}
+          onPublish={() => submitAs(false)}
+          views={["edit", "preview"]}
+          view={view}
+          onViewChange={setView}
+          language={language}
+        >
+          <TranslateButton onTranslate={handleAutoTranslate} size="sm" />
+        </EditorActionRail>
+      </aside>
     </div>
   );
 }

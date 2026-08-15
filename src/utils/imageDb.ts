@@ -42,6 +42,37 @@ export function folderOf(path: string): string {
   return parts.join("/");
 }
 
+/**
+ * Sufixo do recorte de capa derivado de uma imagem original.
+ *
+ * O caminho do original é preservado inteiro antes do sufixo
+ * (`geral/foto.png` vira `geral/foto.png.capa.webp`), o que torna a operação
+ * reversível: dado o recorte, sabemos exatamente de qual arquivo ele saiu.
+ *
+ * É isso que permite reenquadrar quantas vezes for preciso sempre a partir da
+ * imagem cheia. Recortar o recorte degradaria a qualidade a cada rodada e
+ * tornaria impossível recuperar o que ficou de fora do quadro.
+ */
+const COVER_SUFFIX = ".capa.webp";
+
+/** Caminho do recorte de capa derivado de uma imagem original. */
+export function coverPathFor(originalPath: string): string {
+  return `${originalPath}${COVER_SUFFIX}`;
+}
+
+/**
+ * Caminho da imagem original de onde um recorte veio.
+ * Devolve o próprio caminho quando ele já é um original.
+ */
+export function originalPathFor(path: string): string {
+  return path.endsWith(COVER_SUFFIX) ? path.slice(0, -COVER_SUFFIX.length) : path;
+}
+
+/** Indica se o caminho é um recorte de capa gerado a partir de outro arquivo. */
+export function isCoverCrop(path: string): boolean {
+  return path.endsWith(COVER_SUFFIX);
+}
+
 export interface StoredImage {
   /** Caminho completo dentro do bucket — é o que vai na referência `db:`. */
   name: string;
