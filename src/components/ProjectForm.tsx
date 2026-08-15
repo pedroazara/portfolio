@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { 
   X, PenTool, Eye, Sparkles, FolderKanban, Check, ExternalLink, Github, 
@@ -7,11 +7,12 @@ import {
 import { Project, ProjectCategory } from "../types";
 import { Language } from "../lib/translations";
 import ImageSelectorInput from "./ImageSelectorInput";
+import ImageGalleryInput from "./ImageGalleryInput";
 import ArticleContentEditor from "./ArticleContentEditor";
 import MarkdownRenderer from "./MarkdownRenderer";
 import TranslateButton from "./TranslateButton";
 import { translateFields } from "../lib/translator";
-import { StoredImage, listImages, fileNameOf } from "../utils/imageDb";
+import { projectFolder } from "../utils/imageDb";
 import LocalImage from "./LocalImage";
 
 /** Slug de URL a partir de um título: minúsculas, sem acentos, hífens. */
@@ -25,31 +26,36 @@ function slugify(text: string): string {
     .slice(0, 60);
 }
 
-interface ProjectEditorModalProps {
-  isOpen: boolean;
-  onClose: () => void;
+interface ProjectFormProps {
   project: Partial<Project> | null;
   categories: ProjectCategory[];
   onUpdateCategories?: (categories: ProjectCategory[]) => void;
   onSave: (project: Project) => void;
   language?: Language;
-  /**
-   * Renderiza o editor como página, e não como modal sobreposto.
-   * O formulário é o mesmo nos dois casos — muda só o invólucro externo.
-   */
-  asPage?: boolean;
+  /** Escrever ou pré-visualizar. A barra de ações da página controla. */
+  view?: "edit" | "preview";
+  /** Avisa a página quando há alterações pendentes. */
+  onDirtyChange?: (dirty: boolean) => void;
 }
 
-export default function ProjectEditorModal({
-  isOpen,
-  onClose,
+/**
+ * Formulário de projeto.
+ *
+ * O botão de salvar vive na barra de ações da página e alcança este formulário
+ * pelo atributo `form="project-editor-form"` — por isso não há cabeçalho, abas
+ * nem botões de salvar aqui dentro. Antes existiam dois de cada: um no topo do
+ * editor e outro no rodapé do formulário, além do "Voltar" da própria página.
+ */
+
+export default function ProjectForm({
   project,
   categories,
   onSave,
   language = "pt",
-  asPage = false,
-}: ProjectEditorModalProps) {
-  const [activeTab, setActiveTab] = useState<"edit" | "preview">("edit");
+  view = "edit",
+  onDirtyChange,
+}: ProjectFormProps) {
+  const activeTab = view;
   const [editingLanguage, setEditingLanguage] = useState<Language>(language);
 
   // Form State
@@ -73,12 +79,30 @@ export default function ProjectEditorModal({
   });
 
   const [tagsInput, setTagsInput] = useState("");
-  const [showLinkFields, setShowLinkFields] = useState(false);
 
-  // Gallery & Media Bank
-  const [isMediaBankOpen, setIsMediaBankOpen] = useState(false);
-  const [localImages, setLocalImages] = useState<StoredImage[]>([]);
-  const [isLoadingImages, setIsLoadingImages] = useState(false);
+  // Envios da galeria vão para a pasta do próprio projeto quando ele já tem
+  // código; um projeto ainda sem código cai na pasta geral.
+  const galleryFolder = formData.codigo ? projectFolder(formData.codigo) : undefined;
+
+  /**
+   * Estado do formulário no momento em que ele foi carregado.
+   *
+   * Comparar com este retrato diz se há alterações pendentes sem exigir que
+   * cada campo chame um `markDirty` — um só esquecimento deixaria o aviso de
+   * "alterações não salvas" mentindo.
+   */
+  const baselineRef = useRef<string>("");
+
+  useEffect(() => {
+    const agora = JSON.stringify({ formData, tagsInput });
+    // A primeira passagem define a referência; daí em diante, comparamos.
+    if (!baselineRef.current) {
+      baselineRef.current = agora;
+      return;
+    }
+    onDirtyChange?.(agora !== baselineRef.current);
+  }, [formData, tagsInput, onDirtyChange]);
+  const [showLinkFields, setShowLinkFields] = useState(false);
 
   useEffect(() => {
     if (project) {
@@ -115,44 +139,8 @@ export default function ProjectEditorModal({
       setTagsInput("");
     }
     setEditingLanguage(language);
-    setActiveTab("edit");
-  }, [project, isOpen, language, categories]);
-
-  const loadLocalImages = async () => {
-    setIsLoadingImages(true);
-    try {
-      const list = await listImages();
-      setLocalImages(list);
-    } catch (err) {
-      console.error("Erro ao carregar banco de imagens:", err);
-    } finally {
-      setIsLoadingImages(false);
-    }
-  };
-
-  const handleToggleGalleryImage = (imgName: string) => {
-    const dbKey = `db:${imgName}`;
-    const current = formData.galleryImages || [];
-    if (current.includes(dbKey)) {
-      setFormData({
-        ...formData,
-        galleryImages: current.filter((x) => x !== dbKey),
-      });
-    } else {
-      setFormData({
-        ...formData,
-        galleryImages: [...current, dbKey],
-      });
-    }
-  };
-
-  const handleRemoveGalleryImage = (idxToRemove: number) => {
-    const current = formData.galleryImages || [];
-    setFormData({
-      ...formData,
-      galleryImages: current.filter((_, idx) => idx !== idxToRemove),
-    });
-  };
+    baselineRef.current = "";
+  }, [project, language, categories]);
 
   const handleAutoTranslate = async () => {
     const fieldsToTranslate = {
@@ -218,11 +206,9 @@ export default function ProjectEditorModal({
       blogPostId: formData.blogPostId || undefined,
     };
 
+    onDirtyChange?.(false);
     onSave(completeProject);
-    onClose();
   };
-
-  if (!isOpen) return null;
 
   // Selected Category Objects for preview
   const selectedCategoryIds = (formData.categoryIds && formData.categoryIds.length > 0)
@@ -238,109 +224,11 @@ export default function ProjectEditorModal({
 
   // O conteúdo é idêntico nos dois modos; só o invólucro muda. Como página, a
   // altura não é limitada a 92vh e o scroll é o da própria janela.
-  const body = (
-    <>
-            {/* Top Toolbar / Header */}
-            <div className="shrink-0 flex flex-wrap items-center justify-between gap-3 bg-white dark:bg-slate-900 px-4 sm:px-6 py-3.5 border-b border-slate-200/80 dark:border-slate-800 shadow-xs z-10">
-              <div className="flex items-center gap-2.5">
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-50 dark:bg-indigo-950/80 text-indigo-600 dark:text-indigo-400 font-bold border border-indigo-100 dark:border-indigo-900/60">
-                  <PenTool className="h-4.5 w-4.5" />
-                </div>
-                <div>
-                  <h2 className="text-sm sm:text-base font-bold font-display text-slate-900 dark:text-white leading-snug">
-                    {formData.id ? (language === "en" ? "Edit Project Post" : "Editar Artigo de Projeto") : (language === "en" ? "Create New Project" : "Novo Artigo de Projeto")}
-                  </h2>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400 hidden sm:block">
-                    {language === "en" ? "Natural reading-style editor & markdown preview" : "Editor em formato de artigo e pré-visualização em tempo real"}
-                  </p>
-                </div>
-              </div>
-
-              {/* View Switcher Tabs (Escrever / Pré-visualização) */}
-              <div className="flex items-center bg-slate-100 dark:bg-slate-800/80 p-1 rounded-xl border border-slate-200/60 dark:border-slate-700">
-                <button
-                  type="button"
-                  onClick={() => setActiveTab("edit")}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                    activeTab === "edit"
-                      ? "bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-xs"
-                      : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
-                  }`}
-                >
-                  <PenTool className="h-3.5 w-3.5" />
-                  <span>{language === "en" ? "Write / Edit" : "Escrever"}</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setActiveTab("preview")}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                    activeTab === "preview"
-                      ? "bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-xs"
-                      : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
-                  }`}
-                >
-                  <Eye className="h-3.5 w-3.5" />
-                  <span>{language === "en" ? "Post Preview" : "Pré-visualização"}</span>
-                </button>
-              </div>
-
-              {/* Language Switcher, AI Translator & Actions */}
-              <div className="flex items-center gap-2">
-                <TranslateButton
-                  onTranslate={handleAutoTranslate}
-                  label={language === "en" ? "Translate PT → EN" : "Traduzir PT → EN"}
-                  size="sm"
-                />
-
-                <div className="flex items-center bg-slate-100 dark:bg-slate-800/80 p-0.5 rounded-lg border border-slate-200/60 dark:border-slate-700">
-                  <button
-                    type="button"
-                    onClick={() => setEditingLanguage("pt")}
-                    className={`px-2 py-1 rounded text-xs font-bold transition-all cursor-pointer ${
-                      editingLanguage === "pt"
-                        ? "bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-xs"
-                        : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
-                    }`}
-                  >
-                    PT
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setEditingLanguage("en")}
-                    className={`px-2 py-1 rounded text-xs font-bold transition-all cursor-pointer ${
-                      editingLanguage === "en"
-                        ? "bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-xs"
-                        : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
-                    }`}
-                  >
-                    EN
-                  </button>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={handleSubmit}
-                  className="flex items-center gap-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white px-4 py-2 text-xs font-bold shadow-sm transition-all cursor-pointer"
-                >
-                  <Check className="h-4 w-4" />
-                  <span>{language === "en" ? "Save Project" : "Salvar Projeto"}</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={onClose}
-                  className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-600 dark:hover:text-slate-200 transition-colors cursor-pointer"
-                >
-                  <X className="h-5 w-5" />
-                </button>
-              </div>
-            </div>
-
-            {/* Scrollable Main Document Canvas */}
-            <div className="flex-1 overflow-y-auto p-4 sm:p-8">
+  return (
+    <div className="no-print">
+            <div>
               {activeTab === "edit" ? (
-                /* --- WRITE MODE (NATURAL ARTICLE-STYLE EDITOR) --- */
-                <form onSubmit={handleSubmit} className="max-w-4xl mx-auto space-y-8 bg-white dark:bg-slate-900 p-6 sm:p-10 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm">
+                <form id="project-editor-form" onSubmit={handleSubmit} className="space-y-8 rounded-3xl border border-slate-200/80 bg-white p-6 shadow-xs sm:p-10 dark:border-slate-800 dark:bg-slate-900">
                   
                   {/* 1. HERO COVER IMAGE SECTION */}
                   <div className="space-y-2">
@@ -603,130 +491,23 @@ export default function ProjectEditorModal({
                     />
                   </div>
 
-                  {/* 7. GALLERY IMAGES SECTION */}
+                  {/* 7. GALERIA */}
                   <div className="space-y-3 pt-2">
-                    <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2">
-                      <div className="flex items-center gap-2">
-                        <ImageIcon className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
-                        <h3 className="text-base font-bold font-display text-slate-900 dark:text-white">
-                          {language === "en" ? "Gallery Images" : "Galeria de Imagens do Projeto"}
-                        </h3>
-                      </div>
-
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setIsMediaBankOpen(!isMediaBankOpen);
-                          if (!isMediaBankOpen) loadLocalImages();
-                        }}
-                        className="flex items-center gap-1.5 rounded-xl bg-indigo-50 dark:bg-indigo-950/80 hover:bg-indigo-100 text-indigo-700 dark:text-indigo-300 px-3 py-1.5 text-xs font-bold transition-all cursor-pointer border border-indigo-200 dark:border-indigo-800"
-                      >
-                        <Plus className="h-3.5 w-3.5" />
-                        <span>{language === "en" ? "Add from Media Bank" : "Adicionar do Banco de Mídia"}</span>
-                      </button>
+                    <div className="flex items-center gap-2 border-b border-slate-100 pb-2 dark:border-slate-800">
+                      <ImageIcon className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
+                      <h3 className="font-display text-base font-bold text-slate-900 dark:text-white">
+                        {language === "en" ? "Gallery" : "Galeria de Imagens"}
+                      </h3>
                     </div>
 
-                    {/* Attached Gallery Thumbnails */}
-                    {(formData.galleryImages || []).length > 0 ? (
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                        {(formData.galleryImages || []).map((imgUrl, idx) => (
-                          <div key={idx} className="group relative rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 aspect-video">
-                            <LocalImage src={imgUrl} alt={`Galeria ${idx + 1}`} className="h-full w-full object-cover" />
-                            <button
-                              type="button"
-                              onClick={() => handleRemoveGalleryImage(idx)}
-                              className="absolute top-1.5 right-1.5 flex h-7 w-7 items-center justify-center rounded-full bg-slate-950/80 text-white hover:bg-red-600 transition-colors shadow-md cursor-pointer"
-                              title="Remover Imagem da Galeria"
-                            >
-                              <Trash2 className="h-3.5 w-3.5" />
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="p-4 rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 text-center">
-                        <p className="text-xs text-slate-500 dark:text-slate-400">
-                          {language === "en" ? "No gallery images attached yet." : "Nenhuma imagem adicional na galeria ainda."}
-                        </p>
-                      </div>
-                    )}
-
-                    {/* Media Bank Picker Drawer */}
-                    {isMediaBankOpen && (
-                      <motion.div
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: "auto" }}
-                        exit={{ opacity: 0, height: 0 }}
-                        className="p-4 rounded-2xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 space-y-3 mt-3"
-                      >
-                        <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-700 pb-2">
-                          <span className="text-xs font-bold font-mono uppercase text-slate-600 dark:text-slate-300">
-                            {language === "en" ? "Select images for Gallery:" : "Selecione as imagens para a galeria:"}
-                          </span>
-                          <button
-                            type="button"
-                            onClick={loadLocalImages}
-                            className="p-1 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition-colors cursor-pointer"
-                            title="Atualizar"
-                          >
-                            <RefreshCw className="h-3.5 w-3.5" />
-                          </button>
-                        </div>
-
-                        {isLoadingImages ? (
-                          <p className="text-xs text-slate-500 font-mono py-4 text-center">Carregando banco...</p>
-                        ) : localImages.length === 0 ? (
-                          <p className="text-xs text-slate-500 text-center py-4">Nenhuma imagem no banco local.</p>
-                        ) : (
-                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 max-h-48 overflow-y-auto p-1">
-                            {localImages.map((img, idx) => {
-                              const dbKey = `db:${img.name}`;
-                              const isSelected = (formData.galleryImages || []).includes(dbKey);
-                              return (
-                                <button
-                                  key={`local-img-${img.name}-${idx}`}
-                                  type="button"
-                                  onClick={() => handleToggleGalleryImage(img.name)}
-                                  className={`relative group rounded-xl overflow-hidden border p-1 text-left transition-all cursor-pointer aspect-video bg-white dark:bg-slate-900 ${
-                                    isSelected
-                                      ? "border-indigo-600 ring-2 ring-indigo-500/50"
-                                      : "border-slate-200 dark:border-slate-700 hover:border-slate-400"
-                                  }`}
-                                >
-                                  <img src={img.url} alt={img.name} className="h-full w-full object-cover rounded-lg" />
-                                  <div className="absolute inset-x-0 bottom-0 bg-slate-950/70 p-1 text-[9px] font-mono text-white truncate">
-                                    {fileNameOf(img.name)}
-                                  </div>
-                                  {isSelected && (
-                                    <div className="absolute top-1.5 right-1.5 rounded-full bg-indigo-600 text-white p-1 shadow-md">
-                                      <Check className="h-3 w-3" />
-                                    </div>
-                                  )}
-                                </button>
-                              );
-                            })}
-                          </div>
-                        )}
-                      </motion.div>
-                    )}
+                    <ImageGalleryInput
+                      value={formData.galleryImages || []}
+                      onChange={(images) => setFormData({ ...formData, galleryImages: images })}
+                      folder={galleryFolder}
+                      language={language}
+                    />
                   </div>
 
-                  {/* SUBMIT BUTTON FOOTER */}
-                  <div className="pt-6 border-t border-slate-100 dark:border-slate-800 flex items-center justify-end gap-3">
-                    <button
-                      type="button"
-                      onClick={onClose}
-                      className="rounded-xl border border-slate-200 dark:border-slate-700 px-5 py-2.5 text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-                    >
-                      {language === "en" ? "Cancel" : "Cancelar"}
-                    </button>
-                    <button
-                      type="submit"
-                      className="rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2.5 text-xs font-bold shadow-md transition-all cursor-pointer"
-                    >
-                      {language === "en" ? "Save Project" : "Salvar Projeto"}
-                    </button>
-                  </div>
                 </form>
               ) : (
                 /* --- PREVIEW MODE (EXACT ARTICLE/POST READING VIEW) --- */
@@ -847,42 +628,6 @@ export default function ProjectEditorModal({
                 </div>
               )}
             </div>
-    </>
-  );
-
-  if (asPage) {
-    return (
-      <div className="mx-auto w-full max-w-5xl overflow-hidden rounded-3xl border border-slate-200 bg-slate-50 text-slate-900 shadow-sm dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100 no-print">
-        {body}
-      </div>
-    );
-  }
-
-  return (
-    <AnimatePresence>
-      <div className="fixed inset-0 z-50 overflow-y-auto no-print">
-        {/* Backdrop */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          onClick={onClose}
-          className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm transition-opacity"
-        />
-
-        {/* Modal Container */}
-        <div className="flex min-h-screen items-center justify-center p-2 sm:p-4 lg:p-6">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.97, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.97, y: 20 }}
-            transition={{ duration: 0.2, ease: "easeOut" }}
-            className="relative w-full max-w-5xl rounded-3xl bg-slate-50 dark:bg-slate-950 shadow-2xl border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 overflow-hidden flex flex-col my-4 max-h-[92vh]"
-          >
-            {body}
-          </motion.div>
-        </div>
-      </div>
-    </AnimatePresence>
+    </div>
   );
 }
