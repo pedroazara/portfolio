@@ -4,13 +4,12 @@ import { Project, ProjectCategory, BlogPost } from "../types";
 import { FolderKanban, Plus, Edit2, Trash2, ExternalLink, Github, Settings, Info, Eye, BookOpen, Image as ImageIcon, Check, RefreshCw, Search, ArrowLeft } from "lucide-react";
 import EditModal from "./EditModal";
 import ConfirmModal from "./ConfirmModal";
-import ProjectDetailsModal from "./ProjectDetailsModal";
 import LocalImage from "./LocalImage";
 import MarkdownRenderer from "./MarkdownRenderer";
 import { Language, translations } from "../lib/translations";
 import TranslateButton from "./TranslateButton";
 import { translateFields } from "../lib/translator";
-import { findBySlug, slugOf } from "../utils/slug";
+import { slugOf } from "../utils/slug";
 
 interface ProjectSectionProps {
   projects: Project[];
@@ -46,8 +45,6 @@ export default function ProjectSection({
   const navigate = useNavigate();
   const [activeCategory, setActiveCategory] = useState<string>("all");
   const [localSearch, setLocalSearch] = useState(searchQuery);
-  const [localSelectedProject, setLocalSelectedProject] = useState<Project | null>(null);
-
   useEffect(() => {
     setLocalSearch(searchQuery);
   }, [searchQuery]);
@@ -57,20 +54,6 @@ export default function ProjectSection({
     setLocalSearch(val);
     if (onSearchChange) {
       onSearchChange(val);
-    }
-  };
-
-  // O trecho da URL pode ser o `codigo` (usado nos links) ou o `id` (links
-  // antigos e rotas pré-renderizadas). `findBySlug` aceita os dois.
-  const selectedProject = selectedProjectId !== undefined
-    ? findBySlug(projects, selectedProjectId)
-    : localSelectedProject;
-
-  const setSelectedProject = (proj: Project | null) => {
-    if (onSelectProject) {
-      onSelectProject(proj ? slugOf(proj) : null);
-    } else {
-      setLocalSelectedProject(proj);
     }
   };
 
@@ -548,16 +531,7 @@ export default function ProjectSection({
         </div>
       )}
 
-      {/* Project Details Modal */}
-      {selectedProject && (
-        <ProjectDetailsModal
-          project={selectedProject}
-          category={categories.find((c) => c.id === selectedProject.categoryId)}
-          categories={categories}
-          onClose={() => setSelectedProject(null)}
-          language={language}
-        />
-      )}
+      {/* Os detalhes do projeto são uma página (/project/<slug>), não um modal. */}
 
       {/* A edição acontece em /admin/projetos/<slug>, não mais aqui. */}
 

@@ -10,6 +10,7 @@ import { findBySlug, slugOf } from "../utils/slug";
 import { extractToc } from "../utils/toc";
 import MarkdownRenderer from "../components/MarkdownRenderer";
 import LocalImage from "../components/LocalImage";
+import { COVER_ASPECT_CLASS } from "../lib/coverAspect";
 import TableOfContents from "../components/TableOfContents";
 import ProjectNavList from "../components/ProjectNavList";
 
@@ -195,7 +196,7 @@ export default function ProjectPage({
 
         {/* Capa */}
         {project.imageUrl && (
-          <div className="relative mb-8 h-64 w-full overflow-hidden rounded-3xl bg-slate-100 sm:h-80 lg:h-96 dark:bg-slate-950/50">
+          <div className={`relative mb-8 w-full overflow-hidden rounded-3xl bg-slate-100 dark:bg-slate-950/50 ${COVER_ASPECT_CLASS}`}>
             <LocalImage
               src={project.imageUrl}
               alt={title}

@@ -3,6 +3,7 @@ import { X, Loader2, AlertCircle, Move } from "lucide-react";
 import { useEscapeKey } from "../hooks/useEscapeKey";
 import { getImage, saveImage, joinPath, coverPathFor, originalPathFor } from "../utils/imageDb";
 import { Language } from "../lib/translations";
+import { COVER_ASPECT, COVER_OUTPUT_WIDTH } from "../lib/coverAspect";
 import { isDevPreview } from "../lib/devPreview";
 
 interface ImageCropModalProps {
@@ -38,8 +39,10 @@ interface ImageCropModalProps {
  * então reenquadrar substitui o recorte em vez de acumular arquivos.
  */
 
-const ASPECT = 16 / 9;
-const OUTPUT_WIDTH = 1600;
+// A proporção vem de um só lugar: é a mesma que os cartões e as capas usam
+// para exibir, o que faz o quadro daqui valer no site inteiro.
+const ASPECT = COVER_ASPECT;
+const OUTPUT_WIDTH = COVER_OUTPUT_WIDTH;
 
 /**
  * Carrega a imagem pedindo CORS, para que o canvas aceite exportá-la.

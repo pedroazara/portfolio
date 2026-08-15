@@ -294,6 +294,7 @@ export default function ExperienceEducationSection({
     const fieldsToTranslate = {
       degreeEn: eduForm.degree || "",
       institutionEn: eduForm.institution || "",
+      fieldOfStudyEn: eduForm.fieldOfStudy || "",
       descriptionEn: eduForm.description || "",
     };
 
@@ -303,6 +304,7 @@ export default function ExperienceEducationSection({
       ...prev,
       degreeEn: translated.degreeEn || prev.degreeEn || "",
       institutionEn: translated.institutionEn || prev.institutionEn || "",
+      fieldOfStudyEn: translated.fieldOfStudyEn || prev.fieldOfStudyEn || "",
       descriptionEn: translated.descriptionEn || prev.descriptionEn || "",
     }));
 
@@ -1487,15 +1489,53 @@ export default function ExperienceEducationSection({
         }
       >
         <form onSubmit={handleEduSubmit} className="space-y-4 text-xs font-sans">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 dark:border-slate-800 pb-2 mb-3">
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setEditingLanguage("pt")}
+                className={`px-3 py-1 rounded text-xs font-medium cursor-pointer ${
+                  editingLanguage === "pt"
+                    ? "bg-indigo-600 text-white"
+                    : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400"
+                }`}
+              >
+                Português
+              </button>
+              <button
+                type="button"
+                onClick={() => setEditingLanguage("en")}
+                className={`px-3 py-1 rounded text-xs font-medium cursor-pointer ${
+                  editingLanguage === "en"
+                    ? "bg-indigo-600 text-white"
+                    : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400"
+                }`}
+              >
+                English
+              </button>
+            </div>
+            <TranslateButton
+              onTranslate={handleAutoTranslateEdu}
+              label={language === "en" ? "Auto-Translate PT → EN" : "Traduzir PT → EN (Gemini AI)"}
+              size="sm"
+            />
+          </div>
+
           <div>
             <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
-              Instituição *
+              Instituição {editingLanguage === "en" && "(English)"} {editingLanguage === "pt" && "*"}
             </label>
             <input
               type="text"
-              required
-              value={eduForm.institution || ""}
-              onChange={(e) => setEduForm((prev) => ({ ...prev, institution: e.target.value }))}
+              required={editingLanguage === "pt"}
+              value={editingLanguage === "en" ? eduForm.institutionEn || "" : eduForm.institution || ""}
+              onChange={(e) =>
+                setEduForm((prev) =>
+                  editingLanguage === "en"
+                    ? { ...prev, institutionEn: e.target.value }
+                    : { ...prev, institution: e.target.value }
+                )
+              }
               placeholder="e.g. Universidade de São Paulo (USP)"
               className="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-slate-900 dark:text-white"
             />
@@ -1504,26 +1544,38 @@ export default function ExperienceEducationSection({
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                Grau *
+                Grau {editingLanguage === "en" && "(English)"} {editingLanguage === "pt" && "*"}
               </label>
               <input
                 type="text"
-                required
-                value={eduForm.degree || ""}
-                onChange={(e) => setEduForm((prev) => ({ ...prev, degree: e.target.value }))}
+                required={editingLanguage === "pt"}
+                value={editingLanguage === "en" ? eduForm.degreeEn || "" : eduForm.degree || ""}
+                onChange={(e) =>
+                  setEduForm((prev) =>
+                    editingLanguage === "en"
+                      ? { ...prev, degreeEn: e.target.value }
+                      : { ...prev, degree: e.target.value }
+                  )
+                }
                 placeholder="Bacharelado"
                 className="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-slate-900 dark:text-white"
               />
             </div>
             <div>
               <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                Curso / Área *
+                Curso / Área {editingLanguage === "en" && "(English)"} {editingLanguage === "pt" && "*"}
               </label>
               <input
                 type="text"
-                required
-                value={eduForm.fieldOfStudy || ""}
-                onChange={(e) => setEduForm((prev) => ({ ...prev, fieldOfStudy: e.target.value }))}
+                required={editingLanguage === "pt"}
+                value={editingLanguage === "en" ? eduForm.fieldOfStudyEn || "" : eduForm.fieldOfStudy || ""}
+                onChange={(e) =>
+                  setEduForm((prev) =>
+                    editingLanguage === "en"
+                      ? { ...prev, fieldOfStudyEn: e.target.value }
+                      : { ...prev, fieldOfStudy: e.target.value }
+                  )
+                }
                 placeholder="Engenharia Física"
                 className="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-slate-900 dark:text-white"
               />
@@ -1569,6 +1621,25 @@ export default function ExperienceEducationSection({
             <label htmlFor="edu-current" className="text-slate-700 dark:text-slate-300 font-medium cursor-pointer">
               Em andamento
             </label>
+          </div>
+
+          <div>
+            <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
+              Descrição {editingLanguage === "en" && "(English)"}
+            </label>
+            <textarea
+              rows={4}
+              value={editingLanguage === "en" ? eduForm.descriptionEn || "" : eduForm.description || ""}
+              onChange={(e) =>
+                setEduForm((prev) =>
+                  editingLanguage === "en"
+                    ? { ...prev, descriptionEn: e.target.value }
+                    : { ...prev, description: e.target.value }
+                )
+              }
+              placeholder="Ênfase, disciplinas relevantes, TCC, menções honrosas, projetos de destaque..."
+              className="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-slate-900 dark:text-white"
+            />
           </div>
 
           <div className="flex justify-end gap-2 pt-3 border-t border-slate-200 dark:border-slate-800">

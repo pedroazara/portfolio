@@ -9,6 +9,7 @@ import { findBySlug, slugOf } from "../utils/slug";
 import { estimateReadTime } from "../utils/readTime";
 import MarkdownRenderer from "../components/MarkdownRenderer";
 import LocalImage from "../components/LocalImage";
+import { COVER_ASPECT_CLASS } from "../lib/coverAspect";
 
 interface PostPageProps {
   /** Trecho da URL: o `codigo` ou `id` do artigo. */
@@ -136,7 +137,7 @@ export default function PostPage({
 
       {/* Capa */}
       {post.imageUrl && (
-        <div className="relative mb-8 h-64 w-full overflow-hidden rounded-3xl bg-slate-100 sm:h-80 lg:h-96 dark:bg-slate-950/50">
+        <div className={`relative mb-8 w-full overflow-hidden rounded-3xl bg-slate-100 dark:bg-slate-950/50 ${COVER_ASPECT_CLASS}`}>
           <LocalImage
             src={post.imageUrl}
             alt={title}
