@@ -13,6 +13,7 @@ import SectionHeader from "./components/SectionHeader";
 import BlogSection from "./components/BlogSection";
 import LoginModal from "./components/LoginModal";
 import ImageBankModal from "./components/ImageBankModal";
+import BackupHistoryModal from "./components/BackupHistoryModal";
 import ChangePasswordModal from "./components/ChangePasswordModal";
 import PdfPreviewModal from "./components/PdfPreviewModal";
 import Footer from "./components/Footer";
@@ -175,6 +176,7 @@ export default function App() {
 
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isImageBankOpen, setIsImageBankOpen] = useState(false);
+  const [isBackupHistoryOpen, setIsBackupHistoryOpen] = useState(false);
   const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
   const [isPdfPreviewOpen, setIsPdfPreviewOpen] = useState(false);
   const [showAutoSaveBanner, setShowAutoSaveBanner] = useState(false);
@@ -525,6 +527,7 @@ export default function App() {
           onImportJSON={handleImportJSON}
           onLogout={handleLogout}
           onOpenImageBank={() => setIsImageBankOpen(true)}
+          onOpenBackupHistory={() => setIsBackupHistoryOpen(true)}
           onOpenChangePassword={() => setIsChangePasswordOpen(true)}
           onOpenPdfPreview={() => setIsPdfPreviewOpen(true)}
         />
@@ -750,6 +753,14 @@ export default function App() {
       <ImageBankModal
         isOpen={isImageBankOpen}
         onClose={() => setIsImageBankOpen(false)}
+      />
+
+      {/* Backup History Modal */}
+      <BackupHistoryModal
+        isOpen={isBackupHistoryOpen}
+        onClose={() => setIsBackupHistoryOpen(false)}
+        onRestore={handleImportJSON}
+        language={language}
       />
 
       {/* Change Password Modal */}

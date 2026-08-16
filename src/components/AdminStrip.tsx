@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { MoreHorizontal, Download, Upload, Image as ImageIcon, KeyRound, FileText, LogOut, AlertTriangle, X } from "lucide-react";
+import { MoreHorizontal, Download, Upload, Image as ImageIcon, KeyRound, FileText, LogOut, AlertTriangle, X, History } from "lucide-react";
 import { ResumeData } from "../types";
 import { generateResumePDF } from "../utils/pdfGenerator";
 
@@ -12,6 +12,7 @@ interface AdminStripProps {
   resumeData: ResumeData;
   onImportJSON: (importedData: ResumeData) => void;
   onOpenImageBank: () => void;
+  onOpenBackupHistory: () => void;
   onOpenChangePassword: () => void;
   onLogout: () => void;
   onResetToTemplate?: () => void;
@@ -29,6 +30,7 @@ export default function AdminStrip({
   resumeData,
   onImportJSON,
   onOpenImageBank,
+  onOpenBackupHistory,
   onOpenChangePassword,
   onLogout,
   onOpenPdfPreview,
@@ -247,6 +249,20 @@ export default function AdminStrip({
                 <span className="font-mono text-[10px] text-rose-500/80">
                   {language === "en" ? "overwrites" : "sobrescreve"}
                 </span>
+              </button>
+
+              <div className="my-1 border-t border-slate-700/60" />
+
+              <button
+                type="button"
+                onClick={() => {
+                  setIsMenuOpen(false);
+                  onOpenBackupHistory();
+                }}
+                className="flex w-full items-center gap-2 rounded px-3 py-2 text-left hover:bg-slate-800 transition-colors cursor-pointer"
+              >
+                <History className="h-3.5 w-3.5 text-teal-400" />
+                <span>{language === "en" ? "Backup History" : "Histórico de Backups"}</span>
               </button>
 
               <div className="my-1 border-t border-slate-700/60" />
