@@ -1,6 +1,7 @@
 import React, { useState } from "react";
+import { Reorder, useDragControls } from "motion/react";
 import { Skill } from "../types";
-import { Award, Plus, Edit2, Trash2, Star, Tag, Check } from "lucide-react";
+import { Award, Plus, Edit2, Trash2, Star, Tag, Check, GripVertical } from "lucide-react";
 import EditModal from "./EditModal";
 import ConfirmModal from "./ConfirmModal";
 import { Language } from "../lib/translations";
@@ -38,6 +39,106 @@ const LEVEL_LABELS: Record<number, { pt: string; en: string }> = {
 
 const inputClasses =
   "w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-sm text-slate-800 dark:text-slate-200 focus:border-indigo-500 focus:outline-hidden font-sans";
+
+interface SkillRowProps {
+  skill: Skill;
+  language: Language;
+  accent: { bg: string; text: string; bar: string };
+  isEditMode: boolean;
+  onEdit: (skill: Skill) => void;
+  onDelete: (id: string) => void;
+}
+
+// Inner content shared between the plain (read-only) and draggable (edit mode) rows.
+function SkillRowContent({ skill, language, accent, isEditMode, onEdit, onDelete, dragHandleProps }: SkillRowProps & { dragHandleProps?: React.HTMLAttributes<HTMLButtonElement> }) {
+  return (
+    <div className="flex items-start gap-2">
+      {isEditMode && (
+        <button
+          type="button"
+          {...dragHandleProps}
+          className="mt-0.5 shrink-0 touch-none cursor-grab text-slate-300 dark:text-slate-600 hover:text-slate-500 dark:hover:text-slate-400 active:cursor-grabbing sm:opacity-0 sm:group-hover:opacity-100 opacity-100 transition-opacity no-print print:hidden"
+          title={language === "en" ? "Drag to reorder" : "Arrastar para reordenar"}
+        >
+          <GripVertical className="h-3.5 w-3.5" />
+        </button>
+      )}
+
+      <div className="min-w-0 flex-1 space-y-1.5">
+        <div className="flex items-center justify-between">
+          <span className="text-xs font-semibold text-slate-700 dark:text-slate-300 font-sans">
+            {language === "en" && skill.nameEn ? skill.nameEn : skill.name}
+          </span>
+
+          {/* Level number or star count for print stability */}
+          <div className="flex items-center gap-1">
+            {/* Level bar or dots */}
+            <div className="flex gap-0.5 print:hidden">
+              {[1, 2, 3, 4, 5].map((level) => (
+                <Star
+                  key={level}
+                  className={`h-3 w-3 ${
+                    level <= skill.level
+                      ? "text-amber-400 fill-amber-400"
+                      : "text-slate-200 dark:text-slate-700"
+                  }`}
+                />
+              ))}
+            </div>
+            {/* Simple numeric readout for print and accessibility */}
+            <span className="hidden print:inline text-[10px] font-mono text-slate-500 font-semibold">
+              {language === "en" ? "Level" : "Nível"} {skill.level}/5
+            </span>
+          </div>
+        </div>
+
+        {/* Visual progress bar tinted per category */}
+        <div className="h-1.5 w-full rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden print:hidden">
+          <div
+            className={`h-full rounded-full ${accent.bar}`}
+            style={{ width: `${(skill.level / 5) * 100}%` }}
+          ></div>
+        </div>
+      </div>
+
+      {/* Admin Tools */}
+      {isEditMode && (
+        <div className="absolute right-0 top-0 flex sm:opacity-0 sm:group-hover:opacity-100 opacity-100 items-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded px-1 py-0.5 gap-0.5 z-10 no-print print:hidden transition-opacity duration-200">
+          <button
+            onClick={() => onEdit(skill)}
+            className="p-0.5 rounded text-indigo-600 dark:text-indigo-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+            title="Editar Habilidade"
+          >
+            <Edit2 className="h-3 w-3" />
+          </button>
+          <button
+            onClick={() => onDelete(skill.id)}
+            className="p-0.5 rounded text-rose-600 dark:text-rose-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+            title="Excluir Habilidade"
+          >
+            <Trash2 className="h-3 w-3" />
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Draggable row used in edit mode (must live inside a Reorder.Group).
+function DraggableSkillRow(props: SkillRowProps) {
+  const controls = useDragControls();
+  return (
+    <Reorder.Item
+      as="div"
+      value={props.skill}
+      dragListener={false}
+      dragControls={controls}
+      className="group relative"
+    >
+      <SkillRowContent {...props} dragHandleProps={{ onPointerDown: (e) => controls.start(e) }} />
+    </Reorder.Item>
+  );
+}
 
 export default function SkillsSection({ skills, isEditMode, onUpdateSkills, language = "pt" }: SkillsSectionProps) {
   const [editingLanguage, setEditingLanguage] = useState<Language>("pt");
@@ -95,6 +196,14 @@ export default function SkillsSection({ skills, isEditMode, onUpdateSkills, lang
 
   // Group skills by category dynamically, preserving first-seen order.
   const categories = Array.from(new Set(skills.map((s) => s.category)));
+
+  // Reordering only moves skills within the same category — other categories'
+  // positions in the underlying flat array are left untouched.
+  const handleReorderCategory = (cat: string, reorderedCatSkills: Skill[]) => {
+    let i = 0;
+    const merged = skills.map((s) => (s.category === cat ? reorderedCatSkills[i++] : s));
+    onUpdateSkills(merged);
+  };
 
   // Suggestions shown as clickable chips in the add/edit form, per language.
   const ptCategorySuggestions = Array.from(new Set(skills.map((s) => s.category).filter(Boolean)));
@@ -212,66 +321,42 @@ export default function SkillsSection({ skills, isEditMode, onUpdateSkills, lang
                   </span>
                 </div>
 
-                <div className="space-y-4">
-                  {catSkills.map((skill) => (
-                    <div key={skill.id} className="group relative flex flex-col gap-1.5">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-semibold text-slate-700 dark:text-slate-300 font-sans">
-                          {language === "en" && skill.nameEn ? skill.nameEn : skill.name}
-                        </span>
-
-                        {/* Level number or star count for print stability */}
-                        <div className="flex items-center gap-1">
-                          {/* Level bar or dots */}
-                          <div className="flex gap-0.5 print:hidden">
-                            {[1, 2, 3, 4, 5].map((level) => (
-                              <Star
-                                key={level}
-                                className={`h-3 w-3 ${
-                                  level <= skill.level
-                                    ? "text-amber-400 fill-amber-400"
-                                    : "text-slate-200 dark:text-slate-700"
-                                }`}
-                              />
-                            ))}
-                          </div>
-                          {/* Simple numeric readout for print and accessibility */}
-                          <span className="hidden print:inline text-[10px] font-mono text-slate-500 font-semibold">
-                            {language === "en" ? "Level" : "Nível"} {skill.level}/5
-                          </span>
-                        </div>
+                {isEditMode ? (
+                  <Reorder.Group
+                    as="div"
+                    axis="y"
+                    values={catSkills}
+                    onReorder={(newOrder) => handleReorderCategory(cat, newOrder as Skill[])}
+                    className="space-y-4"
+                  >
+                    {catSkills.map((skill) => (
+                      <DraggableSkillRow
+                        key={skill.id}
+                        skill={skill}
+                        language={language}
+                        accent={accent}
+                        isEditMode={isEditMode}
+                        onEdit={handleOpenEdit}
+                        onDelete={handleDelete}
+                      />
+                    ))}
+                  </Reorder.Group>
+                ) : (
+                  <div className="space-y-4">
+                    {catSkills.map((skill) => (
+                      <div key={skill.id} className="group relative">
+                        <SkillRowContent
+                          skill={skill}
+                          language={language}
+                          accent={accent}
+                          isEditMode={false}
+                          onEdit={handleOpenEdit}
+                          onDelete={handleDelete}
+                        />
                       </div>
-
-                      {/* Visual progress bar tinted per category */}
-                      <div className="h-1.5 w-full rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden print:hidden">
-                        <div
-                          className={`h-full rounded-full ${accent.bar}`}
-                          style={{ width: `${(skill.level / 5) * 100}%` }}
-                        ></div>
-                      </div>
-
-                      {/* Admin Tools */}
-                      {isEditMode && (
-                        <div className="absolute right-0 top-0 flex sm:opacity-0 sm:group-hover:opacity-100 opacity-100 items-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded px-1 py-0.5 gap-0.5 z-10 no-print print:hidden transition-opacity duration-200">
-                          <button
-                            onClick={() => handleOpenEdit(skill)}
-                            className="p-0.5 rounded text-indigo-600 dark:text-indigo-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-                            title="Editar Habilidade"
-                          >
-                            <Edit2 className="h-3 w-3" />
-                          </button>
-                          <button
-                            onClick={() => handleDelete(skill.id)}
-                            className="p-0.5 rounded text-rose-600 dark:text-rose-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-                            title="Excluir Habilidade"
-                          >
-                            <Trash2 className="h-3 w-3" />
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                )}
               </div>
             );
           })}

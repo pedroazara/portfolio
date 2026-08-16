@@ -21,6 +21,9 @@ import {
   CloudOff,
   PlusCircle,
   Mail,
+  Languages,
+  Sparkles,
+  Circle,
 } from "lucide-react";
 import { ResumeData } from "../types";
 import { BackupEntry, listBackups, createManualBackup } from "../lib/backupService";
@@ -32,9 +35,10 @@ import {
   restoreFullBackup,
 } from "../lib/fullBackupService";
 import { changePassword, describeAuthError, currentUser } from "../lib/auth";
+import { translateAllContent, TRANSLATE_ALL_STEPS, TranslateAllStep } from "../lib/translator";
 import ConfirmModal from "./ConfirmModal";
 
-type Tab = "backups" | "security" | "media" | "advanced";
+type Tab = "backups" | "security" | "media" | "translation" | "advanced";
 
 interface AdminManagementModalProps {
   isOpen: boolean;
@@ -80,6 +84,7 @@ export default function AdminManagementModal({
     { id: "backups", label: t("Backups", "Backups"), icon: History },
     { id: "security", label: t("Segurança", "Security"), icon: KeyRound },
     { id: "media", label: t("Mídia", "Media"), icon: ImageIcon },
+    { id: "translation", label: t("Tradução", "Translation"), icon: Languages },
     { id: "advanced", label: t("Avançado", "Advanced"), icon: ShieldAlert },
   ];
 
@@ -160,6 +165,9 @@ export default function AdminManagementModal({
                       onOpenPdfPreview();
                     }}
                   />
+                )}
+                {tab === "translation" && (
+                  <TranslationTab language={language} resumeData={resumeData} onRestore={onRestore} />
                 )}
                 {tab === "advanced" && (
                   <AdvancedTab
@@ -787,6 +795,136 @@ function MediaTab({
           </span>
         </div>
       </button>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Aba: Tradução
+// ---------------------------------------------------------------------------
+
+function TranslationTab({
+  language,
+  resumeData,
+  onRestore,
+}: {
+  language: "pt" | "en";
+  resumeData: ResumeData;
+  onRestore: (data: ResumeData) => void;
+}) {
+  const t = (pt: string, en: string) => (language === "en" ? en : pt);
+
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [isRunning, setIsRunning] = useState(false);
+  const [steps, setSteps] = useState<TranslateAllStep[]>(
+    TRANSLATE_ALL_STEPS.map((s) => ({ ...s, status: "pending" }))
+  );
+  const [errors, setErrors] = useState<{ section: string; message: string }[]>([]);
+  const [finished, setFinished] = useState(false);
+
+  const handleRun = async () => {
+    setIsRunning(true);
+    setFinished(false);
+    setErrors([]);
+    setSteps(TRANSLATE_ALL_STEPS.map((s) => ({ ...s, status: "pending" })));
+
+    const { data, errors: runErrors } = await translateAllContent(resumeData, (key, status, error) => {
+      setSteps((prev) => prev.map((s) => (s.key === key ? { ...s, status, error } : s)));
+    });
+
+    onRestore(data);
+    setErrors(runErrors);
+    setIsRunning(false);
+    setFinished(true);
+  };
+
+  const stepIcon = (status: TranslateAllStep["status"]) => {
+    if (status === "done") return <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />;
+    if (status === "running") return <Loader2 className="h-3.5 w-3.5 text-indigo-500 animate-spin" />;
+    if (status === "error") return <AlertCircle className="h-3.5 w-3.5 text-rose-500" />;
+    return <Circle className="h-3.5 w-3.5 text-slate-300 dark:text-slate-700" />;
+  };
+
+  return (
+    <div>
+      <p className="mb-4 text-xs text-slate-500 dark:text-slate-400 font-sans">
+        {t(
+          "Traduz de uma vez os campos curtos do português para o inglês em todo o portfólio (perfil, formação, experiências, atividades, habilidades, cursos, e título/resumo de projetos e posts). Textos longos, como o corpo dos posts e a descrição detalhada dos projetos, continuam com o botão de traduzir de cada editor. Qualquer tradução em inglês já existente será substituída.",
+          "Translates every short PT field across the portfolio into English in one go (profile, education, experience, activities, skills, courses, and project/post titles & summaries). Long-form text, like post bodies and detailed project descriptions, still use each editor's own translate button. Any existing English translation will be overwritten."
+        )}
+      </p>
+
+      <button
+        type="button"
+        onClick={() => setConfirmOpen(true)}
+        disabled={isRunning}
+        className="flex w-full items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 py-2.5 text-xs font-semibold text-white shadow-xs transition-all cursor-pointer disabled:opacity-60"
+      >
+        {isRunning ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5 text-amber-300" />}
+        {isRunning ? t("Traduzindo…", "Translating…") : t("Traduzir Tudo (PT → EN)", "Translate Everything (PT → EN)")}
+      </button>
+
+      {(isRunning || finished) && (
+        <div className="mt-4 space-y-1.5 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/40 p-3">
+          {steps.map((s) => (
+            <div key={s.key} className="flex items-center gap-2 text-xs">
+              {stepIcon(s.status)}
+              <span
+                className={
+                  s.status === "error"
+                    ? "text-rose-600 dark:text-rose-400"
+                    : s.status === "done"
+                    ? "text-slate-700 dark:text-slate-200"
+                    : "text-slate-400 dark:text-slate-500"
+                }
+              >
+                {s.label}
+              </span>
+              {s.status === "error" && s.error && (
+                <span className="text-[10px] text-rose-500/80 truncate">— {s.error}</span>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {finished && (
+        <div
+          className={`mt-3 flex items-center gap-2 rounded-xl p-3 text-xs border font-sans ${
+            errors.length === 0
+              ? "bg-emerald-50 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-300 border-emerald-100 dark:border-emerald-900/40"
+              : "bg-amber-50 dark:bg-amber-950/20 text-amber-700 dark:text-amber-300 border-amber-100 dark:border-amber-900/40"
+          }`}
+        >
+          {errors.length === 0 ? (
+            <CheckCircle2 className="h-4 w-4 shrink-0" />
+          ) : (
+            <AlertTriangle className="h-4 w-4 shrink-0" />
+          )}
+          <span>
+            {errors.length === 0
+              ? t("Tudo traduzido com sucesso!", "Everything translated successfully!")
+              : t(
+                  `${TRANSLATE_ALL_STEPS.length - errors.length}/${TRANSLATE_ALL_STEPS.length} seções traduzidas. ${errors.length} falharam e mantiveram o conteúdo anterior.`,
+                  `${TRANSLATE_ALL_STEPS.length - errors.length}/${TRANSLATE_ALL_STEPS.length} sections translated. ${errors.length} failed and kept their previous content.`
+                )}
+          </span>
+        </div>
+      )}
+
+      <ConfirmModal
+        isOpen={confirmOpen}
+        onClose={() => setConfirmOpen(false)}
+        onConfirm={handleRun}
+        type="warning"
+        title={t("Traduzir tudo e sobrescrever?", "Translate everything and overwrite?")}
+        message={t(
+          "Isso vai gerar uma nova tradução em inglês para todos os campos curtos do portfólio, substituindo qualquer tradução já existente (inclusive as que você editou manualmente).",
+          "This will generate a fresh English translation for every short field in the portfolio, replacing any existing translation (including ones you edited by hand)."
+        )}
+        confirmText={t("Traduzir tudo", "Translate everything")}
+        cancelText={t("Cancelar", "Cancel")}
+      />
     </div>
   );
 }
