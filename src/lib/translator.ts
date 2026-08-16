@@ -1,7 +1,13 @@
 /**
  * Utility functions for Gemini AI Auto-Translation API
+ *
+ * Translation always goes through the `/api/translate` serverless function —
+ * the Gemini API key lives only in the server environment (GEMINI_API_KEY)
+ * and is never bundled into client-side JS. There is intentionally no
+ * client-side fallback that calls Gemini directly: that would require
+ * exposing the API key via a VITE_-prefixed env var, letting anyone extract
+ * it from the deployed bundle and run up usage on it.
  */
-import { GoogleGenAI } from "@google/genai";
 import { ResumeData } from "../types";
 
 export interface TranslationResponse {
@@ -11,80 +17,30 @@ export interface TranslationResponse {
 }
 
 /**
- * Fallback client-side translation using VITE_GEMINI_API_KEY if serverless route is unreachable
- */
-async function clientSideTranslateFields<T extends Record<string, string>>(
-  validFields: Record<string, string>
-): Promise<Partial<T>> {
-  const apiKey = (import.meta as any).env?.VITE_GEMINI_API_KEY;
-  if (!apiKey) {
-    throw new Error(
-      "Serviço de tradução indisponível. Certifique-se de configurar a variável GEMINI_API_KEY no painel da Vercel (Settings -> Environment Variables)."
-    );
-  }
-
-  const ai = new GoogleGenAI({ apiKey });
-  const prompt = `Você é um tradutor especialista acadêmico e profissional em currículos e portfólios.
-Traduza os valores dos textos fornecidos no objeto JSON do Português (PT-BR) para um Inglês fluente, natural e profissional.
-Mantenha a precisão de termos técnicos (física, engenharia, óptica, programação, instrumentação).
-Mantenha a formatação original (quebras de linha, listas, markdown se houver).
-Retorne APENAS um objeto JSON válido mapeando as mesmas chaves para os valores traduzidos em inglês.
-
-JSON de entrada:
-${JSON.stringify(validFields, null, 2)}`;
-
-  const response = await ai.models.generateContent({
-    model: "gemini-3.6-flash",
-    contents: prompt,
-    config: {
-      responseMimeType: "application/json",
-      temperature: 0.2,
-    },
-  });
-
-  const responseText = response.text || "{}";
-  return JSON.parse(responseText);
-}
-
-/**
  * Translates a single string from Portuguese to English using Gemini AI API.
  */
 export async function translateText(text: string): Promise<string> {
   if (!text || text.trim().length === 0) return "";
 
-  try {
-    const res = await fetch("/api/translate", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text }),
-    });
+  const res = await fetch("/api/translate", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ text }),
+  });
 
-    const contentType = res.headers.get("content-type") || "";
-    if (!res.ok || !contentType.includes("application/json")) {
-      // Fallback to client-side if server route failed or returned HTML
-      const fallbackResult = await clientSideTranslateFields({ text });
-      return fallbackResult.text || "";
-    }
-
-    const data: TranslationResponse = await res.json();
-    if (data.error) {
-      throw new Error(data.error);
-    }
-
-    return data.translation || "";
-  } catch (error: any) {
-    console.warn("Rota backend /api/translate falhou, tentando fallback...", error);
-    try {
-      const fallbackResult = await clientSideTranslateFields({ text });
-      return (fallbackResult as any).text || "";
-    } catch (fallbackErr: any) {
-      console.error("Erro na tradução com Gemini AI:", fallbackErr);
-      throw new Error(
-        fallbackErr.message ||
-          "Não foi possível traduzir o texto. Verifique se a chave GEMINI_API_KEY foi adicionada no painel da Vercel."
-      );
-    }
+  const contentType = res.headers.get("content-type") || "";
+  if (!res.ok || !contentType.includes("application/json")) {
+    throw new Error(
+      "Serviço de tradução indisponível. Verifique se a variável GEMINI_API_KEY está configurada no servidor (Vercel -> Settings -> Environment Variables)."
+    );
   }
+
+  const data: TranslationResponse = await res.json();
+  if (data.error) {
+    throw new Error(data.error);
+  }
+
+  return data.translation || "";
 }
 
 /**
@@ -107,42 +63,48 @@ export async function translateFields<T extends Record<string, string>>(
     return {};
   }
 
-  try {
-    const res = await fetch("/api/translate", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ texts: validFields }),
-    });
+  const res = await fetch("/api/translate", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ texts: validFields }),
+  });
 
-    const contentType = res.headers.get("content-type") || "";
-    if (!res.ok || !contentType.includes("application/json")) {
-      const errData = contentType.includes("application/json") ? await res.json().catch(() => ({})) : {};
-      if (errData.error) {
-        throw new Error(errData.error);
-      }
-      // If server returned non-200 or HTML, try client-side fallback
-      return await clientSideTranslateFields<T>(validFields);
-    }
-
-    const data: TranslationResponse = await res.json();
-    if (data.error) {
-      throw new Error(data.error);
-    }
-
-    return (data.translations as Partial<T>) || {};
-  } catch (error: any) {
-    console.warn("Rota /api/translate falhou, tentando fallback cliente...", error);
-    try {
-      return await clientSideTranslateFields<T>(validFields);
-    } catch (fallbackErr: any) {
-      console.error("Erro na tradução de campos com Gemini AI:", fallbackErr);
-      throw new Error(
-        error.message && !error.message.includes("fetch")
-          ? error.message
-          : fallbackErr.message || "Erro de conexão na tradução. Verifique se a chave GEMINI_API_KEY está configurada na Vercel."
-      );
-    }
+  const contentType = res.headers.get("content-type") || "";
+  if (!res.ok || !contentType.includes("application/json")) {
+    const errData = contentType.includes("application/json") ? await res.json().catch(() => ({})) : {};
+    throw new Error(
+      errData.error ||
+        "Serviço de tradução indisponível. Verifique se a variável GEMINI_API_KEY está configurada no servidor (Vercel -> Settings -> Environment Variables)."
+    );
   }
+
+  const data: TranslationResponse = await res.json();
+  if (data.error) {
+    throw new Error(data.error);
+  }
+
+  return (data.translations as Partial<T>) || {};
+}
+
+/**
+ * Shared body behind every per-item "Traduzir PT → EN" button in the admin
+ * editors: translates `fieldsToTranslate` (keyed by the target English field
+ * name, e.g. `{ roleEn: expForm.role }`) and merges the result back into form
+ * state, falling back to whatever was already there for any field the API
+ * didn't return.
+ */
+export async function autoTranslateFields<F, T extends Record<string, string>>(
+  fieldsToTranslate: T,
+  setForm: (updater: (prev: F) => F) => void
+): Promise<void> {
+  const translated = await translateFields(fieldsToTranslate);
+  setForm((prev) => {
+    const next: any = { ...prev };
+    for (const key of Object.keys(fieldsToTranslate)) {
+      next[key] = (translated as any)[key] || (prev as any)[key] || "";
+    }
+    return next as F;
+  });
 }
 
 export interface TranslateAllStep {
@@ -185,12 +147,14 @@ export const TRANSLATE_ALL_STEPS: { key: string; label: string }[] = [
  */
 export async function translateAllContent(
   data: ResumeData,
-  onStepChange?: (key: string, status: TranslateAllStep["status"], error?: string) => void
+  onStepChange?: (key: string, status: TranslateAllStep["status"], error?: string) => void,
+  selectedKeys?: Set<string>
 ): Promise<TranslateAllResult> {
   const result: ResumeData = { ...data };
   const errors: { section: string; message: string }[] = [];
 
   const runSection = async (key: string, label: string, task: () => Promise<void>) => {
+    if (selectedKeys && !selectedKeys.has(key)) return;
     onStepChange?.(key, "running");
     try {
       await task();
@@ -279,17 +243,25 @@ export async function translateAllContent(
   });
 
   await runSection("skills", "Habilidades", async () => {
+    const skillCategories = data.skillCategories || [];
     const fields: Record<string, string> = {};
     data.skills.forEach((skill, i) => {
-      if (skill.name) fields[`${i}__name`] = skill.name;
-      if (skill.category) fields[`${i}__category`] = skill.category;
+      if (skill.name) fields[`skill${i}__name`] = skill.name;
+      if (skill.category) fields[`skill${i}__category`] = skill.category;
+    });
+    skillCategories.forEach((cat, i) => {
+      if (cat.name) fields[`cat${i}__name`] = cat.name;
     });
     if (Object.keys(fields).length === 0) return;
     const t = await translateFields(fields);
     result.skills = data.skills.map((skill, i) => ({
       ...skill,
-      nameEn: t[`${i}__name`] ?? skill.nameEn,
-      categoryEn: t[`${i}__category`] ?? skill.categoryEn,
+      nameEn: t[`skill${i}__name`] ?? skill.nameEn,
+      categoryEn: t[`skill${i}__category`] ?? skill.categoryEn,
+    }));
+    result.skillCategories = skillCategories.map((cat, i) => ({
+      ...cat,
+      nameEn: t[`cat${i}__name`] ?? cat.nameEn,
     }));
   });
 

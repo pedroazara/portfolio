@@ -4,6 +4,7 @@ import { Award, Plus, Edit2, Trash2, Calendar, ExternalLink } from "lucide-react
 import EditModal from "./EditModal";
 import ConfirmModal from "./ConfirmModal";
 import MarkdownRenderer from "./MarkdownRenderer";
+import { ReorderableList } from "./Reorderable";
 import { Language, translations } from "../lib/translations";
 
 interface CoursesSectionProps {
@@ -149,15 +150,24 @@ export default function CoursesSection({
           </p>
         </div>
       ) : (
-        <div className="grid gap-6 sm:grid-cols-2 print:grid-cols-1">
-          {courses.map((course) => (
-            <div
-              key={course.id}
-              className="group relative flex flex-col justify-between rounded-xl border border-slate-100 dark:border-slate-800/60 bg-slate-50/30 dark:bg-slate-950/20 p-5 transition-all hover:border-slate-200 dark:hover:border-slate-700 hover:bg-slate-50/60 dark:hover:bg-slate-950/40 print-border print-bg-none print:p-4 print-break-inside-avoid"
-            >
+        <ReorderableList
+          items={courses}
+          isEditMode={isEditMode}
+          onReorder={onUpdateCourses}
+          getKey={(course) => course.id}
+          className="grid gap-6 sm:grid-cols-2 print:grid-cols-1"
+          itemClassName="group relative flex flex-col justify-between rounded-xl border border-slate-100 dark:border-slate-800/60 bg-slate-50/30 dark:bg-slate-950/20 p-5 transition-all hover:border-slate-200 dark:hover:border-slate-700 hover:bg-slate-50/60 dark:hover:bg-slate-950/40 print-border print-bg-none print:p-4 print-break-inside-avoid"
+        >
+          {(course, dragHandle) => (
+            <>
               <div>
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex items-start gap-3">
+                    {dragHandle && (
+                      <div className="mt-1 sm:opacity-0 sm:group-hover:opacity-100 opacity-100 transition-opacity">
+                        {dragHandle}
+                      </div>
+                    )}
                     <div className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 print-border print-bg-none">
                       <Award className="h-4.5 w-4.5" />
                     </div>
@@ -217,9 +227,9 @@ export default function CoursesSection({
                   </a>
                 </div>
               )}
-            </div>
-          ))}
-        </div>
+            </>
+          )}
+        </ReorderableList>
       )}
 
       {/* EDIT/ADD MODAL */}

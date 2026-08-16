@@ -10,6 +10,7 @@ import { estimateReadTime } from "../utils/readTime";
 import MarkdownRenderer from "../components/MarkdownRenderer";
 import LocalImage from "../components/LocalImage";
 import { COVER_ASPECT_CLASS } from "../lib/coverAspect";
+import { useLocalePath } from "../lib/routes";
 
 interface PostPageProps {
   /** Trecho da URL: o `codigo` ou `id` do artigo. */
@@ -30,6 +31,7 @@ export default function PostPage({
   language,
 }: PostPageProps) {
   const navigate = useNavigate();
+  const lp = useLocalePath();
   const [copiedLink, setCopiedLink] = useState(false);
 
   const post = findBySlug(posts, slug);
@@ -52,7 +54,7 @@ export default function PostPage({
             : "Ele pode ter sido excluído, ou o link está errado."}
         </p>
         <Link
-          to="/blog"
+          to={lp("/blog")}
           className="mt-5 inline-block rounded-xl bg-indigo-600 px-5 py-2.5 text-xs font-bold text-white transition-colors hover:bg-indigo-700"
         >
           {language === "en" ? "Back to blog" : "Voltar ao blog"}
@@ -70,7 +72,7 @@ export default function PostPage({
           {language === "en" ? "Article not available" : "Artigo indisponível"}
         </h1>
         <Link
-          to="/blog"
+          to={lp("/blog")}
           className="mt-5 inline-block rounded-xl bg-indigo-600 px-5 py-2.5 text-xs font-bold text-white transition-colors hover:bg-indigo-700"
         >
           {language === "en" ? "Back to blog" : "Voltar ao blog"}
@@ -84,7 +86,7 @@ export default function PostPage({
   const category = (language === "en" ? post.categoryEn : post.category) || post.category;
 
   const handleCopyLink = () => {
-    navigator.clipboard.writeText(`${window.location.origin}/blog/${slugOf(post)}`);
+    navigator.clipboard.writeText(`${window.location.origin}${lp(`/blog/${slugOf(post)}`)}`);
     setCopiedLink(true);
     setTimeout(() => setCopiedLink(false), 2000);
   };
@@ -103,7 +105,7 @@ export default function PostPage({
       {/* Barra de navegação do artigo */}
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3 no-print">
         <Link
-          to="/blog"
+          to={lp("/blog")}
           className="flex items-center gap-1.5 rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-600 transition-colors hover:bg-slate-50 dark:border-slate-800 dark:text-slate-300 dark:hover:bg-slate-800"
         >
           <ArrowLeft className="h-3.5 w-3.5" />
@@ -125,7 +127,7 @@ export default function PostPage({
           {isEditMode && (
             <button
               type="button"
-              onClick={() => navigate(`/admin/posts/${encodeURIComponent(slugOf(post))}`)}
+              onClick={() => navigate(`/admin/posts/${encodeURIComponent(slugOf(post))}`)} // admin: single-language, no locale prefix
               className="flex items-center gap-1.5 rounded-xl bg-indigo-600 px-4 py-2 text-xs font-bold text-white transition-colors hover:bg-indigo-700"
             >
               <Edit2 className="h-3.5 w-3.5" />
@@ -225,7 +227,7 @@ export default function PostPage({
               return (
                 <Link
                   key={proj.id}
-                  to={`/projetos/${slugOf(proj)}`}
+                  to={lp(`/projetos/${slugOf(proj)}`)}
                   className="group flex flex-col items-stretch gap-4 rounded-xl border border-slate-200 bg-slate-50/70 p-3.5 transition-all hover:border-indigo-500 hover:shadow-md sm:flex-row dark:border-slate-800 dark:bg-slate-900/60 dark:hover:border-indigo-500"
                 >
                   {proj.imageUrl && (
@@ -277,7 +279,7 @@ export default function PostPage({
         >
           {newerPost ? (
             <Link
-              to={`/blog/${slugOf(newerPost)}`}
+              to={lp(`/blog/${slugOf(newerPost)}`)}
               className="group rounded-2xl border border-slate-200 p-4 transition-all hover:border-indigo-500 hover:shadow-md dark:border-slate-800 dark:hover:border-indigo-500"
             >
               <span className="flex items-center gap-1 font-mono text-[11px] uppercase tracking-wider text-slate-400">
@@ -293,7 +295,7 @@ export default function PostPage({
           )}
           {olderPost && (
             <Link
-              to={`/blog/${slugOf(olderPost)}`}
+              to={lp(`/blog/${slugOf(olderPost)}`)}
               className="group rounded-2xl border border-slate-200 p-4 text-right transition-all hover:border-indigo-500 hover:shadow-md dark:border-slate-800 dark:hover:border-indigo-500"
             >
               <span className="flex items-center justify-end gap-1 font-mono text-[11px] uppercase tracking-wider text-slate-400">

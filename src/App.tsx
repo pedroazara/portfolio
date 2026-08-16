@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { ResumeData, Profile, Project, ProjectCategory, Experience, AcademicActivity, Education, Skill, Course, BlogPost } from "./types";
+import { ResumeData, Profile, Project, ProjectCategory, Experience, AcademicActivity, Education, Skill, SkillCategory, Course, BlogPost } from "./types";
 import { initialResumeData } from "./data/initialData";
 import ResumeHeader from "./components/ResumeHeader";
 import ProjectSection from "./components/ProjectSection";
@@ -26,14 +26,15 @@ import { maybeRunDailyFullBackup } from "./lib/fullBackupService";
 import { observeAuth, logout } from "./lib/auth";
 import { findBySlug } from "./utils/slug";
 import { isDevPreview } from "./lib/devPreview";
+import { stripLocale, localePath, switchLanguagePath } from "./lib/routes";
 import PostEditorPage from "./pages/PostEditorPage";
 import ProjectEditorPage from "./pages/ProjectEditorPage";
+import AdminHubPage, { AdminHubTab, ADMIN_HUB_TABS } from "./pages/AdminHubPage";
 import PostPage from "./pages/PostPage";
 import ProjectPage from "./pages/ProjectPage";
 
 const STORAGE_KEY = "curriculo_portfolio_data_v1";
 const EDIT_MODE_KEY = "curriculo_portfolio_edit_mode_v1";
-const LANG_KEY = "curriculo_portfolio_lang_v1";
 
 // Intervalo de espera antes de gravar na nuvem, para que uma sequência de
 // digitação vire uma única escrita em vez de uma por tecla.
@@ -67,17 +68,13 @@ const sanitizeResumeData = (data: any): ResumeData => {
     academicActivities: Array.isArray(data?.academicActivities) ? data.academicActivities : (initialResumeData.academicActivities || []),
     educations: Array.isArray(data?.educations) ? data.educations : (initialResumeData.educations || []),
     skills: Array.isArray(data?.skills) ? data.skills : (initialResumeData.skills || []),
+    skillCategories: Array.isArray(data?.skillCategories) ? data.skillCategories : (initialResumeData.skillCategories || []),
     courses: Array.isArray(data?.courses) ? data.courses : (initialResumeData.courses || []),
     posts: Array.isArray(data?.posts) ? data.posts : (initialResumeData.posts || []),
   };
 };
 
 export default function App() {
-  const [language, setLanguage] = useState<Language>(() => {
-    const saved = localStorage.getItem(LANG_KEY);
-    return (saved === "pt" || saved === "en") ? saved : "pt";
-  });
-
   const [darkMode, setDarkMode] = useState<boolean>(() => {
     const saved = localStorage.getItem("portfolio_dark_mode_v1");
     if (saved !== null) return saved === "true";
@@ -193,6 +190,15 @@ export default function App() {
   const location = useLocation();
   const navigate = useNavigate();
 
+  // O idioma vem da URL (`/en/...` = inglês), não de uma preferência salva:
+  // assim cada página é compartilhável e indexável no idioma do link. Todo o
+  // roteamento abaixo continua raciocinando em caminhos em português, que é o
+  // que `routePath` guarda.
+  const { language, path: routePath } = stripLocale(location.pathname);
+  const setLanguage = (lang: Language) => {
+    navigate(switchLanguagePath(location.pathname, lang) + location.search + location.hash);
+  };
+
   // Scroll direction detection for global bar collapse (> 120px)
   useEffect(() => {
     let lastY = window.scrollY;
@@ -217,24 +223,31 @@ export default function App() {
   // Open login modal when visiting /admin if not authenticated.
   // Espera o Supabase resolver a sessão para não piscar o modal em quem já está logado.
   useEffect(() => {
-    if (location.pathname === "/admin" && isAuthReady && !isAuthenticated) {
+    if (routePath === "/admin" && isAuthReady && !isAuthenticated) {
       setIsLoginModalOpen(true);
     }
-  }, [location.pathname, isAuthReady, isAuthenticated]);
+  }, [routePath, isAuthReady, isAuthenticated]);
 
   // Rotas de edição em página. Ficam antes das demais porque `/admin/posts/x`
   // não deve ser interpretado como a página pública de posts.
-  const postEditorMatch = location.pathname.match(/^\/admin\/posts\/(.+)$/);
-  const projectEditorMatch = location.pathname.match(/^\/admin\/projetos\/(.+)$/);
-  const isEditorRoute = Boolean(postEditorMatch || projectEditorMatch);
+  const postEditorMatch = routePath.match(/^\/admin\/posts\/(.+)$/);
+  const projectEditorMatch = routePath.match(/^\/admin\/projetos\/(.+)$/);
+  const adminHubMatch = routePath.match(/^\/admin\/painel(?:\/([^/]+))?\/?$/);
+  const adminHubTab: AdminHubTab = ADMIN_HUB_TABS.includes(adminHubMatch?.[1] as AdminHubTab)
+    ? (adminHubMatch![1] as AdminHubTab)
+    : "tarefas";
+  const isEditorRoute = Boolean(postEditorMatch || projectEditorMatch || adminHubMatch);
 
-  const isBlog = !isEditorRoute && location.pathname.startsWith("/blog");
-  const isProjects = !isEditorRoute && (location.pathname.startsWith("/projetos") || location.pathname.startsWith("/project"));
+  const isBlog = !isEditorRoute && routePath.startsWith("/blog");
+  const isProjects = !isEditorRoute && (routePath.startsWith("/projetos") || routePath.startsWith("/project"));
   const activePage: "cv" | "projetos" | "blog" = isBlog ? "blog" : isProjects ? "projetos" : "cv";
+
+  // Navega mantendo o idioma atual da URL.
+  const go = (canonicalPath: string) => navigate(localePath(canonicalPath, language));
 
   let selectedBlogPostId: string | null = null;
   if (isBlog) {
-    const match = location.pathname.match(/^\/blog\/(.+)$/);
+    const match = routePath.match(/^\/blog\/(.+)$/);
     if (match && match[1]) {
       selectedBlogPostId = decodeURIComponent(match[1]);
     }
@@ -242,7 +255,7 @@ export default function App() {
 
   let selectedProjectId: string | null = null;
   if (isProjects) {
-    const match = location.pathname.match(/^\/(?:project|projetos)\/(.+)$/);
+    const match = routePath.match(/^\/(?:project|projetos)\/(.+)$/);
     if (match && match[1]) {
       selectedProjectId = decodeURIComponent(match[1]);
     }
@@ -250,37 +263,33 @@ export default function App() {
 
   const handleSelectBlogPost = (postId: string | null) => {
     if (postId) {
-      navigate(`/blog/${encodeURIComponent(postId)}`);
+      go(`/blog/${encodeURIComponent(postId)}`);
     } else {
-      navigate("/blog");
+      go("/blog");
     }
   };
 
   const handleSelectProject = (projectId: string | null) => {
     if (projectId) {
-      navigate(`/project/${encodeURIComponent(projectId)}`);
+      go(`/projetos/${encodeURIComponent(projectId)}`);
     } else {
-      if (isProjects) {
-        navigate("/projetos");
-      } else {
-        navigate("/");
-      }
+      go(isProjects ? "/projetos" : "/");
     }
   };
 
   const handleNavigateToBlogPost = (postId: string) => {
-    navigate(`/blog/${encodeURIComponent(postId)}`);
+    go(`/blog/${encodeURIComponent(postId)}`);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   // Route scroll sync
   useEffect(() => {
-    if (location.pathname === "/projetos") {
+    if (routePath === "/projetos") {
       const projElem = document.getElementById("projetos");
       if (projElem) {
         projElem.scrollIntoView({ behavior: "smooth" });
       }
-    } else if (location.pathname === "/curriculo" || location.pathname === "/") {
+    } else if (routePath === "/curriculo" || routePath === "/") {
       if (!location.hash) {
         window.scrollTo({ top: 0, behavior: "smooth" });
       }
@@ -289,44 +298,69 @@ export default function App() {
 
   // Dynamic client-side document title, canonical link, and meta description synchronization
   useEffect(() => {
+    const isEn = language === "en";
     const name = resumeData?.profile?.name || "Pedro Henrique Almeida";
-    let title = `${name} | Currículo, Portfólio & Blog`;
-    let description = resumeData?.profile?.bio || "";
+    let title = isEn ? `${name} | Resume, Portfolio & Blog` : `${name} | Currículo, Portfólio & Blog`;
+    let description = (isEn ? resumeData?.profile?.bioEn : resumeData?.profile?.bio) || resumeData?.profile?.bio || "";
 
-    if (location.pathname === "/curriculo") {
-      title = `Currículo | ${name}`;
-      description = `Currículo acadêmico e profissional de ${name} - Engenharia Física UFLA, Óptica e Instrumentação Científica.`;
-    } else if (location.pathname === "/blog") {
-      title = `Blog & Artigos | ${name}`;
-      description = "Artigos e notas técnicas sobre física computacional, óptica ultrarrápida, instrumentação e automação experimental.";
+    if (routePath === "/curriculo") {
+      title = isEn ? `Resume | ${name}` : `Currículo | ${name}`;
+      description = isEn
+        ? `Academic and professional resume of ${name} — Engineering Physics at UFLA, Optics and Scientific Instrumentation.`
+        : `Currículo acadêmico e profissional de ${name} - Engenharia Física UFLA, Óptica e Instrumentação Científica.`;
+    } else if (routePath === "/blog") {
+      title = isEn ? `Blog & Articles | ${name}` : `Blog & Artigos | ${name}`;
+      description = isEn
+        ? "Articles and technical notes on computational physics, ultrafast optics, instrumentation and experimental automation."
+        : "Artigos e notas técnicas sobre física computacional, óptica ultrarrápida, instrumentação e automação experimental.";
     } else if (selectedBlogPostId) {
       // Rascunhos não emprestam título nem descrição para quem não está editando:
       // a página em si já os esconde, e o título da aba vazaria o mesmo conteúdo.
       const post = findBySlug(resumeData.posts, selectedBlogPostId);
       if (post && (!post.draft || isEditMode)) {
-        title = `${language === "en" ? post.titleEn || post.title : post.title} | Blog de ${name}`;
-        description = (language === "en" ? post.summaryEn || post.summary : post.summary) || description;
+        const postTitle = isEn ? post.titleEn || post.title : post.title;
+        title = isEn ? `${postTitle} | ${name}'s Blog` : `${postTitle} | Blog de ${name}`;
+        description = (isEn ? post.summaryEn || post.summary : post.summary) || description;
       }
     } else if (selectedProjectId) {
       const proj = findBySlug(resumeData.projects, selectedProjectId);
       if (proj && (!proj.draft || isEditMode)) {
-        title = `${language === "en" ? proj.titleEn || proj.title : proj.title} | Projetos de ${name}`;
-        description = proj.description || description;
+        const projTitle = isEn ? proj.titleEn || proj.title : proj.title;
+        title = isEn ? `${projTitle} | ${name}'s Projects` : `${projTitle} | Projetos de ${name}`;
+        description = (isEn ? proj.descriptionEn || proj.description : proj.description) || description;
       }
     }
 
     document.title = title;
+    document.documentElement.lang = isEn ? "en" : "pt-BR";
 
     const metaDesc = document.querySelector('meta[name="description"]');
     if (metaDesc) {
       metaDesc.setAttribute("content", description);
     }
 
-    let canonical = document.querySelector('link[rel="canonical"]');
+    const canonical = document.querySelector('link[rel="canonical"]');
     if (canonical) {
       canonical.setAttribute("href", `https://pedroazara.vercel.app${location.pathname}`);
     }
-  }, [location.pathname, selectedBlogPostId, selectedProjectId, resumeData, language, isEditMode]);
+
+    // hreflang: aponta cada página para a sua irmã no outro idioma, para o
+    // buscador entender que são traduções e não conteúdo duplicado.
+    const setAlternate = (hreflang: string, href: string) => {
+      let link = document.querySelector(`link[rel="alternate"][hreflang="${hreflang}"]`);
+      if (!link) {
+        link = document.createElement("link");
+        link.setAttribute("rel", "alternate");
+        link.setAttribute("hreflang", hreflang);
+        document.head.appendChild(link);
+      }
+      link.setAttribute("href", href);
+    };
+    const base = "https://pedroazara.vercel.app";
+    setAlternate("pt-BR", `${base}${localePath(routePath, "pt")}`);
+    setAlternate("en", `${base}${localePath(routePath, "en")}`);
+    setAlternate("x-default", `${base}${localePath(routePath, "pt")}`);
+  }, [location.pathname, routePath, selectedBlogPostId, selectedProjectId, resumeData, language, isEditMode]);
 
   // Cópia local: gravada imediatamente a cada alteração.
   useEffect(() => {
@@ -406,13 +440,6 @@ export default function App() {
     localStorage.setItem(EDIT_MODE_KEY, isEditMode.toString());
   }, [isEditMode, isAuthenticated]);
 
-  // Sync language with LocalStorage e com o atributo lang do documento,
-  // que leitores de tela e tradutores automáticos usam para escolher a voz.
-  useEffect(() => {
-    localStorage.setItem(LANG_KEY, language);
-    document.documentElement.lang = language === "en" ? "en" : "pt-BR";
-  }, [language]);
-
   const handleLoginSuccess = () => {
     // O estado de autenticação em si vem do observador do Supabase Auth.
     // Aqui só ativamos o modo de edição logo após entrar.
@@ -457,6 +484,10 @@ export default function App() {
 
   const handleUpdateSkills = (updatedSkills: Skill[]) => {
     setResumeData((prev) => ({ ...prev, skills: updatedSkills }));
+  };
+
+  const handleUpdateSkillCategories = (updatedCategories: SkillCategory[]) => {
+    setResumeData((prev) => ({ ...prev, skillCategories: updatedCategories }));
   };
 
   const handleUpdateCourses = (updatedCourses: Course[]) => {
@@ -574,6 +605,8 @@ export default function App() {
                 {language === "en" ? "Sign in" : "Entrar"}
               </button>
             </div>
+          ) : adminHubMatch ? (
+            <AdminHubPage tab={adminHubTab} />
           ) : postEditorMatch ? (
             <PostEditorPage
               slug={decodeURIComponent(postEditorMatch[1])}
@@ -643,8 +676,10 @@ export default function App() {
             {/* Skillset Matrix Section */}
             <SkillsSection
               skills={resumeData.skills}
+              skillCategories={resumeData.skillCategories || []}
               isEditMode={isEditMode}
               onUpdateSkills={handleUpdateSkills}
+              onUpdateSkillCategories={handleUpdateSkillCategories}
               language={language}
             />
           </div>

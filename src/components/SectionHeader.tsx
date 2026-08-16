@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate, useSearchParams } from "react-router-do
 import { ArrowLeft, Search, Copy, Check, Tag } from "lucide-react";
 import { ResumeData, BlogPost, Project } from "../types";
 import { Orbita } from "./WaveIcon";
+import { localePath, stripLocale } from "../lib/routes";
 
 interface SectionHeaderProps {
   resumeData?: ResumeData;
@@ -37,16 +38,17 @@ export default function SectionHeader({
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
-  const isHomeOrCv = location.pathname === "/" || location.pathname === "/curriculo";
-  const isBlogList = location.pathname === "/blog";
-  const isBlogPost = location.pathname.startsWith("/blog/") && location.pathname !== "/blog";
-  const isProjectsList = location.pathname === "/projetos";
-  const isProjectDetail = location.pathname.startsWith("/projetos/") || location.pathname.startsWith("/project/");
+  const { path: routePath } = stripLocale(location.pathname);
+  const isHomeOrCv = routePath === "/" || routePath === "/curriculo";
+  const isBlogList = routePath === "/blog";
+  const isBlogPost = routePath.startsWith("/blog/") && routePath !== "/blog";
+  const isProjectsList = routePath === "/projetos";
+  const isProjectDetail = routePath.startsWith("/projetos/") || routePath.startsWith("/project/");
 
   // Extract Blog Post ID
   let blogPost: BlogPost | null = null;
   if (isBlogPost) {
-    const match = location.pathname.match(/^\/blog\/(.+)$/);
+    const match = routePath.match(/^\/blog\/(.+)$/);
     if (match && match[1]) {
       const id = decodeURIComponent(match[1]);
       blogPost = resumeData.posts.find((p) => p.id === id) || null;
@@ -56,7 +58,7 @@ export default function SectionHeader({
   // Extract Project ID
   let projectItem: Project | null = null;
   if (isProjectDetail) {
-    const match = location.pathname.match(/^\/(?:projetos|project)\/(.+)$/);
+    const match = routePath.match(/^\/(?:projetos|project)\/(.+)$/);
     if (match && match[1]) {
       const id = decodeURIComponent(match[1]);
       projectItem = resumeData.projects.find((p) => p.id === id) || null;
@@ -196,7 +198,7 @@ export default function SectionHeader({
         {/* If global header is collapsed, show mini 32px Orbita logo on left */}
         {isGlobalCollapsed && (
           <Link
-            to="/"
+            to={localePath("/", language)}
             className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[var(--accent)] text-white mr-3 shadow-xs"
             title="Voltar ao topo"
           >
@@ -298,7 +300,7 @@ export default function SectionHeader({
           <>
             <div className="flex items-center gap-3 min-w-0 pr-4">
               <Link
-                to="/blog"
+                to={localePath("/blog", language)}
                 className="flex items-center gap-1.5 text-[var(--text-muted)] hover:text-[var(--text)] font-semibold transition-colors shrink-0"
               >
                 <ArrowLeft className="h-4 w-4" />
@@ -378,7 +380,7 @@ export default function SectionHeader({
           <>
             <div className="flex items-center gap-3 min-w-0 pr-4">
               <Link
-                to="/projetos"
+                to={localePath("/projetos", language)}
                 className="flex items-center gap-1.5 text-[var(--text-muted)] hover:text-[var(--text)] font-semibold transition-colors shrink-0"
               >
                 <ArrowLeft className="h-4 w-4" />

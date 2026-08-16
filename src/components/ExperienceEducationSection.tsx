@@ -14,9 +14,11 @@ import {
 import EditModal from "./EditModal";
 import ConfirmModal from "./ConfirmModal";
 import MarkdownRenderer from "./MarkdownRenderer";
+import { ReorderableList } from "./Reorderable";
+import { localePath } from "../lib/routes";
 import { Language } from "../lib/translations";
 import TranslateButton from "./TranslateButton";
-import { translateFields } from "../lib/translator";
+import { autoTranslateFields } from "../lib/translator";
 
 interface ExperienceEducationSectionProps {
   experiences: Experience[];
@@ -88,7 +90,7 @@ export default function ExperienceEducationSection({
             return (
               <Link
                 key={`exp-code-proj-${code}-${idx}`}
-                to={`/projetos/${proj.codigo || proj.id}`}
+                to={localePath(`/projetos/${proj.codigo || proj.id}`, language)}
                 className="inline-flex items-center gap-1 rounded-md bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200/80 dark:border-indigo-800/80 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 px-2.5 py-0.5 text-[11.5px] font-sans font-medium transition-colors"
               >
                 <span>{language === "en" && proj.titleEn ? proj.titleEn : proj.title}</span>
@@ -245,61 +247,39 @@ export default function ExperienceEducationSection({
   };
 
   const handleAutoTranslateExp = async () => {
-    const fieldsToTranslate = {
-      roleEn: expForm.role || "",
-      locationEn: expForm.location || "",
-      descriptionEn: expForm.description || "",
-    };
-
-    const translated = await translateFields(fieldsToTranslate);
-
-    setExpForm((prev) => ({
-      ...prev,
-      roleEn: translated.roleEn || prev.roleEn || "",
-      locationEn: translated.locationEn || prev.locationEn || "",
-      descriptionEn: translated.descriptionEn || prev.descriptionEn || "",
-    }));
-
+    await autoTranslateFields(
+      {
+        roleEn: expForm.role || "",
+        locationEn: expForm.location || "",
+        descriptionEn: expForm.description || "",
+      },
+      setExpForm
+    );
     setEditingLanguage("en");
   };
 
   const handleAutoTranslateAct = async () => {
-    const fieldsToTranslate = {
-      nameEn: actForm.name || "",
-      descriptionEn: actForm.description || "",
-      extraContentEn: actForm.extraContent || "",
-    };
-
-    const translated = await translateFields(fieldsToTranslate);
-
-    setActForm((prev) => ({
-      ...prev,
-      nameEn: translated.nameEn || prev.nameEn || "",
-      descriptionEn: translated.descriptionEn || prev.descriptionEn || "",
-      extraContentEn: translated.extraContentEn || prev.extraContentEn || "",
-    }));
-
+    await autoTranslateFields(
+      {
+        nameEn: actForm.name || "",
+        descriptionEn: actForm.description || "",
+        extraContentEn: actForm.extraContent || "",
+      },
+      setActForm
+    );
     setEditingLanguage("en");
   };
 
   const handleAutoTranslateEdu = async () => {
-    const fieldsToTranslate = {
-      degreeEn: eduForm.degree || "",
-      institutionEn: eduForm.institution || "",
-      fieldOfStudyEn: eduForm.fieldOfStudy || "",
-      descriptionEn: eduForm.description || "",
-    };
-
-    const translated = await translateFields(fieldsToTranslate);
-
-    setEduForm((prev) => ({
-      ...prev,
-      degreeEn: translated.degreeEn || prev.degreeEn || "",
-      institutionEn: translated.institutionEn || prev.institutionEn || "",
-      fieldOfStudyEn: translated.fieldOfStudyEn || prev.fieldOfStudyEn || "",
-      descriptionEn: translated.descriptionEn || prev.descriptionEn || "",
-    }));
-
+    await autoTranslateFields(
+      {
+        degreeEn: eduForm.degree || "",
+        institutionEn: eduForm.institution || "",
+        fieldOfStudyEn: eduForm.fieldOfStudy || "",
+        descriptionEn: eduForm.description || "",
+      },
+      setEduForm
+    );
     setEditingLanguage("en");
   };
 
@@ -554,63 +534,74 @@ export default function ExperienceEducationSection({
             </p>
           </div>
         ) : (
-          <div className="space-y-6">
-            {educations.map((edu) => {
+          <ReorderableList
+            items={educations}
+            isEditMode={isEditMode}
+            onReorder={onUpdateEducations}
+            getKey={(edu) => edu.id}
+            className="space-y-6"
+            itemClassName="group relative rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-900/80 p-5 sm:p-6 transition-all"
+          >
+            {(edu, dragHandle) => {
               const degreeText = language === "en" && edu.degreeEn ? edu.degreeEn : edu.degree;
               const fieldText = language === "en" && edu.fieldOfStudyEn ? edu.fieldOfStudyEn : edu.fieldOfStudy;
               const instText = language === "en" && edu.institutionEn ? edu.institutionEn : edu.institution;
               const descText = language === "en" && edu.descriptionEn ? edu.descriptionEn : edu.description;
 
               return (
-                <div
-                  key={edu.id}
-                  className="rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-900/80 p-5 sm:p-6 transition-all"
-                >
-                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
-                    <div className="space-y-1">
-                      <h3 className="text-base font-bold text-slate-900 dark:text-white font-display">
-                        {degreeText} em {fieldText}
-                      </h3>
-                      <p className="text-sm font-semibold text-indigo-600 dark:text-indigo-400 font-sans">
-                        {instText}
-                      </p>
-                    </div>
-
-                    <div className="flex items-center gap-2 sm:flex-col sm:items-end shrink-0">
-                      <div className="font-mono text-xs text-slate-700 dark:text-slate-300 bg-slate-200/70 dark:bg-slate-800 px-2.5 py-1 rounded-md border border-slate-200/60 dark:border-slate-700/60">
-                        {formatPeriodDisplay(edu.startDate, edu.endDate, edu.current)}
-                      </div>
-
-                      {isEditMode && (
-                        <div className="flex items-center gap-1 no-print print:hidden">
-                          <button
-                            onClick={() => handleOpenEduEdit(edu)}
-                            className="rounded p-1 text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors cursor-pointer"
-                            title="Editar Formação"
-                          >
-                            <Edit2 className="h-3.5 w-3.5" />
-                          </button>
-                          <button
-                            onClick={() => handleDeleteEdu(edu.id)}
-                            className="rounded p-1 text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 hover:text-rose-600 dark:hover:text-rose-400 transition-colors cursor-pointer"
-                            title="Excluir Formação"
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {descText && (
-                    <div className="mt-3 text-xs leading-relaxed text-slate-600 dark:text-slate-400 font-sans">
-                      <MarkdownRenderer content={descText} className="text-xs text-slate-600 dark:text-slate-400 font-sans space-y-1" />
+                <div className="flex items-start gap-2">
+                  {dragHandle && (
+                    <div className="mt-1 sm:opacity-0 sm:group-hover:opacity-100 opacity-100 transition-opacity">
+                      {dragHandle}
                     </div>
                   )}
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+                      <div className="space-y-1">
+                        <h3 className="text-base font-bold text-slate-900 dark:text-white font-display">
+                          {degreeText} em {fieldText}
+                        </h3>
+                        <p className="text-sm font-semibold text-indigo-600 dark:text-indigo-400 font-sans">
+                          {instText}
+                        </p>
+                      </div>
+
+                      <div className="flex items-center gap-2 sm:flex-col sm:items-end shrink-0">
+                        <div className="font-mono text-xs text-slate-700 dark:text-slate-300 bg-slate-200/70 dark:bg-slate-800 px-2.5 py-1 rounded-md border border-slate-200/60 dark:border-slate-700/60">
+                          {formatPeriodDisplay(edu.startDate, edu.endDate, edu.current)}
+                        </div>
+
+                        {isEditMode && (
+                          <div className="flex items-center gap-1 no-print print:hidden">
+                            <button
+                              onClick={() => handleOpenEduEdit(edu)}
+                              className="rounded p-1 text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors cursor-pointer"
+                              title="Editar Formação"
+                            >
+                              <Edit2 className="h-3.5 w-3.5" />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteEdu(edu.id)}
+                              className="rounded p-1 text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 hover:text-rose-600 dark:hover:text-rose-400 transition-colors cursor-pointer"
+                              title="Excluir Formação"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {descText && (
+                      <div className="mt-3 text-xs leading-relaxed text-slate-600 dark:text-slate-400 font-sans">
+                        <MarkdownRenderer content={descText} className="text-xs text-slate-600 dark:text-slate-400 font-sans space-y-1" />
+                      </div>
+                    )}
+                  </div>
                 </div>
               );
-            })}
-          </div>
+            }}
+          </ReorderableList>
         )}
       </section>
 
@@ -654,147 +645,157 @@ export default function ExperienceEducationSection({
             </p>
           </div>
         ) : (
-          <div className="space-y-6">
-            {experiences.map((exp) => {
+          <ReorderableList
+            items={experiences}
+            isEditMode={isEditMode}
+            onReorder={onUpdateExperiences}
+            getKey={(exp) => exp.id}
+            className="space-y-6"
+            itemClassName="group relative rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-900/80 p-5 sm:p-6 transition-all duration-200 hover:border-slate-300 dark:hover:border-slate-700"
+          >
+            {(exp, dragHandle) => {
               const roleText = language === "en" && exp.roleEn ? exp.roleEn : exp.role;
               const locationText = language === "en" && exp.locationEn ? exp.locationEn : exp.location;
               const descText = language === "en" && exp.descriptionEn ? exp.descriptionEn : exp.description;
               const hasDescription = descText && descText.trim().length > 0;
 
               return (
-                <div
-                  key={exp.id}
-                  id={`research-${exp.id}`}
-                  className="rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-900/80 p-5 sm:p-6 transition-all duration-200 hover:border-slate-300 dark:hover:border-slate-700"
-                >
-                  {/* Top Row: Role, Company, Location & Period */}
-                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
-                    <div className="space-y-1">
-                      {/* Cargo (15px, weight 500) */}
-                      <h3 className="text-[15px] font-medium text-slate-900 dark:text-white font-sans leading-snug">
-                        {roleText}
-                      </h3>
-
-                      {/* Instituição e sigla na cor de acento */}
-                      <p className="text-sm font-semibold text-indigo-600 dark:text-indigo-400 font-sans">
-                        {exp.company}
-                      </p>
-
-                      {/* Local e tipo de vínculo em cor apagada */}
-                      {locationText && (
-                        <p className="text-xs text-slate-500 dark:text-slate-400 font-sans">
-                          {locationText}
-                        </p>
-                      )}
+                <div id={`research-${exp.id}`} className="flex items-start gap-2">
+                  {dragHandle && (
+                    <div className="mt-1 sm:opacity-0 sm:group-hover:opacity-100 opacity-100 transition-opacity">
+                      {dragHandle}
                     </div>
+                  )}
+                  <div className="min-w-0 flex-1">
+                    {/* Top Row: Role, Company, Location & Period */}
+                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+                      <div className="space-y-1">
+                        {/* Cargo (15px, weight 500) */}
+                        <h3 className="text-[15px] font-medium text-slate-900 dark:text-white font-sans leading-snug">
+                          {roleText}
+                        </h3>
 
-                    {/* Right column: Period Pill & Admin controls */}
-                    <div className="flex items-center gap-2 sm:flex-col sm:items-end shrink-0">
-                      <div className="font-mono text-xs text-slate-700 dark:text-slate-300 bg-slate-200/70 dark:bg-slate-800 px-2.5 py-1 rounded-md border border-slate-200/60 dark:border-slate-700/60">
-                        {formatPeriodDisplay(exp.startDate, exp.endDate, exp.current)}
+                        {/* Instituição e sigla na cor de acento */}
+                        <p className="text-sm font-semibold text-indigo-600 dark:text-indigo-400 font-sans">
+                          {exp.company}
+                        </p>
+
+                        {/* Local e tipo de vínculo em cor apagada */}
+                        {locationText && (
+                          <p className="text-xs text-slate-500 dark:text-slate-400 font-sans">
+                            {locationText}
+                          </p>
+                        )}
                       </div>
 
-                      {isEditMode && (
-                        <div className="flex items-center gap-1 no-print print:hidden">
-                          <button
-                            onClick={() => handleOpenExpEdit(exp)}
-                            className="rounded p-1 text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors cursor-pointer"
-                            title="Editar Pesquisa"
-                          >
-                            <Edit2 className="h-3.5 w-3.5" />
-                          </button>
-                          <button
-                            onClick={() => handleDeleteExp(exp.id)}
-                            className="rounded p-1 text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 hover:text-rose-600 dark:hover:text-rose-400 transition-colors cursor-pointer"
-                            title="Excluir Pesquisa"
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </button>
+                      {/* Right column: Period Pill & Admin controls */}
+                      <div className="flex items-center gap-2 sm:flex-col sm:items-end shrink-0">
+                        <div className="font-mono text-xs text-slate-700 dark:text-slate-300 bg-slate-200/70 dark:bg-slate-800 px-2.5 py-1 rounded-md border border-slate-200/60 dark:border-slate-700/60">
+                          {formatPeriodDisplay(exp.startDate, exp.endDate, exp.current)}
                         </div>
-                      )}
-                    </div>
-                  </div>
 
-                  {/* Descrição Corrida */}
-                  <div className="mt-3.5 text-sm leading-relaxed text-slate-700 dark:text-slate-300 font-sans">
-                    {hasDescription ? (
-                      <MarkdownRenderer content={descText} className="text-sm text-slate-700 dark:text-slate-300 font-sans space-y-1" />
-                    ) : isEditMode ? (
-                      <p className="text-xs text-slate-400 dark:text-slate-500 italic">
-                        descrição pendente
-                      </p>
-                    ) : null}
-                  </div>
-
-                  {/* Subperíodos (quando houver) */}
-                  {exp.subperiods && exp.subperiods.length > 0 && (
-                    <div className="mt-4 border-l-2 border-slate-300 dark:border-slate-700 pl-[14px] space-y-3.5 my-3.5">
-                      {exp.subperiods.map((sub) => {
-                        const subTitleText = language === "en" && sub.titleEn ? sub.titleEn : sub.title;
-                        const subDescText = language === "en" && sub.descriptionEn ? sub.descriptionEn : sub.description;
-                        const subHasText = (subTitleText && subTitleText.trim()) || (subDescText && subDescText.trim());
-
-                        return (
-                          <div key={sub.id} className="space-y-0.5">
-                            {/* Período em monoespaçada 11px */}
-                            <span className="font-mono text-[11px] text-slate-500 dark:text-slate-400 block">
-                              {formatPeriodDisplay(sub.startDate, sub.endDate, sub.current)}
-                            </span>
-
-                            {/* Linha de descrição do subperíodo */}
-                            {subHasText ? (
-                              <p className="text-xs font-medium text-slate-800 dark:text-slate-200 font-sans">
-                                {subTitleText || subDescText}
-                              </p>
-                            ) : isEditMode ? (
-                              <p className="text-xs text-slate-400 dark:text-slate-500 italic font-sans">
-                                {subTitleText ? `${subTitleText} — ` : ""}descrição pendente
-                              </p>
-                            ) : null}
+                        {isEditMode && (
+                          <div className="flex items-center gap-1 no-print print:hidden">
+                            <button
+                              onClick={() => handleOpenExpEdit(exp)}
+                              className="rounded p-1 text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors cursor-pointer"
+                              title="Editar Pesquisa"
+                            >
+                              <Edit2 className="h-3.5 w-3.5" />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteExp(exp.id)}
+                              className="rounded p-1 text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 hover:text-rose-600 dark:hover:text-rose-400 transition-colors cursor-pointer"
+                              title="Excluir Pesquisa"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </button>
                           </div>
-                        );
-                      })}
+                        )}
+                      </div>
                     </div>
-                  )}
 
-                  {/* Links de Produção (se houver) */}
-                  {exp.links && exp.links.length > 0 && (
-                    <div className="mt-3.5 flex flex-wrap gap-3">
-                      {exp.links.map((link, i) => (
-                        <a
-                          key={i}
-                          href={link.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1.5 text-xs text-indigo-600 dark:text-indigo-400 hover:underline font-sans font-medium"
-                        >
-                          <span>{link.title}</span>
-                          <ExternalLink className="h-3 w-3" />
-                        </a>
-                      ))}
+                    {/* Descrição Corrida */}
+                    <div className="mt-3.5 text-sm leading-relaxed text-slate-700 dark:text-slate-300 font-sans">
+                      {hasDescription ? (
+                        <MarkdownRenderer content={descText} className="text-sm text-slate-700 dark:text-slate-300 font-sans space-y-1" />
+                      ) : isEditMode ? (
+                        <p className="text-xs text-slate-400 dark:text-slate-500 italic">
+                          descrição pendente
+                        </p>
+                      ) : null}
                     </div>
-                  )}
 
-                  {/* Competências como chips (chips separados por linha divisória de 0.5px) */}
-                  {exp.skills && exp.skills.length > 0 && (
-                    <div className="mt-4 border-t border-slate-200/80 dark:border-slate-800 pt-3.5 flex flex-wrap gap-2">
-                      {exp.skills.map((skill, i) => (
-                        <span
-                          key={i}
-                          className="bg-indigo-50 dark:bg-indigo-950/70 text-indigo-700 dark:text-indigo-300 border border-indigo-200/60 dark:border-indigo-900/60 rounded-full px-3 py-1 text-xs font-mono font-medium select-none"
-                        >
-                          {skill}
-                        </span>
-                      ))}
-                    </div>
-                  )}
+                    {/* Subperíodos (quando houver) */}
+                    {exp.subperiods && exp.subperiods.length > 0 && (
+                      <div className="mt-4 border-l-2 border-slate-300 dark:border-slate-700 pl-[14px] space-y-3.5 my-3.5">
+                        {exp.subperiods.map((sub) => {
+                          const subTitleText = language === "en" && sub.titleEn ? sub.titleEn : sub.title;
+                          const subDescText = language === "en" && sub.descriptionEn ? sub.descriptionEn : sub.description;
+                          const subHasText = (subTitleText && subTitleText.trim()) || (subDescText && subDescText.trim());
 
-                  {/* Projetos Relacionados (ETAPA 9.4) */}
-                  {renderProjectChips(exp.projetos)}
+                          return (
+                            <div key={sub.id} className="space-y-0.5">
+                              {/* Período em monoespaçada 11px */}
+                              <span className="font-mono text-[11px] text-slate-500 dark:text-slate-400 block">
+                                {formatPeriodDisplay(sub.startDate, sub.endDate, sub.current)}
+                              </span>
+
+                              {/* Linha de descrição do subperíodo */}
+                              {subHasText ? (
+                                <p className="text-xs font-medium text-slate-800 dark:text-slate-200 font-sans">
+                                  {subTitleText || subDescText}
+                                </p>
+                              ) : isEditMode ? (
+                                <p className="text-xs text-slate-400 dark:text-slate-500 italic font-sans">
+                                  {subTitleText ? `${subTitleText} — ` : ""}descrição pendente
+                                </p>
+                              ) : null}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+
+                    {/* Links de Produção (se houver) */}
+                    {exp.links && exp.links.length > 0 && (
+                      <div className="mt-3.5 flex flex-wrap gap-3">
+                        {exp.links.map((link, i) => (
+                          <a
+                            key={i}
+                            href={link.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1.5 text-xs text-indigo-600 dark:text-indigo-400 hover:underline font-sans font-medium"
+                          >
+                            <span>{link.title}</span>
+                            <ExternalLink className="h-3 w-3" />
+                          </a>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Competências como chips (chips separados por linha divisória de 0.5px) */}
+                    {exp.skills && exp.skills.length > 0 && (
+                      <div className="mt-4 border-t border-slate-200/80 dark:border-slate-800 pt-3.5 flex flex-wrap gap-2">
+                        {exp.skills.map((skill, i) => (
+                          <span
+                            key={i}
+                            className="bg-indigo-50 dark:bg-indigo-950/70 text-indigo-700 dark:text-indigo-300 border border-indigo-200/60 dark:border-indigo-900/60 rounded-full px-3 py-1 text-xs font-mono font-medium select-none"
+                          >
+                            {skill}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Projetos Relacionados (ETAPA 9.4) */}
+                    {renderProjectChips(exp.projetos)}
+                  </div>
                 </div>
               );
-            })}
-          </div>
+            }}
+          </ReorderableList>
         )}
       </section>
 
@@ -841,84 +842,95 @@ export default function ExperienceEducationSection({
               </p>
             </div>
           ) : (
-            <div className="space-y-4">
-              {academicActivities.map((act) => {
+            <ReorderableList
+              items={academicActivities}
+              isEditMode={isEditMode}
+              onReorder={(newOrder) => onUpdateAcademicActivities?.(newOrder)}
+              getKey={(act) => act.id}
+              className="space-y-4"
+              itemClassName="group relative rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-900/80 p-5 sm:p-6 transition-colors hover:border-slate-300 dark:hover:border-slate-700"
+            >
+              {(act, dragHandle) => {
                 const actName = language === "en" && act.nameEn ? act.nameEn : act.name;
                 const actDesc = language === "en" && act.descriptionEn ? act.descriptionEn : act.description;
                 const actExtra = language === "en" && act.extraContentEn ? act.extraContentEn : act.extraContent;
                 const hasExtra = (actExtra && actExtra.trim().length > 0) || (act.links && act.links.length > 0);
 
                 return (
-                  <div
-                    key={act.id}
-                    className="rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-900/80 p-5 sm:p-6 transition-colors hover:border-slate-300 dark:hover:border-slate-700"
-                  >
-                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
-                      <div className="space-y-1">
-                        <h3 className="text-[15px] font-medium text-slate-900 dark:text-white font-sans leading-snug">
-                          {actName}
-                        </h3>
-                        {actDesc && (
-                          <p className="text-xs text-slate-500 dark:text-slate-400 font-sans">
-                            {actDesc}
-                          </p>
-                        )}
-                      </div>
-
-                      <div className="flex items-center gap-2 sm:flex-col sm:items-end shrink-0">
-                        <div className="font-mono text-xs text-slate-700 dark:text-slate-300 bg-slate-200/70 dark:bg-slate-800 px-2.5 py-1 rounded-md border border-slate-200/60 dark:border-slate-700/60">
-                          {formatPeriodDisplay(act.startDate, act.endDate, act.current)}
-                        </div>
-
-                        {isEditMode && (
-                          <div className="flex items-center gap-1 no-print print:hidden">
-                            <button
-                              onClick={() => handleOpenActEdit(act)}
-                              className="rounded p-1 text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors cursor-pointer"
-                              title="Editar Atividade"
-                            >
-                              <Edit2 className="h-3.5 w-3.5" />
-                            </button>
-                            <button
-                              onClick={() => handleDeleteAct(act.id)}
-                              className="rounded p-1 text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 hover:text-rose-600 dark:hover:text-rose-400 transition-colors cursor-pointer"
-                              title="Excluir Atividade"
-                            >
-                              <Trash2 className="h-3.5 w-3.5" />
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    {hasExtra && (
-                      <div className="mt-3.5 pt-3 border-t border-slate-200/70 dark:border-slate-800 text-xs leading-relaxed text-slate-600 dark:text-slate-300 font-sans space-y-2">
-                        {actExtra && <p>{actExtra}</p>}
-                        {act.links && act.links.length > 0 && (
-                          <div className="flex flex-wrap gap-3 pt-1">
-                            {act.links.map((link, idx) => (
-                              <a
-                                key={idx}
-                                href={link.url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="inline-flex items-center gap-1.5 text-indigo-600 dark:text-indigo-400 hover:underline font-medium"
-                              >
-                                <span>{link.title}</span>
-                                <ExternalLink className="h-3 w-3" />
-                              </a>
-                            ))}
-                          </div>
-                        )}
+                  <div className="flex items-start gap-2">
+                    {dragHandle && (
+                      <div className="mt-1 sm:opacity-0 sm:group-hover:opacity-100 opacity-100 transition-opacity">
+                        {dragHandle}
                       </div>
                     )}
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+                        <div className="space-y-1">
+                          <h3 className="text-[15px] font-medium text-slate-900 dark:text-white font-sans leading-snug">
+                            {actName}
+                          </h3>
+                          {actDesc && (
+                            <p className="text-xs text-slate-500 dark:text-slate-400 font-sans">
+                              {actDesc}
+                            </p>
+                          )}
+                        </div>
 
-                    {/* Projetos Relacionados (ETAPA 9.4) */}
-                    {renderProjectChips(act.projetos)}
+                        <div className="flex items-center gap-2 sm:flex-col sm:items-end shrink-0">
+                          <div className="font-mono text-xs text-slate-700 dark:text-slate-300 bg-slate-200/70 dark:bg-slate-800 px-2.5 py-1 rounded-md border border-slate-200/60 dark:border-slate-700/60">
+                            {formatPeriodDisplay(act.startDate, act.endDate, act.current)}
+                          </div>
+
+                          {isEditMode && (
+                            <div className="flex items-center gap-1 no-print print:hidden">
+                              <button
+                                onClick={() => handleOpenActEdit(act)}
+                                className="rounded p-1 text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors cursor-pointer"
+                                title="Editar Atividade"
+                              >
+                                <Edit2 className="h-3.5 w-3.5" />
+                              </button>
+                              <button
+                                onClick={() => handleDeleteAct(act.id)}
+                                className="rounded p-1 text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 hover:text-rose-600 dark:hover:text-rose-400 transition-colors cursor-pointer"
+                                title="Excluir Atividade"
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {hasExtra && (
+                        <div className="mt-3.5 pt-3 border-t border-slate-200/70 dark:border-slate-800 text-xs leading-relaxed text-slate-600 dark:text-slate-300 font-sans space-y-2">
+                          {actExtra && <p>{actExtra}</p>}
+                          {act.links && act.links.length > 0 && (
+                            <div className="flex flex-wrap gap-3 pt-1">
+                              {act.links.map((link, idx) => (
+                                <a
+                                  key={idx}
+                                  href={link.url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="inline-flex items-center gap-1.5 text-indigo-600 dark:text-indigo-400 hover:underline font-medium"
+                                >
+                                  <span>{link.title}</span>
+                                  <ExternalLink className="h-3 w-3" />
+                                </a>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Projetos Relacionados (ETAPA 9.4) */}
+                      {renderProjectChips(act.projetos)}
+                    </div>
                   </div>
                 );
-              })}
-            </div>
+              }}
+            </ReorderableList>
           )}
         </section>
       )}

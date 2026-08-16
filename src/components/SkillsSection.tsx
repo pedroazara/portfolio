@@ -1,17 +1,19 @@
 import React, { useState } from "react";
-import { Reorder, useDragControls } from "motion/react";
-import { Skill } from "../types";
-import { Award, Plus, Edit2, Trash2, Star, Tag, Check, GripVertical } from "lucide-react";
+import { Skill, SkillCategory } from "../types";
+import { Award, Plus, FolderPlus, Edit2, Trash2, Star, Tag } from "lucide-react";
 import EditModal from "./EditModal";
 import ConfirmModal from "./ConfirmModal";
+import { ReorderableList } from "./Reorderable";
 import { Language } from "../lib/translations";
 import TranslateButton from "./TranslateButton";
-import { translateFields } from "../lib/translator";
+import { autoTranslateFields } from "../lib/translator";
 
 interface SkillsSectionProps {
   skills: Skill[];
+  skillCategories: SkillCategory[];
   isEditMode: boolean;
   onUpdateSkills: (updatedSkills: Skill[]) => void;
+  onUpdateSkillCategories: (updatedCategories: SkillCategory[]) => void;
   language?: Language;
 }
 
@@ -47,21 +49,16 @@ interface SkillRowProps {
   isEditMode: boolean;
   onEdit: (skill: Skill) => void;
   onDelete: (id: string) => void;
+  dragHandle?: React.ReactNode;
 }
 
-// Inner content shared between the plain (read-only) and draggable (edit mode) rows.
-function SkillRowContent({ skill, language, accent, isEditMode, onEdit, onDelete, dragHandleProps }: SkillRowProps & { dragHandleProps?: React.HTMLAttributes<HTMLButtonElement> }) {
+function SkillRowContent({ skill, language, accent, isEditMode, onEdit, onDelete, dragHandle }: SkillRowProps) {
   return (
     <div className="flex items-start gap-2">
-      {isEditMode && (
-        <button
-          type="button"
-          {...dragHandleProps}
-          className="mt-0.5 shrink-0 touch-none cursor-grab text-slate-300 dark:text-slate-600 hover:text-slate-500 dark:hover:text-slate-400 active:cursor-grabbing sm:opacity-0 sm:group-hover:opacity-100 opacity-100 transition-opacity no-print print:hidden"
-          title={language === "en" ? "Drag to reorder" : "Arrastar para reordenar"}
-        >
-          <GripVertical className="h-3.5 w-3.5" />
-        </button>
+      {isEditMode && dragHandle && (
+        <div className="mt-0.5 shrink-0 sm:opacity-0 sm:group-hover:opacity-100 opacity-100 transition-opacity">
+          {dragHandle}
+        </div>
       )}
 
       <div className="min-w-0 flex-1 space-y-1.5">
@@ -124,38 +121,49 @@ function SkillRowContent({ skill, language, accent, isEditMode, onEdit, onDelete
   );
 }
 
-// Draggable row used in edit mode (must live inside a Reorder.Group).
-function DraggableSkillRow(props: SkillRowProps) {
-  const controls = useDragControls();
-  return (
-    <Reorder.Item
-      as="div"
-      value={props.skill}
-      dragListener={false}
-      dragControls={controls}
-      className="group relative"
-    >
-      <SkillRowContent {...props} dragHandleProps={{ onPointerDown: (e) => controls.start(e) }} />
-    </Reorder.Item>
-  );
+interface MergedCategory {
+  id: string;
+  name: string;
+  nameEn?: string;
+  /** Not in skillCategories — exists only because a skill still references it. */
+  isOrphan: boolean;
 }
 
-export default function SkillsSection({ skills, isEditMode, onUpdateSkills, language = "pt" }: SkillsSectionProps) {
+export default function SkillsSection({
+  skills,
+  skillCategories,
+  isEditMode,
+  onUpdateSkills,
+  onUpdateSkillCategories,
+  language = "pt",
+}: SkillsSectionProps) {
+  const t = (pt: string, en: string) => (language === "en" ? en : pt);
+
   const [editingLanguage, setEditingLanguage] = useState<Language>("pt");
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [confirmCallback, setConfirmCallback] = useState<(() => void) | null>(null);
   const [confirmTitle, setConfirmTitle] = useState("");
   const [confirmMessage, setConfirmMessage] = useState("");
+  const [confirmType, setConfirmType] = useState<"danger" | "warning" | "info">("danger");
   const [hoverLevel, setHoverLevel] = useState<number | null>(null);
 
-  const triggerConfirm = (title: string, message: string, onConfirm: () => void) => {
+  const triggerConfirm = (
+    title: string,
+    message: string,
+    onConfirm: () => void,
+    type: "danger" | "warning" | "info" = "danger"
+  ) => {
     setConfirmTitle(title);
     setConfirmMessage(message);
     setConfirmCallback(() => onConfirm);
+    setConfirmType(type);
     setConfirmOpen(true);
   };
+
+  // --- Skill Modal State ---
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingSkill, setEditingSkill] = useState<Skill | null>(null);
+  const [lockedCategory, setLockedCategory] = useState<{ name: string; nameEn?: string } | null>(null);
   const [skillForm, setSkillForm] = useState<Partial<Skill>>({
     name: "",
     nameEn: "",
@@ -164,54 +172,99 @@ export default function SkillsSection({ skills, isEditMode, onUpdateSkills, lang
     level: 4,
   });
 
+  // --- Section (Category) Modal State ---
+  const [isSectionModalOpen, setIsSectionModalOpen] = useState(false);
+  const [sectionForm, setSectionForm] = useState<{ name: string; nameEn: string }>({ name: "", nameEn: "" });
+
   const handleAutoTranslateSkill = async () => {
-    const fieldsToTranslate = {
-      nameEn: skillForm.name || "",
-      categoryEn: skillForm.category || "",
-    };
-
-    const translated = await translateFields(fieldsToTranslate);
-
-    setSkillForm((prev) => ({
-      ...prev,
-      nameEn: translated.nameEn || prev.nameEn || "",
-      categoryEn: translated.categoryEn || prev.categoryEn || "",
-    }));
-
+    const fields: Record<string, string> = { nameEn: skillForm.name || "" };
+    if (!lockedCategory) fields.categoryEn = skillForm.category || "";
+    await autoTranslateFields(fields, setSkillForm);
     setEditingLanguage("en");
   };
 
-  // Helper to translate legacy/known categories that don't have a saved categoryEn.
-  const getCategoryName = (cat: string, lang: Language) => {
-    if (lang === "en") {
-      if (cat === "Física Computacional") return "Computational Physics";
-      if (cat === "Instrumentação & IoT") return "Instrumentation & IoT";
-      if (cat === "Ciência dos Materiais") return "Materials Science";
-      if (cat === "Física Teórica") return "Theoretical Physics";
-      if (cat === "Idiomas") return "Languages";
-      if (cat === "Outros") return "Others";
-    }
-    return cat;
+  const handleAutoTranslateSection = async () => {
+    await autoTranslateFields({ nameEn: sectionForm.name || "" }, setSectionForm);
+    setEditingLanguage("en");
   };
 
-  // Group skills by category dynamically, preserving first-seen order.
-  const categories = Array.from(new Set(skills.map((s) => s.category)));
+  // Sections (categories) are explicit entities now (`skillCategories`), so a
+  // section can exist before it has any skills. Legacy/imported skills whose
+  // category isn't in that list yet still show up as an "orphan" section, so
+  // nothing already saved disappears.
+  const mergedCategories: MergedCategory[] = [
+    ...skillCategories.map((c) => ({ ...c, isOrphan: false })),
+    ...Array.from(new Set(skills.map((s) => s.category)))
+      .filter((name) => !skillCategories.some((c) => c.name === name))
+      .map((name) => ({
+        id: `orphan-${name}`,
+        name,
+        nameEn: skills.find((s) => s.category === name && s.categoryEn)?.categoryEn,
+        isOrphan: true,
+      })),
+  ];
+
+  const catDisplayName = (cat: MergedCategory, lang: Language) => (lang === "en" ? cat.nameEn || cat.name : cat.name);
 
   // Reordering only moves skills within the same category — other categories'
   // positions in the underlying flat array are left untouched.
-  const handleReorderCategory = (cat: string, reorderedCatSkills: Skill[]) => {
+  const handleReorderCategory = (catName: string, reorderedCatSkills: Skill[]) => {
     let i = 0;
-    const merged = skills.map((s) => (s.category === cat ? reorderedCatSkills[i++] : s));
+    const merged = skills.map((s) => (s.category === catName ? reorderedCatSkills[i++] : s));
     onUpdateSkills(merged);
   };
 
-  // Suggestions shown as clickable chips in the add/edit form, per language.
-  const ptCategorySuggestions = Array.from(new Set(skills.map((s) => s.category).filter(Boolean)));
-  const enCategorySuggestions = Array.from(new Set(skills.map((s) => s.categoryEn).filter(Boolean) as string[]));
+  // --- Section Handlers ---
+  const handleOpenSectionAdd = () => {
+    setSectionForm({ name: "", nameEn: "" });
+    setEditingLanguage(language);
+    setIsSectionModalOpen(true);
+  };
 
-  const handleOpenAdd = () => {
+  const handleSectionSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const name = (sectionForm.name || "").trim();
+    if (!name) return;
+    const newCategory: SkillCategory = {
+      id: `skillcat-${Date.now()}`,
+      name,
+      nameEn: (sectionForm.nameEn || "").trim() || undefined,
+    };
+    onUpdateSkillCategories([...skillCategories, newCategory]);
+    setIsSectionModalOpen(false);
+  };
+
+  const handleDeleteCategory = (cat: MergedCategory) => {
+    const hasSkills = skills.some((s) => s.category === cat.name);
+    if (hasSkills) {
+      triggerConfirm(
+        t("Seção não está vazia", "Section isn't empty"),
+        t(
+          "Mova ou exclua as habilidades desta seção antes de removê-la.",
+          "Move or delete this section's skills before removing it."
+        ),
+        () => {},
+        "info"
+      );
+      return;
+    }
+    triggerConfirm(
+      t("Excluir Seção", "Delete Section"),
+      t(
+        `Deseja realmente excluir a seção "${cat.name}"?`,
+        `Are you sure you want to delete the "${cat.name}" section?`
+      ),
+      () => {
+        onUpdateSkillCategories(skillCategories.filter((c) => c.id !== cat.id));
+      }
+    );
+  };
+
+  // --- Skill Handlers ---
+  const handleOpenAddToCategory = (cat: MergedCategory) => {
     setEditingSkill(null);
-    setSkillForm({ name: "", nameEn: "", category: ptCategorySuggestions[0] || "", categoryEn: "", level: 4 });
+    setLockedCategory({ name: cat.name, nameEn: cat.nameEn });
+    setSkillForm({ name: "", nameEn: "", category: cat.name, categoryEn: cat.nameEn || "", level: 4 });
     setEditingLanguage(language);
     setHoverLevel(null);
     setIsModalOpen(true);
@@ -219,6 +272,7 @@ export default function SkillsSection({ skills, isEditMode, onUpdateSkills, lang
 
   const handleOpenEdit = (skill: Skill) => {
     setEditingSkill(skill);
+    setLockedCategory(null);
     setSkillForm({ ...skill });
     setEditingLanguage(language);
     setHoverLevel(null);
@@ -226,14 +280,13 @@ export default function SkillsSection({ skills, isEditMode, onUpdateSkills, lang
   };
 
   const handleDelete = (id: string) => {
-    const confirmTitle = language === "en" ? "Delete Skill" : "Excluir Habilidade";
-    const confirmMsg = language === "en"
-      ? "Are you sure you want to delete this skill?"
-      : "Deseja realmente excluir esta habilidade?";
-
-    triggerConfirm(confirmTitle, confirmMsg, () => {
-      onUpdateSkills(skills.filter((s) => s.id !== id));
-    });
+    triggerConfirm(
+      t("Excluir Habilidade", "Delete Skill"),
+      t("Deseja realmente excluir esta habilidade?", "Are you sure you want to delete this skill?"),
+      () => {
+        onUpdateSkills(skills.filter((s) => s.id !== id));
+      }
+    );
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -242,7 +295,7 @@ export default function SkillsSection({ skills, isEditMode, onUpdateSkills, lang
       id: editingSkill?.id || `skill-${Date.now()}`,
       name: skillForm.name || "Nova Habilidade",
       nameEn: skillForm.nameEn || "",
-      category: skillForm.category || "Outros",
+      category: skillForm.category || mergedCategories[0]?.name || "Outros",
       categoryEn: skillForm.categoryEn || "",
       level: skillForm.level || 4,
     };
@@ -257,9 +310,6 @@ export default function SkillsSection({ skills, isEditMode, onUpdateSkills, lang
 
   const activeLevel = hoverLevel ?? skillForm.level ?? 0;
   const levelLabel = LEVEL_LABELS[skillForm.level && skillForm.level >= 1 && skillForm.level <= 5 ? skillForm.level : 4];
-  const categorySuggestions = editingLanguage === "pt" ? ptCategorySuggestions : enCategorySuggestions;
-  const categoryFieldKey = editingLanguage === "pt" ? "category" : "categoryEn";
-  const categoryFieldValue = (editingLanguage === "pt" ? skillForm.category : skillForm.categoryEn) || "";
 
   return (
     <section id="habilidades" className="scroll-mt-32 mb-8 rounded-2xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 sm:p-8 md:p-10 shadow-xs print-border print-shadow-none print-m-0 transition-colors duration-300">
@@ -270,92 +320,105 @@ export default function SkillsSection({ skills, isEditMode, onUpdateSkills, lang
           </div>
           <div>
             <h2 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white font-display">
-              {language === "en" ? "Skills & Competencies" : "Habilidades & Competências"}
+              {t("Habilidades & Competências", "Skills & Competencies")}
             </h2>
             <p className="text-sm text-slate-500 dark:text-slate-400 font-sans">
-              {language === "en"
-                ? "My technical qualifications, frameworks and work tools."
-                : "Minhas qualificações técnicas, frameworks e ferramentas de trabalho."}
+              {t(
+                "Minhas qualificações técnicas, frameworks e ferramentas de trabalho.",
+                "My technical qualifications, frameworks and work tools."
+              )}
             </p>
           </div>
         </div>
 
         {isEditMode && (
           <button
-            onClick={handleOpenAdd}
+            onClick={handleOpenSectionAdd}
             className="flex items-center gap-1 rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white shadow-xs transition-colors hover:bg-indigo-700 no-print print:hidden cursor-pointer"
-            id="add-skill-btn"
+            id="add-skill-section-btn"
           >
-            <Plus className="h-3.5 w-3.5" />
-            {language === "en" ? "Add" : "Adicionar"}
+            <FolderPlus className="h-3.5 w-3.5" />
+            {t("Nova Seção", "New Section")}
           </button>
         )}
       </div>
 
-      {skills.length === 0 ? (
+      {mergedCategories.length === 0 ? (
         <div className="rounded-xl border border-dashed border-slate-200 dark:border-slate-800 p-8 text-center font-sans">
           <Award className="mx-auto h-6 w-6 text-slate-300 dark:text-slate-700" />
           <p className="mt-2 text-xs text-slate-400 dark:text-slate-500 font-medium">
-            {language === "en" ? "No competencies added." : "Nenhuma competência adicionada."}
+            {isEditMode
+              ? t("Nenhuma seção criada. Clique em \"Nova Seção\" para começar.", "No sections yet. Click \"New Section\" to start.")
+              : t("Nenhuma competência adicionada.", "No competencies added.")}
           </p>
         </div>
       ) : (
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4 print:grid-cols-2 print:gap-4">
-          {categories.map((cat, idx) => {
-            const catSkills = skills.filter((s) => s.category === cat);
+          {mergedCategories.map((cat, idx) => {
+            const catSkills = skills.filter((s) => s.category === cat.name);
             const accent = getCategoryAccent(idx);
             return (
               <div
-                key={`skill-cat-${cat}-${idx}`}
+                key={cat.id}
                 className="rounded-xl border border-slate-100/50 dark:border-slate-800/80 bg-slate-50/50 dark:bg-slate-950/20 p-5 print-border print-bg-transparent print-break-inside-avoid"
               >
                 <div className="flex items-center gap-2 mb-4 pb-3 border-b border-slate-100 dark:border-slate-800">
                   <div className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md ${accent.bg} ${accent.text} print-border print-bg-none`}>
                     <Tag className="h-3 w-3" />
                   </div>
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 font-sans">
-                    {language === "en" ? getCategoryName(cat, "en") : cat}
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 font-sans truncate">
+                    {catDisplayName(cat, language)}
                   </h3>
-                  <span className="ml-auto text-[10px] font-mono font-semibold text-slate-300 dark:text-slate-600">
+                  <span className="ml-auto shrink-0 text-[10px] font-mono font-semibold text-slate-300 dark:text-slate-600">
                     {catSkills.length}
                   </span>
+                  {isEditMode && (
+                    <div className="flex items-center gap-0.5 shrink-0 no-print print:hidden">
+                      <button
+                        onClick={() => handleOpenAddToCategory(cat)}
+                        className="rounded p-1 text-slate-400 hover:bg-slate-200/70 dark:hover:bg-slate-800 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors cursor-pointer"
+                        title={t("Adicionar habilidade", "Add skill")}
+                      >
+                        <Plus className="h-3.5 w-3.5" />
+                      </button>
+                      {!cat.isOrphan && (
+                        <button
+                          onClick={() => handleDeleteCategory(cat)}
+                          className="rounded p-1 text-slate-400 hover:bg-slate-200/70 dark:hover:bg-slate-800 hover:text-rose-600 dark:hover:text-rose-400 transition-colors cursor-pointer"
+                          title={t("Excluir seção", "Delete section")}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </div>
 
-                {isEditMode ? (
-                  <Reorder.Group
-                    as="div"
-                    axis="y"
-                    values={catSkills}
-                    onReorder={(newOrder) => handleReorderCategory(cat, newOrder as Skill[])}
+                {catSkills.length === 0 ? (
+                  <p className="text-[11px] text-slate-400 dark:text-slate-600 font-sans italic">
+                    {t("Nenhuma habilidade ainda.", "No skills yet.")}
+                  </p>
+                ) : (
+                  <ReorderableList
+                    items={catSkills}
+                    isEditMode={isEditMode}
+                    onReorder={(newOrder) => handleReorderCategory(cat.name, newOrder)}
+                    getKey={(skill) => skill.id}
                     className="space-y-4"
+                    itemClassName="group relative"
                   >
-                    {catSkills.map((skill) => (
-                      <DraggableSkillRow
-                        key={skill.id}
+                    {(skill, dragHandle) => (
+                      <SkillRowContent
                         skill={skill}
                         language={language}
                         accent={accent}
                         isEditMode={isEditMode}
                         onEdit={handleOpenEdit}
                         onDelete={handleDelete}
+                        dragHandle={dragHandle}
                       />
-                    ))}
-                  </Reorder.Group>
-                ) : (
-                  <div className="space-y-4">
-                    {catSkills.map((skill) => (
-                      <div key={skill.id} className="group relative">
-                        <SkillRowContent
-                          skill={skill}
-                          language={language}
-                          accent={accent}
-                          isEditMode={false}
-                          onEdit={handleOpenEdit}
-                          onDelete={handleDelete}
-                        />
-                      </div>
-                    ))}
-                  </div>
+                    )}
+                  </ReorderableList>
                 )}
               </div>
             );
@@ -367,7 +430,7 @@ export default function SkillsSection({ skills, isEditMode, onUpdateSkills, lang
       <EditModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        title={editingSkill ? (language === "en" ? "Edit Skill" : "Editar Habilidade") : (language === "en" ? "Add Skill" : "Adicionar Habilidade")}
+        title={editingSkill ? t("Editar Habilidade", "Edit Skill") : t("Adicionar Habilidade", "Add Skill")}
         size="lg"
       >
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -376,18 +439,19 @@ export default function SkillsSection({ skills, isEditMode, onUpdateSkills, lang
           <div className="bg-slate-50 dark:bg-slate-800/50 p-3 rounded-2xl border border-slate-200/60 dark:border-slate-700/60 mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
               <p className="text-xs font-bold text-slate-700 dark:text-slate-200 font-sans">
-                {language === "en" ? "Language under Editing" : "Idioma em Edição"}
+                {t("Idioma em Edição", "Language under Editing")}
               </p>
               <p className="text-[10px] text-slate-400 dark:text-slate-500 font-sans">
-                {language === "en"
-                  ? "Toggle to specify contents in Portuguese or English"
-                  : "Alterne para preencher as informações em Português ou Inglês"}
+                {t(
+                  "Alterne para preencher as informações em Português ou Inglês",
+                  "Toggle to specify contents in Portuguese or English"
+                )}
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto shrink-0 font-sans">
               <TranslateButton
                 onTranslate={handleAutoTranslateSkill}
-                label={language === "en" ? "Auto-Translate PT → EN" : "Traduzir PT → EN (Gemini AI)"}
+                label={t("Traduzir PT → EN (Gemini AI)", "Auto-Translate PT → EN")}
                 size="sm"
               />
               <div className="bg-slate-200/70 dark:bg-slate-700/70 p-1 rounded-xl flex gap-1">
@@ -416,6 +480,16 @@ export default function SkillsSection({ skills, isEditMode, onUpdateSkills, lang
               </div>
             </div>
           </div>
+
+          {lockedCategory && (
+            <div className="flex items-center gap-2 rounded-lg bg-indigo-50 dark:bg-indigo-950/30 border border-indigo-100 dark:border-indigo-900/50 px-3 py-2 text-xs font-sans">
+              <Tag className="h-3.5 w-3.5 text-indigo-500 shrink-0" />
+              <span className="text-slate-600 dark:text-slate-300">{t("Seção:", "Section:")}</span>
+              <span className="font-semibold text-indigo-700 dark:text-indigo-300">
+                {editingLanguage === "en" ? lockedCategory.nameEn || lockedCategory.name : lockedCategory.name}
+              </span>
+            </div>
+          )}
 
           {editingLanguage === "pt" ? (
             <div className="space-y-1">
@@ -447,53 +521,37 @@ export default function SkillsSection({ skills, isEditMode, onUpdateSkills, lang
             </div>
           )}
 
-          {/* Category picker: click an existing category or type a new one */}
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-600 dark:text-slate-300 font-sans">
-              {language === "en" ? "Category" : "Categoria"}
-            </label>
-
-            {categorySuggestions.length > 0 && (
-              <div className="flex flex-wrap gap-1.5">
-                {categorySuggestions.map((cat) => {
-                  const isSelected = categoryFieldValue === cat;
-                  return (
-                    <button
-                      key={`cat-chip-${cat}`}
-                      type="button"
-                      onClick={() => setSkillForm({ ...skillForm, [categoryFieldKey]: cat })}
-                      className={`inline-flex items-center gap-1 rounded-xl px-3 py-1.5 text-xs font-bold transition-all cursor-pointer border ${
-                        isSelected
-                          ? "bg-indigo-600 text-white border-indigo-600 shadow-xs"
-                          : "bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-indigo-400"
-                      }`}
-                    >
-                      {isSelected && <Check className="h-3.5 w-3.5 shrink-0" />}
-                      <span>{cat}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-
-            <input
-              type="text"
-              required
-              placeholder={
-                editingLanguage === "pt"
-                  ? "Ou digite uma nova categoria (Ex: Física Computacional, Idiomas)"
-                  : "Or type a new category (e.g. Computational Physics, Languages)"
-              }
-              value={categoryFieldValue}
-              onChange={(e) => setSkillForm({ ...skillForm, [categoryFieldKey]: e.target.value })}
-              className={inputClasses}
-            />
-          </div>
+          {/* Category: only editable when moving an existing skill between sections */}
+          {!lockedCategory && (
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-slate-600 dark:text-slate-300 font-sans">
+                {t("Seção", "Section")}
+              </label>
+              <select
+                value={skillForm.category || ""}
+                onChange={(e) => {
+                  const chosen = mergedCategories.find((c) => c.name === e.target.value);
+                  setSkillForm((prev) => ({
+                    ...prev,
+                    category: chosen?.name || e.target.value,
+                    categoryEn: chosen?.nameEn || prev.categoryEn,
+                  }));
+                }}
+                className={inputClasses}
+              >
+                {mergedCategories.map((c) => (
+                  <option key={c.id} value={c.name}>
+                    {catDisplayName(c, editingLanguage)}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
 
           {/* Star rating picker */}
           <div className="space-y-1.5">
             <label className="text-xs font-semibold text-slate-600 dark:text-slate-300 font-sans">
-              {language === "en" ? "Proficiency / Level" : "Proficiência / Nível"}
+              {t("Proficiência / Nível", "Proficiency / Level")}
             </label>
             <div className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2.5">
               <div className="flex items-center gap-0.5" onMouseLeave={() => setHoverLevel(null)}>
@@ -528,13 +586,77 @@ export default function SkillsSection({ skills, isEditMode, onUpdateSkills, lang
               onClick={() => setIsModalOpen(false)}
               className="rounded-lg border border-slate-200 dark:border-slate-700 px-4 py-2 text-sm font-semibold text-slate-600 dark:text-slate-300 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800"
             >
-              {language === "en" ? "Cancel" : "Cancelar"}
+              {t("Cancelar", "Cancel")}
             </button>
             <button
               type="submit"
               className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-xs transition-colors hover:bg-indigo-700"
             >
-              {language === "en" ? "Save Changes" : "Salvar Alterações"}
+              {t("Salvar Alterações", "Save Changes")}
+            </button>
+          </div>
+        </form>
+      </EditModal>
+
+      {/* New Section Modal */}
+      <EditModal
+        isOpen={isSectionModalOpen}
+        onClose={() => setIsSectionModalOpen(false)}
+        title={t("Nova Seção", "New Section")}
+      >
+        <form onSubmit={handleSectionSubmit} className="space-y-4">
+          <div className="bg-slate-50 dark:bg-slate-800/50 p-3 rounded-2xl border border-slate-200/60 dark:border-slate-700/60 mb-1 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <p className="text-[10px] text-slate-400 dark:text-slate-500 font-sans">
+              {t("Preencha em português, ou traduza automaticamente.", "Fill in Portuguese, or auto-translate.")}
+            </p>
+            <TranslateButton
+              onTranslate={handleAutoTranslateSection}
+              label={t("Traduzir PT → EN", "Auto-Translate PT → EN")}
+              size="sm"
+            />
+          </div>
+
+          <div className="space-y-1">
+            <label className="text-xs font-semibold text-slate-600 dark:text-slate-300 font-sans">
+              {t("Nome da Seção (Português) *", "Section Name (Portuguese) *")}
+            </label>
+            <input
+              type="text"
+              required
+              autoFocus
+              placeholder={t("Ex: Física Computacional, Idiomas", "e.g. Computational Physics, Languages")}
+              value={sectionForm.name}
+              onChange={(e) => setSectionForm({ ...sectionForm, name: e.target.value })}
+              className={inputClasses}
+            />
+          </div>
+
+          <div className="space-y-1">
+            <label className="text-xs font-semibold text-slate-600 dark:text-slate-300 font-sans">
+              {t("Nome da Seção (Inglês)", "Section Name (English)")}
+            </label>
+            <input
+              type="text"
+              placeholder={t("Ex: Computational Physics, Languages", "e.g. Computational Physics, Languages")}
+              value={sectionForm.nameEn}
+              onChange={(e) => setSectionForm({ ...sectionForm, nameEn: e.target.value })}
+              className={inputClasses}
+            />
+          </div>
+
+          <div className="flex justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
+            <button
+              type="button"
+              onClick={() => setIsSectionModalOpen(false)}
+              className="rounded-lg border border-slate-200 dark:border-slate-700 px-4 py-2 text-sm font-semibold text-slate-600 dark:text-slate-300 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800"
+            >
+              {t("Cancelar", "Cancel")}
+            </button>
+            <button
+              type="submit"
+              className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-xs transition-colors hover:bg-indigo-700"
+            >
+              {t("Criar Seção", "Create Section")}
             </button>
           </div>
         </form>
@@ -546,9 +668,9 @@ export default function SkillsSection({ skills, isEditMode, onUpdateSkills, lang
         onConfirm={confirmCallback || (() => {})}
         title={confirmTitle}
         message={confirmMessage}
-        confirmText={language === "en" ? "Delete" : "Excluir"}
-        cancelText={language === "en" ? "Cancel" : "Cancelar"}
-        type="danger"
+        confirmText={confirmType === "info" ? t("Entendi", "Got it") : t("Excluir", "Delete")}
+        cancelText={confirmType === "info" ? "" : t("Cancelar", "Cancel")}
+        type={confirmType}
       />
     </section>
   );

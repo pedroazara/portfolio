@@ -13,6 +13,7 @@ import LocalImage from "../components/LocalImage";
 import { COVER_ASPECT_CLASS } from "../lib/coverAspect";
 import TableOfContents from "../components/TableOfContents";
 import ProjectNavList from "../components/ProjectNavList";
+import { useLocalePath } from "../lib/routes";
 
 interface ProjectPageProps {
   /** Trecho da URL: o `codigo` ou `id` do projeto. */
@@ -41,6 +42,7 @@ export default function ProjectPage({
   language,
 }: ProjectPageProps) {
   const navigate = useNavigate();
+  const lp = useLocalePath();
   const [copiedLink, setCopiedLink] = useState(false);
 
   const project = findBySlug(projects, slug);
@@ -84,7 +86,7 @@ export default function ProjectPage({
             : "Ele pode ter sido excluído, ou o link está errado."}
         </p>
         <Link
-          to="/projetos"
+          to={lp("/projetos")}
           className="mt-5 inline-block rounded-xl bg-indigo-600 px-5 py-2.5 text-xs font-bold text-white transition-colors hover:bg-indigo-700"
         >
           {language === "en" ? "Back to projects" : "Voltar aos projetos"}
@@ -144,7 +146,7 @@ export default function ProjectPage({
       : null;
 
   const handleCopyLink = () => {
-    navigator.clipboard.writeText(`${window.location.origin}/project/${slugOf(project)}`);
+    navigator.clipboard.writeText(`${window.location.origin}${lp(`/project/${slugOf(project)}`)}`);
     setCopiedLink(true);
     setTimeout(() => setCopiedLink(false), 2000);
   };
@@ -162,7 +164,7 @@ export default function ProjectPage({
         {/* Barra de navegação do projeto */}
         <div className="mb-6 flex flex-wrap items-center justify-between gap-3 no-print">
           <Link
-            to="/projetos"
+            to={lp("/projetos")}
             className="flex items-center gap-1.5 rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-600 transition-colors hover:bg-slate-50 dark:border-slate-800 dark:text-slate-300 dark:hover:bg-slate-800"
           >
             <ArrowLeft className="h-3.5 w-3.5" />
@@ -381,7 +383,7 @@ export default function ProjectPage({
               {relatedPosts.map((post) => (
                 <Link
                   key={post.id}
-                  to={`/blog/${slugOf(post)}`}
+                  to={lp(`/blog/${slugOf(post)}`)}
                   className="group rounded-xl border border-slate-200 p-3.5 transition-all hover:border-indigo-500 hover:shadow-md dark:border-slate-800 dark:hover:border-indigo-500"
                 >
                   <span className="block font-display text-sm font-bold text-slate-900 transition-colors group-hover:text-indigo-600 dark:text-white dark:group-hover:text-indigo-400">
@@ -404,7 +406,7 @@ export default function ProjectPage({
           >
             {previousProject ? (
               <Link
-                to={`/project/${slugOf(previousProject)}`}
+                to={lp(`/project/${slugOf(previousProject)}`)}
                 className="group rounded-2xl border border-slate-200 p-4 transition-all hover:border-indigo-500 hover:shadow-md dark:border-slate-800 dark:hover:border-indigo-500"
               >
                 <span className="flex items-center gap-1 font-mono text-[11px] uppercase tracking-wider text-slate-400">
@@ -420,7 +422,7 @@ export default function ProjectPage({
             )}
             {nextProject && (
               <Link
-                to={`/project/${slugOf(nextProject)}`}
+                to={lp(`/project/${slugOf(nextProject)}`)}
                 className="group rounded-2xl border border-slate-200 p-4 text-right transition-all hover:border-indigo-500 hover:shadow-md dark:border-slate-800 dark:hover:border-indigo-500"
               >
                 <span className="flex items-center justify-end gap-1 font-mono text-[11px] uppercase tracking-wider text-slate-400">

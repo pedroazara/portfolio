@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Download, Sun, Moon, Menu, X, Lock, ChevronDown, ArrowRight } from "lucide-react";
+import { Download, Sun, Moon, Menu, X, Lock, ChevronDown, ArrowRight, LayoutDashboard } from "lucide-react";
 import { OrbitaIcon } from "./OrbitaIcon";
 import { generateResumePDF } from "../utils/pdfGenerator";
+import { stripLocale, localePath } from "../lib/routes";
 import { ResumeData } from "../types";
 
 interface GlobalHeaderProps {
@@ -59,22 +60,26 @@ export default function GlobalHeader({
     setIsMobileMenuOpen(false);
   }, [location.pathname]);
 
+  // `path` é sempre o caminho canônico em português; `localePath` o converte
+  // para a URL real do idioma ativo (`/curriculo` ou `/en/resume`).
   const navItems = [
-    { label: language === "en" ? "Curriculum" : "Currículo", path: "/curriculo" },
+    { label: language === "en" ? "Resume" : "Currículo", path: "/curriculo" },
     { label: language === "en" ? "Projects" : "Projetos", path: "/projetos" },
     { label: language === "en" ? "Blog" : "Blog", path: "/blog" },
   ];
 
+  const { path: routePath } = stripLocale(location.pathname);
+
   // Helper to test active route
   const isRouteActive = (path: string) => {
     if (path === "/curriculo") {
-      return location.pathname === "/" || location.pathname === "/curriculo";
+      return routePath === "/" || routePath === "/curriculo";
     }
     if (path === "/projetos") {
-      return location.pathname.startsWith("/projetos") || location.pathname.startsWith("/project");
+      return routePath.startsWith("/projetos") || routePath.startsWith("/project");
     }
     if (path === "/blog") {
-      return location.pathname.startsWith("/blog");
+      return routePath.startsWith("/blog");
     }
     return false;
   };
@@ -109,9 +114,9 @@ export default function GlobalHeader({
             {/* Zone 1: Brand */}
             <div className="flex items-center gap-[8px] shrink-0">
               <Link
-                to="/"
+                to={localePath("/", language)}
                 className="group orb-hover flex items-center gap-2.5 rounded-full focus-visible:outline-2 focus-visible:outline-[var(--accent)] focus-visible:outline-offset-2 hover:opacity-95 transition-opacity"
-                aria-label="Ir para a página inicial"
+                aria-label={language === "en" ? "Go to home page" : "Ir para a página inicial"}
               >
                 <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[var(--accent)] text-white p-0.5 shrink-0 shadow-xs">
                   <OrbitaIcon size={38} color="#ffffff" />
@@ -133,7 +138,7 @@ export default function GlobalHeader({
                 return (
                   <Link
                     key={item.path}
-                    to={item.path}
+                    to={localePath(item.path, language)}
                     aria-current={active ? "page" : undefined}
                     className={`relative px-3 py-2 text-[14.5px] rounded-[7px] transition-colors duration-160 font-sans cursor-pointer ${
                       active
@@ -191,12 +196,25 @@ export default function GlobalHeader({
                 {darkMode ? <Sun className="h-4 w-4 text-amber-400" /> : <Moon className="h-4 w-4 text-[var(--accent)]" />}
               </button>
 
+              {/* Painel pessoal: área privada, só faz sentido com sessão ativa */}
+              {isAuthenticated && (
+                <button
+                  type="button"
+                  onClick={() => navigate(localePath("/admin/painel", language))}
+                  className="hidden min-[860px]:flex h-8 items-center gap-1.5 rounded-lg border border-[var(--border)] bg-[var(--surface)] px-2.5 text-[12px] font-medium text-[var(--text-muted)] transition-colors hover:bg-[var(--surface-raised)] hover:text-[var(--text)] cursor-pointer"
+                  title="Painel pessoal"
+                >
+                  <LayoutDashboard className="h-3.5 w-3.5 text-indigo-500" />
+                  <span>Painel</span>
+                </button>
+              )}
+
               {/* Admin Button */}
               <button
                 type="button"
                 onClick={() => {
                   if (onOpenLogin) onOpenLogin();
-                  else navigate("/admin");
+                  else navigate(localePath("/admin", language));
                 }}
                 className={`hidden min-[860px]:flex h-8 items-center gap-1.5 rounded-lg border px-2.5 text-[12px] font-medium transition-colors cursor-pointer ${
                   isAuthenticated
@@ -266,7 +284,7 @@ export default function GlobalHeader({
                 return (
                   <Link
                     key={item.path}
-                    to={item.path}
+                    to={localePath(item.path, language)}
                     onClick={() => setIsMobileMenuOpen(false)}
                     className={`flex items-center justify-between rounded-xl px-4 py-3 text-base font-medium transition-colors ${
                       active
@@ -334,7 +352,7 @@ export default function GlobalHeader({
                   onClick={() => {
                     setIsMobileMenuOpen(false);
                     if (onOpenLogin) onOpenLogin();
-                    else navigate("/admin");
+                    else navigate(localePath("/admin", language));
                   }}
                   className="flex items-center gap-2 rounded-lg border border-[var(--border)] bg-[var(--surface-raised)] px-3 py-1.5 text-xs font-semibold text-[var(--text)] cursor-pointer"
                 >
@@ -342,6 +360,25 @@ export default function GlobalHeader({
                   <span>{isAuthenticated ? (language === "en" ? "Admin Mode" : "Modo Admin") : "Admin"}</span>
                 </button>
               </div>
+
+              {isAuthenticated && (
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-semibold text-[var(--text-muted)]">
+                    {language === "en" ? "Personal hub" : "Painel pessoal"}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsMobileMenuOpen(false);
+                      navigate(localePath("/admin/painel", language));
+                    }}
+                    className="flex items-center gap-2 rounded-lg border border-[var(--border)] bg-[var(--surface-raised)] px-3 py-1.5 text-xs font-semibold text-[var(--text)] cursor-pointer"
+                  >
+                    <LayoutDashboard className="h-4 w-4 text-indigo-500" />
+                    <span>{language === "en" ? "Open" : "Abrir"}</span>
+                  </button>
+                </div>
+              )}
 
               {isAuthenticated && (
                 <button

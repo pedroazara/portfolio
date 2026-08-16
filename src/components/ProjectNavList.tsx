@@ -5,6 +5,7 @@ import { Project } from "../types";
 import { Language } from "../lib/translations";
 import { slugOf } from "../utils/slug";
 import LocalImage from "./LocalImage";
+import { useLocalePath } from "../lib/routes";
 
 interface ProjectNavListProps {
   projects: Project[];
@@ -20,6 +21,7 @@ interface ProjectNavListProps {
  * um para outro sem voltar à grade.
  */
 export default function ProjectNavList({ projects, currentId, language = "pt" }: ProjectNavListProps) {
+  const lp = useLocalePath();
   if (projects.length <= 1) return null;
 
   return (
@@ -75,7 +77,7 @@ export default function ProjectNavList({ projects, currentId, language = "pt" }:
           return (
             <li key={proj.id}>
               <Link
-                to={`/project/${slugOf(proj)}`}
+                to={lp(`/project/${slugOf(proj)}`)}
                 className="flex items-center gap-2.5 rounded-xl border border-transparent p-2 text-slate-600 transition-colors hover:border-slate-200 hover:bg-slate-50 hover:text-slate-900 dark:text-slate-400 dark:hover:border-slate-800 dark:hover:bg-slate-900 dark:hover:text-white"
               >
                 {inner}

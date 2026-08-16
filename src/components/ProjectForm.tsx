@@ -11,7 +11,7 @@ import ImageGalleryInput from "./ImageGalleryInput";
 import ArticleContentEditor from "./ArticleContentEditor";
 import MarkdownRenderer from "./MarkdownRenderer";
 import TranslateButton from "./TranslateButton";
-import { translateFields } from "../lib/translator";
+import { autoTranslateFields } from "../lib/translator";
 import { projectFolder } from "../utils/imageDb";
 import LocalImage from "./LocalImage";
 
@@ -143,22 +143,15 @@ export default function ProjectForm({
   }, [project, language, categories]);
 
   const handleAutoTranslate = async () => {
-    const fieldsToTranslate = {
-      titleEn: formData.title || "",
-      descriptionEn: formData.description || "",
-      detailedDescriptionEn: formData.detailedDescription || "",
-      scientificRelevanceEn: formData.scientificRelevance || "",
-    };
-
-    const translated = await translateFields(fieldsToTranslate);
-
-    setFormData((prev) => ({
-      ...prev,
-      titleEn: translated.titleEn || prev.titleEn || "",
-      descriptionEn: translated.descriptionEn || prev.descriptionEn || "",
-      detailedDescriptionEn: translated.detailedDescriptionEn || prev.detailedDescriptionEn || "",
-      scientificRelevanceEn: translated.scientificRelevanceEn || prev.scientificRelevanceEn || "",
-    }));
+    await autoTranslateFields(
+      {
+        titleEn: formData.title || "",
+        descriptionEn: formData.description || "",
+        detailedDescriptionEn: formData.detailedDescription || "",
+        scientificRelevanceEn: formData.scientificRelevance || "",
+      },
+      setFormData
+    );
   };
 
   const handleSubmit = (e: React.FormEvent) => {

@@ -10,12 +10,11 @@ import { motion, AnimatePresence } from "motion/react";
 import EditModal from "./EditModal";
 import ConfirmModal from "./ConfirmModal";
 import MarkdownRenderer from "./MarkdownRenderer";
+import { ReorderableList, mergeReorderedSubset } from "./Reorderable";
 import LocalImage from "./LocalImage";
 import ImageSelectorInput from "./ImageSelectorInput";
 import ArticleContentEditor from "./ArticleContentEditor";
 import { Language, translations } from "../lib/translations";
-import TranslateButton from "./TranslateButton";
-import { translateFields } from "../lib/translator";
 import { estimateReadTime } from "../utils/readTime";
 import { findBySlug, slugOf } from "../utils/slug";
 
@@ -162,6 +161,12 @@ export default function BlogSection({
     const postCat = getPostCategoryDisplay(post);
     return postCat.toLowerCase().trim() === activeCategoryFilter.toLowerCase().trim();
   });
+
+  // Reordering only applies to the unfiltered "Todos" view — the featured
+  // hero post (filteredPosts[0]) always stays fixed; dragging only reorders
+  // the remaining articles among themselves.
+  const canReorderPosts =
+    isEditMode && (activeCategoryFilter === "Todos" || activeCategoryFilter === "All") && !searchQuery.trim();
 
   return (
     <div className="mt-16 border-t border-slate-100 dark:border-slate-800/80 pt-16 no-print print:hidden" id="blog-section">
@@ -341,17 +346,32 @@ export default function BlogSection({
 
           {/* Remaining Articles (Spacious 2-column wide portfolio grid) */}
           {filteredPosts.length > 1 && (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-12">
-              {filteredPosts.slice(1).map((post) => {
+            <ReorderableList
+              items={filteredPosts.slice(1)}
+              isEditMode={canReorderPosts}
+              onReorder={(newOrder) => onUpdatePosts(mergeReorderedSubset(posts, newOrder))}
+              getKey={(post) => post.id}
+              className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-12"
+            >
+              {(post, dragHandle) => {
                 const displayTitle = (language === "en" ? post.titleEn : post.title) || post.title;
                 const displaySummary = (language === "en" ? post.summaryEn : post.summary) || post.summary;
 
                 return (
                   <article
-                    key={post.id}
                     onClick={() => setSelectedPost(post)}
-                    className="group flex flex-col overflow-hidden rounded-3xl border border-slate-200/70 dark:border-slate-800/80 bg-white dark:bg-slate-900 shadow-xs transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl hover:border-indigo-300 dark:hover:border-indigo-800/80 cursor-pointer h-full"
+                    className="group relative flex flex-col overflow-hidden rounded-3xl border border-slate-200/70 dark:border-slate-800/80 bg-white dark:bg-slate-900 shadow-xs transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl hover:border-indigo-300 dark:hover:border-indigo-800/80 cursor-pointer h-full"
                   >
+                    {/* Alça de arrastar — só existe na aba "Todos", sem busca ativa. */}
+                    {dragHandle && (
+                      <div
+                        onClick={(e) => e.stopPropagation()}
+                        className="absolute right-4 top-4 z-10 rounded-full bg-white/90 dark:bg-slate-900/90 p-1.5 shadow-sm sm:opacity-0 sm:group-hover:opacity-100 opacity-100 transition-opacity"
+                      >
+                        {dragHandle}
+                      </div>
+                    )}
+
                     {/* Cover Image */}
                     {post.imageUrl ? (
                       <div className="relative aspect-[16/9] w-full overflow-hidden bg-slate-50 dark:bg-slate-950/30 shrink-0">
@@ -455,8 +475,8 @@ export default function BlogSection({
                     </div>
                   </article>
                 );
-              })}
-            </div>
+              }}
+            </ReorderableList>
           )}
         </div>
       )}

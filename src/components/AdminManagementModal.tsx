@@ -814,23 +814,39 @@ function TranslationTab({
 }) {
   const t = (pt: string, en: string) => (language === "en" ? en : pt);
 
+  const [selectedKeys, setSelectedKeys] = useState<Set<string>>(
+    () => new Set(TRANSLATE_ALL_STEPS.map((s) => s.key))
+  );
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [isRunning, setIsRunning] = useState(false);
-  const [steps, setSteps] = useState<TranslateAllStep[]>(
-    TRANSLATE_ALL_STEPS.map((s) => ({ ...s, status: "pending" }))
-  );
+  const [steps, setSteps] = useState<TranslateAllStep[]>([]);
   const [errors, setErrors] = useState<{ section: string; message: string }[]>([]);
   const [finished, setFinished] = useState(false);
+
+  const toggleKey = (key: string) => {
+    setSelectedKeys((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  };
+
+  const selectedSteps = TRANSLATE_ALL_STEPS.filter((s) => selectedKeys.has(s.key));
 
   const handleRun = async () => {
     setIsRunning(true);
     setFinished(false);
     setErrors([]);
-    setSteps(TRANSLATE_ALL_STEPS.map((s) => ({ ...s, status: "pending" })));
+    setSteps(selectedSteps.map((s) => ({ ...s, status: "pending" })));
 
-    const { data, errors: runErrors } = await translateAllContent(resumeData, (key, status, error) => {
-      setSteps((prev) => prev.map((s) => (s.key === key ? { ...s, status, error } : s)));
-    });
+    const { data, errors: runErrors } = await translateAllContent(
+      resumeData,
+      (key, status, error) => {
+        setSteps((prev) => prev.map((s) => (s.key === key ? { ...s, status, error } : s)));
+      },
+      selectedKeys
+    );
 
     onRestore(data);
     setErrors(runErrors);
@@ -854,14 +870,58 @@ function TranslationTab({
         )}
       </p>
 
+      <div className="mb-4 rounded-xl border border-slate-100 dark:border-slate-800 overflow-hidden">
+        <div className="flex items-center justify-between bg-slate-50/60 dark:bg-slate-800/40 px-3 py-2 border-b border-slate-100 dark:border-slate-800">
+          <span className="text-[11px] font-bold uppercase tracking-wide text-slate-400 dark:text-slate-500">
+            {t("Seções a traduzir", "Sections to translate")}
+          </span>
+          <div className="flex gap-3 text-[11px] font-semibold">
+            <button
+              type="button"
+              onClick={() => setSelectedKeys(new Set(TRANSLATE_ALL_STEPS.map((s) => s.key)))}
+              className="text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer"
+            >
+              {t("Todas", "All")}
+            </button>
+            <button
+              type="button"
+              onClick={() => setSelectedKeys(new Set())}
+              className="text-slate-400 dark:text-slate-500 hover:underline cursor-pointer"
+            >
+              {t("Nenhuma", "None")}
+            </button>
+          </div>
+        </div>
+        <div className="divide-y divide-slate-100 dark:divide-slate-800">
+          {TRANSLATE_ALL_STEPS.map((s) => (
+            <label
+              key={s.key}
+              className="flex items-center gap-2.5 px-3 py-2 text-xs cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/40"
+            >
+              <input
+                type="checkbox"
+                checked={selectedKeys.has(s.key)}
+                onChange={() => toggleKey(s.key)}
+                className="rounded border-slate-300 dark:border-slate-600 text-indigo-600 focus:ring-indigo-500"
+              />
+              <span className="text-slate-700 dark:text-slate-200">{s.label}</span>
+            </label>
+          ))}
+        </div>
+      </div>
+
       <button
         type="button"
         onClick={() => setConfirmOpen(true)}
-        disabled={isRunning}
+        disabled={isRunning || selectedSteps.length === 0}
         className="flex w-full items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 py-2.5 text-xs font-semibold text-white shadow-xs transition-all cursor-pointer disabled:opacity-60"
       >
         {isRunning ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5 text-amber-300" />}
-        {isRunning ? t("Traduzindo…", "Translating…") : t("Traduzir Tudo (PT → EN)", "Translate Everything (PT → EN)")}
+        {isRunning
+          ? t("Traduzindo…", "Translating…")
+          : selectedSteps.length === TRANSLATE_ALL_STEPS.length
+          ? t("Traduzir Tudo (PT → EN)", "Translate Everything (PT → EN)")
+          : t(`Traduzir Selecionadas (${selectedSteps.length})`, `Translate Selected (${selectedSteps.length})`)}
       </button>
 
       {(isRunning || finished) && (
@@ -905,8 +965,8 @@ function TranslationTab({
             {errors.length === 0
               ? t("Tudo traduzido com sucesso!", "Everything translated successfully!")
               : t(
-                  `${TRANSLATE_ALL_STEPS.length - errors.length}/${TRANSLATE_ALL_STEPS.length} seções traduzidas. ${errors.length} falharam e mantiveram o conteúdo anterior.`,
-                  `${TRANSLATE_ALL_STEPS.length - errors.length}/${TRANSLATE_ALL_STEPS.length} sections translated. ${errors.length} failed and kept their previous content.`
+                  `${steps.length - errors.length}/${steps.length} seções traduzidas. ${errors.length} falharam e mantiveram o conteúdo anterior.`,
+                  `${steps.length - errors.length}/${steps.length} sections translated. ${errors.length} failed and kept their previous content.`
                 )}
           </span>
         </div>
@@ -917,12 +977,12 @@ function TranslationTab({
         onClose={() => setConfirmOpen(false)}
         onConfirm={handleRun}
         type="warning"
-        title={t("Traduzir tudo e sobrescrever?", "Translate everything and overwrite?")}
+        title={t("Traduzir seções selecionadas e sobrescrever?", "Translate selected sections and overwrite?")}
         message={t(
-          "Isso vai gerar uma nova tradução em inglês para todos os campos curtos do portfólio, substituindo qualquer tradução já existente (inclusive as que você editou manualmente).",
-          "This will generate a fresh English translation for every short field in the portfolio, replacing any existing translation (including ones you edited by hand)."
+          `Isso vai gerar uma nova tradução em inglês para as ${selectedSteps.length} seção(ões) marcada(s), substituindo qualquer tradução já existente nelas (inclusive as que você editou manualmente). As demais seções não são tocadas.`,
+          `This will generate a fresh English translation for the ${selectedSteps.length} checked section(s), replacing any existing translation in them (including ones you edited by hand). Other sections are left untouched.`
         )}
-        confirmText={t("Traduzir tudo", "Translate everything")}
+        confirmText={t("Traduzir", "Translate")}
         cancelText={t("Cancelar", "Cancel")}
       />
     </div>

@@ -7,7 +7,7 @@ import LocalImage from "./LocalImage";
 import ImageSelectorInput from "./ImageSelectorInput";
 import { Language, translations } from "../lib/translations";
 import TranslateButton from "./TranslateButton";
-import { translateFields } from "../lib/translator";
+import { autoTranslateFields } from "../lib/translator";
 
 interface ResumeHeaderProps {
   profile: Profile;
@@ -55,18 +55,13 @@ export default function ResumeHeader({
   };
 
   const handleAutoTranslateProfile = async () => {
-    const fieldsToTranslate = {
-      titleEn: formData.title || "",
-      bioEn: formData.bio || "",
-    };
-
-    const translated = await translateFields(fieldsToTranslate);
-
-    setFormData((prev) => ({
-      ...prev,
-      titleEn: translated.titleEn || prev.titleEn || "",
-      bioEn: translated.bioEn || prev.bioEn || "",
-    }));
+    await autoTranslateFields(
+      {
+        titleEn: formData.title || "",
+        bioEn: formData.bio || "",
+      },
+      setFormData
+    );
 
     setEditingLanguage("en");
   };

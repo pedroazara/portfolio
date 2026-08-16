@@ -4,11 +4,13 @@ import { Project, ProjectCategory, BlogPost } from "../types";
 import { FolderKanban, Plus, Edit2, Trash2, ExternalLink, Github, Settings, Info, Eye, BookOpen, Image as ImageIcon, Check, RefreshCw, Search, ArrowLeft } from "lucide-react";
 import EditModal from "./EditModal";
 import ConfirmModal from "./ConfirmModal";
+import { ReorderableList, mergeReorderedSubset } from "./Reorderable";
 import LocalImage from "./LocalImage";
 import MarkdownRenderer from "./MarkdownRenderer";
 import { Language, translations } from "../lib/translations";
 import TranslateButton from "./TranslateButton";
-import { translateFields } from "../lib/translator";
+import { autoTranslateFields } from "../lib/translator";
+import { useLocalePath } from "../lib/routes";
 import { slugOf } from "../utils/slug";
 
 interface ProjectSectionProps {
@@ -43,6 +45,7 @@ export default function ProjectSection({
   onSearchChange,
 }: ProjectSectionProps) {
   const navigate = useNavigate();
+  const lp = useLocalePath();
   const [activeCategory, setActiveCategory] = useState<string>("all");
   const [localSearch, setLocalSearch] = useState(searchQuery);
   useEffect(() => {
@@ -110,6 +113,11 @@ export default function ProjectSection({
     return true;
   });
 
+  // Reordering only makes sense against the full, unfiltered list — with a
+  // category tab or search active, dragging within that subset would shuffle
+  // items relative to ones the admin can't currently see.
+  const canReorderProjects = isEditMode && activeCategory === "all" && !localSearch.trim();
+
   // --- Project Handlers ---
   // A edição acontece em página dedicada (/admin/projetos/...), onde cabe também
   // a galeria que sobe imagens direto para a pasta do projeto no Storage.
@@ -139,18 +147,13 @@ export default function ProjectSection({
   };
 
   const handleAutoTranslateCategory = async () => {
-    const fieldsToTranslate = {
-      nameEn: categoryForm.name || "",
-      descriptionEn: categoryForm.description || "",
-    };
-
-    const translated = await translateFields(fieldsToTranslate);
-
-    setCategoryForm((prev) => ({
-      ...prev,
-      nameEn: translated.nameEn || prev.nameEn || "",
-      descriptionEn: translated.descriptionEn || prev.descriptionEn || "",
-    }));
+    await autoTranslateFields(
+      {
+        nameEn: categoryForm.name || "",
+        descriptionEn: categoryForm.description || "",
+      },
+      setCategoryForm
+    );
 
     setEditingLanguage("en");
   };
@@ -226,7 +229,7 @@ export default function ProjectSection({
       {isStandalonePage && (
         <div className="mb-8 border-b border-slate-100 dark:border-slate-800 pb-6 no-print print:hidden">
           <Link
-            to="/curriculo"
+            to={lp("/curriculo")}
             className="inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 mb-4 transition-colors"
           >
             <ArrowLeft className="h-3.5 w-3.5" />
@@ -390,24 +393,40 @@ export default function ProjectSection({
           )}
         </div>
       ) : (
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 print:grid-cols-1 print:gap-4">
-          {filteredProjects.map((proj) => {
+        <ReorderableList
+          items={filteredProjects}
+          isEditMode={canReorderProjects}
+          onReorder={(newOrder) => onUpdateProjects(mergeReorderedSubset(projects, newOrder))}
+          getKey={(proj) => proj.id}
+          className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 print:grid-cols-1 print:gap-4"
+        >
+          {(proj, dragHandle) => {
             const projCatIds = proj.categoryIds && proj.categoryIds.length > 0
               ? proj.categoryIds
               : (proj.categoryId ? [proj.categoryId] : []);
             const projCategories = categories.filter((c) => projCatIds.includes(c.id));
             return (
               <article
-                key={proj.id}
                 onClick={() => {
                   if (onSelectProject) {
                     onSelectProject(slugOf(proj));
                   } else {
-                    navigate(`/projetos/${encodeURIComponent(slugOf(proj))}`);
+                    navigate(lp(`/projetos/${encodeURIComponent(slugOf(proj))}`));
                   }
                 }}
-                className="group relative flex flex-col overflow-hidden rounded-2xl border border-slate-100 dark:border-slate-800/80 bg-white dark:bg-slate-900/40 shadow-xs transition-all hover:shadow-lg hover:border-slate-200 dark:hover:border-slate-700 hover:-translate-y-1 cursor-pointer print-border print-shadow-none print-translate-none print-break-inside-avoid duration-300"
+                className="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-slate-100 dark:border-slate-800/80 bg-white dark:bg-slate-900/40 shadow-xs transition-all hover:shadow-lg hover:border-slate-200 dark:hover:border-slate-700 hover:-translate-y-1 cursor-pointer print-border print-shadow-none print-translate-none print-break-inside-avoid duration-300"
               >
+                {/* Alça de arrastar — só existe quando a lista está reordenável
+                    (aba "Todos", sem busca ativa). */}
+                {dragHandle && (
+                  <div
+                    onClick={(e) => e.stopPropagation()}
+                    className="absolute left-3 top-3 z-10 rounded-full bg-white/90 dark:bg-slate-900/90 p-1.5 shadow-sm sm:opacity-0 sm:group-hover:opacity-100 opacity-100 transition-opacity no-print"
+                  >
+                    {dragHandle}
+                  </div>
+                )}
+
                 {/* Marca de rascunho — só aparece porque o filtro acima já
                     escondeu estes cartões de quem não está editando. */}
                 {proj.draft && (
@@ -527,8 +546,8 @@ export default function ProjectSection({
                 </div>
               </article>
             );
-          })}
-        </div>
+          }}
+        </ReorderableList>
       )}
 
       {/* Os detalhes do projeto são uma página (/project/<slug>), não um modal. */}

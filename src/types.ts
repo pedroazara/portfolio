@@ -151,6 +151,13 @@ export interface Skill {
   level: number; // 1 to 5 stars or percentage
 }
 
+/** A skill section/category, creatable on its own before it has any skills. */
+export interface SkillCategory {
+  id: string;
+  name: string;
+  nameEn?: string;
+}
+
 export interface Course {
   id: string;
   name: string;
@@ -191,6 +198,7 @@ export interface ResumeData {
   academicActivities?: AcademicActivity[];
   educations: Education[];
   skills: Skill[];
+  skillCategories?: SkillCategory[];
   courses?: Course[];
   posts?: BlogPost[];
 }

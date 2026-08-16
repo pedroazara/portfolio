@@ -10,7 +10,8 @@ import ImageSelectorInput from "../components/ImageSelectorInput";
 import MarkdownRenderer from "../components/MarkdownRenderer";
 import TranslateButton from "../components/TranslateButton";
 import EditorActionRail from "../components/EditorActionRail";
-import { translateFields } from "../lib/translator";
+import { autoTranslateFields } from "../lib/translator";
+import { localePath } from "../lib/routes";
 
 const CATEGORIES = [
   "Física Computacional",
@@ -106,7 +107,7 @@ export default function PostEditorPage({ slug, posts, onUpdatePosts, language }:
             : "Ele pode ter sido excluído, ou o link está errado."}
         </p>
         <button
-          onClick={() => navigate("/blog")}
+          onClick={() => navigate(localePath("/blog", language))}
           className="mt-5 rounded-xl bg-indigo-600 px-5 py-2.5 text-xs font-bold text-white transition-colors hover:bg-indigo-700"
         >
           {language === "en" ? "Back to blog" : "Voltar ao blog"}
@@ -116,16 +117,15 @@ export default function PostEditorPage({ slug, posts, onUpdatePosts, language }:
   }
 
   const handleAutoTranslate = async () => {
-    const translated = await translateFields({
-      titleEn: form.title || "",
-      summaryEn: form.summary || "",
-      contentEn: form.content || "",
-    });
-    update({
-      titleEn: translated.titleEn || form.titleEn || "",
-      summaryEn: translated.summaryEn || form.summaryEn || "",
-      contentEn: translated.contentEn || form.contentEn || "",
-    });
+    await autoTranslateFields(
+      {
+        titleEn: form.title || "",
+        summaryEn: form.summary || "",
+        contentEn: form.content || "",
+      },
+      setForm
+    );
+    setIsDirty(true);
     setEditingLanguage("en");
   };
 
@@ -164,7 +164,7 @@ export default function PostEditorPage({ slug, posts, onUpdatePosts, language }:
     setIsDirty(false);
 
     // Um rascunho não tem página pública; ficamos no editor para continuar.
-    if (!draft) navigate(`/blog/${slugOf(complete)}`);
+    if (!draft) navigate(localePath(`/blog/${slugOf(complete)}`, language));
   };
 
   const isEn = editingLanguage === "en";
@@ -342,7 +342,7 @@ export default function PostEditorPage({ slug, posts, onUpdatePosts, language }:
           }
           isDirty={isDirty}
           isDraft={isDraft}
-          onBack={() => navigate("/blog")}
+          onBack={() => navigate(localePath("/blog", language))}
           onSaveDraft={() => submitAs(true)}
           onPublish={() => submitAs(false)}
           views={["edit", "preview"]}

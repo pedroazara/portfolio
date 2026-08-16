@@ -6,6 +6,7 @@ import { Language } from "../lib/translations";
 import { findBySlug, slugOf } from "../utils/slug";
 import ProjectForm from "../components/ProjectForm";
 import EditorActionRail from "../components/EditorActionRail";
+import { localePath } from "../lib/routes";
 
 interface ProjectEditorPageProps {
   /** Trecho da URL: o `codigo`/`id` do projeto, ou "novo". */
@@ -73,7 +74,7 @@ export default function ProjectEditorPage({
     setIsDirty(false);
 
     // Um rascunho não tem página pública; ficamos no editor para continuar.
-    if (!draft) navigate(`/project/${slugOf(saved)}`);
+    if (!draft) navigate(localePath(`/project/${slugOf(saved)}`, language));
   };
 
   if (!isNew && !existing) {
@@ -89,7 +90,7 @@ export default function ProjectEditorPage({
             : "Ele pode ter sido excluído, ou o link está errado."}
         </p>
         <button
-          onClick={() => navigate("/projetos")}
+          onClick={() => navigate(localePath("/projetos", language))}
           className="mt-5 rounded-xl bg-indigo-600 px-5 py-2.5 text-xs font-bold text-white transition-colors hover:bg-indigo-700"
         >
           {language === "en" ? "Back to projects" : "Voltar aos projetos"}
@@ -121,7 +122,7 @@ export default function ProjectEditorPage({
           }
           isDirty={isDirty}
           isDraft={isDraft}
-          onBack={() => navigate("/projetos")}
+          onBack={() => navigate(localePath("/projetos", language))}
           onSaveDraft={() => submitAs(true)}
           onPublish={() => submitAs(false)}
           views={["edit", "preview"]}
