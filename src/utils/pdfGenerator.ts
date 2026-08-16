@@ -132,81 +132,7 @@ export async function createResumePDFDoc(data?: ResumeData): Promise<jsPDF | nul
   }
 
   // ==========================================
-  // 3. EXPERIÊNCIAS PROFISSIONAIS
-  // ==========================================
-  if (data.experiences && data.experiences.length > 0) {
-    renderSectionHeader("Experiência Profissional");
-
-    // Sort experiences: current first, then by date descending
-    const sortedExp = [...data.experiences].sort((a, b) => {
-      if (a.current && !b.current) return -1;
-      if (!a.current && b.current) return 1;
-      return b.startDate.localeCompare(a.startDate);
-    });
-
-    sortedExp.forEach((exp, idx) => {
-      ensureSpace(18); // Header of experience block
-
-      const dateStr = `${exp.startDate} - ${exp.current ? "Presente" : exp.endDate}`;
-      const locationStr = exp.location ? ` | ${exp.location}` : "";
-      const metaStr = `${dateStr}${locationStr}`;
-
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(8.5);
-      doc.setTextColor(100, 116, 139); // slate-500
-      const metaWidth = doc.getTextWidth(metaStr);
-
-      const titleText = `${exp.role} - ${exp.company}`;
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(10.5);
-      doc.setTextColor(15, 23, 42); // slate-900
-
-      // Calculate max width for first line to prevent overlap with right-aligned meta
-      const maxTitleWidthLine1 = CONTENT_WIDTH - metaWidth - 4;
-      const titleLines = doc.splitTextToSize(titleText, maxTitleWidthLine1);
-
-      // Draw first line of title and right-aligned meta
-      doc.text(titleLines[0], MARGIN_LEFT, y);
-
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(8.5);
-      doc.setTextColor(100, 116, 139);
-      doc.text(metaStr, PAGE_WIDTH - MARGIN_RIGHT - metaWidth, y);
-
-      // Draw remaining lines of title if wrapped
-      if (titleLines.length > 1) {
-        doc.setFont("helvetica", "bold");
-        doc.setFontSize(10.5);
-        doc.setTextColor(15, 23, 42);
-        for (let i = 1; i < titleLines.length; i++) {
-          y += 4.5;
-          ensureSpace(4.5);
-          doc.text(titleLines[i], MARGIN_LEFT, y);
-        }
-      }
-      
-      y += 5;
-
-      // Description
-      if (exp.description && exp.description.trim().length > 0) {
-        doc.setFont("helvetica", "normal");
-        doc.setFontSize(9);
-        doc.setTextColor(51, 65, 85); // slate-700
-        
-        const descLines = doc.splitTextToSize(exp.description.trim(), CONTENT_WIDTH);
-        for (const line of descLines) {
-          ensureSpace(4.5);
-          doc.text(line, MARGIN_LEFT, y);
-          y += 4.5;
-        }
-      }
-      
-      y += (idx < sortedExp.length - 1) ? 5 : 3; // Space between experiences
-    });
-  }
-
-  // ==========================================
-  // 4. FORMAÇÃO ACADÊMICA
+  // 3. FORMAÇÃO ACADÊMICA
   // ==========================================
   if (data.educations && data.educations.length > 0) {
     renderSectionHeader("Formação Acadêmica");
@@ -286,6 +212,80 @@ export async function createResumePDFDoc(data?: ResumeData): Promise<jsPDF | nul
   }
 
   // ==========================================
+  // 4. EXPERIÊNCIA ACADÊMICA
+  // ==========================================
+  if (data.experiences && data.experiences.length > 0) {
+    renderSectionHeader("Experiência Acadêmica");
+
+    // Sort experiences: current first, then by date descending
+    const sortedExp = [...data.experiences].sort((a, b) => {
+      if (a.current && !b.current) return -1;
+      if (!a.current && b.current) return 1;
+      return b.startDate.localeCompare(a.startDate);
+    });
+
+    sortedExp.forEach((exp, idx) => {
+      ensureSpace(18); // Header of experience block
+
+      const dateStr = `${exp.startDate} - ${exp.current ? "Presente" : exp.endDate}`;
+      const locationStr = exp.location ? ` | ${exp.location}` : "";
+      const metaStr = `${dateStr}${locationStr}`;
+
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8.5);
+      doc.setTextColor(100, 116, 139); // slate-500
+      const metaWidth = doc.getTextWidth(metaStr);
+
+      const titleText = `${exp.role} - ${exp.company}`;
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(10.5);
+      doc.setTextColor(15, 23, 42); // slate-900
+
+      // Calculate max width for first line to prevent overlap with right-aligned meta
+      const maxTitleWidthLine1 = CONTENT_WIDTH - metaWidth - 4;
+      const titleLines = doc.splitTextToSize(titleText, maxTitleWidthLine1);
+
+      // Draw first line of title and right-aligned meta
+      doc.text(titleLines[0], MARGIN_LEFT, y);
+
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8.5);
+      doc.setTextColor(100, 116, 139);
+      doc.text(metaStr, PAGE_WIDTH - MARGIN_RIGHT - metaWidth, y);
+
+      // Draw remaining lines of title if wrapped
+      if (titleLines.length > 1) {
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(10.5);
+        doc.setTextColor(15, 23, 42);
+        for (let i = 1; i < titleLines.length; i++) {
+          y += 4.5;
+          ensureSpace(4.5);
+          doc.text(titleLines[i], MARGIN_LEFT, y);
+        }
+      }
+
+      y += 5;
+
+      // Description
+      if (exp.description && exp.description.trim().length > 0) {
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(9);
+        doc.setTextColor(51, 65, 85); // slate-700
+
+        const descLines = doc.splitTextToSize(exp.description.trim(), CONTENT_WIDTH);
+        for (const line of descLines) {
+          ensureSpace(4.5);
+          doc.text(line, MARGIN_LEFT, y);
+          y += 4.5;
+        }
+      }
+
+      y += (idx < sortedExp.length - 1) ? 5 : 3; // Space between experiences
+    });
+  }
+
+  // ==========================================
   // 5. PROJETOS RELEVANTES (Apenas Resumo e Link do Post no Blog)
   // ==========================================
   if (data.projects && data.projects.length > 0) {
@@ -305,7 +305,7 @@ export async function createResumePDFDoc(data?: ResumeData): Promise<jsPDF | nul
         // Determine Project Link URL (link to the project on the curriculum website itself)
         const projectLinkUrl = `${origin}/project/${encodeURIComponent(proj.id)}`;
         const rightLabel = "Ver no Site";
-        const projectTitle = `${proj.title}${proj.featured ? " [Destaque]" : ""}`;
+        const projectTitle = proj.title;
 
         doc.setFont("helvetica", "normal");
         doc.setFontSize(8);

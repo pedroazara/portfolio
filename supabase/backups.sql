@@ -128,3 +128,36 @@ select cron.schedule(
   '0 3 * * *',
   $$ select public.create_portfolio_backup('scheduled'); $$
 );
+
+
+-- ---------------------------------------------------------------------
+-- 4. Bucket de backups completos (dados + imagens)
+--
+-- Guarda os arquivos .zip gerados pelo painel (conteúdo + todas as
+-- imagens do bucket `images`). Diferente do bucket de imagens, este é
+-- privado: só o admin autenticado lista, baixa, cria ou apaga backups.
+-- ---------------------------------------------------------------------
+insert into storage.buckets (id, name, public)
+values ('full-backups', 'full-backups', false)
+on conflict (id) do update set public = false;
+
+drop policy if exists "full_backups_authenticated_read" on storage.objects;
+create policy "full_backups_authenticated_read"
+  on storage.objects
+  for select
+  to authenticated
+  using (bucket_id = 'full-backups');
+
+drop policy if exists "full_backups_authenticated_insert" on storage.objects;
+create policy "full_backups_authenticated_insert"
+  on storage.objects
+  for insert
+  to authenticated
+  with check (bucket_id = 'full-backups');
+
+drop policy if exists "full_backups_authenticated_delete" on storage.objects;
+create policy "full_backups_authenticated_delete"
+  on storage.objects
+  for delete
+  to authenticated
+  using (bucket_id = 'full-backups');

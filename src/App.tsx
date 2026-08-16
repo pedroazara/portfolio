@@ -13,8 +13,7 @@ import SectionHeader from "./components/SectionHeader";
 import BlogSection from "./components/BlogSection";
 import LoginModal from "./components/LoginModal";
 import ImageBankModal from "./components/ImageBankModal";
-import BackupHistoryModal from "./components/BackupHistoryModal";
-import ChangePasswordModal from "./components/ChangePasswordModal";
+import AdminManagementModal from "./components/AdminManagementModal";
 import PdfPreviewModal from "./components/PdfPreviewModal";
 import Footer from "./components/Footer";
 import LocalImage from "./components/LocalImage";
@@ -23,6 +22,7 @@ import { Sparkles, CheckCircle2, Lock, Atom, FileText, BookOpen, Cloud, CloudOff
 import { motion, AnimatePresence } from "motion/react";
 import { Language, translations } from "./lib/translations";
 import { fetchResumeData, saveResumeData, StaleWriteError } from "./lib/dataService";
+import { maybeRunDailyFullBackup } from "./lib/fullBackupService";
 import { observeAuth, logout } from "./lib/auth";
 import { findBySlug } from "./utils/slug";
 import { isDevPreview } from "./lib/devPreview";
@@ -176,8 +176,7 @@ export default function App() {
 
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isImageBankOpen, setIsImageBankOpen] = useState(false);
-  const [isBackupHistoryOpen, setIsBackupHistoryOpen] = useState(false);
-  const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
+  const [isAdminManagementOpen, setIsAdminManagementOpen] = useState(false);
   const [isPdfPreviewOpen, setIsPdfPreviewOpen] = useState(false);
   const [showAutoSaveBanner, setShowAutoSaveBanner] = useState(false);
   const [isGlobalCollapsed, setIsGlobalCollapsed] = useState(false);
@@ -334,6 +333,16 @@ export default function App() {
     if (!isDataLoaded) return; // Prevent overwriting during initialization
     localStorage.setItem(STORAGE_KEY, JSON.stringify(resumeData));
   }, [resumeData, isDataLoaded]);
+
+  // Backup completo (conteúdo + imagens) uma vez por dia, no máximo, quando o
+  // admin loga. `maybeRunDailyFullBackup` já decide sozinha se já rodou hoje;
+  // a ref aqui só evita disparar de novo a cada edição nesta mesma sessão.
+  const dailyFullBackupTriggeredRef = useRef(false);
+  useEffect(() => {
+    if (!isDataLoaded || !isAuthenticated || dailyFullBackupTriggeredRef.current) return;
+    dailyFullBackupTriggeredRef.current = true;
+    maybeRunDailyFullBackup(resumeData);
+  }, [isDataLoaded, isAuthenticated, resumeData]);
 
   // Cópia na nuvem: agrupada por debounce, para que uma sequência de digitação
   // gere uma única gravação no Supabase em vez de uma por tecla.
@@ -521,15 +530,8 @@ export default function App() {
           isSaving={isSaving}
           showAutoSaveBanner={showAutoSaveBanner}
           language={language}
-          resumeData={resumeData}
-          onResetToTemplate={handleResetToTemplate}
-          onClearAll={handleClearAll}
-          onImportJSON={handleImportJSON}
           onLogout={handleLogout}
-          onOpenImageBank={() => setIsImageBankOpen(true)}
-          onOpenBackupHistory={() => setIsBackupHistoryOpen(true)}
-          onOpenChangePassword={() => setIsChangePasswordOpen(true)}
-          onOpenPdfPreview={() => setIsPdfPreviewOpen(true)}
+          onOpenManagement={() => setIsAdminManagementOpen(true)}
         />
       )}
 
@@ -755,18 +757,17 @@ export default function App() {
         onClose={() => setIsImageBankOpen(false)}
       />
 
-      {/* Backup History Modal */}
-      <BackupHistoryModal
-        isOpen={isBackupHistoryOpen}
-        onClose={() => setIsBackupHistoryOpen(false)}
+      {/* Admin Management Modal (backups, security, media, advanced) */}
+      <AdminManagementModal
+        isOpen={isAdminManagementOpen}
+        onClose={() => setIsAdminManagementOpen(false)}
+        resumeData={resumeData}
         onRestore={handleImportJSON}
+        onResetToTemplate={handleResetToTemplate}
+        onClearAll={handleClearAll}
+        onOpenImageBank={() => setIsImageBankOpen(true)}
+        onOpenPdfPreview={() => setIsPdfPreviewOpen(true)}
         language={language}
-      />
-
-      {/* Change Password Modal */}
-      <ChangePasswordModal
-        isOpen={isChangePasswordOpen}
-        onClose={() => setIsChangePasswordOpen(false)}
       />
 
       {/* PDF Preview Modal */}
