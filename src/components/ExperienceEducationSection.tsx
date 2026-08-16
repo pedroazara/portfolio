@@ -8,7 +8,6 @@ import {
   Plus,
   Edit2,
   Trash2,
-  ChevronDown,
   ExternalLink,
   AlertCircle
 } from "lucide-react";
@@ -112,13 +111,6 @@ export default function ExperienceEducationSection({
     setConfirmMessage(message);
     setConfirmCallback(() => onConfirm);
     setConfirmOpen(true);
-  };
-
-  // Disclosure states for Academic Activities with extra content
-  const [expandedActivities, setExpandedActivities] = useState<Record<string, boolean>>({});
-
-  const toggleActivityExpand = (id: string) => {
-    setExpandedActivities((prev) => ({ ...prev, [id]: !prev[id] }));
   };
 
   // --- Research Experience Modal States ---
@@ -849,136 +841,80 @@ export default function ExperienceEducationSection({
               </p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))" }}>
+            <div className="space-y-4">
               {academicActivities.map((act) => {
                 const actName = language === "en" && act.nameEn ? act.nameEn : act.name;
                 const actDesc = language === "en" && act.descriptionEn ? act.descriptionEn : act.description;
                 const actExtra = language === "en" && act.extraContentEn ? act.extraContentEn : act.extraContent;
                 const hasExtra = (actExtra && actExtra.trim().length > 0) || (act.links && act.links.length > 0);
-                const isExpanded = !!expandedActivities[act.id];
 
-                if (hasExtra) {
-                  // Interactive disclosure block (button)
-                  return (
-                    <div
-                      key={act.id}
-                      className="rounded-xl bg-slate-100/70 dark:bg-slate-900/40 p-4 transition-colors hover:bg-slate-200/60 dark:hover:bg-slate-800/60"
-                    >
-                      <button
-                        type="button"
-                        aria-expanded={isExpanded}
-                        onClick={() => toggleActivityExpand(act.id)}
-                        className="w-full text-left cursor-pointer focus:outline-hidden focus-visible:ring-2 focus-visible:ring-indigo-500 rounded-lg p-0.5"
-                      >
-                        <div className="flex items-start justify-between gap-2">
-                          <h3 className="text-sm font-medium text-slate-900 dark:text-slate-200 font-sans">
-                            {actName}
-                          </h3>
-                          <div className="flex items-center gap-1.5 shrink-0">
-                            <span className="font-mono text-xs text-slate-500 dark:text-slate-400">
-                              {formatPeriodDisplay(act.startDate, act.endDate, act.current)}
-                            </span>
-                            <ChevronDown
-                              className={`h-3.5 w-3.5 text-slate-400 transition-transform duration-160 ${
-                                isExpanded ? "rotate-180" : ""
-                              }`}
-                            />
-                          </div>
-                        </div>
-                        <p className="text-xs text-slate-500 dark:text-slate-400 font-sans truncate line-clamp-1 mt-1">
-                          {actDesc}
-                        </p>
-                      </button>
-
-                      {/* Expanded extra content */}
-                      {isExpanded && (
-                        <div className="mt-3 pt-2.5 border-t border-slate-200 dark:border-slate-800 text-xs text-slate-600 dark:text-slate-300 space-y-2 transition-all duration-160">
-                          {actExtra && <p>{actExtra}</p>}
-                          {act.links && act.links.length > 0 && (
-                            <div className="flex flex-wrap gap-2 pt-1">
-                              {act.links.map((link, idx) => (
-                                <a
-                                  key={idx}
-                                  href={link.url}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="inline-flex items-center gap-1 text-indigo-600 dark:text-indigo-400 hover:underline font-medium"
-                                >
-                                  <span>{link.title}</span>
-                                  <ExternalLink className="h-3 w-3" />
-                                </a>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      )}
-
-                      {/* Projetos Relacionados (ETAPA 9.4) */}
-                      {renderProjectChips(act.projetos)}
-
-                      {/* Admin Controls */}
-                      {isEditMode && (
-                        <div className="mt-2 flex items-center justify-end gap-1 border-t border-slate-200/50 dark:border-slate-800/50 pt-2 no-print print:hidden">
-                          <button
-                            onClick={() => handleOpenActEdit(act)}
-                            className="rounded p-1 text-slate-400 hover:text-indigo-600 transition-colors cursor-pointer"
-                            title="Editar Atividade"
-                          >
-                            <Edit2 className="h-3.5 w-3.5" />
-                          </button>
-                          <button
-                            onClick={() => handleDeleteAct(act.id)}
-                            className="rounded p-1 text-slate-400 hover:text-rose-600 transition-colors cursor-pointer"
-                            title="Excluir Atividade"
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  );
-                }
-
-                // Static block (without extra content)
                 return (
                   <div
                     key={act.id}
-                    className="rounded-xl bg-slate-100/70 dark:bg-slate-900/40 p-4 transition-none"
+                    className="rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-900/80 p-5 sm:p-6 transition-colors hover:border-slate-300 dark:hover:border-slate-700"
                   >
-                    <div className="flex items-start justify-between gap-2">
-                      <h3 className="text-sm font-medium text-slate-900 dark:text-slate-200 font-sans">
-                        {actName}
-                      </h3>
-                      <span className="font-mono text-xs text-slate-500 dark:text-slate-400 shrink-0">
-                        {formatPeriodDisplay(act.startDate, act.endDate, act.current)}
-                      </span>
+                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+                      <div className="space-y-1">
+                        <h3 className="text-[15px] font-medium text-slate-900 dark:text-white font-sans leading-snug">
+                          {actName}
+                        </h3>
+                        {actDesc && (
+                          <p className="text-xs text-slate-500 dark:text-slate-400 font-sans">
+                            {actDesc}
+                          </p>
+                        )}
+                      </div>
+
+                      <div className="flex items-center gap-2 sm:flex-col sm:items-end shrink-0">
+                        <div className="font-mono text-xs text-slate-700 dark:text-slate-300 bg-slate-200/70 dark:bg-slate-800 px-2.5 py-1 rounded-md border border-slate-200/60 dark:border-slate-700/60">
+                          {formatPeriodDisplay(act.startDate, act.endDate, act.current)}
+                        </div>
+
+                        {isEditMode && (
+                          <div className="flex items-center gap-1 no-print print:hidden">
+                            <button
+                              onClick={() => handleOpenActEdit(act)}
+                              className="rounded p-1 text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors cursor-pointer"
+                              title="Editar Atividade"
+                            >
+                              <Edit2 className="h-3.5 w-3.5" />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteAct(act.id)}
+                              className="rounded p-1 text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 hover:text-rose-600 dark:hover:text-rose-400 transition-colors cursor-pointer"
+                              title="Excluir Atividade"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
+                        )}
+                      </div>
                     </div>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 font-sans truncate line-clamp-1 mt-1">
-                      {actDesc}
-                    </p>
+
+                    {hasExtra && (
+                      <div className="mt-3.5 pt-3 border-t border-slate-200/70 dark:border-slate-800 text-xs leading-relaxed text-slate-600 dark:text-slate-300 font-sans space-y-2">
+                        {actExtra && <p>{actExtra}</p>}
+                        {act.links && act.links.length > 0 && (
+                          <div className="flex flex-wrap gap-3 pt-1">
+                            {act.links.map((link, idx) => (
+                              <a
+                                key={idx}
+                                href={link.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1.5 text-indigo-600 dark:text-indigo-400 hover:underline font-medium"
+                              >
+                                <span>{link.title}</span>
+                                <ExternalLink className="h-3 w-3" />
+                              </a>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
 
                     {/* Projetos Relacionados (ETAPA 9.4) */}
                     {renderProjectChips(act.projetos)}
-
-                    {/* Admin Controls */}
-                    {isEditMode && (
-                      <div className="mt-2 flex items-center justify-end gap-1 border-t border-slate-200/50 dark:border-slate-800/50 pt-2 no-print print:hidden">
-                        <button
-                          onClick={() => handleOpenActEdit(act)}
-                          className="rounded p-1 text-slate-400 hover:text-indigo-600 transition-colors cursor-pointer"
-                          title="Editar Atividade"
-                        >
-                          <Edit2 className="h-3.5 w-3.5" />
-                        </button>
-                        <button
-                          onClick={() => handleDeleteAct(act.id)}
-                          className="rounded p-1 text-slate-400 hover:text-rose-600 transition-colors cursor-pointer"
-                          title="Excluir Atividade"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </button>
-                      </div>
-                    )}
                   </div>
                 );
               })}

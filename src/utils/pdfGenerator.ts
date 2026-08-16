@@ -286,7 +286,86 @@ export async function createResumePDFDoc(data?: ResumeData): Promise<jsPDF | nul
   }
 
   // ==========================================
-  // 5. PROJETOS RELEVANTES (Apenas Resumo e Link do Post no Blog)
+  // 5. ATIVIDADES ACADÊMICAS
+  // ==========================================
+  if (data.academicActivities && data.academicActivities.length > 0) {
+    renderSectionHeader("Atividades Acadêmicas");
+
+    const sortedAct = [...data.academicActivities].sort((a, b) => {
+      if (a.current && !b.current) return -1;
+      if (!a.current && b.current) return 1;
+      return b.startDate.localeCompare(a.startDate);
+    });
+
+    sortedAct.forEach((act, idx) => {
+      ensureSpace(16);
+
+      const dateStr = `${act.startDate} - ${act.current ? "Presente" : act.endDate}`;
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8.5);
+      doc.setTextColor(100, 116, 139);
+      const dateWidth = doc.getTextWidth(dateStr);
+
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(10.5);
+      doc.setTextColor(15, 23, 42);
+
+      const maxTitleWidthLine1 = CONTENT_WIDTH - dateWidth - 4;
+      const titleLines = doc.splitTextToSize(act.name, maxTitleWidthLine1);
+
+      doc.text(titleLines[0], MARGIN_LEFT, y);
+
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8.5);
+      doc.setTextColor(100, 116, 139);
+      doc.text(dateStr, PAGE_WIDTH - MARGIN_RIGHT - dateWidth, y);
+
+      if (titleLines.length > 1) {
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(10.5);
+        doc.setTextColor(15, 23, 42);
+        for (let i = 1; i < titleLines.length; i++) {
+          y += 4.5;
+          ensureSpace(4.5);
+          doc.text(titleLines[i], MARGIN_LEFT, y);
+        }
+      }
+
+      y += 4.5;
+
+      // Short description (subtitle)
+      if (act.description && act.description.trim().length > 0) {
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(9.5);
+        doc.setTextColor(79, 70, 229); // Indigo
+        const descLines = doc.splitTextToSize(act.description.trim(), CONTENT_WIDTH);
+        for (const line of descLines) {
+          ensureSpace(4.5);
+          doc.text(line, MARGIN_LEFT, y);
+          y += 4.5;
+        }
+      }
+
+      // Extra content (body paragraph)
+      if (act.extraContent && act.extraContent.trim().length > 0) {
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(9);
+        doc.setTextColor(51, 65, 85);
+
+        const extraLines = doc.splitTextToSize(act.extraContent.trim(), CONTENT_WIDTH);
+        for (const line of extraLines) {
+          ensureSpace(4.5);
+          doc.text(line, MARGIN_LEFT, y);
+          y += 4.5;
+        }
+      }
+
+      y += (idx < sortedAct.length - 1) ? 4 : 3;
+    });
+  }
+
+  // ==========================================
+  // 6. PROJETOS RELEVANTES (Apenas Resumo e Link do Post no Blog)
   // ==========================================
   if (data.projects && data.projects.length > 0) {
     const featuredProjects = data.projects.filter(p => p.featured);
@@ -387,7 +466,7 @@ export async function createResumePDFDoc(data?: ResumeData): Promise<jsPDF | nul
   }
 
   // ==========================================
-  // 6. HABILIDADES TÉCNICAS (Com Latin-1 Seguro sem caracteres inválidos)
+  // 7. HABILIDADES TÉCNICAS (Com Latin-1 Seguro sem caracteres inválidos)
   // ==========================================
   if (data.skills && data.skills.length > 0) {
     renderSectionHeader("Habilidades Técnicas");
@@ -431,7 +510,7 @@ export async function createResumePDFDoc(data?: ResumeData): Promise<jsPDF | nul
   }
 
   // ==========================================
-  // 7. CURSOS E CERTIFICAÇÕES
+  // 8. CURSOS E CERTIFICAÇÕES
   // ==========================================
   if (data.courses && data.courses.length > 0) {
     renderSectionHeader("Cursos e Certificações");
