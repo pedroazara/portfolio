@@ -8,10 +8,173 @@ import { ZoomIn, X, Copy, Check } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import LocalImage from "./LocalImage";
 import { headingIdsByLine } from "../utils/toc";
+import { parseYouTubeUrl, YouTubeVideo } from "../utils/videoEmbed";
 
 interface MarkdownRendererProps {
   content: string;
   className?: string;
+}
+
+/**
+ * Player do YouTube no lugar do link.
+ *
+ * A proporção fixa evita o pulo de layout enquanto o iframe carrega, e o
+ * carregamento tardio mantém fora do caminho crítico um recurso pesado que
+ * quase sempre está abaixo da dobra.
+ *
+ * No celular a moldura ocupa a largura toda do texto e perde o arredondamento
+ * exagerado — numa tela de 360px, um raio grande come a imagem. O Shorts vem
+ * em pé e limitado a uma largura confortável, para não virar uma coluna alta
+ * demais que empurra o resto do artigo para fora da tela.
+ */
+function YouTubeEmbed({ video, caption }: { video: YouTubeVideo; caption?: string }) {
+  const frame = video.portrait
+    ? "aspect-[9/16] max-w-[280px] sm:max-w-[320px]"
+    : "aspect-video max-w-3xl";
+
+  return (
+    <figure className="my-5 sm:my-6 space-y-2">
+      <div
+        className={`relative mx-auto w-full ${frame} overflow-hidden rounded-xl sm:rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-950 shadow-md`}
+      >
+        <iframe
+          src={video.embedUrl}
+          title={caption || "Vídeo do YouTube"}
+          loading="lazy"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          referrerPolicy="strict-origin-when-cross-origin"
+          allowFullScreen
+          className="absolute inset-0 h-full w-full border-0"
+        />
+      </div>
+      {caption && (
+        <figcaption className="mx-auto max-w-prose px-2 text-center text-[11px] sm:text-xs italic text-slate-500 dark:text-slate-400 font-sans text-balance">
+          {caption}
+        </figcaption>
+      )}
+    </figure>
+  );
+}
+
+/** Um pedaço de linha: ou texto cru, ou um nó já renderizado pelo react-markdown. */
+type LinePart =
+  | { kind: "text"; value: string }
+  | { kind: "node"; hast: any; rendered: React.ReactNode };
+
+/** Segmento do parágrafo depois da separação: um vídeo ou as demais linhas. */
+type ParagraphPart =
+  | { kind: "video"; video: YouTubeVideo; caption?: string }
+  | { kind: "lines"; lines: LinePart[][] };
+
+/**
+ * Quebra o parágrafo em linhas, do jeito que o leitor as enxerga.
+ *
+ * O parágrafo aqui é renderizado com `whitespace-pre-line`: uma quebra simples
+ * já vira linha visível, então quem escreve trata cada linha como uma unidade.
+ * O `remark`, porém, junta tudo num nó só. Esta função desfaz esse nó nas
+ * linhas de origem, mantendo cada filho já renderizado (negrito, links, código)
+ * no lugar certo.
+ */
+function splitLines(node: any, children: React.ReactNode): LinePart[][] {
+  const hastKids: any[] = node?.children || [];
+  const rendered = React.Children.toArray(children);
+  const lines: LinePart[][] = [[]];
+
+  const pushLine = () => lines.push([]);
+  const push = (part: LinePart) => lines[lines.length - 1].push(part);
+
+  hastKids.forEach((kid, index) => {
+    if (kid?.type === "text") {
+      // O texto é idêntico ao filho renderizado (uma string), então dá para
+      // fatiá-lo sem perder nada.
+      const chunks = String(kid.value ?? "").split("\n");
+      chunks.forEach((chunk, i) => {
+        if (i > 0) pushLine();
+        if (chunk) push({ kind: "text", value: chunk });
+      });
+      return;
+    }
+
+    if (kid?.type === "element" && kid.tagName === "br") {
+      pushLine();
+      return;
+    }
+
+    push({ kind: "node", hast: kid, rendered: rendered[index] });
+  });
+
+  return lines;
+}
+
+/**
+ * Reconhece a linha que contém apenas um link de vídeo.
+ *
+ * Um link citado no meio de uma frase continua sendo link — é o que o texto
+ * pede ali. Só a URL sozinha na linha vira player.
+ */
+function videoFromLine(line: LinePart[]): { video: YouTubeVideo; caption?: string } | null {
+  const meaningful = line.filter((part) => part.kind !== "text" || part.value.trim());
+  if (meaningful.length !== 1) return null;
+  const only = meaningful[0];
+
+  // O `node` entregue aqui é hast: um link chega como elemento `a` com `href`.
+  if (only.kind === "node" && only.hast?.type === "element" && only.hast.tagName === "a") {
+    const href = String(only.hast.properties?.href || "");
+    const video = parseYouTubeUrl(href);
+    if (!video) return null;
+    const label = textOf(only.hast).trim();
+    return { video, caption: label && label !== href ? label : undefined };
+  }
+
+  // `remark-gfm` já transforma a URL solta em link; o caso `text` cobre o resto.
+  if (only.kind === "text") {
+    const video = parseYouTubeUrl(only.value.trim());
+    return video ? { video } : null;
+  }
+
+  return null;
+}
+
+/**
+ * Separa os vídeos do restante do parágrafo, ou `null` se não houver nenhum.
+ *
+ * Devolver `null` no caso comum deixa o parágrafo seguir pelo caminho de
+ * sempre, com os filhos originais — sem reconstrução, sem risco de perder
+ * formatação.
+ */
+function splitVideos(node: any, children: React.ReactNode): ParagraphPart[] | null {
+  const lines = splitLines(node, children);
+  const parts: ParagraphPart[] = [];
+  let pending: LinePart[][] = [];
+  let found = false;
+
+  const flush = () => {
+    // Linhas em branco nas bordas do bloco não viram espaço extra.
+    while (pending.length && !pending[0].length) pending.shift();
+    while (pending.length && !pending[pending.length - 1].length) pending.pop();
+    if (pending.length) parts.push({ kind: "lines", lines: pending });
+    pending = [];
+  };
+
+  for (const line of lines) {
+    const video = videoFromLine(line);
+    if (video) {
+      found = true;
+      flush();
+      parts.push({ kind: "video", ...video });
+      continue;
+    }
+    pending.push(line);
+  }
+  flush();
+
+  return found ? parts : null;
+}
+
+/** Texto visível de um nó hast, para usar como legenda. */
+function textOf(node: any): string {
+  if (node?.type === "text") return String(node.value || "");
+  return (node?.children || []).map(textOf).join("");
 }
 
 // Code block renderer with dynamic Copy button
@@ -205,8 +368,32 @@ export default function MarkdownRenderer({ content, className = "max-w-[75ch] te
     hr() {
       return <hr className="my-6 border-t border-slate-200 dark:border-slate-800" />;
     },
-    p({ children }: any) {
-      return <div className="whitespace-pre-line leading-relaxed my-3">{children}</div>;
+    p({ node, children }: any) {
+      const parts = splitVideos(node, children);
+      if (!parts) return <div className="whitespace-pre-line leading-relaxed my-3">{children}</div>;
+
+      return (
+        <>
+          {parts.map((part, index) =>
+            part.kind === "video" ? (
+              <YouTubeEmbed key={index} video={part.video} caption={part.caption} />
+            ) : (
+              <div key={index} className="whitespace-pre-line leading-relaxed my-3">
+                {part.lines.map((line, lineIndex) => (
+                  <React.Fragment key={lineIndex}>
+                    {lineIndex > 0 && "\n"}
+                    {line.map((piece, pieceIndex) => (
+                      <React.Fragment key={pieceIndex}>
+                        {piece.kind === "text" ? piece.value : piece.rendered}
+                      </React.Fragment>
+                    ))}
+                  </React.Fragment>
+                ))}
+              </div>
+            )
+          )}
+        </>
+      );
     }
   };
 
