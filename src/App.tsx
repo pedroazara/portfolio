@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, lazy, Suspense } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { ResumeData, Profile, Project, ProjectCategory, Experience, AcademicActivity, Education, Skill, SkillCategory, Course, BlogPost } from "./types";
 import { initialResumeData } from "./data/initialData";
@@ -11,10 +11,19 @@ import AdminStrip from "./components/AdminStrip";
 import GlobalHeader from "./components/GlobalHeader";
 import SectionHeader from "./components/SectionHeader";
 import BlogSection from "./components/BlogSection";
-import LoginModal from "./components/LoginModal";
-import ImageBankModal from "./components/ImageBankModal";
-import AdminManagementModal from "./components/AdminManagementModal";
-import PdfPreviewModal from "./components/PdfPreviewModal";
+/**
+ * Telas de administração, carregadas sob demanda.
+ *
+ * Editores, painel, banco de imagens e prévia em PDF respondiam por boa parte
+ * do pacote inicial — e nada disso serve a quem só abriu o currículo para ler.
+ * `lazy` só busca o pedaço quando o componente é de fato renderizado, então o
+ * ganho depende de eles ficarem desmontados enquanto fechados: é o que
+ * `useMountedOnce` garante nos modais.
+ */
+const LoginModal = lazy(() => import("./components/LoginModal"));
+const ImageBankModal = lazy(() => import("./components/ImageBankModal"));
+const AdminManagementModal = lazy(() => import("./components/AdminManagementModal"));
+const PdfPreviewModal = lazy(() => import("./components/PdfPreviewModal"));
 import Footer from "./components/Footer";
 import LocalImage from "./components/LocalImage";
 import { OrbitaIcon } from "./components/OrbitaIcon";
@@ -26,10 +35,12 @@ import { maybeRunDailyFullBackup } from "./lib/fullBackupService";
 import { observeAuth, logout } from "./lib/auth";
 import { findBySlug } from "./utils/slug";
 import { isDevPreview } from "./lib/devPreview";
+import { useMountedOnce } from "./hooks/useMountedOnce";
 import { stripLocale, localePath, switchLanguagePath } from "./lib/routes";
-import PostEditorPage from "./pages/PostEditorPage";
-import ProjectEditorPage from "./pages/ProjectEditorPage";
-import AdminHubPage, { AdminHubTab, ADMIN_HUB_TABS } from "./pages/AdminHubPage";
+const PostEditorPage = lazy(() => import("./pages/PostEditorPage"));
+const ProjectEditorPage = lazy(() => import("./pages/ProjectEditorPage"));
+const AdminHubPage = lazy(() => import("./pages/AdminHubPage"));
+import { AdminHubTab, ADMIN_HUB_TABS } from "./lib/adminHubTabs";
 import PostPage from "./pages/PostPage";
 import ProjectPage from "./pages/ProjectPage";
 
@@ -174,7 +185,14 @@ export default function App() {
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isImageBankOpen, setIsImageBankOpen] = useState(false);
   const [isAdminManagementOpen, setIsAdminManagementOpen] = useState(false);
+
   const [isPdfPreviewOpen, setIsPdfPreviewOpen] = useState(false);
+  // Cada modal do painel entra no DOM na primeira vez que abre e fica montado
+  // depois disso — o pedaço já foi baixado, e a animação de saída sobrevive.
+  const precisaLogin = useMountedOnce(isLoginModalOpen);
+  const precisaBancoDeImagens = useMountedOnce(isImageBankOpen);
+  const precisaPainel = useMountedOnce(isAdminManagementOpen);
+  const precisaPdf = useMountedOnce(isPdfPreviewOpen);
   const [showAutoSaveBanner, setShowAutoSaveBanner] = useState(false);
   const [isGlobalCollapsed, setIsGlobalCollapsed] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -638,24 +656,36 @@ export default function App() {
                 {language === "en" ? "Sign in" : "Entrar"}
               </button>
             </div>
-          ) : adminHubMatch ? (
-            <AdminHubPage tab={adminHubTab} />
-          ) : postEditorMatch ? (
-            <PostEditorPage
-              slug={decodeURIComponent(postEditorMatch[1])}
-              posts={resumeData.posts || []}
-              onUpdatePosts={handleUpdatePosts}
-              language={language}
-            />
           ) : (
-            <ProjectEditorPage
-              slug={decodeURIComponent(projectEditorMatch![1])}
-              projects={resumeData.projects}
-              categories={resumeData.categories}
-              onUpdateProjects={handleUpdateProjects}
-              onUpdateCategories={handleUpdateCategories}
-              language={language}
-            />
+            /* As telas de edição chegam sob demanda; enquanto o pedaço não
+               carrega, o aviso ocupa o lugar do formulário. */
+            <Suspense
+              fallback={
+                <div className="py-20 text-center text-sm text-slate-500">
+                  {language === "en" ? "Loading the editor…" : "Carregando o editor…"}
+                </div>
+              }
+            >
+              {adminHubMatch ? (
+                <AdminHubPage tab={adminHubTab} />
+              ) : postEditorMatch ? (
+                <PostEditorPage
+                  slug={decodeURIComponent(postEditorMatch[1])}
+                  posts={resumeData.posts || []}
+                  onUpdatePosts={handleUpdatePosts}
+                  language={language}
+                />
+              ) : (
+                <ProjectEditorPage
+                  slug={decodeURIComponent(projectEditorMatch![1])}
+                  projects={resumeData.projects}
+                  categories={resumeData.categories}
+                  onUpdateProjects={handleUpdateProjects}
+                  onUpdateCategories={handleUpdateCategories}
+                  language={language}
+                />
+              )}
+            </Suspense>
           )
         ) : activePage === "cv" ? (
           /* High-Fidelity Active Resume / Portfolio View */
@@ -823,39 +853,47 @@ export default function App() {
         )}
       </AnimatePresence>
 
-      {/* Login Modal for Admin Access */}
-      <LoginModal
-        isOpen={isLoginModalOpen}
-        onClose={() => setIsLoginModalOpen(false)}
-        onLoginSuccess={handleLoginSuccess}
-      />
+      {/* Modais do painel. Só entram no DOM depois de abertos pela primeira
+          vez — é isso que mantém o código deles fora do pacote inicial. */}
+      <Suspense fallback={null}>
+        {precisaLogin && (
+          <LoginModal
+            isOpen={isLoginModalOpen}
+            onClose={() => setIsLoginModalOpen(false)}
+            onLoginSuccess={handleLoginSuccess}
+          />
+        )}
 
-      {/* Image Bank Modal */}
-      <ImageBankModal
-        isOpen={isImageBankOpen}
-        onClose={() => setIsImageBankOpen(false)}
-      />
+        {precisaBancoDeImagens && (
+          <ImageBankModal
+            isOpen={isImageBankOpen}
+            onClose={() => setIsImageBankOpen(false)}
+          />
+        )}
 
-      {/* Admin Management Modal (backups, security, media, advanced) */}
-      <AdminManagementModal
-        isOpen={isAdminManagementOpen}
-        onClose={() => setIsAdminManagementOpen(false)}
-        resumeData={resumeData}
-        onRestore={handleImportJSON}
-        onResetToTemplate={handleResetToTemplate}
-        onClearAll={handleClearAll}
-        onOpenImageBank={() => setIsImageBankOpen(true)}
-        onOpenPdfPreview={() => setIsPdfPreviewOpen(true)}
-        language={language}
-      />
+        {precisaPainel && (
+          <AdminManagementModal
+            isOpen={isAdminManagementOpen}
+            onClose={() => setIsAdminManagementOpen(false)}
+            resumeData={resumeData}
+            onRestore={handleImportJSON}
+            onResetToTemplate={handleResetToTemplate}
+            onClearAll={handleClearAll}
+            onOpenImageBank={() => setIsImageBankOpen(true)}
+            onOpenPdfPreview={() => setIsPdfPreviewOpen(true)}
+            language={language}
+          />
+        )}
 
-      {/* PDF Preview Modal */}
-      <PdfPreviewModal
-        isOpen={isPdfPreviewOpen}
-        onClose={() => setIsPdfPreviewOpen(false)}
-        resumeData={resumeData}
-        language={language}
-      />
+        {precisaPdf && (
+          <PdfPreviewModal
+            isOpen={isPdfPreviewOpen}
+            onClose={() => setIsPdfPreviewOpen(false)}
+            resumeData={resumeData}
+            language={language}
+          />
+        )}
+      </Suspense>
     </div>
   );
 }

@@ -6,10 +6,9 @@ import HabitTracker from "../components/HabitTracker";
 import QuickNotes from "../components/QuickNotes";
 import LinkVault from "../components/LinkVault";
 import DraftsPanel from "../components/DraftsPanel";
+import { AdminHubTab, ADMIN_HUB_TABS } from "../lib/adminHubTabs";
 
-export type AdminHubTab = "tarefas" | "habitos" | "notas" | "links" | "rascunhos";
-
-export const ADMIN_HUB_TABS: AdminHubTab[] = ["tarefas", "habitos", "notas", "links", "rascunhos"];
+export type { AdminHubTab } from "../lib/adminHubTabs";
 
 const TAB_META: Record<AdminHubTab, { label: string; icon: typeof KanbanSquare }> = {
   tarefas: { label: "Tarefas", icon: KanbanSquare },

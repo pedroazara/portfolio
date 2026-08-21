@@ -2,7 +2,12 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import { ImagePlus, Crop, Trash2, Loader2, Link as LinkIcon, X } from "lucide-react";
 import { StoredImage, listImages, saveImage, fileNameOf, joinPath, GENERAL_FOLDER, originalPathFor, isCoverCrop } from "../utils/imageDb";
 import { optimizeImage } from "../utils/imageOptimizer";
-import ImageCropModal from "./ImageCropModal";
+/**
+ * O recorte só existe depois de alguém pedir para recortar — e já é montado
+ * sob condição, então `lazy` tira o editor de imagem inteiro (canvas, cálculo
+ * de enquadramento, otimização) do pacote que a página carrega de saída.
+ */
+const ImageCropModal = React.lazy(() => import("./ImageCropModal"));
 import LocalImage from "./LocalImage";
 import { isDevPreview } from "../lib/devPreview";
 
@@ -310,6 +315,7 @@ export default function ImageSelectorInput({
       )}
 
       {isCropping && value && (
+        <React.Suspense fallback={null}>
         <ImageCropModal
           isOpen={isCropping}
           onClose={() => setIsCropping(false)}
@@ -320,6 +326,7 @@ export default function ImageSelectorInput({
             setIsCropping(false);
           }}
         />
+        </React.Suspense>
       )}
     </div>
   );
