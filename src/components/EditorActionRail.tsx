@@ -127,7 +127,7 @@ export default function EditorActionRail({
             {isEn ? "Save as draft" : "Salvar rascunho"}
           </button>
 
-          <p className="px-1 text-[10px] leading-snug text-slate-400">
+          <p className="px-1 text-[10px] leading-snug text-slate-500">
             {isEn
               ? "Drafts stay hidden from visitors — only you see them, in edit mode."
               : "Rascunhos ficam invisíveis para os visitantes — só você os vê, no modo de edição."}

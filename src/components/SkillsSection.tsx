@@ -376,7 +376,7 @@ export default function SkillsSection({
       {mergedCategories.length === 0 ? (
         <div className="rounded-xl border border-dashed border-slate-200 dark:border-slate-800 p-8 text-center font-sans">
           <Award className="mx-auto h-6 w-6 text-slate-300 dark:text-slate-700" />
-          <p className="mt-2 text-xs text-slate-400 dark:text-slate-500 font-medium">
+          <p className="mt-2 text-xs text-slate-500 dark:text-slate-500 font-medium">
             {isEditMode
               ? t("Nenhuma seção criada. Clique em \"Nova Seção\" para começar.", "No sections yet. Click \"New Section\" to start.")
               : t("Nenhuma competência adicionada.", "No competencies added.")}
@@ -406,7 +406,7 @@ export default function SkillsSection({
                     <div className="flex items-center gap-0.5 shrink-0 no-print print:hidden">
                       <button
                         onClick={() => handleOpenAddToCategory(cat)}
-                        className="rounded p-1 text-slate-400 hover:bg-slate-200/70 dark:hover:bg-slate-800 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors cursor-pointer"
+                        className="rounded p-1 text-slate-500 hover:bg-slate-200/70 dark:hover:bg-slate-800 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors cursor-pointer"
                         title={t("Adicionar habilidade", "Add skill")}
                       >
                         <Plus className="h-3.5 w-3.5" />
@@ -414,7 +414,7 @@ export default function SkillsSection({
                       {!cat.isOrphan && (
                         <button
                           onClick={() => handleDeleteCategory(cat)}
-                          className="rounded p-1 text-slate-400 hover:bg-slate-200/70 dark:hover:bg-slate-800 hover:text-rose-600 dark:hover:text-rose-400 transition-colors cursor-pointer"
+                          className="rounded p-1 text-slate-500 hover:bg-slate-200/70 dark:hover:bg-slate-800 hover:text-rose-600 dark:hover:text-rose-400 transition-colors cursor-pointer"
                           title={t("Excluir seção", "Delete section")}
                         >
                           <Trash2 className="h-3.5 w-3.5" />
@@ -425,7 +425,7 @@ export default function SkillsSection({
                 </div>
 
                 {catSkills.length === 0 ? (
-                  <p className="text-[11px] text-slate-400 dark:text-slate-600 font-sans italic">
+                  <p className="text-[11px] text-slate-500 dark:text-slate-600 font-sans italic">
                     {t("Nenhuma habilidade ainda.", "No skills yet.")}
                   </p>
                 ) : (
@@ -472,7 +472,7 @@ export default function SkillsSection({
               <p className="text-xs font-bold text-slate-700 dark:text-slate-200 font-sans">
                 {t("Idioma em Edição", "Language under Editing")}
               </p>
-              <p className="text-[10px] text-slate-400 dark:text-slate-500 font-sans">
+              <p className="text-[10px] text-slate-500 dark:text-slate-500 font-sans">
                 {t(
                   "Alterne para preencher as informações em Português ou Inglês",
                   "Toggle to specify contents in Portuguese or English"
@@ -637,7 +637,7 @@ export default function SkillsSection({
       >
         <form onSubmit={handleSectionSubmit} className="space-y-4">
           <div className="bg-slate-50 dark:bg-slate-800/50 p-3 rounded-2xl border border-slate-200/60 dark:border-slate-700/60 mb-1 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <p className="text-[10px] text-slate-400 dark:text-slate-500 font-sans">
+            <p className="text-[10px] text-slate-500 dark:text-slate-500 font-sans">
               {t("Preencha em português, ou traduza automaticamente.", "Fill in Portuguese, or auto-translate.")}
             </p>
             <TranslateButton

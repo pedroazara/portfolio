@@ -298,7 +298,7 @@ export default function PostEditorPage({ slug, posts, onUpdatePosts, language }:
                   className={fieldClass}
                   placeholder={estimateReadTime(form.content || "", language)}
                 />
-                <p className="mt-1 text-[11px] text-slate-400">
+                <p className="mt-1 text-[11px] text-slate-500">
                   {language === "en" ? "Blank calculates from the text." : "Em branco, calcula pelo texto."}
                 </p>
               </div>
@@ -311,13 +311,13 @@ export default function PostEditorPage({ slug, posts, onUpdatePosts, language }:
         {view === "preview" && (
           <div>
             <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-xs sm:p-8 dark:border-slate-800 dark:bg-slate-900">
-              <p className="mb-4 font-mono text-[11px] font-bold uppercase tracking-wider text-slate-400">
+              <p className="mb-4 font-mono text-[11px] font-bold uppercase tracking-wider text-slate-500">
                 {language === "en" ? "Preview" : "Pré-visualização"}
               </p>
               <h2 className="font-display text-2xl font-black leading-tight text-slate-900 dark:text-white">
                 {previewTitle}
               </h2>
-              <div className="mt-2 flex items-center gap-2 font-mono text-[11px] text-slate-400">
+              <div className="mt-2 flex items-center gap-2 font-mono text-[11px] text-slate-500">
                 <span>{form.date}</span>
                 <span>·</span>
                 <span>{form.readTime || estimateReadTime(form.content || "", language)}</span>
@@ -326,7 +326,7 @@ export default function PostEditorPage({ slug, posts, onUpdatePosts, language }:
                 {previewContent ? (
                   <MarkdownRenderer content={previewContent} />
                 ) : (
-                  <p className="text-sm italic text-slate-400">
+                  <p className="text-sm italic text-slate-500">
                     {language === "en"
                       ? "Start writing to see the preview."
                       : "Comece a escrever para ver a prévia."}

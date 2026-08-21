@@ -622,7 +622,7 @@ export default function App() {
              o aviso em vez do formulário — as políticas RLS recusariam a gravação
              de qualquer forma, e é melhor dizer isso antes de a pessoa digitar. */
           !isAuthReady ? (
-            <div className="py-20 text-center text-sm text-slate-400">
+            <div className="py-20 text-center text-sm text-slate-500">
               {language === "en" ? "Checking session…" : "Verificando sessão…"}
             </div>
           ) : !(isAuthenticated || devPreview) ? (
@@ -667,6 +667,13 @@ export default function App() {
               isEditMode={isEditMode}
               onUpdateProfile={handleUpdateProfile}
               language={language}
+              isAuthenticated={isAuthenticated}
+              onOpenPdfPreview={() => setIsPdfPreviewOpen(true)}
+              stats={{
+                projetos: resumeData.projects.filter((p) => !p.draft).length,
+                pesquisa: resumeData.experiences.length,
+                habilidades: resumeData.skills.length,
+              }}
             />
 
             {/* Academic Background & Research Experience Sections */}
@@ -721,6 +728,8 @@ export default function App() {
              a grade. Antes os detalhes abriam num modal sobre a grade. */
           selectedProjectId ? (
             <ProjectPage
+              isDataLoaded={isDataLoaded}
+              loadFailed={cloudReadFailed}
               slug={selectedProjectId}
               projects={resumeData.projects}
               categories={resumeData.categories}
@@ -751,6 +760,8 @@ export default function App() {
              mostramos a listagem. Antes o artigo abria sobreposto à lista. */
           selectedBlogPostId ? (
             <PostPage
+              isDataLoaded={isDataLoaded}
+              loadFailed={cloudReadFailed}
               slug={selectedBlogPostId}
               posts={resumeData.posts || []}
               projects={resumeData.projects}

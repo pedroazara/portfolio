@@ -275,7 +275,7 @@ export default function ImageCropModal({
             onClick={onClose}
             disabled={isSaving}
             aria-label={language === "en" ? "Close" : "Fechar"}
-            className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600 disabled:opacity-50 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+            className="rounded-lg p-1.5 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-600 disabled:opacity-50 dark:hover:bg-slate-800 dark:hover:text-slate-200"
           >
             <X className="h-4.5 w-4.5" />
           </button>
@@ -362,7 +362,7 @@ export default function ImageCropModal({
                   onChange={(e) => setZoom(Number(e.target.value))}
                   className="h-1.5 flex-1 cursor-pointer appearance-none rounded-full bg-slate-200 accent-indigo-600 dark:bg-slate-700"
                 />
-                <span className="w-10 shrink-0 text-right font-mono text-[11px] text-slate-400">
+                <span className="w-10 shrink-0 text-right font-mono text-[11px] text-slate-500">
                   {Math.round(zoom * 100)}%
                 </span>
               </div>
@@ -374,7 +374,7 @@ export default function ImageCropModal({
                 </p>
               )}
 
-              <p className="mt-2 flex items-center gap-1.5 text-[11px] text-slate-400">
+              <p className="mt-2 flex items-center gap-1.5 text-[11px] text-slate-500">
                 <Move className="h-3 w-3" />
                 {language === "en"
                   ? "Drag the image to choose what stays in frame."

@@ -114,7 +114,7 @@ export default function HabitTracker() {
   };
 
   if (isLoading) {
-    return <p className="py-16 text-center text-sm text-slate-400">Carregando hábitos…</p>;
+    return <p className="py-16 text-center text-sm text-slate-500">Carregando hábitos…</p>;
   }
 
   const today = todayKey();
@@ -144,7 +144,7 @@ export default function HabitTracker() {
       )}
 
       {habits.length === 0 ? (
-        <p className="py-16 text-center text-sm text-slate-400">Nenhum hábito ainda.</p>
+        <p className="py-16 text-center text-sm text-slate-500">Nenhum hábito ainda.</p>
       ) : (
         <div className="space-y-3">
           {habits.map((habit) => {
@@ -169,7 +169,7 @@ export default function HabitTracker() {
                     <button
                       type="button"
                       onClick={() => setPendingDelete(habit)}
-                      className="rounded p-1 text-slate-400 transition-colors hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/40 dark:hover:text-rose-400 cursor-pointer"
+                      className="rounded p-1 text-slate-500 transition-colors hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/40 dark:hover:text-rose-400 cursor-pointer"
                       aria-label={`Excluir hábito ${habit.name}`}
                     >
                       <Trash2 className="h-3.5 w-3.5" />

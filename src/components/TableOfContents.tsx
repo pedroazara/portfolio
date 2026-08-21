@@ -96,7 +96,7 @@ export default function TableOfContents({ entries, language = "pt" }: TableOfCon
       aria-label={language === "en" ? "Table of contents" : "Sumário"}
       className="sticky top-24 max-h-[calc(100vh-8rem)] overflow-y-auto no-print"
     >
-      <p className="mb-3 flex items-center gap-1.5 font-mono text-[11px] font-bold uppercase tracking-wider text-slate-400">
+      <p className="mb-3 flex items-center gap-1.5 font-mono text-[11px] font-bold uppercase tracking-wider text-slate-500">
         <List className="h-3.5 w-3.5" />
         {language === "en" ? "Contents" : "Sumário"}
       </p>

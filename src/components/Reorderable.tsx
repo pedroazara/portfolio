@@ -461,7 +461,7 @@ export function DragHandle({
         onPointerDown(event);
       }}
       onClick={(event) => event.stopPropagation()}
-      className="shrink-0 touch-none cursor-grab text-slate-300 dark:text-slate-600 hover:text-slate-500 dark:hover:text-slate-400 active:cursor-grabbing no-print print:hidden"
+      className="shrink-0 touch-none cursor-grab text-slate-300 dark:text-slate-600 hover:text-slate-500 dark:hover:text-slate-500 active:cursor-grabbing no-print print:hidden"
       title={label}
       aria-label={label}
     >

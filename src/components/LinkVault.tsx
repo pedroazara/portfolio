@@ -110,14 +110,14 @@ export default function LinkVault() {
   };
 
   if (isLoading) {
-    return <p className="py-16 text-center text-sm text-slate-400">Carregando links…</p>;
+    return <p className="py-16 text-center text-sm text-slate-500">Carregando links…</p>;
   }
 
   return (
     <div>
       <div className="mb-4 flex flex-wrap items-center gap-2">
         <div className="relative min-w-[200px] flex-1">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
@@ -161,7 +161,7 @@ export default function LinkVault() {
       )}
 
       {visible.length === 0 ? (
-        <p className="py-16 text-center text-sm text-slate-400">Nenhum link aqui.</p>
+        <p className="py-16 text-center text-sm text-slate-500">Nenhum link aqui.</p>
       ) : (
         <div className="space-y-2">
           {visible.map((link) => (
@@ -177,9 +177,9 @@ export default function LinkVault() {
                   className="flex items-center gap-1.5 text-sm font-semibold text-slate-900 hover:text-indigo-600 dark:text-white dark:hover:text-indigo-400"
                 >
                   <span className="truncate">{link.title}</span>
-                  <ExternalLink className="h-3.5 w-3.5 shrink-0 text-slate-400" />
+                  <ExternalLink className="h-3.5 w-3.5 shrink-0 text-slate-500" />
                 </a>
-                <p className="truncate text-xs text-slate-400">{link.url}</p>
+                <p className="truncate text-xs text-slate-500">{link.url}</p>
                 {link.notes && (
                   <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{link.notes}</p>
                 )}
@@ -200,7 +200,7 @@ export default function LinkVault() {
                 <button
                   type="button"
                   onClick={() => openEdit(link)}
-                  className="rounded p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200 cursor-pointer"
+                  className="rounded p-1.5 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200 cursor-pointer"
                   aria-label="Editar link"
                 >
                   <Pencil className="h-3.5 w-3.5" />
@@ -208,7 +208,7 @@ export default function LinkVault() {
                 <button
                   type="button"
                   onClick={() => setPendingDelete(link)}
-                  className="rounded p-1.5 text-slate-400 transition-colors hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/40 dark:hover:text-rose-400 cursor-pointer"
+                  className="rounded p-1.5 text-slate-500 transition-colors hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/40 dark:hover:text-rose-400 cursor-pointer"
                   aria-label="Excluir link"
                 >
                   <Trash2 className="h-3.5 w-3.5" />

@@ -94,13 +94,13 @@ export default function TasksBoard() {
   };
 
   if (isLoading) {
-    return <p className="py-16 text-center text-sm text-slate-400">Carregando tarefas…</p>;
+    return <p className="py-16 text-center text-sm text-slate-500">Carregando tarefas…</p>;
   }
 
   return (
     <div>
       <div className="mb-4 flex items-center justify-between">
-        <span className="text-xs font-medium uppercase tracking-wider text-slate-400">
+        <span className="text-xs font-medium uppercase tracking-wider text-slate-500">
           {tasks.length} {tasks.length === 1 ? "tarefa" : "tarefas"}
         </span>
         <button
@@ -157,7 +157,7 @@ export default function TasksBoard() {
                         type="button"
                         onClick={() => move(task, -1)}
                         disabled={status === "todo"}
-                        className="rounded p-1 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 disabled:opacity-30 dark:hover:bg-slate-800 dark:hover:text-slate-200 cursor-pointer disabled:cursor-default"
+                        className="rounded p-1 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700 disabled:opacity-30 dark:hover:bg-slate-800 dark:hover:text-slate-200 cursor-pointer disabled:cursor-default"
                         aria-label="Mover para a coluna anterior"
                       >
                         <ChevronLeft className="h-3.5 w-3.5" />
@@ -166,7 +166,7 @@ export default function TasksBoard() {
                         type="button"
                         onClick={() => move(task, 1)}
                         disabled={status === "done"}
-                        className="rounded p-1 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 disabled:opacity-30 dark:hover:bg-slate-800 dark:hover:text-slate-200 cursor-pointer disabled:cursor-default"
+                        className="rounded p-1 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700 disabled:opacity-30 dark:hover:bg-slate-800 dark:hover:text-slate-200 cursor-pointer disabled:cursor-default"
                         aria-label="Mover para a próxima coluna"
                       >
                         <ChevronRight className="h-3.5 w-3.5" />
@@ -174,7 +174,7 @@ export default function TasksBoard() {
                       <button
                         type="button"
                         onClick={() => setPendingDelete(task)}
-                        className="ml-auto rounded p-1 text-slate-400 transition-colors hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/40 dark:hover:text-rose-400 cursor-pointer"
+                        className="ml-auto rounded p-1 text-slate-500 transition-colors hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/40 dark:hover:text-rose-400 cursor-pointer"
                         aria-label="Excluir tarefa"
                       >
                         <Trash2 className="h-3.5 w-3.5" />
@@ -184,7 +184,7 @@ export default function TasksBoard() {
                 ))}
 
                 {columnTasks.length === 0 && (
-                  <p className="py-6 text-center text-xs text-slate-400">Vazio</p>
+                  <p className="py-6 text-center text-xs text-slate-500">Vazio</p>
                 )}
               </div>
             </section>

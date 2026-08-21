@@ -530,7 +530,7 @@ export default function ExperienceEducationSection({
         {educations.length === 0 ? (
           <div className="rounded-xl border border-dashed border-slate-200 dark:border-slate-800 p-8 text-center font-sans">
             <GraduationCap className="mx-auto h-6 w-6 text-slate-300 dark:text-slate-700" />
-            <p className="mt-2 text-xs text-slate-400 dark:text-slate-500 font-medium">
+            <p className="mt-2 text-xs text-slate-500 dark:text-slate-500 font-medium">
               Nenhuma formação adicionada.
             </p>
           </div>
@@ -576,14 +576,14 @@ export default function ExperienceEducationSection({
                           <div className="flex items-center gap-1 no-print print:hidden">
                             <button
                               onClick={() => handleOpenEduEdit(edu)}
-                              className="rounded p-1 text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors cursor-pointer"
+                              className="rounded p-1 text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-800 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors cursor-pointer"
                               title="Editar Formação"
                             >
                               <Edit2 className="h-3.5 w-3.5" />
                             </button>
                             <button
                               onClick={() => handleDeleteEdu(edu.id)}
-                              className="rounded p-1 text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 hover:text-rose-600 dark:hover:text-rose-400 transition-colors cursor-pointer"
+                              className="rounded p-1 text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-800 hover:text-rose-600 dark:hover:text-rose-400 transition-colors cursor-pointer"
                               title="Excluir Formação"
                             >
                               <Trash2 className="h-3.5 w-3.5" />
@@ -641,7 +641,7 @@ export default function ExperienceEducationSection({
         {experiences.length === 0 ? (
           <div className="rounded-xl border border-dashed border-slate-200 dark:border-slate-800 p-8 text-center font-sans">
             <FlaskConical className="mx-auto h-6 w-6 text-slate-300 dark:text-slate-700" />
-            <p className="mt-2 text-xs text-slate-400 dark:text-slate-500 font-medium">
+            <p className="mt-2 text-xs text-slate-500 dark:text-slate-500 font-medium">
               Nenhuma experiência em pesquisa cadastrada.
             </p>
           </div>
@@ -699,14 +699,14 @@ export default function ExperienceEducationSection({
                           <div className="flex items-center gap-1 no-print print:hidden">
                             <button
                               onClick={() => handleOpenExpEdit(exp)}
-                              className="rounded p-1 text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors cursor-pointer"
+                              className="rounded p-1 text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-800 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors cursor-pointer"
                               title="Editar Pesquisa"
                             >
                               <Edit2 className="h-3.5 w-3.5" />
                             </button>
                             <button
                               onClick={() => handleDeleteExp(exp.id)}
-                              className="rounded p-1 text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 hover:text-rose-600 dark:hover:text-rose-400 transition-colors cursor-pointer"
+                              className="rounded p-1 text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-800 hover:text-rose-600 dark:hover:text-rose-400 transition-colors cursor-pointer"
                               title="Excluir Pesquisa"
                             >
                               <Trash2 className="h-3.5 w-3.5" />
@@ -721,7 +721,7 @@ export default function ExperienceEducationSection({
                       {hasDescription ? (
                         <MarkdownRenderer content={descText} className="text-sm text-slate-700 dark:text-slate-300 font-sans space-y-1" />
                       ) : isEditMode ? (
-                        <p className="text-xs text-slate-400 dark:text-slate-500 italic">
+                        <p className="text-xs text-slate-500 dark:text-slate-500 italic">
                           descrição pendente
                         </p>
                       ) : null}
@@ -748,7 +748,7 @@ export default function ExperienceEducationSection({
                                   {subTitleText || subDescText}
                                 </p>
                               ) : isEditMode ? (
-                                <p className="text-xs text-slate-400 dark:text-slate-500 italic font-sans">
+                                <p className="text-xs text-slate-500 dark:text-slate-500 italic font-sans">
                                   {subTitleText ? `${subTitleText} — ` : ""}descrição pendente
                                 </p>
                               ) : null}
@@ -838,7 +838,7 @@ export default function ExperienceEducationSection({
           {academicActivities.length === 0 ? (
             <div className="rounded-xl border border-dashed border-slate-200 dark:border-slate-800 p-8 text-center font-sans">
               <Users className="mx-auto h-6 w-6 text-slate-300 dark:text-slate-700" />
-              <p className="mt-2 text-xs text-slate-400 dark:text-slate-500 font-medium">
+              <p className="mt-2 text-xs text-slate-500 dark:text-slate-500 font-medium">
                 Nenhuma atividade acadêmica cadastrada.
               </p>
             </div>
@@ -886,14 +886,14 @@ export default function ExperienceEducationSection({
                             <div className="flex items-center gap-1 no-print print:hidden">
                               <button
                                 onClick={() => handleOpenActEdit(act)}
-                                className="rounded p-1 text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors cursor-pointer"
+                                className="rounded p-1 text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-800 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors cursor-pointer"
                                 title="Editar Atividade"
                               >
                                 <Edit2 className="h-3.5 w-3.5" />
                               </button>
                               <button
                                 onClick={() => handleDeleteAct(act.id)}
-                                className="rounded p-1 text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 hover:text-rose-600 dark:hover:text-rose-400 transition-colors cursor-pointer"
+                                className="rounded p-1 text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-800 hover:text-rose-600 dark:hover:text-rose-400 transition-colors cursor-pointer"
                                 title="Excluir Atividade"
                               >
                                 <Trash2 className="h-3.5 w-3.5" />
@@ -1100,7 +1100,7 @@ export default function ExperienceEducationSection({
               placeholder="Alinhamento de cavidades de lasers de femtossegundos e caracterização de meios ativos..."
               className="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-slate-900 dark:text-white"
             />
-            <span className="text-[10px] text-slate-400">
+            <span className="text-[10px] text-slate-500">
               {(editingLanguage === "en" ? expForm.descriptionEn : expForm.description)?.length || 0}/40 caracteres
             </span>
           </div>
@@ -1402,7 +1402,7 @@ export default function ExperienceEducationSection({
               placeholder="Códigos de projetos separados por vírgula (ex: yolocraft, laser-sim)"
               className="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-slate-900 dark:text-white font-mono text-[11px]"
             />
-            <span className="text-[10px] text-slate-400 mt-1 block">
+            <span className="text-[10px] text-slate-500 mt-1 block">
               {language === "en"
                 ? "Click project pills above or type project codes separated by commas."
                 : "Clique nas pílulas acima ou digite os códigos dos projetos separados por vírgula."}

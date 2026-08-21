@@ -236,7 +236,7 @@ export default function ArticleContentEditor({
               {label} {required && "*"}
             </label>
           )}
-          {helpText && <p className="text-[11px] text-slate-400">{helpText}</p>}
+          {helpText && <p className="text-[11px] text-slate-500">{helpText}</p>}
         </div>
 
         <button
@@ -280,7 +280,7 @@ export default function ArticleContentEditor({
             onPaste={handlePaste}
             placeholder={placeholder}
             spellCheck={false}
-            className={`relative block w-full resize-none overflow-hidden bg-transparent text-transparent caret-slate-800 placeholder:text-slate-400 focus:outline-hidden dark:caret-white ${EDITOR_TEXT_CLASS}`}
+            className={`relative block w-full resize-none overflow-hidden bg-transparent text-transparent caret-slate-800 placeholder:text-slate-500 focus:outline-hidden dark:caret-white ${EDITOR_TEXT_CLASS}`}
           />
         </div>
 
@@ -297,7 +297,7 @@ export default function ArticleContentEditor({
           aparece na pré-visualização ao lado. */}
       {embedded.length > 0 && (
         <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
-          <span className="font-mono text-[10px] uppercase tracking-wider text-slate-400">
+          <span className="font-mono text-[10px] uppercase tracking-wider text-slate-500">
             {language === "en" ? "In text:" : "No texto:"}
           </span>
           {embedded.map((img, idx) => (
@@ -312,7 +312,7 @@ export default function ArticleContentEditor({
                 type="button"
                 onClick={() => removeFromText(img.fullMatch)}
                 aria-label={language === "en" ? "Remove from text" : "Remover do texto"}
-                className="rounded p-0.5 text-slate-400 transition-colors hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/40"
+                className="rounded p-0.5 text-slate-500 transition-colors hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/40"
               >
                 <X className="h-3 w-3" />
               </button>
@@ -347,7 +347,7 @@ export default function ArticleContentEditor({
                   type="button"
                   onClick={() => setIsPicking(false)}
                   aria-label={language === "en" ? "Close" : "Fechar"}
-                  className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-100 dark:hover:bg-slate-800"
+                  className="rounded-lg p-1.5 text-slate-500 transition-colors hover:bg-slate-100 dark:hover:bg-slate-800"
                 >
                   <X className="h-4 w-4" />
                 </button>
@@ -357,7 +357,7 @@ export default function ArticleContentEditor({
             {/* A busca só aparece quando a lista é grande o bastante para exigi-la. */}
             {images.length > 12 && (
               <div className="relative border-b border-slate-200 px-5 py-2.5 dark:border-slate-800">
-                <Search className="absolute left-7 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
+                <Search className="absolute left-7 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-500" />
                 <input
                   type="text"
                   value={search}
@@ -370,7 +370,7 @@ export default function ArticleContentEditor({
 
             <div className="grid flex-1 grid-cols-2 gap-3 overflow-y-auto p-5 sm:grid-cols-3">
               {visibleImages.length === 0 && (
-                <p className="col-span-full py-8 text-center text-xs text-slate-400">
+                <p className="col-span-full py-8 text-center text-xs text-slate-500">
                   {language === "en" ? "No saved images yet." : "Nenhuma imagem salva ainda."}
                 </p>
               )}

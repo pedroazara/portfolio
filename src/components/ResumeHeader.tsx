@@ -1,6 +1,7 @@
 import React, { useState } from "react";
+import { Link } from "react-router-dom";
 import { Profile } from "../types";
-import { Mail, Phone, MapPin, Globe, Github, Linkedin, Twitter, Edit3, Camera, Download, FileText } from "lucide-react";
+import { Mail, Phone, MapPin, Globe, Github, Linkedin, Twitter, Edit3, Camera, Download, FileText, ArrowRight } from "lucide-react";
 import EditModal from "./EditModal";
 import { motion, AnimatePresence } from "motion/react";
 import LocalImage from "./LocalImage";
@@ -9,6 +10,7 @@ import { Language, translations } from "../lib/translations";
 import TranslateButton from "./TranslateButton";
 import { autoTranslateFields } from "../lib/translator";
 import { SECTION_CARD_CLASS } from "../lib/cardStyle";
+import { localePath } from "../lib/routes";
 
 interface ResumeHeaderProps {
   profile: Profile;
@@ -17,6 +19,8 @@ interface ResumeHeaderProps {
   language?: Language;
   isAuthenticated?: boolean;
   onOpenPdfPreview?: () => void;
+  /** Contagens do próprio currículo, exibidas como resumo do trabalho. */
+  stats?: { projetos: number; pesquisa: number; habilidades: number };
 }
 
 export default function ResumeHeader({
@@ -26,6 +30,7 @@ export default function ResumeHeader({
   language = "pt",
   isAuthenticated = false,
   onOpenPdfPreview,
+  stats,
 }: ResumeHeaderProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formData, setFormData] = useState<Profile>({ ...profile });
@@ -134,7 +139,7 @@ export default function ResumeHeader({
           <div className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-2 font-mono text-sm text-slate-500 dark:text-slate-400">
             {profile.email && (
               <div className="relative flex items-center gap-2.5">
-                <Mail className="h-4 w-4 text-slate-400 dark:text-slate-500 shrink-0" />
+                <Mail className="h-4 w-4 text-slate-500 dark:text-slate-500 shrink-0" />
                 <button
                   type="button"
                   onClick={handleCopyEmail}
@@ -160,13 +165,13 @@ export default function ResumeHeader({
             )}
             {profile.phone && (
               <div className="flex items-center gap-2.5">
-                <Phone className="h-4 w-4 text-slate-400 shrink-0" />
+                <Phone className="h-4 w-4 text-slate-500 shrink-0" />
                 <span className="truncate">{profile.phone}</span>
               </div>
             )}
             {profile.location && (
               <div className="flex items-center gap-2.5">
-                <MapPin className="h-4 w-4 text-slate-400 shrink-0" />
+                <MapPin className="h-4 w-4 text-slate-500 shrink-0" />
                 <span className="truncate">{profile.location}</span>
               </div>
             )}
@@ -233,33 +238,65 @@ export default function ResumeHeader({
             </div>
           )}
 
-          {/* Hero Download CV CTA Button (Only when authenticated) */}
-          {isAuthenticated && (
-            <div className="mt-5 flex flex-wrap items-center gap-3 no-print print:hidden">
-              <button
-                type="button"
-                onClick={() => {
-                  if (onOpenPdfPreview) {
-                    onOpenPdfPreview();
-                  } else {
-                    const originalTitle = document.title;
-                    document.title = "Pedro-Henrique-Azara-de-Almeida-CV";
-                    window.print();
-                    setTimeout(() => {
-                      document.title = originalTitle;
-                    }, 1000);
-                  }
-                }}
-                className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 px-4 py-2.5 text-xs font-bold text-white shadow-md active:scale-95 transition-all cursor-pointer"
-                id="hero-download-cv-btn"
-              >
-                <Download className="h-4 w-4 shrink-0" />
-                <span>{language === "en" ? "Download CV (PDF)" : "Baixar CV (PDF)"}</span>
-              </button>
-              <span className="text-[11px] text-slate-500 dark:text-slate-400 font-sans italic">
-                ({language === "en" ? 'Select "Save as PDF" in print dialog' : 'Selecione "Salvar como PDF" no diálogo de impressão'})
-              </span>
-            </div>
+          {/* Ações da abertura.
+
+              Baixar o currículo é a razão de existir da página, e o botão vivia
+              atrás de `isAuthenticated` — que o App nem passava, então ele nunca
+              aparecia para ninguém. Agora é público, e ao lado dele o caminho
+              para o trabalho em si. */}
+          <div className="mt-6 flex flex-wrap items-center gap-3 no-print print:hidden">
+            <button
+              type="button"
+              onClick={() => {
+                if (onOpenPdfPreview) {
+                  onOpenPdfPreview();
+                  return;
+                }
+                // Sem a prévia em PDF, a impressão do navegador dá conta: a
+                // folha já está formatada em A4 pela folha de estilo.
+                const originalTitle = document.title;
+                document.title = `${profile.name || "Curriculo"} - CV`;
+                window.print();
+                setTimeout(() => {
+                  document.title = originalTitle;
+                }, 1000);
+              }}
+              className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-bold text-white shadow-md transition-all hover:bg-indigo-700 active:scale-95 cursor-pointer"
+              id="hero-download-cv-btn"
+            >
+              <Download className="h-4 w-4 shrink-0" />
+              <span>{language === "en" ? "Download CV (PDF)" : "Baixar currículo (PDF)"}</span>
+            </button>
+
+            <Link
+              to={localePath("/projetos", language)}
+              className="group inline-flex items-center gap-2 rounded-xl border border-slate-200 px-5 py-2.5 text-sm font-bold text-slate-700 transition-all hover:border-indigo-500 hover:text-indigo-600 dark:border-slate-700 dark:text-slate-200 dark:hover:border-indigo-500 dark:hover:text-indigo-400"
+            >
+              <span>{language === "en" ? "See the projects" : "Ver os projetos"}</span>
+              <ArrowRight className="h-4 w-4 shrink-0 transition-transform group-hover:translate-x-0.5" />
+            </Link>
+          </div>
+
+          {/* Números do próprio currículo: o que já foi feito, antes de rolar. */}
+          {stats && (
+            <dl className="mt-7 flex flex-wrap gap-x-8 gap-y-4 border-t border-slate-100 pt-5 dark:border-slate-800">
+              {[
+                { valor: stats.projetos, pt: "projetos publicados", en: "published projects" },
+                { valor: stats.pesquisa, pt: "vínculos de pesquisa", en: "research positions" },
+                { valor: stats.habilidades, pt: "habilidades mapeadas", en: "mapped skills" },
+              ]
+                .filter((item) => item.valor > 0)
+                .map((item) => (
+                  <div key={item.pt}>
+                    <dt className="font-display text-2xl font-black tabular-nums text-slate-900 dark:text-white">
+                      {item.valor}
+                    </dt>
+                    <dd className="font-mono text-[11px] uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                      {language === "en" ? item.en : item.pt}
+                    </dd>
+                  </div>
+                ))}
+            </dl>
           )}
 
           {/* Social Icons for Print (Shown as text in standard print) */}
@@ -282,7 +319,7 @@ export default function ResumeHeader({
               <p className="text-xs font-bold text-slate-700 font-sans">
                 {language === "en" ? "Language under Editing" : "Idioma em Edição"}
               </p>
-              <p className="text-[10px] text-slate-400 font-sans">
+              <p className="text-[10px] text-slate-500 font-sans">
                 {language === "en" 
                   ? "Toggle to specify contents in Portuguese or English" 
                   : "Alterne para preencher as informações em Português ou Inglês"}

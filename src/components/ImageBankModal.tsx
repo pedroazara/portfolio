@@ -219,7 +219,7 @@ export default function ImageBankModal({ isOpen, onClose }: ImageBankModalProps)
           </div>
           <button
             onClick={onClose}
-            className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors"
+            className="rounded-lg p-1.5 text-slate-500 hover:bg-slate-100 hover:text-slate-600 transition-colors"
           >
             <X className="h-5 w-5" />
           </button>
@@ -230,7 +230,7 @@ export default function ImageBankModal({ isOpen, onClose }: ImageBankModalProps)
           
           {/* Left Column: Upload Form */}
           <div className="md:col-span-5 flex flex-col gap-4">
-            <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider font-mono">Novo Upload</h4>
+            <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider font-mono">Novo Upload</h4>
             
             <form onSubmit={handleSave} className="space-y-4">
               {/* Drag n Drop Stage */}
@@ -274,7 +274,7 @@ export default function ImageBankModal({ isOpen, onClose }: ImageBankModalProps)
                     <div className="text-xs font-semibold text-slate-700">
                       Arraste uma imagem ou <span className="text-indigo-600 hover:underline">clique para buscar</span>
                     </div>
-                    <p className="text-[10px] text-slate-400 font-mono">PNG, JPG, GIF, SVG ou WEBP</p>
+                    <p className="text-[10px] text-slate-500 font-mono">PNG, JPG, GIF, SVG ou WEBP</p>
                   </div>
                 )}
               </div>
@@ -293,7 +293,7 @@ export default function ImageBankModal({ isOpen, onClose }: ImageBankModalProps)
                       placeholder="nome-da-imagem.png"
                       className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs text-slate-800 focus:border-indigo-500 focus:outline-hidden font-mono"
                     />
-                    <p className="mt-1 text-[10px] text-slate-400 leading-normal">
+                    <p className="mt-1 text-[10px] text-slate-500 leading-normal">
                       Use este nome para referenciar a imagem no Markdown do blog. Ex: <code className="bg-slate-100 px-1 py-0.5 rounded">![Minha Imagem](db:{customName || "exemplo.png"})</code>
                     </p>
                   </div>
@@ -351,11 +351,11 @@ export default function ImageBankModal({ isOpen, onClose }: ImageBankModalProps)
           {/* Right Column: Library List */}
           <div className="md:col-span-7 flex flex-col gap-4 min-h-0">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
-              <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider font-mono">Sua Biblioteca ({images.length})</h4>
+              <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider font-mono">Sua Biblioteca ({images.length})</h4>
               
               {/* Search input */}
               <div className="relative">
-                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-500" />
                 <input
                   type="text"
                   placeholder="Buscar imagem..."
@@ -368,11 +368,11 @@ export default function ImageBankModal({ isOpen, onClose }: ImageBankModalProps)
 
             {filteredImages.length === 0 ? (
               <div className="flex-1 border border-dashed border-slate-200 rounded-2xl p-8 flex flex-col items-center justify-center text-center">
-                <div className="p-3 rounded-xl bg-slate-50 text-slate-400 mb-2">
+                <div className="p-3 rounded-xl bg-slate-50 text-slate-500 mb-2">
                   <ImageIcon className="h-6 w-6" />
                 </div>
                 <div className="text-xs font-semibold text-slate-700">Nenhuma imagem localizada</div>
-                <p className="text-[10px] text-slate-400 max-w-xs mt-1">
+                <p className="text-[10px] text-slate-500 max-w-xs mt-1">
                   {searchTerm ? "Tente outro termo de busca ou limpe o filtro." : "Faça upload de fotos no formulário ao lado para compor sua biblioteca."}
                 </p>
               </div>
@@ -397,7 +397,7 @@ export default function ImageBankModal({ isOpen, onClose }: ImageBankModalProps)
                         <div className="text-xs font-bold text-slate-800 font-mono truncate" title={img.name}>
                           {fileNameOf(img.name)}
                         </div>
-                        <div className="flex items-center gap-2 text-[10px] text-slate-400 font-mono mt-0.5">
+                        <div className="flex items-center gap-2 text-[10px] text-slate-500 font-mono mt-0.5">
                           <span>{formatSize(img.size)}</span>
                           <span>•</span>
                           <span>{new Date(img.addedAt).toLocaleDateString("pt-BR")}</span>
@@ -423,7 +423,7 @@ export default function ImageBankModal({ isOpen, onClose }: ImageBankModalProps)
                           </>
                         ) : (
                           <>
-                            <Copy className="h-3.5 w-3.5 text-slate-400 group-hover:text-indigo-600" />
+                            <Copy className="h-3.5 w-3.5 text-slate-500 group-hover:text-indigo-600" />
                             <span>Markdown</span>
                           </>
                         )}
@@ -432,7 +432,7 @@ export default function ImageBankModal({ isOpen, onClose }: ImageBankModalProps)
                       {/* Delete Button */}
                       <button
                         onClick={() => handleDelete(img.name)}
-                        className="rounded-lg p-1.5 text-slate-400 hover:bg-rose-50 hover:text-rose-600 transition-colors"
+                        className="rounded-lg p-1.5 text-slate-500 hover:bg-rose-50 hover:text-rose-600 transition-colors"
                         title="Excluir Imagem"
                       >
                         <Trash2 className="h-4 w-4" />

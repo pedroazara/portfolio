@@ -51,7 +51,7 @@ export default function AdminStrip({
             className={`rounded px-2.5 py-1 text-[11px] font-medium transition-all cursor-pointer ${
               !isEditMode
                 ? "bg-slate-700 text-white shadow-xs font-semibold"
-                : "text-slate-400 hover:text-slate-200"
+                : "text-slate-500 hover:text-slate-200"
             }`}
             id="admin-mode-preview"
           >
@@ -63,7 +63,7 @@ export default function AdminStrip({
             className={`rounded px-2.5 py-1 text-[11px] font-medium transition-all cursor-pointer ${
               isEditMode
                 ? "bg-[var(--accent)] text-white shadow-xs font-semibold"
-                : "text-slate-400 hover:text-slate-200"
+                : "text-slate-500 hover:text-slate-200"
             }`}
             id="admin-mode-edit"
           >
@@ -75,7 +75,7 @@ export default function AdminStrip({
       {/* Right: Save status, Manage, Logout */}
       <div className="flex items-center gap-3">
         {/* Save status in monospace (Hidden on mobile < 860px) */}
-        <span className="hidden md:inline-block font-mono text-[11px] text-slate-400">
+        <span className="hidden md:inline-block font-mono text-[11px] text-slate-500">
           {saveStatusText}
         </span>
 
@@ -95,7 +95,7 @@ export default function AdminStrip({
         <button
           type="button"
           onClick={onLogout}
-          className="flex items-center gap-1 text-slate-400 hover:text-white transition-colors cursor-pointer text-xs font-medium"
+          className="flex items-center gap-1 text-slate-500 hover:text-white transition-colors cursor-pointer text-xs font-medium"
           id="admin-logout-btn"
         >
           <LogOut className="h-3.5 w-3.5" />

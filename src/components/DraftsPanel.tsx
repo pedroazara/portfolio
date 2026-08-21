@@ -85,7 +85,7 @@ export default function DraftsPanel() {
   };
 
   if (isLoading) {
-    return <p className="py-16 text-center text-sm text-slate-400">Carregando rascunhos…</p>;
+    return <p className="py-16 text-center text-sm text-slate-500">Carregando rascunhos…</p>;
   }
 
   return (
@@ -125,14 +125,14 @@ export default function DraftsPanel() {
                   <span className="block truncate text-xs font-semibold text-slate-900 dark:text-white">
                     {draft.title}
                   </span>
-                  <span className="block truncate text-[11px] text-slate-400">
+                  <span className="block truncate text-[11px] text-slate-500">
                     {draft.content.slice(0, 60) || "vazio"}
                   </span>
                 </button>
                 <button
                   type="button"
                   onClick={() => setPendingDelete(draft)}
-                  className="rounded p-1 text-slate-400 opacity-0 transition-opacity hover:text-rose-600 group-hover:opacity-100 dark:hover:text-rose-400 cursor-pointer"
+                  className="rounded p-1 text-slate-500 opacity-0 transition-opacity hover:text-rose-600 group-hover:opacity-100 dark:hover:text-rose-400 cursor-pointer"
                   aria-label="Excluir rascunho"
                 >
                   <Trash2 className="h-3.5 w-3.5" />
@@ -140,7 +140,7 @@ export default function DraftsPanel() {
               </div>
             ))}
             {drafts.length === 0 && (
-              <p className="py-6 text-center text-xs text-slate-400">Nenhum rascunho</p>
+              <p className="py-6 text-center text-xs text-slate-500">Nenhum rascunho</p>
             )}
           </div>
         </aside>
@@ -155,7 +155,7 @@ export default function DraftsPanel() {
                   placeholder="Título do rascunho"
                   className="min-w-[160px] flex-1 border-0 bg-transparent text-base font-bold text-slate-900 outline-hidden dark:text-white"
                 />
-                <span className="text-[11px] text-slate-400">
+                <span className="text-[11px] text-slate-500">
                   {isSaving ? "salvando…" : "salvo"}
                 </span>
                 <div className="flex rounded-lg border border-slate-200 p-0.5 dark:border-slate-700">
@@ -215,7 +215,7 @@ export default function DraftsPanel() {
               )}
             </>
           ) : (
-            <p className="py-16 text-center text-sm text-slate-400">
+            <p className="py-16 text-center text-sm text-slate-500">
               Selecione ou crie um rascunho.
             </p>
           )}

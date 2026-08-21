@@ -111,7 +111,7 @@ export default function AdminManagementModal({
               <button
                 type="button"
                 onClick={onClose}
-                className="absolute top-4 right-4 z-10 rounded-full p-1.5 text-slate-400 dark:text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-600 dark:hover:text-slate-300 transition-colors cursor-pointer"
+                className="absolute top-4 right-4 z-10 rounded-full p-1.5 text-slate-500 dark:text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-600 dark:hover:text-slate-300 transition-colors cursor-pointer"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -414,11 +414,11 @@ function BackupsTab({
 
           <div className="space-y-2">
             {isLoadingFull ? (
-              <div className="flex items-center justify-center py-10 text-slate-400">
+              <div className="flex items-center justify-center py-10 text-slate-500">
                 <Loader2 className="h-5 w-5 animate-spin" />
               </div>
             ) : fullBackups.length === 0 ? (
-              <div className="flex flex-col items-center gap-2 py-10 text-center text-slate-400 dark:text-slate-500">
+              <div className="flex flex-col items-center gap-2 py-10 text-center text-slate-500 dark:text-slate-500">
                 <CloudOff className="h-8 w-8" />
                 <p className="text-xs max-w-xs">
                   {t(
@@ -444,7 +444,7 @@ function BackupsTab({
                           .zip
                         </span>
                       </div>
-                      <span className="text-[10px] font-mono text-slate-400">{formatBytes(entry.sizeBytes)}</span>
+                      <span className="text-[10px] font-mono text-slate-500">{formatBytes(entry.sizeBytes)}</span>
                     </div>
 
                     <div className="flex items-center gap-1 shrink-0">
@@ -453,7 +453,7 @@ function BackupsTab({
                         onClick={() => handleDownloadFull(entry)}
                         disabled={downloadingFullName === entry.name}
                         title={t("Baixar .zip", "Download .zip")}
-                        className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-200/70 dark:hover:bg-slate-700 hover:text-slate-700 dark:hover:text-slate-200 transition-colors cursor-pointer disabled:opacity-50"
+                        className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-200/70 dark:hover:bg-slate-700 hover:text-slate-700 dark:hover:text-slate-200 transition-colors cursor-pointer disabled:opacity-50"
                       >
                         {downloadingFullName === entry.name ? (
                           <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -495,11 +495,11 @@ function BackupsTab({
 
           <div className="space-y-2">
             {isLoading ? (
-              <div className="flex items-center justify-center py-10 text-slate-400">
+              <div className="flex items-center justify-center py-10 text-slate-500">
                 <Loader2 className="h-5 w-5 animate-spin" />
               </div>
             ) : backups.length === 0 ? (
-              <div className="flex flex-col items-center gap-2 py-10 text-center text-slate-400 dark:text-slate-500">
+              <div className="flex flex-col items-center gap-2 py-10 text-center text-slate-500 dark:text-slate-500">
                 <CloudOff className="h-8 w-8" />
                 <p className="text-xs max-w-xs">
                   {t(
@@ -531,7 +531,7 @@ function BackupsTab({
                           {entry.source === "manual" ? t("manual", "manual") : t("automático", "automatic")}
                         </span>
                       </div>
-                      <span className="text-[10px] font-mono text-slate-400">{approxSizeKb(entry.data)} KB</span>
+                      <span className="text-[10px] font-mono text-slate-500">{approxSizeKb(entry.data)} KB</span>
                     </div>
 
                     <div className="flex items-center gap-1 shrink-0">
@@ -539,7 +539,7 @@ function BackupsTab({
                         type="button"
                         onClick={() => handleDownload(entry)}
                         title={t("Baixar como JSON", "Download as JSON")}
-                        className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-200/70 dark:hover:bg-slate-700 hover:text-slate-700 dark:hover:text-slate-200 transition-colors cursor-pointer"
+                        className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-200/70 dark:hover:bg-slate-700 hover:text-slate-700 dark:hover:text-slate-200 transition-colors cursor-pointer"
                       >
                         <Download className="h-3.5 w-3.5" />
                       </button>
@@ -646,7 +646,7 @@ function SecurityTab({ language }: { language: "pt" | "en" }) {
     <div>
       {email && (
         <div className="mb-4 flex items-center gap-2 rounded-xl bg-slate-50 dark:bg-slate-800/50 px-3 py-2.5 text-xs text-slate-600 dark:text-slate-300 border border-slate-100 dark:border-slate-800">
-          <Mail className="h-3.5 w-3.5 shrink-0 text-slate-400" />
+          <Mail className="h-3.5 w-3.5 shrink-0 text-slate-500" />
           <span className="font-mono truncate">{email}</span>
         </div>
       )}
@@ -872,7 +872,7 @@ function TranslationTab({
 
       <div className="mb-4 rounded-xl border border-slate-100 dark:border-slate-800 overflow-hidden">
         <div className="flex items-center justify-between bg-slate-50/60 dark:bg-slate-800/40 px-3 py-2 border-b border-slate-100 dark:border-slate-800">
-          <span className="text-[11px] font-bold uppercase tracking-wide text-slate-400 dark:text-slate-500">
+          <span className="text-[11px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-500">
             {t("Seções a traduzir", "Sections to translate")}
           </span>
           <div className="flex gap-3 text-[11px] font-semibold">
@@ -886,7 +886,7 @@ function TranslationTab({
             <button
               type="button"
               onClick={() => setSelectedKeys(new Set())}
-              className="text-slate-400 dark:text-slate-500 hover:underline cursor-pointer"
+              className="text-slate-500 dark:text-slate-500 hover:underline cursor-pointer"
             >
               {t("Nenhuma", "None")}
             </button>
@@ -935,7 +935,7 @@ function TranslationTab({
                     ? "text-rose-600 dark:text-rose-400"
                     : s.status === "done"
                     ? "text-slate-700 dark:text-slate-200"
-                    : "text-slate-400 dark:text-slate-500"
+                    : "text-slate-500 dark:text-slate-500"
                 }
               >
                 {s.label}
@@ -1088,7 +1088,7 @@ function AdvancedTab({
       />
 
       <div>
-        <h4 className="text-xs font-bold uppercase tracking-wide text-slate-400 dark:text-slate-500 mb-2">
+        <h4 className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-500 mb-2">
           {t("Cópia local (.json)", "Local copy (.json)")}
         </h4>
         <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">
@@ -1160,7 +1160,7 @@ function AdvancedTab({
               <button
                 type="button"
                 onClick={() => setPendingJson(null)}
-                className="rounded p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
+                className="rounded p-1 text-slate-500 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -1185,7 +1185,7 @@ function AdvancedTab({
                   setImportError("");
                 }}
                 placeholder="CONFIRMAR"
-                className="mt-1.5 w-full rounded-lg border border-rose-300 dark:border-rose-800 bg-white dark:bg-slate-900 px-3 py-2 font-mono text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-rose-500"
+                className="mt-1.5 w-full rounded-lg border border-rose-300 dark:border-rose-800 bg-white dark:bg-slate-900 px-3 py-2 font-mono text-xs text-slate-900 dark:text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-rose-500"
               />
               {importError && <p className="mt-1 text-[11px] text-rose-600 font-medium">{importError}</p>}
             </div>

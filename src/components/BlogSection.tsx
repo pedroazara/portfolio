@@ -274,7 +274,7 @@ export default function BlogSection({
                   {/* Content (5 columns on desktop) */}
                   <div className="lg:col-span-5 p-8 sm:p-10 lg:p-12 flex flex-col justify-between">
                     <div className="space-y-5">
-                      <div className="flex items-center gap-3 text-slate-400 dark:text-slate-500 font-mono text-xs">
+                      <div className="flex items-center gap-3 text-slate-500 dark:text-slate-500 font-mono text-xs">
                         {getPostCategoryDisplay(featuredPost) && (
                           <span className="rounded-full bg-indigo-50 dark:bg-indigo-950/60 px-3 py-1 text-xs font-bold text-indigo-600 dark:text-indigo-400">
                             {getPostCategoryDisplay(featuredPost)}
@@ -323,14 +323,14 @@ export default function BlogSection({
                         <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
                           <button
                             onClick={(e) => handleOpenEdit(featuredPost, e)}
-                            className="rounded-xl p-2 text-slate-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+                            className="rounded-xl p-2 text-slate-500 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
                             title="Editar Artigo"
                           >
                             <Edit2 className="h-4 w-4" />
                           </button>
                           <button
                             onClick={(e) => handleDelete(featuredPost.id, e)}
-                            className="rounded-xl p-2 text-slate-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 hover:text-rose-600 dark:hover:text-rose-400 transition-colors"
+                            className="rounded-xl p-2 text-slate-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 hover:text-rose-600 dark:hover:text-rose-400 transition-colors"
                             title="Excluir Artigo"
                           >
                             <Trash2 className="h-4 w-4" />
@@ -389,7 +389,7 @@ export default function BlogSection({
                         )}
                       </div>
                     ) : (
-                      <div className="relative aspect-[16/9] w-full bg-slate-100 dark:bg-slate-950/30 shrink-0 flex items-center justify-center text-slate-400 dark:text-slate-500">
+                      <div className="relative aspect-[16/9] w-full bg-slate-100 dark:bg-slate-950/30 shrink-0 flex items-center justify-center text-slate-500 dark:text-slate-500">
                         <BookOpen className="h-12 w-12 text-slate-300 dark:text-slate-700" />
                         {getPostCategoryDisplay(post) && (
                           <span className="absolute top-4 left-4 rounded-full bg-slate-900/80 dark:bg-slate-950/80 backdrop-blur-xs px-3.5 py-1 text-xs font-bold text-white uppercase tracking-wider">
@@ -403,7 +403,7 @@ export default function BlogSection({
                     <div className="flex-1 p-8 sm:p-10 lg:p-11 flex flex-col justify-between">
                       <div className="space-y-4">
                         {/* Meta */}
-                        <div className="flex items-center gap-3 text-slate-400 dark:text-slate-500 font-mono text-xs">
+                        <div className="flex items-center gap-3 text-slate-500 dark:text-slate-500 font-mono text-xs">
                           <span className="flex items-center gap-1">
                             <Calendar className="h-3.5 w-3.5" />
                             {post.date}
@@ -457,14 +457,14 @@ export default function BlogSection({
                           <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
                             <button
                               onClick={(e) => handleOpenEdit(post, e)}
-                              className="rounded-lg p-1.5 text-slate-400 dark:text-slate-500 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+                              className="rounded-lg p-1.5 text-slate-500 dark:text-slate-500 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
                               title="Editar Artigo"
                             >
                               <Edit2 className="h-3.5 w-3.5" />
                             </button>
                             <button
                               onClick={(e) => handleDelete(post.id, e)}
-                              className="rounded-lg p-1.5 text-slate-400 dark:text-slate-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 hover:text-rose-600 dark:hover:text-rose-400 transition-colors"
+                              className="rounded-lg p-1.5 text-slate-500 dark:text-slate-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 hover:text-rose-600 dark:hover:text-rose-400 transition-colors"
                               title="Excluir Artigo"
                             >
                               <Trash2 className="h-3.5 w-3.5" />

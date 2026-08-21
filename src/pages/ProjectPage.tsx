@@ -12,6 +12,7 @@ import MarkdownRenderer from "../components/MarkdownRenderer";
 import LocalImage from "../components/LocalImage";
 import { COVER_ASPECT_CLASS } from "../lib/coverAspect";
 import TableOfContents from "../components/TableOfContents";
+import ContentUnavailable from "../components/ContentUnavailable";
 import ProjectNavList from "../components/ProjectNavList";
 import { useLocalePath } from "../lib/routes";
 import { editTargetFromViewport } from "../utils/editTarget";
@@ -24,6 +25,9 @@ interface ProjectPageProps {
   posts: BlogPost[];
   isEditMode: boolean;
   language: Language;
+  /** Se os dados já chegaram, e se a leitura da nuvem falhou. */
+  isDataLoaded?: boolean;
+  loadFailed?: boolean;
 }
 
 /**
@@ -41,6 +45,8 @@ export default function ProjectPage({
   posts,
   isEditMode,
   language,
+  isDataLoaded = true,
+  loadFailed = false,
 }: ProjectPageProps) {
   const navigate = useNavigate();
   const lp = useLocalePath();
@@ -73,6 +79,11 @@ export default function ProjectPage({
   }, [project, language]);
 
   const toc = useMemo(() => extractToc(body), [body]);
+
+  // Projeto ausente pode ser link errado — ou dado que ainda não chegou.
+  if (isMissing && (!isDataLoaded || loadFailed)) {
+    return <ContentUnavailable state={loadFailed ? "failed" : "loading"} language={language} />;
+  }
 
   if (isMissing) {
     return (
@@ -251,7 +262,7 @@ export default function ProjectPage({
         </h1>
 
         {/* Metadados */}
-        <div className="mt-6 flex flex-wrap items-center gap-4 border-b border-slate-100 pb-6 font-mono text-xs text-slate-400 sm:text-sm dark:border-slate-800 dark:text-slate-500">
+        <div className="mt-6 flex flex-wrap items-center gap-4 border-b border-slate-100 pb-6 font-mono text-xs text-slate-500 sm:text-sm dark:border-slate-800 dark:text-slate-500">
           {periodLabel && (
             <>
               <span className="flex items-center gap-1">
@@ -417,7 +428,7 @@ export default function ProjectPage({
                 to={lp(`/project/${slugOf(previousProject)}`)}
                 className="group rounded-2xl border border-slate-200 p-4 transition-all hover:border-indigo-500 hover:shadow-md dark:border-slate-800 dark:hover:border-indigo-500"
               >
-                <span className="flex items-center gap-1 font-mono text-[11px] uppercase tracking-wider text-slate-400">
+                <span className="flex items-center gap-1 font-mono text-[11px] uppercase tracking-wider text-slate-500">
                   <ArrowLeft className="h-3 w-3" />
                   {language === "en" ? "Previous" : "Anterior"}
                 </span>
@@ -433,7 +444,7 @@ export default function ProjectPage({
                 to={lp(`/project/${slugOf(nextProject)}`)}
                 className="group rounded-2xl border border-slate-200 p-4 text-right transition-all hover:border-indigo-500 hover:shadow-md dark:border-slate-800 dark:hover:border-indigo-500"
               >
-                <span className="flex items-center justify-end gap-1 font-mono text-[11px] uppercase tracking-wider text-slate-400">
+                <span className="flex items-center justify-end gap-1 font-mono text-[11px] uppercase tracking-wider text-slate-500">
                   {language === "en" ? "Next" : "Próximo"}
                   <ArrowRight className="h-3 w-3" />
                 </span>

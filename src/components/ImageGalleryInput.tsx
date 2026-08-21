@@ -162,7 +162,7 @@ export default function ImageGalleryInput({
             <span className="text-xs font-semibold text-slate-600 dark:text-slate-300">
               {language === "en" ? "Add gallery images" : "Adicionar imagens à galeria"}
             </span>
-            <span className="text-[11px] text-slate-400">
+            <span className="text-[11px] text-slate-500">
               {language === "en" ? "Click or drag files here" : "Clique ou arraste arquivos aqui"}
             </span>
           </button>
@@ -189,7 +189,7 @@ export default function ImageGalleryInput({
               type="button"
               onClick={() => setIsPicking(true)}
               disabled={isUploading}
-              className="flex aspect-video flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed border-slate-200 text-slate-400 transition-colors hover:border-indigo-400 hover:text-indigo-500 disabled:opacity-50 dark:border-slate-700"
+              className="flex aspect-video flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed border-slate-200 text-slate-500 transition-colors hover:border-indigo-400 hover:text-indigo-500 disabled:opacity-50 dark:border-slate-700"
             >
               {isUploading ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -220,7 +220,7 @@ export default function ImageGalleryInput({
                 <h2 className="font-display text-sm font-bold text-slate-900 dark:text-white">
                   {language === "en" ? "Add to gallery" : "Adicionar à galeria"}
                 </h2>
-                <p className="font-mono text-[10px] text-slate-400">{destination}/</p>
+                <p className="font-mono text-[10px] text-slate-500">{destination}/</p>
               </div>
               <div className="flex items-center gap-2">
                 <button
@@ -235,7 +235,7 @@ export default function ImageGalleryInput({
                   type="button"
                   onClick={() => setIsPicking(false)}
                   aria-label={language === "en" ? "Close" : "Fechar"}
-                  className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-100 dark:hover:bg-slate-800"
+                  className="rounded-lg p-1.5 text-slate-500 transition-colors hover:bg-slate-100 dark:hover:bg-slate-800"
                 >
                   <X className="h-4 w-4" />
                 </button>
@@ -244,7 +244,7 @@ export default function ImageGalleryInput({
 
             {images.length > 12 && (
               <div className="relative border-b border-slate-200 px-5 py-2.5 dark:border-slate-800">
-                <Search className="absolute left-7 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
+                <Search className="absolute left-7 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-500" />
                 <input
                   type="text"
                   value={search}
@@ -257,7 +257,7 @@ export default function ImageGalleryInput({
 
             <div className="grid flex-1 grid-cols-2 gap-3 overflow-y-auto p-5 sm:grid-cols-3">
               {visibleImages.length === 0 && (
-                <p className="col-span-full py-8 text-center text-xs text-slate-400">
+                <p className="col-span-full py-8 text-center text-xs text-slate-500">
                   {language === "en" ? "No saved images yet." : "Nenhuma imagem salva ainda."}
                 </p>
               )}

@@ -106,7 +106,7 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }: LoginMod
               <button
                 onClick={handleClose}
                 disabled={isLoading}
-                className="rounded-full p-1.5 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-600 dark:hover:text-slate-300 transition-colors cursor-pointer disabled:opacity-50"
+                className="rounded-full p-1.5 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-600 dark:hover:text-slate-300 transition-colors cursor-pointer disabled:opacity-50"
                 id="close-login-btn"
               >
                 <X className="h-4.5 w-4.5" />
@@ -150,7 +150,7 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }: LoginMod
                   E-mail
                 </label>
                 <div className="relative">
-                  <div className="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400 dark:text-slate-500 pointer-events-none">
+                  <div className="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-500 dark:text-slate-500 pointer-events-none">
                     <Mail className="h-4 w-4" />
                   </div>
                   <input
@@ -187,7 +187,7 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }: LoginMod
                   </button>
                 </div>
                 <div className="relative">
-                  <div className="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400 dark:text-slate-500 pointer-events-none">
+                  <div className="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-500 dark:text-slate-500 pointer-events-none">
                     <KeyRound className="h-4 w-4" />
                   </div>
                   <input
@@ -208,7 +208,7 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }: LoginMod
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
                     disabled={isLoading}
-                    className="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 cursor-pointer disabled:opacity-50"
+                    className="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-500 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 cursor-pointer disabled:opacity-50"
                   >
                     {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>

@@ -69,7 +69,7 @@ export default function EditModal({ isOpen, onClose, title, children, size = "md
                 <button
                   type="button"
                   onClick={onClose}
-                  className="rounded-lg p-1.5 text-slate-400 dark:text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+                  className="rounded-lg p-1.5 text-slate-500 dark:text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
                   id="close-modal-btn"
                 >
                   <X className="h-5 w-5" />

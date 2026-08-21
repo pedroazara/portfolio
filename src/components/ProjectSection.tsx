@@ -274,13 +274,13 @@ export default function ProjectSection({
         <div className="flex flex-wrap items-center gap-2.5 no-print print:hidden">
           {/* Quick Search Input */}
           <div className="relative flex-1 sm:w-64">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
             <input
               type="text"
               value={localSearch}
               onChange={handleSearchInputChange}
               placeholder={language === "en" ? "Search projects..." : "Buscar projetos..."}
-              className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 pl-9 pr-3 py-1.5 text-xs text-slate-800 dark:text-slate-200 placeholder:text-slate-400 focus:border-indigo-500 focus:outline-hidden focus:ring-1 focus:ring-indigo-500 transition-colors"
+              className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 pl-9 pr-3 py-1.5 text-xs text-slate-800 dark:text-slate-200 placeholder:text-slate-500 focus:border-indigo-500 focus:outline-hidden focus:ring-1 focus:ring-indigo-500 transition-colors"
             />
           </div>
 
@@ -310,24 +310,31 @@ export default function ProjectSection({
 
       {/* Tabs / Filter Navigation */}
       {categories.length > 0 && (
-        <div className="mb-6 flex flex-wrap gap-1.5 border-b border-slate-100 dark:border-slate-800 pb-4 no-print print:hidden">
+        /* No celular a lista empilhava sete linhas e empurrava o primeiro
+           projeto para fora da tela; vira faixa que rola de lado, e só volta a
+           quebrar em linhas quando há largura para isso. */
+        <div className="mb-6 -mx-1 flex gap-1.5 overflow-x-auto border-b border-slate-100 px-1 pb-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:flex-wrap sm:overflow-visible dark:border-slate-800 no-print print:hidden">
           <button
             onClick={() => setActiveCategory("all")}
-            className={`rounded-lg px-4 py-2 text-xs font-semibold transition-all cursor-pointer ${
+            className={`shrink-0 rounded-lg px-4 py-2 text-xs font-semibold transition-all cursor-pointer ${
               activeCategory === "all"
                 ? "bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 shadow-xs"
                 : "bg-slate-50 dark:bg-slate-950 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
             }`}
           >
-            {language === "en" ? `All Projects (${visibleProjects.length})` : `Todos os Projetos (${visibleProjects.length})`}
+            <span className="whitespace-nowrap">
+              {language === "en" ? `All Projects (${visibleProjects.length})` : `Todos os Projetos (${visibleProjects.length})`}
+            </span>
           </button>
           {categories.map((cat) => {
             const count = visibleProjects.filter((p) => {
               const pCatIds = p.categoryIds && p.categoryIds.length > 0 ? p.categoryIds : (p.categoryId ? [p.categoryId] : []);
               return pCatIds.includes(cat.id);
             }).length;
+            if (count === 0 && !isEditMode) return null;
+
             return (
-              <div key={cat.id} className="relative flex items-center group">
+              <div key={cat.id} className="relative flex shrink-0 items-center group">
                 <button
                   onClick={() => setActiveCategory(cat.id)}
                   className={`rounded-lg px-4 py-2 text-xs font-semibold transition-all cursor-pointer ${
@@ -336,7 +343,9 @@ export default function ProjectSection({
                       : "bg-slate-50 dark:bg-slate-950 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
                   }`}
                 >
-                  {cat.nameEn && language === "en" ? cat.nameEn : cat.name} ({count})
+                  <span className="whitespace-nowrap">
+                    {cat.nameEn && language === "en" ? cat.nameEn : cat.name} ({count})
+                  </span>
                 </button>
 
                 {/* Edit Category actions inline in Edit Mode */}
@@ -468,7 +477,7 @@ export default function ProjectSection({
                           </span>
                         ))
                       ) : (
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 font-mono">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 font-mono">
                           {language === "en" ? "Uncategorized" : "Sem Categoria"}
                         </span>
                       )}
@@ -523,14 +532,14 @@ export default function ProjectSection({
                         {/* Toggle Featured Star Button */}
                         <button
                           onClick={(e) => handleOpenProjectEdit(proj, e)}
-                          className="rounded-lg p-1.5 text-slate-400 dark:text-slate-500 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors cursor-pointer"
+                          className="rounded-lg p-1.5 text-slate-500 dark:text-slate-500 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors cursor-pointer"
                           title="Editar Projeto"
                         >
                           <Edit2 className="h-3.5 w-3.5" />
                         </button>
                         <button
                           onClick={(e) => handleDeleteProject(proj.id, e)}
-                          className="rounded-lg p-1.5 text-slate-400 dark:text-slate-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 hover:text-rose-600 dark:hover:text-rose-400 transition-colors cursor-pointer"
+                          className="rounded-lg p-1.5 text-slate-500 dark:text-slate-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 hover:text-rose-600 dark:hover:text-rose-400 transition-colors cursor-pointer"
                           title="Excluir Projeto"
                         >
                           <Trash2 className="h-3.5 w-3.5" />
@@ -540,7 +549,7 @@ export default function ProjectSection({
                   </div>
 
                   {/* Print Links */}
-                  <div className="hidden print:flex flex-col gap-1 mt-3 pt-2 border-t border-slate-100 text-[10px] text-slate-400 font-mono">
+                  <div className="hidden print:flex flex-col gap-1 mt-3 pt-2 border-t border-slate-100 text-[10px] text-slate-500 font-mono">
                     {proj.projectUrl && <div><span className="font-semibold">Link:</span> {proj.projectUrl}</div>}
                     {proj.githubUrl && <div><span className="font-semibold">Código:</span> {proj.githubUrl}</div>}
                   </div>
@@ -570,7 +579,7 @@ export default function ProjectSection({
               <p className="text-xs font-bold text-slate-700 font-sans">
                 {language === "en" ? "Language under Editing" : "Idioma em Edição"}
               </p>
-              <p className="text-[10px] text-slate-400 font-sans">
+              <p className="text-[10px] text-slate-500 font-sans">
                 {language === "en" 
                   ? "Toggle to specify contents in Portuguese or English" 
                   : "Alterne para preencher as informações em Português ou Inglês"}

@@ -301,7 +301,7 @@ export default function ProjectForm({
                           <span className="text-xs font-bold uppercase font-mono tracking-wider text-slate-500 dark:text-slate-400">
                             {language === "en" ? "Specialty Areas (Multiple Selection):" : "Áreas de Atuação (Seleção Múltipla):"}
                           </span>
-                          <span className="text-[11px] font-mono text-slate-400 font-semibold">
+                          <span className="text-[11px] font-mono text-slate-500 font-semibold">
                             {(formData.categoryIds || []).length} {language === "en" ? "selected" : "selecionada(s)"}
                           </span>
                         </div>
@@ -451,7 +451,7 @@ export default function ProjectForm({
 
                   {/* 3. DISPLAY TITLE (ARTICLE H1) */}
                   <div className="space-y-1">
-                    <label className="block text-[10px] font-bold uppercase font-mono tracking-wider text-slate-400">
+                    <label className="block text-[10px] font-bold uppercase font-mono tracking-wider text-slate-500">
                       {editingLanguage === "en" ? "Project Title (English)" : "Título do Projeto (Português)"} *
                     </label>
                     <input
@@ -475,7 +475,7 @@ export default function ProjectForm({
                     <div className="flex flex-wrap items-center gap-2 pt-1">
                       <label
                         htmlFor="project-codigo"
-                        className="font-mono text-[10px] font-bold uppercase tracking-wider text-slate-400"
+                        className="font-mono text-[10px] font-bold uppercase tracking-wider text-slate-500"
                       >
                         {language === "en" ? "Link" : "Link"}
                       </label>
@@ -484,7 +484,7 @@ export default function ProjectForm({
                           ? "border-rose-400 dark:border-rose-500"
                           : "border-slate-200 dark:border-slate-700"
                       }`}>
-                        <span className="shrink-0 font-mono text-xs text-slate-400 dark:text-slate-500">/projetos/</span>
+                        <span className="shrink-0 font-mono text-xs text-slate-500 dark:text-slate-500">/projetos/</span>
                         <input
                           id="project-codigo"
                           type="text"
@@ -502,7 +502,7 @@ export default function ProjectForm({
                         />
                       </div>
                     </div>
-                    <p className={`font-sans text-[11px] ${slugError ? "text-rose-600 dark:text-rose-400" : "text-slate-400"}`}>
+                    <p className={`font-sans text-[11px] ${slugError ? "text-rose-600 dark:text-rose-400" : "text-slate-500"}`}>
                       {slugError ||
                         (language === "en"
                           ? "Changing it breaks links already shared; mentions inside the site follow along."

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   ArrowLeft, ArrowRight, Calendar, Clock, Share2, Check, Edit2, Code, AlertCircle, FileText,
@@ -8,6 +8,9 @@ import { Language } from "../lib/translations";
 import { findBySlug, slugOf } from "../utils/slug";
 import { estimateReadTime } from "../utils/readTime";
 import MarkdownRenderer from "../components/MarkdownRenderer";
+import TableOfContents from "../components/TableOfContents";
+import ContentUnavailable from "../components/ContentUnavailable";
+import { extractToc } from "../utils/toc";
 import LocalImage from "../components/LocalImage";
 import { COVER_ASPECT_CLASS } from "../lib/coverAspect";
 import { useLocalePath } from "../lib/routes";
@@ -21,6 +24,9 @@ interface PostPageProps {
   authorName: string;
   isEditMode: boolean;
   language: Language;
+  /** Se os dados já chegaram, e se a leitura da nuvem falhou. */
+  isDataLoaded?: boolean;
+  loadFailed?: boolean;
 }
 
 export default function PostPage({
@@ -30,6 +36,8 @@ export default function PostPage({
   authorName,
   isEditMode,
   language,
+  isDataLoaded = true,
+  loadFailed = false,
 }: PostPageProps) {
   const navigate = useNavigate();
   const lp = useLocalePath();
@@ -41,6 +49,11 @@ export default function PostPage({
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "auto" });
   }, [slug]);
+
+  // Sem artigo pode ser link errado — ou dado que ainda não chegou.
+  if (!post && (!isDataLoaded || loadFailed)) {
+    return <ContentUnavailable state={loadFailed ? "failed" : "loading"} language={language} />;
+  }
 
   if (!post) {
     return (
@@ -85,6 +98,7 @@ export default function PostPage({
   const title = (language === "en" ? post.titleEn : post.title) || post.title;
   const content = (language === "en" ? post.contentEn : post.content) || post.content;
   const category = (language === "en" ? post.categoryEn : post.category) || post.category;
+  const toc = useMemo(() => extractToc(content), [content]);
 
   const handleCopyLink = () => {
     navigator.clipboard.writeText(`${window.location.origin}${lp(`/blog/${slugOf(post)}`)}`);
@@ -102,7 +116,13 @@ export default function PostPage({
   const olderPost = currentIndex >= 0 && currentIndex < published.length - 1 ? published[currentIndex + 1] : null;
 
   return (
-    <article className="mx-auto max-w-4xl">
+    <div className="mx-auto grid max-w-[1400px] grid-cols-1 gap-10 xl:grid-cols-[14rem_minmax(0,1fr)]">
+      {/* Sumário (esquerda), só quando há títulos e largura para ele */}
+      <aside className="hidden xl:block">
+        {toc.length > 0 && <TableOfContents entries={toc} language={language} />}
+      </aside>
+
+      <article className="mx-auto w-full max-w-4xl xl:mx-0">
       {/* Barra de navegação do artigo */}
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3 no-print">
         <Link
@@ -182,7 +202,7 @@ export default function PostPage({
         {title}
       </h1>
 
-      <div className="mt-6 flex flex-wrap items-center gap-4 border-b border-slate-100 pb-6 font-mono text-xs text-slate-400 sm:text-sm dark:border-slate-800 dark:text-slate-500">
+      <div className="mt-6 flex flex-wrap items-center gap-4 border-b border-slate-100 pb-6 font-mono text-xs text-slate-500 sm:text-sm dark:border-slate-800 dark:text-slate-500">
         <span className="flex items-center gap-1">
           <Calendar className="h-4 w-4" />
           {post.date}
@@ -269,7 +289,7 @@ export default function PostPage({
                           </span>
                         ))}
                         {stack.length > 3 && (
-                          <span className="font-mono text-[10px] text-slate-400">+{stack.length - 3}</span>
+                          <span className="font-mono text-[10px] text-slate-500">+{stack.length - 3}</span>
                         )}
                       </div>
                     )}
@@ -292,7 +312,7 @@ export default function PostPage({
               to={lp(`/blog/${slugOf(newerPost)}`)}
               className="group rounded-2xl border border-slate-200 p-4 transition-all hover:border-indigo-500 hover:shadow-md dark:border-slate-800 dark:hover:border-indigo-500"
             >
-              <span className="flex items-center gap-1 font-mono text-[11px] uppercase tracking-wider text-slate-400">
+              <span className="flex items-center gap-1 font-mono text-[11px] uppercase tracking-wider text-slate-500">
                 <ArrowLeft className="h-3 w-3" />
                 {language === "en" ? "Newer" : "Mais recente"}
               </span>
@@ -308,7 +328,7 @@ export default function PostPage({
               to={lp(`/blog/${slugOf(olderPost)}`)}
               className="group rounded-2xl border border-slate-200 p-4 text-right transition-all hover:border-indigo-500 hover:shadow-md dark:border-slate-800 dark:hover:border-indigo-500"
             >
-              <span className="flex items-center justify-end gap-1 font-mono text-[11px] uppercase tracking-wider text-slate-400">
+              <span className="flex items-center justify-end gap-1 font-mono text-[11px] uppercase tracking-wider text-slate-500">
                 {language === "en" ? "Older" : "Mais antigo"}
                 <ArrowRight className="h-3 w-3" />
               </span>
@@ -320,9 +340,10 @@ export default function PostPage({
         </nav>
       )}
 
-      <footer className="mt-12 border-t border-slate-100 pt-6 font-mono text-xs text-slate-400 dark:border-slate-800 dark:text-slate-500">
+      <footer className="mt-12 border-t border-slate-100 pt-6 font-mono text-xs text-slate-500 dark:border-slate-800 dark:text-slate-400">
         © {new Date().getFullYear()} {authorName}
       </footer>
-    </article>
+      </article>
+    </div>
   );
 }

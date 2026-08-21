@@ -82,7 +82,7 @@ export default function QuickNotes() {
   };
 
   if (isLoading) {
-    return <p className="py-16 text-center text-sm text-slate-400">Carregando notas…</p>;
+    return <p className="py-16 text-center text-sm text-slate-500">Carregando notas…</p>;
   }
 
   return (
@@ -122,14 +122,14 @@ export default function QuickNotes() {
                   <span className="block truncate text-xs font-semibold text-slate-900 dark:text-white">
                     {note.title || "Sem título"}
                   </span>
-                  <span className="block truncate text-[11px] text-slate-400">
+                  <span className="block truncate text-[11px] text-slate-500">
                     {note.content.slice(0, 60) || "vazio"}
                   </span>
                 </button>
                 <button
                   type="button"
                   onClick={() => setPendingDelete(note)}
-                  className="rounded p-1 text-slate-400 opacity-0 transition-opacity hover:text-rose-600 group-hover:opacity-100 dark:hover:text-rose-400 cursor-pointer"
+                  className="rounded p-1 text-slate-500 opacity-0 transition-opacity hover:text-rose-600 group-hover:opacity-100 dark:hover:text-rose-400 cursor-pointer"
                   aria-label="Excluir nota"
                 >
                   <Trash2 className="h-3.5 w-3.5" />
@@ -137,7 +137,7 @@ export default function QuickNotes() {
               </div>
             ))}
             {notes.length === 0 && (
-              <p className="py-6 text-center text-xs text-slate-400">Nenhuma nota</p>
+              <p className="py-6 text-center text-xs text-slate-500">Nenhuma nota</p>
             )}
           </div>
         </aside>
@@ -152,7 +152,7 @@ export default function QuickNotes() {
                   placeholder="Título"
                   className="flex-1 border-0 bg-transparent text-base font-bold text-slate-900 outline-hidden dark:text-white"
                 />
-                <span className="shrink-0 text-[11px] text-slate-400">
+                <span className="shrink-0 text-[11px] text-slate-500">
                   {isSaving ? "salvando…" : "salvo"}
                 </span>
               </div>
@@ -165,7 +165,7 @@ export default function QuickNotes() {
               />
             </>
           ) : (
-            <p className="py-16 text-center text-sm text-slate-400">
+            <p className="py-16 text-center text-sm text-slate-500">
               Selecione ou crie uma nota.
             </p>
           )}

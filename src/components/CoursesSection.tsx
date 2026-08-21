@@ -146,7 +146,7 @@ export default function CoursesSection({
       {courses.length === 0 ? (
         <div className="rounded-xl border border-dashed border-slate-200 dark:border-slate-800 p-8 text-center font-sans">
           <Award className="mx-auto h-6 w-6 text-slate-300 dark:text-slate-700" />
-          <p className="mt-2 text-xs text-slate-400 dark:text-slate-500 font-medium">
+          <p className="mt-2 text-xs text-slate-500 dark:text-slate-500 font-medium">
             {language === "en" ? "No courses or certificates added." : "Nenhum curso ou certificado adicionado."}
           </p>
         </div>
@@ -187,14 +187,14 @@ export default function CoursesSection({
                     <div className="flex items-center gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity no-print print:hidden shrink-0">
                       <button
                         onClick={() => handleOpenEdit(course)}
-                        className="rounded-md p-1.5 text-slate-400 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors cursor-pointer"
+                        className="rounded-md p-1.5 text-slate-500 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors cursor-pointer"
                         title={language === "en" ? "Edit" : "Editar"}
                       >
                         <Edit2 className="h-3.5 w-3.5" />
                       </button>
                       <button
                         onClick={() => handleDelete(course.id)}
-                        className="rounded-md p-1.5 text-slate-400 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-rose-600 dark:hover:text-rose-400 transition-colors cursor-pointer"
+                        className="rounded-md p-1.5 text-slate-500 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-rose-600 dark:hover:text-rose-400 transition-colors cursor-pointer"
                         title={language === "en" ? "Delete" : "Excluir"}
                       >
                         <Trash2 className="h-3.5 w-3.5" />
@@ -203,7 +203,7 @@ export default function CoursesSection({
                   )}
                 </div>
 
-                <div className="mt-3 flex items-center gap-1.5 text-slate-400 dark:text-slate-500 font-sans text-xs">
+                <div className="mt-3 flex items-center gap-1.5 text-slate-500 dark:text-slate-500 font-sans text-xs">
                   <Calendar className="h-3.5 w-3.5 text-slate-300 dark:text-slate-600" />
                   <span>{language === "en" ? `Issued in ${formatDate(course.issueDate)}` : `Emitido em ${formatDate(course.issueDate)}`}</span>
                 </div>
@@ -248,7 +248,7 @@ export default function CoursesSection({
               <p className="text-xs font-bold text-slate-700 font-sans">
                 {language === "en" ? "Language under Editing" : "Idioma em Edição"}
               </p>
-              <p className="text-[10px] text-slate-400 font-sans">
+              <p className="text-[10px] text-slate-500 font-sans">
                 {language === "en" 
                   ? "Toggle to specify contents in Portuguese or English" 
                   : "Alterne para preencher as informações em Português ou Inglês"}
