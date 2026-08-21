@@ -7,6 +7,7 @@ import ConfirmModal from "./ConfirmModal";
 import { ReorderableList, mergeReorderedSubset } from "./Reorderable";
 import LocalImage from "./LocalImage";
 import MarkdownRenderer from "./MarkdownRenderer";
+import { SECTION_CARD_CLASS } from "../lib/cardStyle";
 import { Language, translations } from "../lib/translations";
 import TranslateButton from "./TranslateButton";
 import { autoTranslateFields } from "../lib/translator";
@@ -224,7 +225,7 @@ export default function ProjectSection({
   };
 
   return (
-    <section id="projetos" className="scroll-mt-32 mb-8 rounded-2xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 sm:p-8 md:p-10 shadow-xs print-border print-shadow-none print-m-0 transition-colors duration-300">
+    <section id="projetos" className={`mb-8 ${SECTION_CARD_CLASS}`}>
       {/* Standalone Page Top Header */}
       {isStandalonePage && (
         <div className="mb-8 border-b border-slate-100 dark:border-slate-800 pb-6 no-print print:hidden">

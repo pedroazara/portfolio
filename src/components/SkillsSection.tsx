@@ -7,6 +7,7 @@ import { ReorderableList } from "./Reorderable";
 import { Language } from "../lib/translations";
 import TranslateButton from "./TranslateButton";
 import { autoTranslateFields } from "../lib/translator";
+import { SECTION_CARD_CLASS } from "../lib/cardStyle";
 
 interface SkillsSectionProps {
   skills: Skill[];
@@ -341,7 +342,7 @@ export default function SkillsSection({
   const levelLabel = LEVEL_LABELS[skillForm.level && skillForm.level >= 1 && skillForm.level <= 5 ? skillForm.level : 4];
 
   return (
-    <section id="habilidades" className="scroll-mt-32 mb-8 rounded-2xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 sm:p-8 md:p-10 shadow-xs print-border print-shadow-none print-m-0 transition-colors duration-300">
+    <section id="habilidades" className={`mb-8 ${SECTION_CARD_CLASS}`}>
       <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-5 mb-6">
         <div className="flex items-center gap-3">
           <div className="rounded-xl bg-indigo-50 dark:bg-indigo-950/40 p-2.5 text-indigo-600 dark:text-indigo-400 print-border">

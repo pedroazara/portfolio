@@ -14,6 +14,7 @@ import {
 import EditModal from "./EditModal";
 import ConfirmModal from "./ConfirmModal";
 import MarkdownRenderer from "./MarkdownRenderer";
+import { SECTION_CARD_CLASS } from "../lib/cardStyle";
 import { ReorderableList } from "./Reorderable";
 import { localePath } from "../lib/routes";
 import { Language } from "../lib/translations";
@@ -495,7 +496,7 @@ export default function ExperienceEducationSection({
       {/* SEÇÃO 1: FORMAÇÃO ACADÊMICA (Education Section) */}
       <section
         id="formacao"
-        className="scroll-mt-32 rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900/90 p-6 sm:p-8 md:p-10 shadow-xs transition-colors duration-300"
+        className={SECTION_CARD_CLASS}
       >
         <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800/80 pb-5 mb-6">
           <div className="flex items-center gap-3">
@@ -608,7 +609,7 @@ export default function ExperienceEducationSection({
       {/* SEÇÃO 2: EXPERIÊNCIA EM PESQUISA (Research Experience) */}
       <section
         id="pesquisa"
-        className="scroll-mt-32 rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900/90 p-6 sm:p-8 md:p-10 shadow-xs transition-colors duration-300"
+        className={SECTION_CARD_CLASS}
       >
         <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800/80 pb-5 mb-6">
           <div className="flex items-center gap-3">
@@ -803,7 +804,7 @@ export default function ExperienceEducationSection({
       {(academicActivities.length > 0 || isEditMode) && (
         <section
           id="atividades-academicas"
-          className="scroll-mt-32 rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900/90 p-6 sm:p-8 md:p-10 shadow-xs transition-colors duration-300"
+          className={SECTION_CARD_CLASS}
         >
           <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800/80 pb-5 mb-6">
             <div className="flex items-center gap-3">

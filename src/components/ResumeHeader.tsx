@@ -8,6 +8,7 @@ import ImageSelectorInput from "./ImageSelectorInput";
 import { Language, translations } from "../lib/translations";
 import TranslateButton from "./TranslateButton";
 import { autoTranslateFields } from "../lib/translator";
+import { SECTION_CARD_CLASS } from "../lib/cardStyle";
 
 interface ResumeHeaderProps {
   profile: Profile;
@@ -73,12 +74,13 @@ export default function ResumeHeader({
   };
 
   return (
-    <section id="perfil" className="scroll-mt-32 relative mb-8 overflow-hidden rounded-3xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 sm:p-8 md:p-10 lg:p-12 shadow-xs print-border print-shadow-none print-m-0 transition-colors duration-300">
-      {/* Luz de fundo. Só decoração: fica fora da leitura de tela e do papel. */}
+    <section id="perfil" className={`mb-8 lg:p-12 ${SECTION_CARD_CLASS}`}>
+      {/* Luz de fundo. Só decoração: fica fora da leitura de tela e do papel.
+          A abertura recebe mais do que as outras seções — é a primeira coisa
+          que se vê, e o halo do canto sozinho não sustentaria a página. */}
       <div aria-hidden="true" className="pointer-events-none absolute inset-0 no-print print:hidden">
         <div className="absolute -right-32 -top-40 h-96 w-96 rounded-full bg-indigo-500/10 blur-3xl dark:bg-indigo-500/20" />
-        <div className="absolute -bottom-44 -left-28 h-80 w-80 rounded-full bg-violet-500/10 blur-3xl dark:bg-violet-600/15" />
-        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-indigo-500/50 to-transparent" />
+        <div className="absolute -bottom-44 -left-28 h-80 w-80 rounded-full bg-blue-500/10 blur-3xl dark:bg-blue-500/15" />
       </div>
       {/* Edit Trigger (Only visible in edit mode, hidden in prints) */}
       {isEditMode && (
@@ -97,7 +99,7 @@ export default function ResumeHeader({
         {/* Retrato. Vem primeiro no HTML para abrir a página no celular, e vai
             para a direita no desktop, onde o texto merece a margem de leitura. */}
         <div className="relative md:order-2">
-          <div className="absolute -inset-4 rounded-[2.5rem] bg-gradient-to-br from-indigo-500/25 via-violet-500/15 to-transparent blur-2xl no-print print:hidden" />
+          <div className="absolute -inset-4 rounded-[2.5rem] bg-gradient-to-br from-indigo-500/25 via-blue-500/20 to-transparent blur-2xl no-print print:hidden" />
           <div className="relative h-36 w-36 overflow-hidden rounded-[1.75rem] bg-slate-50 dark:bg-slate-950 border-4 border-white dark:border-slate-800 shadow-xl ring-1 ring-slate-200/70 dark:ring-slate-700/60 sm:h-44 sm:w-44 md:h-52 md:w-52 lg:h-60 lg:w-60 print-border">
             {profile.avatarUrl ? (
               <LocalImage
@@ -122,7 +124,7 @@ export default function ResumeHeader({
           </h1>
 
           {/* Barra de acento: fecha o nome e ancora a coluna no desktop. */}
-          <div className="mt-5 h-1 w-16 rounded-full bg-gradient-to-r from-indigo-600 to-violet-500 dark:from-indigo-500 dark:to-violet-400" />
+          <div className="mt-5 h-1 w-16 rounded-full bg-gradient-to-r from-indigo-600 to-blue-500 dark:from-indigo-500 dark:to-blue-400" />
 
           <p className="mt-5 max-w-2xl text-base leading-relaxed text-slate-600 dark:text-slate-300 print-break-inside-avoid">
             {(language === "en" ? profile.bioEn : profile.bio) || profile.bio || (language === "en" ? "Write a short bio..." : "Escreva uma breve apresentação...")}
