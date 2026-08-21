@@ -75,31 +75,23 @@ html {
   background: #94a3b8;
 }
 
-/* High-Fidelity Dark Mode custom selectors for complete sub-component support */
+/* Tema escuro: fundo e texto do documento.
+
+   O que existia aqui era uma lista de exceções globais com `!important` —
+   `.dark section`, `.dark .bg-white`, `.dark .text-slate-600` — que pintavam
+   qualquer elemento que casasse com o seletor, dentro ou fora de um cartão.
+   Era uma solução de quando os componentes ainda não declaravam as próprias
+   cores de tema escuro; hoje declaram, e a regra global só criava surpresa
+   (foi ela que transformou blocos de texto do projeto em caixas sem respiro).
+
+   Resta o que não dá para expressar por classe de utilitário no componente:
+   o fundo do documento e o padrão dos campos de formulário, que aparecem em
+   dezenas de telas do painel sem classe própria. */
 .dark body {
   @apply !bg-slate-950 !text-slate-100;
 }
 
-.dark section,
-.dark .bg-white {
-  @apply !bg-slate-900 !border-slate-800;
-}
-
-/* Seção dentro de um artigo é divisão do texto, não cartão.
-   A regra acima pinta qualquer <section>, e "Tecnologias" e "Relevância
-   científica" viravam caixas com o texto colado nas bordas — elas só têm um
-   filete no topo separando os blocos, sem recuo interno para sustentar fundo. */
-.dark article section {
-  @apply !bg-transparent;
-}
-
-/* Subtle slate cards and inner components */
-.dark .bg-slate-50,
-.dark .bg-slate-100 {
-  @apply !bg-slate-950 !border-slate-800;
-}
-
-/* Scrollbar dark mode */
+/* Barra de rolagem no escuro */
 .dark ::-webkit-scrollbar-thumb {
   background: #1e293b;
 }
@@ -108,72 +100,7 @@ html {
   background: #334155;
 }
 
-/* Base text elements under dark mode */
-.dark .text-slate-900,
-.dark .text-slate-950,
-.dark h1,
-.dark h2,
-.dark h3,
-.dark h4 {
-  @apply !text-white;
-}
-
-.dark .text-slate-600,
-.dark .text-slate-700,
-.dark .text-slate-800 {
-  @apply !text-slate-300;
-}
-
-.dark .text-slate-500,
-.dark .text-slate-400 {
-  @apply !text-slate-400;
-}
-
-/* Borders dark mode */
-.dark .border-slate-100,
-.dark .border-slate-200,
-.dark .border-slate-200\/50,
-.dark .border-slate-200\/60,
-.dark .border-slate-200\/80 {
-  @apply !border-slate-800;
-}
-
-/* Timeline specific dark mode */
-.dark .border-l.border-slate-100 {
-  @apply !border-slate-800;
-}
-
-/* Badges, timeline dots, custom blocks */
-.dark .bg-indigo-50 {
-  @apply !bg-indigo-950/40 !text-indigo-300;
-}
-
-.dark .bg-emerald-50 {
-  @apply !bg-emerald-950/40 !text-emerald-300;
-}
-
-/* Project and Skill tags in dark mode */
-.dark .bg-slate-100 {
-  @apply !bg-slate-800 !text-slate-300;
-}
-
-/* Active buttons in dark navigation blocks */
-.dark .bg-slate-850 {
-  @apply !bg-slate-800 !text-slate-100;
-}
-
-/* Edit and Action panel triggers */
-.dark #discrete-panel-login-btn,
-.dark #edit-profile-btn {
-  @apply !bg-slate-800 !border-slate-700 !text-slate-300;
-}
-
-.dark #discrete-panel-login-btn:hover,
-.dark #edit-profile-btn:hover {
-  @apply !bg-slate-700 !text-indigo-400;
-}
-
-/* Custom form controls dark mode overrides */
+/* Campos de formulário: o painel tem dezenas deles sem classe de tema. */
 .dark input,
 .dark textarea,
 .dark select {

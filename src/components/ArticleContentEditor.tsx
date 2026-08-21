@@ -284,7 +284,7 @@ export default function ArticleContentEditor({
           />
         </div>
 
-        <span className="pointer-events-none absolute bottom-2.5 right-3 font-mono text-[10px] text-slate-300 dark:text-slate-600">
+        <span className="pointer-events-none absolute bottom-2.5 right-3 font-mono text-[10px] text-slate-400 dark:text-slate-500">
           {value.length}
         </span>
       </div>
