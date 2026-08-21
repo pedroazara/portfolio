@@ -452,7 +452,7 @@ function BackupsTab({
                         type="button"
                         onClick={() => handleDownloadFull(entry)}
                         disabled={downloadingFullName === entry.name}
-                        title={t("Baixar .zip", "Download .zip")}
+                        title={t("Baixar .zip", "Download .zip")} aria-label={t("Baixar .zip", "Download .zip")}
                         className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-200/70 dark:hover:bg-slate-700 hover:text-slate-700 dark:hover:text-slate-200 transition-colors cursor-pointer disabled:opacity-50"
                       >
                         {downloadingFullName === entry.name ? (
@@ -465,7 +465,7 @@ function BackupsTab({
                         type="button"
                         onClick={() => setPendingRestore({ kind: "full", entry })}
                         disabled={restoringKey === key}
-                        title={t("Restaurar esta versão", "Restore this version")}
+                        title={t("Restaurar esta versão", "Restore this version")} aria-label={t("Restaurar esta versão", "Restore this version")}
                         className="flex h-7 w-7 items-center justify-center rounded-lg text-indigo-500 hover:bg-indigo-100 dark:hover:bg-indigo-950/40 transition-colors cursor-pointer disabled:opacity-50"
                       >
                         {restoringKey === key ? (
@@ -538,7 +538,7 @@ function BackupsTab({
                       <button
                         type="button"
                         onClick={() => handleDownload(entry)}
-                        title={t("Baixar como JSON", "Download as JSON")}
+                        title={t("Baixar como JSON", "Download as JSON")} aria-label={t("Baixar como JSON", "Download as JSON")}
                         className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-200/70 dark:hover:bg-slate-700 hover:text-slate-700 dark:hover:text-slate-200 transition-colors cursor-pointer"
                       >
                         <Download className="h-3.5 w-3.5" />
@@ -547,7 +547,7 @@ function BackupsTab({
                         type="button"
                         onClick={() => setPendingRestore({ kind: "light", entry })}
                         disabled={restoringKey === key}
-                        title={t("Restaurar esta versão", "Restore this version")}
+                        title={t("Restaurar esta versão", "Restore this version")} aria-label={t("Restaurar esta versão", "Restore this version")}
                         className="flex h-7 w-7 items-center justify-center rounded-lg text-indigo-500 hover:bg-indigo-100 dark:hover:bg-indigo-950/40 transition-colors cursor-pointer disabled:opacity-50"
                       >
                         {restoringKey === key ? (

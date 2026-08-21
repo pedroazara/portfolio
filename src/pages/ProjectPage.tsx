@@ -6,7 +6,7 @@ import {
 } from "lucide-react";
 import { Project, ProjectCategory, BlogPost } from "../types";
 import { Language } from "../lib/translations";
-import { findBySlug, slugOf } from "../utils/slug";
+import { findBySlug, isOldSlug, slugOf } from "../utils/slug";
 import { extractToc } from "../utils/toc";
 import MarkdownRenderer from "../components/MarkdownRenderer";
 import LocalImage from "../components/LocalImage";
@@ -57,6 +57,18 @@ export default function ProjectPage({
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "auto" });
   }, [slug]);
+
+  /**
+   * Chegou por um endereço antigo: troca pela URL de hoje.
+   *
+   * `replace` para o botão "voltar" não cair no endereço antigo e refazer o
+   * salto, e para os buscadores registrarem um endereço só.
+   */
+  useEffect(() => {
+    if (project && isOldSlug(project, slug)) {
+      navigate(lp(`/projetos/${slugOf(project)}`), { replace: true });
+    }
+  }, [project, slug, navigate, lp]);
 
   // Rascunhos só existem para quem edita; para o público, a resposta é a mesma
   // de um projeto inexistente, para não confirmar que ele existe.

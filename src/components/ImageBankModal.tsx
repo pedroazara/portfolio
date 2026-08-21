@@ -414,7 +414,7 @@ export default function ImageBankModal({ isOpen, onClose }: ImageBankModalProps)
                             ? "bg-emerald-500 border-emerald-500 text-white"
                             : "bg-white border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-indigo-600"
                         }`}
-                        title="Copiar código Markdown"
+                        title="Copiar código Markdown" aria-label="Copiar código Markdown"
                       >
                         {copiedName === img.name ? (
                           <>
@@ -433,7 +433,7 @@ export default function ImageBankModal({ isOpen, onClose }: ImageBankModalProps)
                       <button
                         onClick={() => handleDelete(img.name)}
                         className="rounded-lg p-1.5 text-slate-500 hover:bg-rose-50 hover:text-rose-600 transition-colors"
-                        title="Excluir Imagem"
+                        title="Excluir Imagem" aria-label="Excluir Imagem"
                       >
                         <Trash2 className="h-4 w-4" />
                       </button>

@@ -188,14 +188,14 @@ export default function CoursesSection({
                       <button
                         onClick={() => handleOpenEdit(course)}
                         className="rounded-md p-1.5 text-slate-500 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors cursor-pointer"
-                        title={language === "en" ? "Edit" : "Editar"}
+                        title={language === "en" ? "Edit" : "Editar"} aria-label={language === "en" ? "Edit" : "Editar"}
                       >
                         <Edit2 className="h-3.5 w-3.5" />
                       </button>
                       <button
                         onClick={() => handleDelete(course.id)}
                         className="rounded-md p-1.5 text-slate-500 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-rose-600 dark:hover:text-rose-400 transition-colors cursor-pointer"
-                        title={language === "en" ? "Delete" : "Excluir"}
+                        title={language === "en" ? "Delete" : "Excluir"} aria-label={language === "en" ? "Delete" : "Excluir"}
                       >
                         <Trash2 className="h-3.5 w-3.5" />
                       </button>

@@ -214,6 +214,21 @@ export default function ProjectForm({
     }
     setSlugError("");
 
+    /**
+     * Renomear guarda o endereço anterior.
+     *
+     * Sem isso, o link que já circulou passa a responder "projeto não
+     * encontrado" — foi o que aconteceu ao trocar `portfolio-site` por
+     * `seriemapump`. Com o histórico, o endereço antigo continua levando aqui.
+     */
+    const codigoAnterior = project?.codigo;
+    const historico = Array.from(
+      new Set([
+        ...(formData.codigosAntigos || []),
+        ...(codigoAnterior && codigoAnterior !== codigo ? [codigoAnterior] : []),
+      ])
+    ).filter((antigo) => antigo !== codigo);
+
     const tagsArray = tagsInput
       .split(",")
       .map((t) => t.trim())
@@ -233,6 +248,7 @@ export default function ProjectForm({
       // O endereço do link é editável; em branco, volta a sair do título,
       // para a URL ser /projetos/meu-projeto e não /projetos/proj-1755....
       codigo: codigo || undefined,
+      codigosAntigos: historico.length > 0 ? historico : undefined,
       title: formData.title || "Novo Projeto",
       titleEn: formData.titleEn || "",
       description: formData.description || "",

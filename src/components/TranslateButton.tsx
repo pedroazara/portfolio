@@ -55,7 +55,7 @@ export default function TranslateButton({
             ? "bg-emerald-600 text-white hover:bg-emerald-700"
             : "bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white active:scale-98"
         } ${disabled ? "opacity-50 cursor-not-allowed" : ""} ${py} ${className}`}
-        title="Gera tradução automática em Inglês usando Gemini AI (editável)"
+        title="Gera tradução automática em Inglês usando Gemini AI (editável)" aria-label="Gera tradução automática em Inglês usando Gemini AI (editável)"
       >
         {isLoading ? (
           <>

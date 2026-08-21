@@ -202,7 +202,7 @@ export default function GlobalHeader({
                   type="button"
                   onClick={() => navigate(localePath("/admin/painel", language))}
                   className="hidden min-[860px]:flex h-8 items-center gap-1.5 rounded-lg border border-[var(--border)] bg-[var(--surface)] px-2.5 text-[12px] font-medium text-[var(--text-muted)] transition-colors hover:bg-[var(--surface-raised)] hover:text-[var(--text)] cursor-pointer"
-                  title="Painel pessoal"
+                  title="Painel pessoal" aria-label="Painel pessoal"
                 >
                   <LayoutDashboard className="h-3.5 w-3.5 text-indigo-500" />
                   <span>Painel</span>
@@ -221,7 +221,7 @@ export default function GlobalHeader({
                     ? "border-emerald-300 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 font-semibold"
                     : "border-[var(--border)] bg-[var(--surface)] text-[var(--text-muted)] hover:bg-[var(--surface-raised)] hover:text-[var(--text)]"
                 }`}
-                title={isAuthenticated ? "Modo Admin Ativo" : "Acessar Área de Administração"}
+                title={isAuthenticated ? "Modo Admin Ativo" : "Acessar Área de Administração"} aria-label={isAuthenticated ? "Modo Admin Ativo" : "Acessar Área de Administração"}
                 id="header-admin-login-btn"
               >
                 <Lock className="h-3.5 w-3.5 text-indigo-500" />

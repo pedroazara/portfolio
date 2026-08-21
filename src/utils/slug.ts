@@ -13,6 +13,8 @@
 interface Identifiable {
   id: string;
   codigo?: string;
+  /** Códigos anteriores, de antes de alguma renomeação. */
+  codigosAntigos?: string[];
 }
 
 /** Trecho de URL que representa este item. */
@@ -20,8 +22,24 @@ export function slugOf(item: Identifiable): string {
   return item.codigo || item.id;
 }
 
-/** Localiza um item pelo `codigo` ou pelo `id`. */
+/**
+ * Localiza um item pelo `codigo`, pelo `id` ou por um código que ele já teve.
+ *
+ * A ordem importa: o código atual ganha de um antigo, para o caso de um nome
+ * abandonado por um projeto ter sido adotado por outro.
+ */
 export function findBySlug<T extends Identifiable>(items: T[], slug: string | null | undefined): T | null {
   if (!slug) return null;
-  return items.find((item) => item.codigo === slug) || items.find((item) => item.id === slug) || null;
+  return (
+    items.find((item) => item.codigo === slug) ||
+    items.find((item) => item.id === slug) ||
+    items.find((item) => (item.codigosAntigos || []).includes(slug)) ||
+    null
+  );
+}
+
+/** Diz se o trecho da URL é um endereço antigo deste item, e não o atual. */
+export function isOldSlug(item: Identifiable, slug: string | null | undefined): boolean {
+  if (!slug) return false;
+  return slug !== slugOf(item) && (item.codigosAntigos || []).includes(slug);
 }

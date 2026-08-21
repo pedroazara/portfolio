@@ -129,14 +129,14 @@ function SkillRowContent({ skill, language, accent, isEditMode, onEdit, onDelete
           <button
             onClick={() => onEdit(skill)}
             className="p-0.5 rounded text-indigo-600 dark:text-indigo-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-            title="Editar Habilidade"
+            title="Editar Habilidade" aria-label="Editar Habilidade"
           >
             <Edit2 className="h-3 w-3" />
           </button>
           <button
             onClick={() => onDelete(skill.id)}
             className="p-0.5 rounded text-rose-600 dark:text-rose-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-            title="Excluir Habilidade"
+            title="Excluir Habilidade" aria-label="Excluir Habilidade"
           >
             <Trash2 className="h-3 w-3" />
           </button>
@@ -407,7 +407,7 @@ export default function SkillsSection({
                       <button
                         onClick={() => handleOpenAddToCategory(cat)}
                         className="rounded p-1 text-slate-500 hover:bg-slate-200/70 dark:hover:bg-slate-800 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors cursor-pointer"
-                        title={t("Adicionar habilidade", "Add skill")}
+                        title={t("Adicionar habilidade", "Add skill")} aria-label={t("Adicionar habilidade", "Add skill")}
                       >
                         <Plus className="h-3.5 w-3.5" />
                       </button>
@@ -415,7 +415,7 @@ export default function SkillsSection({
                         <button
                           onClick={() => handleDeleteCategory(cat)}
                           className="rounded p-1 text-slate-500 hover:bg-slate-200/70 dark:hover:bg-slate-800 hover:text-rose-600 dark:hover:text-rose-400 transition-colors cursor-pointer"
-                          title={t("Excluir seção", "Delete section")}
+                          title={t("Excluir seção", "Delete section")} aria-label={t("Excluir seção", "Delete section")}
                         >
                           <Trash2 className="h-3.5 w-3.5" />
                         </button>
@@ -593,7 +593,7 @@ export default function SkillsSection({
                     onClick={() => setSkillForm({ ...skillForm, level: n })}
                     onMouseEnter={() => setHoverLevel(n)}
                     className="cursor-pointer p-0.5"
-                    title={`${n}/5`}
+                    title={`${n}/5`} aria-label={`${n}/5`}
                   >
                     <Star
                       className={`h-6 w-6 transition-colors ${

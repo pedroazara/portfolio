@@ -324,14 +324,14 @@ export default function BlogSection({
                           <button
                             onClick={(e) => handleOpenEdit(featuredPost, e)}
                             className="rounded-xl p-2 text-slate-500 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
-                            title="Editar Artigo"
+                            title="Editar Artigo" aria-label="Editar Artigo"
                           >
                             <Edit2 className="h-4 w-4" />
                           </button>
                           <button
                             onClick={(e) => handleDelete(featuredPost.id, e)}
                             className="rounded-xl p-2 text-slate-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 hover:text-rose-600 dark:hover:text-rose-400 transition-colors"
-                            title="Excluir Artigo"
+                            title="Excluir Artigo" aria-label="Excluir Artigo"
                           >
                             <Trash2 className="h-4 w-4" />
                           </button>
@@ -458,14 +458,14 @@ export default function BlogSection({
                             <button
                               onClick={(e) => handleOpenEdit(post, e)}
                               className="rounded-lg p-1.5 text-slate-500 dark:text-slate-500 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
-                              title="Editar Artigo"
+                              title="Editar Artigo" aria-label="Editar Artigo"
                             >
                               <Edit2 className="h-3.5 w-3.5" />
                             </button>
                             <button
                               onClick={(e) => handleDelete(post.id, e)}
                               className="rounded-lg p-1.5 text-slate-500 dark:text-slate-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 hover:text-rose-600 dark:hover:text-rose-400 transition-colors"
-                              title="Excluir Artigo"
+                              title="Excluir Artigo" aria-label="Excluir Artigo"
                             >
                               <Trash2 className="h-3.5 w-3.5" />
                             </button>

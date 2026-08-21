@@ -577,14 +577,14 @@ export default function ExperienceEducationSection({
                             <button
                               onClick={() => handleOpenEduEdit(edu)}
                               className="rounded p-1 text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-800 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors cursor-pointer"
-                              title="Editar Formação"
+                              title="Editar Formação" aria-label="Editar Formação"
                             >
                               <Edit2 className="h-3.5 w-3.5" />
                             </button>
                             <button
                               onClick={() => handleDeleteEdu(edu.id)}
                               className="rounded p-1 text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-800 hover:text-rose-600 dark:hover:text-rose-400 transition-colors cursor-pointer"
-                              title="Excluir Formação"
+                              title="Excluir Formação" aria-label="Excluir Formação"
                             >
                               <Trash2 className="h-3.5 w-3.5" />
                             </button>
@@ -700,14 +700,14 @@ export default function ExperienceEducationSection({
                             <button
                               onClick={() => handleOpenExpEdit(exp)}
                               className="rounded p-1 text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-800 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors cursor-pointer"
-                              title="Editar Pesquisa"
+                              title="Editar Pesquisa" aria-label="Editar Pesquisa"
                             >
                               <Edit2 className="h-3.5 w-3.5" />
                             </button>
                             <button
                               onClick={() => handleDeleteExp(exp.id)}
                               className="rounded p-1 text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-800 hover:text-rose-600 dark:hover:text-rose-400 transition-colors cursor-pointer"
-                              title="Excluir Pesquisa"
+                              title="Excluir Pesquisa" aria-label="Excluir Pesquisa"
                             >
                               <Trash2 className="h-3.5 w-3.5" />
                             </button>
@@ -887,14 +887,14 @@ export default function ExperienceEducationSection({
                               <button
                                 onClick={() => handleOpenActEdit(act)}
                                 className="rounded p-1 text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-800 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors cursor-pointer"
-                                title="Editar Atividade"
+                                title="Editar Atividade" aria-label="Editar Atividade"
                               >
                                 <Edit2 className="h-3.5 w-3.5" />
                               </button>
                               <button
                                 onClick={() => handleDeleteAct(act.id)}
                                 className="rounded p-1 text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-800 hover:text-rose-600 dark:hover:text-rose-400 transition-colors cursor-pointer"
-                                title="Excluir Atividade"
+                                title="Excluir Atividade" aria-label="Excluir Atividade"
                               >
                                 <Trash2 className="h-3.5 w-3.5" />
                               </button>

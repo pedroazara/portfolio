@@ -354,14 +354,14 @@ export default function ProjectSection({
                     <button
                       onClick={() => handleOpenCategoryEdit(cat)}
                       className="p-1 rounded-full text-indigo-600 dark:text-indigo-400 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer"
-                      title="Editar Área"
+                      title="Editar Área" aria-label="Editar Área"
                     >
                       <Edit2 className="h-2.5 w-2.5" />
                     </button>
                     <button
                       onClick={() => handleDeleteCategory(cat.id)}
                       className="p-1 rounded-full text-rose-600 dark:text-rose-400 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer"
-                      title="Excluir Área"
+                      title="Excluir Área" aria-label="Excluir Área"
                     >
                       <Trash2 className="h-2.5 w-2.5" />
                     </button>
@@ -533,14 +533,14 @@ export default function ProjectSection({
                         <button
                           onClick={(e) => handleOpenProjectEdit(proj, e)}
                           className="rounded-lg p-1.5 text-slate-500 dark:text-slate-500 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors cursor-pointer"
-                          title="Editar Projeto"
+                          title="Editar Projeto" aria-label="Editar Projeto"
                         >
                           <Edit2 className="h-3.5 w-3.5" />
                         </button>
                         <button
                           onClick={(e) => handleDeleteProject(proj.id, e)}
                           className="rounded-lg p-1.5 text-slate-500 dark:text-slate-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 hover:text-rose-600 dark:hover:text-rose-400 transition-colors cursor-pointer"
-                          title="Excluir Projeto"
+                          title="Excluir Projeto" aria-label="Excluir Projeto"
                         >
                           <Trash2 className="h-3.5 w-3.5" />
                         </button>

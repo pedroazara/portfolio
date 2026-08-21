@@ -28,7 +28,15 @@ export interface ProjectCategory {
 
 export interface Project {
   id: string;
-  codigo?: string; // Unique immutable code identifier (e.g. "yolocraft")
+  codigo?: string; // Trecho do link, editável (ex.: "yolocraft")
+  /**
+   * Códigos que este projeto já teve.
+   *
+   * Renomear troca o endereço público, e o link antigo já circulou — em
+   * mensagem, currículo impresso, aba aberta de alguém. Guardar os anteriores
+   * é o que permite continuar atendendo por eles.
+   */
+  codigosAntigos?: string[];
   tipo?: "projeto";
   title: string;
   titleEn?: string;
