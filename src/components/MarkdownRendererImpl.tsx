@@ -310,6 +310,31 @@ const RENDERERS = {
         </figure>
       );
     },
+    /**
+     * Link do texto: destaque em pílula, e não só a cor.
+     *
+     * Sem o plugin de tipografia, o `<a>` cru herdava o estilo do navegador —
+     * azul no claro, quase ilegível no escuro. A faixa de fundo em índigo usa a
+     * mesma cor de acento do código embutido e da citação, então o link se
+     * anuncia como link mesmo para quem não distingue bem a cor.
+     *
+     * `box-decoration-clone` repinta o fundo em cada linha quando o link quebra
+     * no meio da frase; sem isso, a pílula sai cortada na virada da linha.
+     */
+    a({ node, href, children, ...props }: any) {
+      const externo = /^(https?:)?\/\//i.test(String(href ?? ""));
+      return (
+        <a
+          href={href}
+          target={externo ? "_blank" : undefined}
+          rel={externo ? "noopener noreferrer" : undefined}
+          className="box-decoration-clone rounded-md bg-indigo-500/10 px-1 py-0.5 font-semibold text-indigo-700 underline decoration-indigo-500/40 decoration-2 underline-offset-2 transition-colors hover:bg-indigo-500/20 hover:decoration-indigo-500 dark:bg-indigo-400/10 dark:text-indigo-300 dark:decoration-indigo-400/40 dark:hover:bg-indigo-400/20 dark:hover:decoration-indigo-400"
+          {...props}
+        >
+          {children}
+        </a>
+      );
+    },
     // Headings
     h1({ children }: any) {
       return (
