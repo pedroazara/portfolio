@@ -16,6 +16,29 @@ interface MarkdownRendererProps {
 }
 
 /**
+ * O que os renderizadores precisam saber do render atual.
+ *
+ * Vai por contexto, e não por closure, porque o objeto `components` do
+ * react-markdown precisa ter identidade estável: cada função ali é um *tipo* de
+ * componente para o React. Recriá-las a cada render trocaria o tipo de todo
+ * parágrafo, e o React desmontaria e remontaria a árvore inteira do artigo.
+ *
+ * Com texto isso passava despercebido. Com um `<iframe>` de vídeo no meio, não:
+ * a remontagem recarrega o player, que pisca preto e volta ao início — e o
+ * gatilho era qualquer re-render do App, como o da barra superior que recolhe
+ * ao rolar a página.
+ */
+interface MarkdownContextValue {
+  headingIds: Map<number, string>;
+  onImageClick: (url: string, alt: string) => void;
+}
+
+const MarkdownContext = React.createContext<MarkdownContextValue>({
+  headingIds: new Map(),
+  onImageClick: () => {},
+});
+
+/**
  * Player do YouTube no lugar do link.
  *
  * A proporção fixa evita o pulo de layout enquanto o iframe carrega, e o
@@ -218,27 +241,25 @@ function CodeBlock({ code, lang }: { code: string; lang?: string }) {
   );
 }
 
-export default function MarkdownRenderer({ content, className = "max-w-[75ch] text-sm sm:text-base space-y-4 text-slate-600 dark:text-slate-300" }: MarkdownRendererProps) {
-  const [zoomedImage, setZoomedImage] = useState<{ url: string; alt: string } | null>(null);
+/**
+ * Id da âncora do título, buscado pela linha de origem no Markdown.
+ *
+ * Derivar o id da posição — e não de um contador que avança a cada título
+ * renderizado — mantém o resultado idêntico entre o sumário e o HTML. Um
+ * contador mutável durante o render era incrementado duas vezes pelo
+ * StrictMode, e as âncoras saíam com sufixo indevido.
+ */
+function useAnchorId(node: any): string | undefined {
+  const { headingIds } = React.useContext(MarkdownContext);
+  return headingIds.get(node?.position?.start?.line);
+}
 
-  const handleImageClick = (url: string, alt: string) => {
-    setZoomedImage({ url, alt });
-  };
-
-  /**
-   * Ids das âncoras, indexados pela linha de origem no Markdown.
-   *
-   * Derivar o id da posição — e não de um contador que avança a cada título
-   * renderizado — mantém o resultado idêntico entre o sumário e o HTML. Um
-   * contador mutável durante o render era incrementado duas vezes pelo
-   * StrictMode, e as âncoras saíam com sufixo indevido.
-   */
-  const headingIds = React.useMemo(() => headingIdsByLine(content), [content]);
-
-  const anchorFor = (node: any): string | undefined =>
-    headingIds.get(node?.position?.start?.line);
-
-  const renderers = {
+/**
+ * Componentes do Markdown.
+ *
+ * Definidos uma única vez, fora de qualquer render — ver `MarkdownContext`.
+ */
+const RENDERERS = {
     // Custom code block
     code({ node, inline, className, children, ...props }: any) {
       const match = /language-(\w+)/.exec(className || "");
@@ -257,13 +278,14 @@ export default function MarkdownRenderer({ content, className = "max-w-[75ch] te
     },
     // Custom image element with lightbox zoom
     img({ node, src, alt, ...props }: any) {
+      const { onImageClick } = React.useContext(MarkdownContext);
       if (!src) return null;
       return (
         <figure className="my-6 space-y-2 text-center">
           <div
             onClick={(e) => {
               e.stopPropagation();
-              handleImageClick(src, alt || "");
+              onImageClick(src, alt || "");
             }}
             className="group relative cursor-pointer overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-950 inline-block w-full max-w-3xl shadow-md hover:shadow-lg transition-all"
           >
@@ -297,10 +319,11 @@ export default function MarkdownRenderer({ content, className = "max-w-[75ch] te
       );
     },
     h2({ node, children }: any) {
+      const id = useAnchorId(node);
       return (
         // `scroll-mt-24` compensa o cabeçalho fixo ao pular pela âncora.
         <h2
-          id={anchorFor(node)}
+          id={id}
           className="scroll-mt-24 text-xl sm:text-2xl font-black text-slate-900 dark:text-white font-display pt-4 pb-1 tracking-tight border-b border-slate-100 dark:border-slate-800"
         >
           {children}
@@ -308,9 +331,10 @@ export default function MarkdownRenderer({ content, className = "max-w-[75ch] te
       );
     },
     h3({ node, children }: any) {
+      const id = useAnchorId(node);
       return (
         <h3
-          id={anchorFor(node)}
+          id={id}
           className="scroll-mt-24 text-lg sm:text-xl font-bold text-slate-900 dark:text-white font-display pt-3 tracking-tight"
         >
           {children}
@@ -395,18 +419,34 @@ export default function MarkdownRenderer({ content, className = "max-w-[75ch] te
         </>
       );
     }
-  };
+};
+
+function MarkdownRenderer({ content, className = "max-w-[75ch] text-sm sm:text-base space-y-4 text-slate-600 dark:text-slate-300" }: MarkdownRendererProps) {
+  const [zoomedImage, setZoomedImage] = useState<{ url: string; alt: string } | null>(null);
+
+  const handleImageClick = React.useCallback((url: string, alt: string) => {
+    setZoomedImage({ url, alt });
+  }, []);
+
+  const headingIds = React.useMemo(() => headingIdsByLine(content), [content]);
+
+  const contexto = React.useMemo(
+    () => ({ headingIds, onImageClick: handleImageClick }),
+    [headingIds, handleImageClick]
+  );
 
   return (
     <div className={`markdown-body font-sans leading-relaxed ${className}`}>
-      <ReactMarkdown
-        remarkPlugins={[remarkMath, remarkGfm]}
-        rehypePlugins={[rehypeKatex]}
-        urlTransform={(url) => url}
-        components={renderers}
-      >
-        {content}
-      </ReactMarkdown>
+      <MarkdownContext.Provider value={contexto}>
+        <ReactMarkdown
+          remarkPlugins={[remarkMath, remarkGfm]}
+          rehypePlugins={[rehypeKatex]}
+          urlTransform={(url) => url}
+          components={RENDERERS}
+        >
+          {content}
+        </ReactMarkdown>
+      </MarkdownContext.Provider>
 
       {/* Lightbox Image Zoom Viewer Modal */}
       <AnimatePresence>
@@ -453,3 +493,13 @@ export default function MarkdownRenderer({ content, className = "max-w-[75ch] te
     </div>
   );
 }
+
+/**
+ * `memo` porque o artigo é caro e não depende de quase nada que muda.
+ *
+ * O App re-renderiza a cada mudança de direção da rolagem (é assim que a barra
+ * superior recolhe). Sem esta barreira, cada uma dessas rolagens refazia a
+ * análise do Markdown inteiro — e, com um vídeo no texto, mexia no `<iframe>`
+ * sem necessidade. Como as props são só duas strings, a comparação rasa basta.
+ */
+export default React.memo(MarkdownRenderer);
