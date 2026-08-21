@@ -13,6 +13,7 @@ import MarkdownRenderer from "./MarkdownRenderer";
 import TranslateButton from "./TranslateButton";
 import { autoTranslateFields } from "../lib/translator";
 import { projectFolder } from "../utils/imageDb";
+import { EditTarget, scrollTextareaToLine } from "../utils/editTarget";
 import LocalImage from "./LocalImage";
 
 /** Slug de URL a partir de um título: minúsculas, sem acentos, hífens. */
@@ -36,6 +37,8 @@ interface ProjectFormProps {
   view?: "edit" | "preview";
   /** Avisa a página quando há alterações pendentes. */
   onDirtyChange?: (dirty: boolean) => void;
+  /** Trecho que estava sendo lido quando se pediu a edição. */
+  editTarget?: EditTarget | null;
 }
 
 /**
@@ -54,6 +57,7 @@ export default function ProjectForm({
   language = "pt",
   view = "edit",
   onDirtyChange,
+  editTarget = null,
 }: ProjectFormProps) {
   const activeTab = view;
   const [editingLanguage, setEditingLanguage] = useState<Language>(language);
@@ -141,6 +145,26 @@ export default function ProjectForm({
     setEditingLanguage(language);
     baselineRef.current = "";
   }, [project, language, categories]);
+
+  /**
+   * Relevância científica: campo simples, sem camada de destaque.
+   *
+   * Basta pousar o cursor na linha pedida e trazer o campo para a tela — o
+   * texto é curto, então não há o que procurar depois disso.
+   */
+  const relevanceRef = useRef<HTMLTextAreaElement>(null);
+  const alvoAtendidoRef = useRef(false);
+
+  useEffect(() => {
+    if (editTarget?.field !== "scientificRelevance" || alvoAtendidoRef.current) return;
+
+    const textarea = relevanceRef.current;
+    if (!textarea || !textarea.value) return;
+
+    alvoAtendidoRef.current = true;
+    const quadro = requestAnimationFrame(() => scrollTextareaToLine(textarea, editTarget.line));
+    return () => cancelAnimationFrame(quadro);
+  }, [editTarget, formData.scientificRelevance, formData.scientificRelevanceEn]);
 
   const handleAutoTranslate = async () => {
     await autoTranslateFields(
@@ -460,6 +484,7 @@ export default function ProjectForm({
                       language={editingLanguage}
                       articleTitle={formData.title || "projeto"}
                       rows={14}
+                      focusLine={editTarget?.field === "detailedDescription" ? editTarget.line : undefined}
                     />
                   </div>
 
@@ -470,6 +495,7 @@ export default function ProjectForm({
                       <span>{editingLanguage === "en" ? "Scientific & Technological Relevance (Optional)" : "Relevância Científica & Aplicação Tecnológica (Opcional)"}</span>
                     </div>
                     <textarea
+                      ref={relevanceRef}
                       rows={3}
                       value={editingLanguage === "en" ? formData.scientificRelevanceEn || "" : formData.scientificRelevance || ""}
                       onChange={(e) => {

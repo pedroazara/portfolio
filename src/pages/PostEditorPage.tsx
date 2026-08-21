@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { FileText } from "lucide-react";
 import { BlogPost } from "../types";
 import { Language } from "../lib/translations";
@@ -12,6 +12,7 @@ import TranslateButton from "../components/TranslateButton";
 import EditorActionRail from "../components/EditorActionRail";
 import { autoTranslateFields } from "../lib/translator";
 import { localePath } from "../lib/routes";
+import { EditTargetState } from "../utils/editTarget";
 
 const CATEGORIES = [
   "Física Computacional",
@@ -46,6 +47,9 @@ const emptyPost = (): Partial<BlogPost> => ({
 
 export default function PostEditorPage({ slug, posts, onUpdatePosts, language }: PostEditorPageProps) {
   const navigate = useNavigate();
+
+  // Trecho que estava sendo lido quando se clicou "Editar" na página pública.
+  const editTarget = (useLocation().state as EditTargetState | null)?.editTarget ?? null;
 
   const isNew = slug === "novo";
   const existing = useMemo(() => (isNew ? null : findBySlug(posts, slug)), [posts, slug, isNew]);
@@ -236,6 +240,7 @@ export default function PostEditorPage({ slug, posts, onUpdatePosts, language }:
                 language={language}
                 articleTitle={form.title || ""}
                 rows={20}
+                focusLine={editTarget?.field === "content" ? editTarget.line : undefined}
               />
             </div>
 

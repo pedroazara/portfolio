@@ -5,6 +5,7 @@ import { processImagePreservingFormat } from "../utils/imageOptimizer";
 import { Language } from "../lib/translations";
 import { isDevPreview } from "../lib/devPreview";
 import MarkdownHighlight, { EDITOR_TEXT_CLASS } from "./MarkdownHighlight";
+import { scrollTextareaToLine } from "../utils/editTarget";
 
 interface ArticleContentEditorProps {
   value: string;
@@ -16,6 +17,12 @@ interface ArticleContentEditorProps {
   articleTitle?: string;
   required?: boolean;
   rows?: number;
+  /**
+   * Linha em que abrir o campo, vinda de quem clicou "Editar" durante a
+   * leitura. Vale uma vez por chegada: reposicionar o cursor a cada digitação
+   * seria brigar com quem está escrevendo.
+   */
+  focusLine?: number;
 }
 
 /** Imagens já referenciadas no texto, para a lista de remoção. */
@@ -64,6 +71,7 @@ export default function ArticleContentEditor({
   articleTitle = "artigo",
   required = false,
   rows = 12,
+  focusLine,
 }: ArticleContentEditorProps) {
   const [isBusy, setIsBusy] = useState(false);
   const [status, setStatus] = useState("");
@@ -92,6 +100,29 @@ export default function ArticleContentEditor({
 
   // Reajusta quando o texto muda por fora (troca de idioma, imagem inserida).
   useEffect(fitHeight, [value]);
+
+  /**
+   * Abre o campo na linha que estava sendo lida.
+   *
+   * Espera o texto chegar — em artigo carregado da nuvem, o primeiro render
+   * vem vazio — e o quadro seguinte, para medir depois que `fitHeight` deu ao
+   * campo a altura final. `atendido` garante uma única ida: passado o pulo, a
+   * rolagem volta a ser de quem escreve.
+   */
+  const atendidoRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (!focusLine || !value || atendidoRef.current === focusLine) return;
+
+    const quadro = requestAnimationFrame(() => {
+      const textarea = textareaRef.current;
+      if (!textarea) return;
+      atendidoRef.current = focusLine;
+      scrollTextareaToLine(textarea, focusLine, highlightRef.current);
+    });
+
+    return () => cancelAnimationFrame(quadro);
+  }, [focusLine, value]);
 
   const embedded = findEmbeddedImages(value);
 

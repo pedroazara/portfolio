@@ -255,6 +255,17 @@ function useAnchorId(node: any): string | undefined {
 }
 
 /**
+ * Linha do Markdown que originou este bloco.
+ *
+ * Vai para o DOM em `data-md-line` para que a leitura saiba dizer ao editor
+ * onde o olho estava: o botão "Editar" lê o bloco que está no topo da tela e
+ * manda o editor abrir naquela linha do texto-fonte.
+ */
+function lineOf(node: any): number | undefined {
+  return node?.position?.start?.line;
+}
+
+/**
  * Componentes do Markdown.
  *
  * Definidos uma única vez, fora de qualquer render — ver `MarkdownContext`.
@@ -281,7 +292,7 @@ const RENDERERS = {
       const { onImageClick } = React.useContext(MarkdownContext);
       if (!src) return null;
       return (
-        <figure className="my-6 space-y-2 text-center">
+        <figure data-md-line={lineOf(node)} className="my-6 space-y-2 text-center">
           <div
             onClick={(e) => {
               e.stopPropagation();
@@ -336,9 +347,9 @@ const RENDERERS = {
       );
     },
     // Headings
-    h1({ children }: any) {
+    h1({ node, children }: any) {
       return (
-        <h1 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white font-display pt-5 pb-1 tracking-tight border-b border-slate-100 dark:border-slate-800">
+        <h1 data-md-line={lineOf(node)} className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white font-display pt-5 pb-1 tracking-tight border-b border-slate-100 dark:border-slate-800">
           {children}
         </h1>
       );
@@ -349,6 +360,7 @@ const RENDERERS = {
         // `scroll-mt-24` compensa o cabeçalho fixo ao pular pela âncora.
         <h2
           id={id}
+          data-md-line={lineOf(node)}
           className="scroll-mt-24 text-xl sm:text-2xl font-black text-slate-900 dark:text-white font-display pt-4 pb-1 tracking-tight border-b border-slate-100 dark:border-slate-800"
         >
           {children}
@@ -360,31 +372,32 @@ const RENDERERS = {
       return (
         <h3
           id={id}
+          data-md-line={lineOf(node)}
           className="scroll-mt-24 text-lg sm:text-xl font-bold text-slate-900 dark:text-white font-display pt-3 tracking-tight"
         >
           {children}
         </h3>
       );
     },
-    h4({ children }: any) {
+    h4({ node, children }: any) {
       return (
-        <h4 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white font-display pt-2 tracking-tight">
+        <h4 data-md-line={lineOf(node)} className="text-base sm:text-lg font-bold text-slate-900 dark:text-white font-display pt-2 tracking-tight">
           {children}
         </h4>
       );
     },
     // Blockquote
-    blockquote({ children }: any) {
+    blockquote({ node, children }: any) {
       return (
-        <blockquote className="my-4 pl-4 border-l-4 border-indigo-500 italic bg-indigo-50/20 dark:bg-indigo-950/30 py-2 text-slate-700 dark:text-slate-300 rounded-r-lg">
+        <blockquote data-md-line={lineOf(node)} className="my-4 pl-4 border-l-4 border-indigo-500 italic bg-indigo-50/20 dark:bg-indigo-950/30 py-2 text-slate-700 dark:text-slate-300 rounded-r-lg">
           {children}
         </blockquote>
       );
     },
     // Tables (GFM extension)
-    table({ children }: any) {
+    table({ node, children }: any) {
       return (
-        <div className="my-5 overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs">
+        <div data-md-line={lineOf(node)} className="my-5 overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs">
           <table className="w-full text-left text-xs sm:text-sm border-collapse">{children}</table>
         </div>
       );
@@ -405,21 +418,21 @@ const RENDERERS = {
       return <td className="px-3.5 py-2 text-slate-700 dark:text-slate-300 leading-normal">{children}</td>;
     },
     // Lists
-    ul({ children }: any) {
-      return <ul className="list-disc pl-5 my-3 space-y-1.5">{children}</ul>;
+    ul({ node, children }: any) {
+      return <ul data-md-line={lineOf(node)} className="list-disc pl-5 my-3 space-y-1.5">{children}</ul>;
     },
-    ol({ children }: any) {
-      return <ol className="list-decimal pl-5 my-3 space-y-1.5">{children}</ol>;
+    ol({ node, children }: any) {
+      return <ol data-md-line={lineOf(node)} className="list-decimal pl-5 my-3 space-y-1.5">{children}</ol>;
     },
-    li({ children }: any) {
-      return <li className="text-slate-600 dark:text-slate-300">{children}</li>;
+    li({ node, children }: any) {
+      return <li data-md-line={lineOf(node)} className="text-slate-600 dark:text-slate-300">{children}</li>;
     },
-    hr() {
-      return <hr className="my-6 border-t border-slate-200 dark:border-slate-800" />;
+    hr({ node }: any) {
+      return <hr data-md-line={lineOf(node)} className="my-6 border-t border-slate-200 dark:border-slate-800" />;
     },
     p({ node, children }: any) {
       const parts = splitVideos(node, children);
-      if (!parts) return <div className="whitespace-pre-line leading-relaxed my-3">{children}</div>;
+      if (!parts) return <div data-md-line={lineOf(node)} className="whitespace-pre-line leading-relaxed my-3">{children}</div>;
 
       return (
         <>
@@ -427,7 +440,7 @@ const RENDERERS = {
             part.kind === "video" ? (
               <YouTubeEmbed key={index} video={part.video} caption={part.caption} />
             ) : (
-              <div key={index} className="whitespace-pre-line leading-relaxed my-3">
+              <div key={index} data-md-line={lineOf(node)} className="whitespace-pre-line leading-relaxed my-3">
                 {part.lines.map((line, lineIndex) => (
                   <React.Fragment key={lineIndex}>
                     {lineIndex > 0 && "\n"}

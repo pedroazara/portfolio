@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { FolderKanban } from "lucide-react";
 import { Project, ProjectCategory } from "../types";
 import { Language } from "../lib/translations";
@@ -7,6 +7,7 @@ import { findBySlug, slugOf } from "../utils/slug";
 import ProjectForm from "../components/ProjectForm";
 import EditorActionRail from "../components/EditorActionRail";
 import { localePath } from "../lib/routes";
+import { EditTargetState } from "../utils/editTarget";
 
 interface ProjectEditorPageProps {
   /** Trecho da URL: o `codigo`/`id` do projeto, ou "novo". */
@@ -29,6 +30,9 @@ export default function ProjectEditorPage({
   language,
 }: ProjectEditorPageProps) {
   const navigate = useNavigate();
+
+  // Trecho que estava sendo lido quando se clicou "Editar" na página pública.
+  const editTarget = (useLocation().state as EditTargetState | null)?.editTarget ?? null;
 
   const isNew = slug === "novo";
   const existing = useMemo(() => (isNew ? null : findBySlug(projects, slug)), [projects, slug, isNew]);
@@ -110,6 +114,7 @@ export default function ProjectEditorPage({
           language={language}
           view={view}
           onDirtyChange={setIsDirty}
+          editTarget={editTarget}
         />
       </div>
 

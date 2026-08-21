@@ -14,6 +14,7 @@ import { COVER_ASPECT_CLASS } from "../lib/coverAspect";
 import TableOfContents from "../components/TableOfContents";
 import ProjectNavList from "../components/ProjectNavList";
 import { useLocalePath } from "../lib/routes";
+import { editTargetFromViewport } from "../utils/editTarget";
 
 interface ProjectPageProps {
   /** Trecho da URL: o `codigo` ou `id` do projeto. */
@@ -186,7 +187,12 @@ export default function ProjectPage({
             {isEditMode && (
               <button
                 type="button"
-                onClick={() => navigate(`/admin/projetos/${encodeURIComponent(slugOf(project))}`)}
+                // O alvo leva o editor ao trecho que estava na tela.
+                onClick={() =>
+                  navigate(`/admin/projetos/${encodeURIComponent(slugOf(project))}`, {
+                    state: { editTarget: editTargetFromViewport() },
+                  })
+                }
                 className="flex items-center gap-1.5 rounded-xl bg-indigo-600 px-4 py-2 text-xs font-bold text-white transition-colors hover:bg-indigo-700"
               >
                 <Edit2 className="h-3.5 w-3.5" />
@@ -309,7 +315,7 @@ export default function ProjectPage({
 
         {/* Corpo. O `className` é explícito porque o padrão do renderizador
             limita a coluna a 75ch — estreito demais para a largura desta página. */}
-        <div className="mt-10">
+        <div className="mt-10" data-md-field="detailedDescription">
           <MarkdownRenderer
             content={body}
             className="max-w-none space-y-4 text-base leading-relaxed text-slate-700 dark:text-slate-300"
@@ -365,10 +371,12 @@ export default function ProjectPage({
               <FlaskConical className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
               {language === "en" ? "Scientific relevance" : "Relevância científica"}
             </h2>
-            <MarkdownRenderer
-              content={relevance}
-              className="max-w-none space-y-3 text-sm leading-relaxed text-slate-700 dark:text-slate-300"
-            />
+            <div data-md-field="scientificRelevance">
+              <MarkdownRenderer
+                content={relevance}
+                className="max-w-none space-y-3 text-sm leading-relaxed text-slate-700 dark:text-slate-300"
+              />
+            </div>
           </section>
         )}
 

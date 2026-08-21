@@ -11,6 +11,7 @@ import MarkdownRenderer from "../components/MarkdownRenderer";
 import LocalImage from "../components/LocalImage";
 import { COVER_ASPECT_CLASS } from "../lib/coverAspect";
 import { useLocalePath } from "../lib/routes";
+import { editTargetFromViewport } from "../utils/editTarget";
 
 interface PostPageProps {
   /** Trecho da URL: o `codigo` ou `id` do artigo. */
@@ -127,7 +128,13 @@ export default function PostPage({
           {isEditMode && (
             <button
               type="button"
-              onClick={() => navigate(`/admin/posts/${encodeURIComponent(slugOf(post))}`)} // admin: single-language, no locale prefix
+              // admin: single-language, no locale prefix. O alvo leva o editor
+              // ao trecho que estava na tela, em vez de sempre ao topo.
+              onClick={() =>
+                navigate(`/admin/posts/${encodeURIComponent(slugOf(post))}`, {
+                  state: { editTarget: editTargetFromViewport() },
+                })
+              }
               className="flex items-center gap-1.5 rounded-xl bg-indigo-600 px-4 py-2 text-xs font-bold text-white transition-colors hover:bg-indigo-700"
             >
               <Edit2 className="h-3.5 w-3.5" />
@@ -189,7 +196,10 @@ export default function PostPage({
         <span>{authorName}</span>
       </div>
 
-      <div className="prose prose-lg mt-10 max-w-none font-sans leading-relaxed text-slate-800 dark:prose-invert dark:text-slate-200">
+      <div
+        data-md-field="content"
+        className="prose prose-lg mt-10 max-w-none font-sans leading-relaxed text-slate-800 dark:prose-invert dark:text-slate-200"
+      >
         <MarkdownRenderer content={content} />
       </div>
 
