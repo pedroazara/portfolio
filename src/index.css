@@ -85,6 +85,14 @@ html {
   @apply !bg-slate-900 !border-slate-800;
 }
 
+/* Seção dentro de um artigo é divisão do texto, não cartão.
+   A regra acima pinta qualquer <section>, e "Tecnologias" e "Relevância
+   científica" viravam caixas com o texto colado nas bordas — elas só têm um
+   filete no topo separando os blocos, sem recuo interno para sustentar fundo. */
+.dark article section {
+  @apply !bg-transparent;
+}
+
 /* Subtle slate cards and inner components */
 .dark .bg-slate-50,
 .dark .bg-slate-100 {
