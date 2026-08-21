@@ -49,10 +49,15 @@ interface SkillRowProps {
   isEditMode: boolean;
   onEdit: (skill: Skill) => void;
   onDelete: (id: string) => void;
+  onSetLevel: (id: string, level: number) => void;
   dragHandle?: React.ReactNode;
 }
 
-function SkillRowContent({ skill, language, accent, isEditMode, onEdit, onDelete, dragHandle }: SkillRowProps) {
+function SkillRowContent({ skill, language, accent, isEditMode, onEdit, onDelete, onSetLevel, dragHandle }: SkillRowProps) {
+  // Hovering a star previews that level (stars + bar) before it's committed.
+  const [previewLevel, setPreviewLevel] = useState<number | null>(null);
+  const shownLevel = previewLevel ?? skill.level;
+
   return (
     <div className="flex items-start gap-2">
       {isEditMode && dragHandle && (
@@ -69,18 +74,37 @@ function SkillRowContent({ skill, language, accent, isEditMode, onEdit, onDelete
 
           {/* Level number or star count for print stability */}
           <div className="flex items-center gap-1">
-            {/* Level bar or dots */}
-            <div className="flex gap-0.5 print:hidden">
-              {[1, 2, 3, 4, 5].map((level) => (
-                <Star
-                  key={level}
-                  className={`h-3 w-3 ${
-                    level <= skill.level
-                      ? "text-amber-400 fill-amber-400"
-                      : "text-slate-200 dark:text-slate-700"
-                  }`}
-                />
-              ))}
+            {/* Stars — clickable in edit mode so the level can be set without opening the modal */}
+            <div
+              className="flex gap-0.5 print:hidden"
+              onMouseLeave={() => setPreviewLevel(null)}
+            >
+              {[1, 2, 3, 4, 5].map((level) => {
+                const starClass = `${isEditMode ? "h-4 w-4" : "h-3 w-3"} transition-colors ${
+                  level <= shownLevel
+                    ? "text-amber-400 fill-amber-400"
+                    : "text-slate-200 dark:text-slate-700"
+                }`;
+
+                if (!isEditMode) return <Star key={level} className={starClass} />;
+
+                const label = LEVEL_LABELS[level];
+                return (
+                  <button
+                    key={level}
+                    type="button"
+                    onClick={() => onSetLevel(skill.id, level)}
+                    onMouseEnter={() => setPreviewLevel(level)}
+                    onFocus={() => setPreviewLevel(level)}
+                    onBlur={() => setPreviewLevel(null)}
+                    className="-m-0.5 cursor-pointer rounded p-0.5 transition-transform hover:scale-125 focus:outline-hidden focus-visible:ring-2 focus-visible:ring-indigo-400"
+                    title={`${level}/5 — ${language === "en" ? label.en : label.pt}`}
+                    aria-label={`${language === "en" ? "Set level" : "Definir nível"} ${level}/5`}
+                  >
+                    <Star className={starClass} />
+                  </button>
+                );
+              })}
             </div>
             {/* Simple numeric readout for print and accessibility */}
             <span className="hidden print:inline text-[10px] font-mono text-slate-500 font-semibold">
@@ -93,14 +117,14 @@ function SkillRowContent({ skill, language, accent, isEditMode, onEdit, onDelete
         <div className="h-1.5 w-full rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden print:hidden">
           <div
             className={`h-full rounded-full ${accent.bar}`}
-            style={{ width: `${(skill.level / 5) * 100}%` }}
+            style={{ width: `${(shownLevel / 5) * 100}%` }}
           ></div>
         </div>
       </div>
 
-      {/* Admin Tools */}
+      {/* Admin Tools — inline (not overlaying) so the stars stay clickable */}
       {isEditMode && (
-        <div className="absolute right-0 top-0 flex sm:opacity-0 sm:group-hover:opacity-100 opacity-100 items-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded px-1 py-0.5 gap-0.5 z-10 no-print print:hidden transition-opacity duration-200">
+        <div className="mt-0.5 flex shrink-0 sm:opacity-0 sm:group-hover:opacity-100 opacity-100 items-center gap-0.5 no-print print:hidden transition-opacity duration-200">
           <button
             onClick={() => onEdit(skill)}
             className="p-0.5 rounded text-indigo-600 dark:text-indigo-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
@@ -279,6 +303,11 @@ export default function SkillsSection({
     setIsModalOpen(true);
   };
 
+  // Inline star click in the list — updates the level straight away, no modal.
+  const handleSetLevel = (id: string, level: number) => {
+    onUpdateSkills(skills.map((s) => (s.id === id ? { ...s, level } : s)));
+  };
+
   const handleDelete = (id: string) => {
     triggerConfirm(
       t("Excluir Habilidade", "Delete Skill"),
@@ -415,6 +444,7 @@ export default function SkillsSection({
                         isEditMode={isEditMode}
                         onEdit={handleOpenEdit}
                         onDelete={handleDelete}
+                        onSetLevel={handleSetLevel}
                         dragHandle={dragHandle}
                       />
                     )}
