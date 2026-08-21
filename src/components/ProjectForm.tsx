@@ -27,6 +27,23 @@ function slugify(text: string): string {
     .slice(0, 60);
 }
 
+/**
+ * Limpeza enquanto se digita o endereço.
+ *
+ * Diferente de `slugify`, mantém o hífen do fim: quem escreve "bomba-" está a
+ * meio caminho de "bomba-de-seringa", e apagar o hífen a cada tecla tornaria o
+ * campo impossível de usar. O acerto final fica para o envio.
+ */
+function sanitizeSlugInput(text: string): string {
+  return text
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/[^a-z0-9-]+/g, "-")
+    .replace(/-{2,}/g, "-")
+    .slice(0, 60);
+}
+
 interface ProjectFormProps {
   project: Partial<Project> | null;
   categories: ProjectCategory[];
@@ -39,6 +56,8 @@ interface ProjectFormProps {
   onDirtyChange?: (dirty: boolean) => void;
   /** Trecho que estava sendo lido quando se pediu a edição. */
   editTarget?: EditTarget | null;
+  /** Endereços já ocupados por outros projetos, para não haver dois iguais. */
+  reservedSlugs?: string[];
 }
 
 /**
@@ -58,6 +77,7 @@ export default function ProjectForm({
   view = "edit",
   onDirtyChange,
   editTarget = null,
+  reservedSlugs = [],
 }: ProjectFormProps) {
   const activeTab = view;
   const [editingLanguage, setEditingLanguage] = useState<Language>(language);
@@ -83,6 +103,7 @@ export default function ProjectForm({
   });
 
   const [tagsInput, setTagsInput] = useState("");
+  const [slugError, setSlugError] = useState("");
 
   // Envios da galeria vão para a pasta do próprio projeto quando ele já tem
   // código; um projeto ainda sem código cai na pasta geral.
@@ -181,6 +202,18 @@ export default function ProjectForm({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
+    // Endereço do link: o que foi digitado, ou o título como antes.
+    const codigo = slugify(formData.codigo || "") || slugify(formData.title || "");
+    if (codigo && reservedSlugs.includes(codigo)) {
+      setSlugError(
+        language === "en"
+          ? "Another project already uses this address."
+          : "Outro projeto já usa este endereço."
+      );
+      return;
+    }
+    setSlugError("");
+
     const tagsArray = tagsInput
       .split(",")
       .map((t) => t.trim())
@@ -197,9 +230,9 @@ export default function ProjectForm({
       // e chegou a publicar rascunhos, já que `draft` também se perdia.
       ...formData,
       id: formData.id || `proj-${Date.now()}`,
-      // Projeto novo ganha um slug legível derivado do título, para a URL
-      // sair /project/meu-projeto em vez de /project/proj-1755....
-      codigo: formData.codigo || slugify(formData.title || "") || undefined,
+      // O endereço do link é editável; em branco, volta a sair do título,
+      // para a URL ser /projetos/meu-projeto e não /projetos/proj-1755....
+      codigo: codigo || undefined,
       title: formData.title || "Novo Projeto",
       titleEn: formData.titleEn || "",
       description: formData.description || "",
@@ -435,6 +468,46 @@ export default function ProjectForm({
                       placeholder={editingLanguage === "en" ? "Enter project title..." : "Digite o título do artigo ou projeto..."}
                       className="w-full text-2xl sm:text-3xl lg:text-4xl font-black font-display text-slate-900 dark:text-white placeholder-slate-300 dark:placeholder-slate-700 bg-transparent border-b-2 border-slate-200 dark:border-slate-800 focus:border-indigo-600 dark:focus:border-indigo-500 focus:outline-hidden py-2 leading-tight transition-colors"
                     />
+
+                    {/* Endereço do projeto no site. Nasce do título, mas quem
+                        escreve manda: o título muda ao longo do tempo e o link
+                        já compartilhado não deveria mudar junto. */}
+                    <div className="flex flex-wrap items-center gap-2 pt-1">
+                      <label
+                        htmlFor="project-codigo"
+                        className="font-mono text-[10px] font-bold uppercase tracking-wider text-slate-400"
+                      >
+                        {language === "en" ? "Link" : "Link"}
+                      </label>
+                      <div className={`flex min-w-0 flex-1 items-center rounded-lg border bg-white px-2.5 py-1.5 transition-colors focus-within:border-indigo-500 dark:bg-slate-900 ${
+                        slugError
+                          ? "border-rose-400 dark:border-rose-500"
+                          : "border-slate-200 dark:border-slate-700"
+                      }`}>
+                        <span className="shrink-0 font-mono text-xs text-slate-400 dark:text-slate-500">/projetos/</span>
+                        <input
+                          id="project-codigo"
+                          type="text"
+                          value={formData.codigo || ""}
+                          onChange={(e) => {
+                            setSlugError("");
+                            setFormData({ ...formData, codigo: sanitizeSlugInput(e.target.value) });
+                          }}
+                          onBlur={(e) => {
+                            const limpo = slugify(e.target.value);
+                            if (limpo !== e.target.value) setFormData({ ...formData, codigo: limpo });
+                          }}
+                          placeholder={slugify(formData.title || "") || "meu-projeto"}
+                          className="w-full min-w-0 bg-transparent font-mono text-xs text-slate-800 placeholder-slate-300 focus:outline-hidden dark:text-slate-200 dark:placeholder-slate-700"
+                        />
+                      </div>
+                    </div>
+                    <p className={`font-sans text-[11px] ${slugError ? "text-rose-600 dark:text-rose-400" : "text-slate-400"}`}>
+                      {slugError ||
+                        (language === "en"
+                          ? "Changing it breaks links already shared; mentions inside the site follow along."
+                          : "Mudar quebra links já compartilhados; as menções dentro do site acompanham sozinhas.")}
+                    </p>
                   </div>
 
                   {/* 4. LEAD SUMMARY CALLOUT BOX */}

@@ -65,6 +65,16 @@ export default function ProjectEditorPage({
     form?.requestSubmit();
   };
 
+  /** Endereços de link já ocupados pelos outros projetos. */
+  const reservedSlugs = useMemo(
+    () =>
+      projects
+        .filter((p) => p.id !== existing?.id)
+        .flatMap((p) => [p.codigo, p.id])
+        .filter((slug): slug is string => Boolean(slug)),
+    [projects, existing]
+  );
+
   const handleSave = (project: Project) => {
     const draft = draftIntentRef.current ?? isDraft;
     draftIntentRef.current = null;
@@ -78,7 +88,13 @@ export default function ProjectEditorPage({
     setIsDirty(false);
 
     // Um rascunho não tem página pública; ficamos no editor para continuar.
-    if (!draft) navigate(localePath(`/project/${slugOf(saved)}`, language));
+    if (!draft) {
+      navigate(localePath(`/project/${slugOf(saved)}`, language));
+    } else if (slugOf(saved) !== slug) {
+      // O endereço mudou: a própria URL do editor ficou apontando para um
+      // projeto que não existe mais com aquele nome.
+      navigate(`/admin/projetos/${encodeURIComponent(slugOf(saved))}`, { replace: true });
+    }
   };
 
   if (!isNew && !existing) {
@@ -115,6 +131,7 @@ export default function ProjectEditorPage({
           view={view}
           onDirtyChange={setIsDirty}
           editTarget={editTarget}
+          reservedSlugs={reservedSlugs}
         />
       </div>
 

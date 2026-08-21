@@ -462,8 +462,41 @@ export default function App() {
     setResumeData((prev) => ({ ...prev, profile: updatedProfile }));
   };
 
+  /**
+   * Salva os projetos e leva junto quem os menciona pelo código.
+   *
+   * Artigos, experiências e atividades guardam o projeto pelo `codigo` — o
+   * mesmo trecho que aparece no link. Como esse endereço passou a ser
+   * editável, renomear um projeto deixaria essas listas apontando para um
+   * código que não existe mais, e a menção sumiria da tela sem aviso.
+   */
   const handleUpdateProjects = (updatedProjects: Project[]) => {
-    setResumeData((prev) => ({ ...prev, projects: updatedProjects }));
+    setResumeData((prev) => {
+      const renomeados = new Map<string, string>();
+      prev.projects.forEach((antigo) => {
+        const novo = updatedProjects.find((p) => p.id === antigo.id);
+        if (!novo) return;
+        const de = antigo.codigo || antigo.id;
+        const para = novo.codigo || novo.id;
+        if (de !== para) renomeados.set(de, para);
+      });
+
+      if (renomeados.size === 0) return { ...prev, projects: updatedProjects };
+
+      const seguir = (codigos?: string[]) =>
+        codigos ? codigos.map((codigo) => renomeados.get(codigo) ?? codigo) : codigos;
+
+      return {
+        ...prev,
+        projects: updatedProjects,
+        posts: (prev.posts || []).map((post) => ({ ...post, projetos: seguir(post.projetos) })),
+        experiences: prev.experiences.map((exp) => ({ ...exp, projetos: seguir(exp.projetos) })),
+        academicActivities: prev.academicActivities?.map((ativ) => ({
+          ...ativ,
+          projetos: seguir(ativ.projetos),
+        })),
+      };
+    });
   };
 
   const handleUpdateCategories = (updatedCategories: ProjectCategory[]) => {

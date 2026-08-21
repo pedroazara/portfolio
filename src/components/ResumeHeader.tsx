@@ -72,18 +72,6 @@ export default function ResumeHeader({
     setIsModalOpen(false);
   };
 
-  const cargo = (language === "en" ? profile.titleEn : profile.title) || profile.title || "";
-
-  /**
-   * O cargo costuma vir com as áreas separadas por barra — "Engenharia Física
-   * | Instrumentação". Cada área vira um selo: a mesma informação, lida de
-   * relance, e o primeiro selo carrega a identidade principal.
-   */
-  const especialidades = cargo
-    .split(/[|·•/]/)
-    .map((parte) => parte.trim())
-    .filter(Boolean);
-
   return (
     <section id="perfil" className="scroll-mt-32 relative mb-8 overflow-hidden rounded-3xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 sm:p-8 md:p-10 lg:p-12 shadow-xs print-border print-shadow-none print-m-0 transition-colors duration-300">
       {/* Luz de fundo. Só decoração: fica fora da leitura de tela e do papel. */}
@@ -129,29 +117,7 @@ export default function ResumeHeader({
 
         {/* Info Section */}
         <div className="min-w-0 md:order-1">
-          {/* Selos de especialidade: o primeiro é a identidade, os demais o campo. */}
-          <div className="flex flex-wrap gap-2">
-            {especialidades.length > 0 ? (
-              especialidades.map((area, idx) => (
-                <span
-                  key={idx}
-                  className={`rounded-full px-3 py-1 font-mono text-[11px] font-bold uppercase tracking-wider print-border ${
-                    idx === 0
-                      ? "bg-indigo-600 text-white dark:bg-indigo-500"
-                      : "border border-indigo-200 bg-indigo-50 text-indigo-700 dark:border-indigo-900/60 dark:bg-indigo-950/50 dark:text-indigo-300"
-                  }`}
-                >
-                  {area}
-                </span>
-              ))
-            ) : (
-              <span className="rounded-full border border-slate-200 px-3 py-1 font-mono text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:border-slate-700">
-                {language === "en" ? "Your Specialty / Title" : "Seu Cargo ou Especialidade"}
-              </span>
-            )}
-          </div>
-
-          <h1 className="mt-5 font-display text-4xl font-black leading-[0.95] tracking-tighter text-balance text-slate-900 dark:text-white sm:text-5xl lg:text-6xl">
+          <h1 className="font-display text-4xl font-black leading-[0.95] tracking-tighter text-balance text-slate-900 dark:text-white sm:text-5xl lg:text-6xl">
             {profile.name || "Seu Nome Completo"}
           </h1>
 
