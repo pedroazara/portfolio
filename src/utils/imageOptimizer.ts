@@ -51,88 +51,101 @@ export async function processImagePreservingFormat(
     }
   }
 
-  // For GIFs, SVGs, or smaller files (< 1.2MB), preserve original file content 100% directly
-  if (extension === "gif" || extension === "svg" || file.size <= 1200000) {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        if (e.target?.result) {
-          const dataUrl = e.target.result as string;
-          resolve({
-            dataUrl,
-            extension,
-            mimeType,
-            size: file.size,
-          });
-        } else {
-          reject(new Error("Erro ao ler arquivo da imagem."));
-        }
-      };
-      reader.onerror = () => reject(new Error("Erro na leitura do arquivo."));
-      reader.readAsDataURL(file);
-    });
+  /**
+   * Animação e vetor saem daqui intactos.
+   *
+   * Redesenhar um GIF no canvas o deixaria parado no primeiro quadro, e um SVG
+   * não tem tamanho fixo para reduzir — ele já se adapta a qualquer largura.
+   */
+  if (extension === "gif" || extension === "svg") {
+    return lerComoEsta(file, extension, mimeType);
   }
 
-  // For larger files (> 1.2MB), resize via Canvas preserving original mimeType format
+  const dataUrlOriginal = await lerDataUrl(file);
+  const img = await carregarImagem(dataUrlOriginal);
+
+  /**
+   * Reduz pela dimensão, não pelo peso.
+   *
+   * A regra anterior deixava passar intacto qualquer arquivo abaixo de 1,2 MB
+   * — o que media a coisa errada. Uma captura de tela de 3.000 px de largura
+   * costuma pesar menos que isso e ia inteira para a nuvem, para ser exibida
+   * num cartão de 300 px. Já uma foto de 1.400 px pode passar de 1,2 MB sem
+   * ter o que cortar em tamanho.
+   *
+   * Quem já cabe no limite volta com os próprios bytes: passar pelo canvas
+   * sem necessidade recomprimiria a imagem e, no caso do WebP, a devolveria
+   * como PNG — maior do que entrou.
+   */
+  if (img.width <= maxDimension && img.height <= maxDimension) {
+    return { dataUrl: dataUrlOriginal, extension, mimeType, size: file.size, width: img.width, height: img.height };
+  }
+
+  const escala = maxDimension / Math.max(img.width, img.height);
+  const width = Math.round(img.width * escala);
+  const height = Math.round(img.height * escala);
+
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+
+  const ctx = canvas.getContext("2d");
+  if (!ctx) throw new Error("Não foi possível inicializar o Canvas.");
+
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = "high";
+  ctx.drawImage(img, 0, 0, width, height);
+
+  // O formato de saída acompanha o de entrada: um WebP que virasse PNG
+  // desfaria a economia que motivou a redução.
+  const targetFormat =
+    extension === "jpg" ? "image/jpeg" : extension === "webp" ? "image/webp" : "image/png";
+  const dataUrl = canvas.toDataURL(targetFormat, 0.88);
+
+  return {
+    dataUrl,
+    extension,
+    mimeType: targetFormat,
+    size: Math.round((dataUrl.length * 3) / 4),
+    width,
+    height,
+  };
+}
+
+/** Lê o arquivo como data URL, sem tocar no conteúdo. */
+function lerDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.crossOrigin = "anonymous";
-
-    img.onload = () => {
-      try {
-        let width = img.width;
-        let height = img.height;
-
-        if (width > maxDimension || height > maxDimension) {
-          if (width > height) {
-            height = Math.round((height * maxDimension) / width);
-            width = maxDimension;
-          } else {
-            width = Math.round((width * maxDimension) / height);
-            height = maxDimension;
-          }
-        }
-
-        const canvas = document.createElement("canvas");
-        canvas.width = width;
-        canvas.height = height;
-
-        const ctx = canvas.getContext("2d");
-        if (!ctx) {
-          reject(new Error("Não foi possível inicializar o Canvas."));
-          return;
-        }
-
-        ctx.imageSmoothingEnabled = true;
-        ctx.imageSmoothingQuality = "high";
-        ctx.drawImage(img, 0, 0, width, height);
-
-        const targetFormat = extension === "jpg" ? "image/jpeg" : "image/png";
-        const dataUrl = canvas.toDataURL(targetFormat, 0.88);
-        const size = Math.round((dataUrl.length * 3) / 4);
-
-        resolve({
-          dataUrl,
-          extension,
-          mimeType: targetFormat,
-          size,
-          width,
-          height,
-        });
-      } catch (err) {
-        reject(err);
-      }
-    };
-
-    img.onerror = () => reject(new Error("Erro ao processar imagem no Canvas."));
-
     const reader = new FileReader();
     reader.onload = (e) => {
-      if (e.target?.result) img.src = e.target.result as string;
+      const resultado = e.target?.result;
+      if (typeof resultado === "string") resolve(resultado);
+      else reject(new Error("Erro ao ler arquivo da imagem."));
     };
+    reader.onerror = () => reject(new Error("Erro na leitura do arquivo."));
     reader.readAsDataURL(file);
   });
 }
+
+/** Devolve o arquivo exatamente como veio. */
+async function lerComoEsta(
+  file: File,
+  extension: string,
+  mimeType: string
+): Promise<FormatPreservedImageResult> {
+  return { dataUrl: await lerDataUrl(file), extension, mimeType, size: file.size };
+}
+
+/** Carrega a imagem para poder medir e desenhar. */
+function carregarImagem(dataUrl: string): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => resolve(img);
+    img.onerror = () => reject(new Error("Erro ao processar imagem no Canvas."));
+    img.src = dataUrl;
+  });
+}
+
 
 /**
  * Optimizes an image File or Data URL to fit within max 1600px and compress to ~80% quality WebP.
