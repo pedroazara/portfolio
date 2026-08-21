@@ -13,6 +13,7 @@ import LocalImage from "../components/LocalImage";
 import { COVER_ASPECT_CLASS } from "../lib/coverAspect";
 import TableOfContents from "../components/TableOfContents";
 import ContentUnavailable from "../components/ContentUnavailable";
+import { previaLiberada } from "../lib/previewLink";
 import ProjectNavList from "../components/ProjectNavList";
 import { useLocalePath } from "../lib/routes";
 import { editTargetFromViewport } from "../utils/editTarget";
@@ -28,6 +29,8 @@ interface ProjectPageProps {
   /** Se os dados já chegaram, e se a leitura da nuvem falhou. */
   isDataLoaded?: boolean;
   loadFailed?: boolean;
+  /** Chave de prévia vinda da URL, que revela um rascunho específico. */
+  chavePrevia?: string | null;
 }
 
 /**
@@ -47,6 +50,7 @@ export default function ProjectPage({
   language,
   isDataLoaded = true,
   loadFailed = false,
+  chavePrevia = null,
 }: ProjectPageProps) {
   const navigate = useNavigate();
   const lp = useLocalePath();
@@ -72,7 +76,8 @@ export default function ProjectPage({
 
   // Rascunhos só existem para quem edita; para o público, a resposta é a mesma
   // de um projeto inexistente, para não confirmar que ele existe.
-  const isMissing = !project || (project.draft && !isEditMode);
+  const isMissing =
+    !project || (project.draft && !isEditMode && !previaLiberada(project, chavePrevia));
 
   const visibleProjects = useMemo(
     () => projects.filter((p) => !p.draft || isEditMode),

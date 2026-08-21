@@ -8,6 +8,7 @@ import ProjectForm from "../components/ProjectForm";
 import EditorActionRail from "../components/EditorActionRail";
 import { localePath } from "../lib/routes";
 import { EditTargetState } from "../utils/editTarget";
+import { linkDePrevia, novaChavePrevia } from "../lib/previewLink";
 
 interface ProjectEditorPageProps {
   /** Trecho da URL: o `codigo`/`id` do projeto, ou "novo". */
@@ -74,6 +75,27 @@ export default function ProjectEditorPage({
         .filter((slug): slug is string => Boolean(slug)),
     [projects, existing]
   );
+
+  /**
+   * Link que mostra este rascunho a quem ainda não pode vê-lo.
+   *
+   * Diferente do editor de artigo, aqui a chave não passa pelo formulário: ela
+   * é gravada no próprio projeto, para o link já valer sem depender de um
+   * salvamento seguinte.
+   */
+  const copiarLinkDePrevia = () => {
+    if (!existing) return;
+
+    const chave = existing.chavePrevia || novaChavePrevia();
+    if (!existing.chavePrevia) {
+      onUpdateProjects(
+        projects.map((p) => (p.id === existing.id ? { ...p, chavePrevia: chave } : p))
+      );
+    }
+
+    const caminho = localePath(`/projetos/${slugOf(existing)}`, language);
+    navigator.clipboard.writeText(linkDePrevia(caminho, chave));
+  };
 
   const handleSave = (project: Project) => {
     const draft = draftIntentRef.current ?? isDraft;
@@ -147,6 +169,7 @@ export default function ProjectEditorPage({
           onBack={() => navigate(localePath("/projetos", language))}
           onSaveDraft={() => submitAs(true)}
           onPublish={() => submitAs(false)}
+          onCopyPreviewLink={existing ? copiarLinkDePrevia : undefined}
           views={["edit", "preview"]}
           view={view}
           onViewChange={(v) => setView(v === "preview" ? "preview" : "edit")}

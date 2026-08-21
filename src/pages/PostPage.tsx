@@ -10,6 +10,7 @@ import { estimateReadTime } from "../utils/readTime";
 import MarkdownRenderer from "../components/MarkdownRenderer";
 import TableOfContents from "../components/TableOfContents";
 import ContentUnavailable from "../components/ContentUnavailable";
+import { previaLiberada } from "../lib/previewLink";
 import { extractToc } from "../utils/toc";
 import LocalImage from "../components/LocalImage";
 import { COVER_ASPECT_CLASS } from "../lib/coverAspect";
@@ -27,6 +28,8 @@ interface PostPageProps {
   /** Se os dados já chegaram, e se a leitura da nuvem falhou. */
   isDataLoaded?: boolean;
   loadFailed?: boolean;
+  /** Chave de prévia vinda da URL, que revela um rascunho específico. */
+  chavePrevia?: string | null;
 }
 
 export default function PostPage({
@@ -38,6 +41,7 @@ export default function PostPage({
   language,
   isDataLoaded = true,
   loadFailed = false,
+  chavePrevia = null,
 }: PostPageProps) {
   const navigate = useNavigate();
   const lp = useLocalePath();
@@ -77,8 +81,9 @@ export default function PostPage({
     );
   }
 
-  // Rascunho só é legível por quem está editando; para o público, some.
-  if (post.draft && !isEditMode) {
+  // Rascunho só é legível por quem está editando — ou por quem chegou com a
+  // chave de prévia, que é justamente o que permite mostrar antes de publicar.
+  if (post.draft && !isEditMode && !previaLiberada(post, chavePrevia)) {
     return (
       <div className="mx-auto max-w-2xl rounded-3xl border border-slate-200 bg-white p-10 text-center dark:border-slate-800 dark:bg-slate-900">
         <FileText className="mx-auto mb-3 h-10 w-10 text-slate-300 dark:text-slate-700" />

@@ -35,6 +35,7 @@ import { maybeRunDailyFullBackup } from "./lib/fullBackupService";
 import { observeAuth, logout } from "./lib/auth";
 import { findBySlug } from "./utils/slug";
 import { isDevPreview } from "./lib/devPreview";
+import { chaveDaUrl } from "./lib/previewLink";
 import { useMountedOnce } from "./hooks/useMountedOnce";
 import { stripLocale, localePath, switchLanguagePath } from "./lib/routes";
 const PostEditorPage = lazy(() => import("./pages/PostEditorPage"));
@@ -255,6 +256,9 @@ export default function App() {
     ? (adminHubMatch![1] as AdminHubTab)
     : "tarefas";
   const isEditorRoute = Boolean(postEditorMatch || projectEditorMatch || adminHubMatch);
+
+  // Chave de prévia apresentada na URL, que revela um rascunho específico.
+  const chavePrevia = chaveDaUrl(location.search);
 
   const isBlog = !isEditorRoute && routePath.startsWith("/blog");
   const isProjects = !isEditorRoute && (routePath.startsWith("/projetos") || routePath.startsWith("/project"));
@@ -758,6 +762,7 @@ export default function App() {
              a grade. Antes os detalhes abriam num modal sobre a grade. */
           selectedProjectId ? (
             <ProjectPage
+              chavePrevia={chavePrevia}
               isDataLoaded={isDataLoaded}
               loadFailed={cloudReadFailed}
               slug={selectedProjectId}
@@ -790,6 +795,7 @@ export default function App() {
              mostramos a listagem. Antes o artigo abria sobreposto à lista. */
           selectedBlogPostId ? (
             <PostPage
+              chavePrevia={chavePrevia}
               isDataLoaded={isDataLoaded}
               loadFailed={cloudReadFailed}
               slug={selectedBlogPostId}

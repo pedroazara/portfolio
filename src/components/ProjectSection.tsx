@@ -465,7 +465,7 @@ export default function ProjectSection({
 
                 {/* Project Body */}
                 <div className="flex flex-1 flex-col p-5">
-                  <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-start justify-between gap-2">
                     <div className="flex flex-wrap items-center gap-1">
                       {projCategories.length > 0 ? (
                         projCategories.map((c) => (
@@ -484,8 +484,8 @@ export default function ProjectSection({
                     </div>
 
                     {(proj.emAndamento || proj.status === "Em andamento" || proj.status === "em_andamento" || proj.status === "In Progress") && (
-                      <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 px-2 py-0.5 text-[9.5px] font-bold text-emerald-600 dark:text-emerald-400 font-mono">
-                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                      <span className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full bg-emerald-500/10 border border-emerald-500/30 px-2 py-1 text-[9.5px] font-bold text-emerald-700 dark:text-emerald-400 font-mono">
+                        <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-500 animate-pulse" />
                         {language === "en" ? "In Progress" : "Em Andamento"}
                       </span>
                     )}

@@ -1,5 +1,5 @@
 import React from "react";
-import { ArrowLeft, Save, FileEdit, Eye, PenTool, CircleDot } from "lucide-react";
+import { ArrowLeft, Save, FileEdit, Eye, PenTool, CircleDot, Link2, Check } from "lucide-react";
 import { Language } from "../lib/translations";
 
 export type EditorView = "edit" | "preview";
@@ -18,6 +18,11 @@ interface EditorActionRailProps {
   views?: EditorView[];
   view?: EditorView;
   onViewChange?: (view: EditorView) => void;
+  /**
+   * Copia o link que mostra este rascunho a quem ainda não pode vê-lo.
+   * Omitido, o botão não aparece — item novo não tem endereço ainda.
+   */
+  onCopyPreviewLink?: () => void;
   /** Espaço para ações específicas de cada editor, como traduzir. */
   children?: React.ReactNode;
   language?: Language;
@@ -45,10 +50,18 @@ export default function EditorActionRail({
   views,
   view,
   onViewChange,
+  onCopyPreviewLink,
   children,
   language = "pt",
 }: EditorActionRailProps) {
   const isEn = language === "en";
+  const [copiado, setCopiado] = React.useState(false);
+
+  const copiarPrevia = () => {
+    onCopyPreviewLink?.();
+    setCopiado(true);
+    setTimeout(() => setCopiado(false), 2500);
+  };
 
   return (
     <div className="sticky top-24 z-30 space-y-3 no-print max-lg:static max-lg:top-0">
@@ -127,10 +140,23 @@ export default function EditorActionRail({
             {isEn ? "Save as draft" : "Salvar rascunho"}
           </button>
 
+          {isDraft && onCopyPreviewLink && (
+            <button
+              type="button"
+              onClick={copiarPrevia}
+              className="flex w-full items-center justify-center gap-1.5 rounded-xl border border-indigo-200 px-4 py-2 text-xs font-semibold text-indigo-700 transition-colors hover:bg-indigo-50 dark:border-indigo-900/60 dark:text-indigo-300 dark:hover:bg-indigo-950/50"
+            >
+              {copiado ? <Check className="h-3.5 w-3.5 text-emerald-500" /> : <Link2 className="h-3.5 w-3.5" />}
+              {copiado
+                ? (isEn ? "Link copied" : "Link copiado")
+                : (isEn ? "Copy preview link" : "Copiar link de prévia")}
+            </button>
+          )}
+
           <p className="px-1 text-[10px] leading-snug text-slate-500">
             {isEn
-              ? "Drafts stay hidden from visitors — only you see them, in edit mode."
-              : "Rascunhos ficam invisíveis para os visitantes — só você os vê, no modo de edição."}
+              ? "Drafts stay hidden from visitors — only you see them, in edit mode. The preview link shows this draft to whoever opens it."
+              : "Rascunhos ficam invisíveis para os visitantes — só você os vê, no modo de edição. O link de prévia mostra este rascunho a quem o abrir."}
           </p>
         </div>
       </div>

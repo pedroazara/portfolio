@@ -82,6 +82,8 @@ export interface Project {
   highlightsEn?: string[];
   data?: string;
   draft?: boolean;
+  /** Chave que revela este rascunho por um link de prévia. */
+  chavePrevia?: string;
 }
 
 export interface Subperiod {
@@ -196,6 +198,8 @@ export interface BlogPost {
   categoryEn?: string;
   projetos?: string[]; // Array of project codes referenced (ETAPA 9)
   draft?: boolean;
+  /** Chave que revela este rascunho por um link de prévia. */
+  chavePrevia?: string;
 }
 
 export interface ResumeData {

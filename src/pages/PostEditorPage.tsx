@@ -13,6 +13,7 @@ import EditorActionRail from "../components/EditorActionRail";
 import { autoTranslateFields } from "../lib/translator";
 import { localePath } from "../lib/routes";
 import { EditTargetState } from "../utils/editTarget";
+import { linkDePrevia, novaChavePrevia } from "../lib/previewLink";
 
 const CATEGORIES = [
   "Física Computacional",
@@ -85,6 +86,21 @@ export default function PostEditorPage({ slug, posts, onUpdatePosts, language }:
     }
   }, [existing, isDirty]);
 
+  /**
+   * Link que mostra este rascunho a quem ainda não pode vê-lo.
+   *
+   * A chave nasce aqui, na primeira vez que alguém pede o link, e vai junto no
+   * próximo salvamento — não faz sentido gerar chave para todo rascunho que
+   * nunca será compartilhado.
+   */
+  const copiarLinkDePrevia = () => {
+    const chave = form.chavePrevia || novaChavePrevia();
+    if (!form.chavePrevia) update({ chavePrevia: chave });
+
+    const caminho = localePath(`/blog/${slugOf({ id: form.id || "", codigo: form.codigo })}`, language);
+    navigator.clipboard.writeText(linkDePrevia(caminho, chave));
+  };
+
   const update = (patch: Partial<BlogPost>) => {
     setForm((prev) => ({ ...prev, ...patch }));
     setIsDirty(true);
@@ -156,6 +172,9 @@ export default function PostEditorPage({ slug, posts, onUpdatePosts, language }:
       category: form.category || "Instrumentação",
       categoryEn: form.categoryEn || "Instrumentation",
       draft: draftIntentRef.current ?? isDraft,
+      // A chave de prévia nasce fora do formulário visível, ao pedir o link;
+      // sem esta linha o `...existing` acima a descartaria no salvamento.
+      chavePrevia: form.chavePrevia || existing?.chavePrevia,
     };
 
     onUpdatePosts(
@@ -350,6 +369,7 @@ export default function PostEditorPage({ slug, posts, onUpdatePosts, language }:
           onBack={() => navigate(localePath("/blog", language))}
           onSaveDraft={() => submitAs(true)}
           onPublish={() => submitAs(false)}
+          onCopyPreviewLink={isNew ? undefined : copiarLinkDePrevia}
           views={["edit", "preview"]}
           view={view}
           onViewChange={setView}
