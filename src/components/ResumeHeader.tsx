@@ -72,8 +72,26 @@ export default function ResumeHeader({
     setIsModalOpen(false);
   };
 
+  const cargo = (language === "en" ? profile.titleEn : profile.title) || profile.title || "";
+
+  /**
+   * O cargo costuma vir com as áreas separadas por barra — "Engenharia Física
+   * | Instrumentação". Cada área vira um selo: a mesma informação, lida de
+   * relance, e o primeiro selo carrega a identidade principal.
+   */
+  const especialidades = cargo
+    .split(/[|·•/]/)
+    .map((parte) => parte.trim())
+    .filter(Boolean);
+
   return (
-    <section id="perfil" className="scroll-mt-32 relative mb-8 rounded-2xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 sm:p-8 md:p-10 shadow-xs print-border print-shadow-none print-m-0 transition-colors duration-300">
+    <section id="perfil" className="scroll-mt-32 relative mb-8 overflow-hidden rounded-3xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 sm:p-8 md:p-10 lg:p-12 shadow-xs print-border print-shadow-none print-m-0 transition-colors duration-300">
+      {/* Luz de fundo. Só decoração: fica fora da leitura de tela e do papel. */}
+      <div aria-hidden="true" className="pointer-events-none absolute inset-0 no-print print:hidden">
+        <div className="absolute -right-32 -top-40 h-96 w-96 rounded-full bg-indigo-500/10 blur-3xl dark:bg-indigo-500/20" />
+        <div className="absolute -bottom-44 -left-28 h-80 w-80 rounded-full bg-violet-500/10 blur-3xl dark:bg-violet-600/15" />
+        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-indigo-500/50 to-transparent" />
+      </div>
       {/* Edit Trigger (Only visible in edit mode, hidden in prints) */}
       {isEditMode && (
         <button
@@ -82,14 +100,17 @@ export default function ResumeHeader({
           id="edit-profile-btn"
         >
           <Edit3 className="h-4 w-4" />
-          {translations[language].editProfile}
+          {/* No celular o rótulo cobriria o retrato, que agora começa no topo. */}
+          <span className="hidden sm:inline">{translations[language].editProfile}</span>
         </button>
       )}
 
-      <div className="flex flex-col gap-6 md:flex-row md:items-start md:gap-8">
-        {/* Avatar Section */}
-        <div className="relative self-center md:self-start">
-          <div className="h-28 w-28 overflow-hidden rounded-2xl bg-slate-50 dark:bg-slate-950 border-4 border-white dark:border-slate-800 shadow-md outline outline-1 outline-slate-100 dark:outline-slate-800/50 print-border">
+      <div className="relative grid gap-8 md:grid-cols-[minmax(0,1fr)_auto] md:items-center md:gap-12">
+        {/* Retrato. Vem primeiro no HTML para abrir a página no celular, e vai
+            para a direita no desktop, onde o texto merece a margem de leitura. */}
+        <div className="relative md:order-2">
+          <div className="absolute -inset-4 rounded-[2.5rem] bg-gradient-to-br from-indigo-500/25 via-violet-500/15 to-transparent blur-2xl no-print print:hidden" />
+          <div className="relative h-36 w-36 overflow-hidden rounded-[1.75rem] bg-slate-50 dark:bg-slate-950 border-4 border-white dark:border-slate-800 shadow-xl ring-1 ring-slate-200/70 dark:ring-slate-700/60 sm:h-44 sm:w-44 md:h-52 md:w-52 lg:h-60 lg:w-60 print-border">
             {profile.avatarUrl ? (
               <LocalImage
                 src={profile.avatarUrl}
@@ -99,7 +120,7 @@ export default function ResumeHeader({
                 fallback={`https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(profile.name)}`}
               />
             ) : (
-              <div className="flex h-full w-full items-center justify-center bg-indigo-50 dark:bg-indigo-950/40 text-3xl font-bold text-indigo-600 dark:text-indigo-400 font-display">
+              <div className="flex h-full w-full items-center justify-center bg-indigo-50 dark:bg-indigo-950/40 text-5xl font-black text-indigo-600 dark:text-indigo-400 font-display sm:text-6xl">
                 {profile.name.charAt(0)}
               </div>
             )}
@@ -107,21 +128,44 @@ export default function ResumeHeader({
         </div>
 
         {/* Info Section */}
-        <div className="flex-1 text-center md:text-left">
-          <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white sm:text-4xl font-display">
+        <div className="min-w-0 md:order-1">
+          {/* Selos de especialidade: o primeiro é a identidade, os demais o campo. */}
+          <div className="flex flex-wrap gap-2">
+            {especialidades.length > 0 ? (
+              especialidades.map((area, idx) => (
+                <span
+                  key={idx}
+                  className={`rounded-full px-3 py-1 font-mono text-[11px] font-bold uppercase tracking-wider print-border ${
+                    idx === 0
+                      ? "bg-indigo-600 text-white dark:bg-indigo-500"
+                      : "border border-indigo-200 bg-indigo-50 text-indigo-700 dark:border-indigo-900/60 dark:bg-indigo-950/50 dark:text-indigo-300"
+                  }`}
+                >
+                  {area}
+                </span>
+              ))
+            ) : (
+              <span className="rounded-full border border-slate-200 px-3 py-1 font-mono text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:border-slate-700">
+                {language === "en" ? "Your Specialty / Title" : "Seu Cargo ou Especialidade"}
+              </span>
+            )}
+          </div>
+
+          <h1 className="mt-5 font-display text-4xl font-black leading-[0.95] tracking-tighter text-balance text-slate-900 dark:text-white sm:text-5xl lg:text-6xl">
             {profile.name || "Seu Nome Completo"}
           </h1>
-          <p className="mt-2 text-lg font-semibold text-indigo-600 dark:text-indigo-400 font-display">
-            {(language === "en" ? profile.titleEn : profile.title) || profile.title || (language === "en" ? "Your Specialty / Title" : "Seu Cargo ou Especialidade")}
-          </p>
-          <p className="mt-4 text-base leading-relaxed text-slate-600 dark:text-slate-300 print-break-inside-avoid">
+
+          {/* Barra de acento: fecha o nome e ancora a coluna no desktop. */}
+          <div className="mt-5 h-1 w-16 rounded-full bg-gradient-to-r from-indigo-600 to-violet-500 dark:from-indigo-500 dark:to-violet-400" />
+
+          <p className="mt-5 max-w-2xl text-base leading-relaxed text-slate-600 dark:text-slate-300 print-break-inside-avoid">
             {(language === "en" ? profile.bioEn : profile.bio) || profile.bio || (language === "en" ? "Write a short bio..." : "Escreva uma breve apresentação...")}
           </p>
 
           {/* Contact Details Grid */}
-          <div className="mt-6 grid gap-y-2 gap-x-4 sm:grid-cols-2 lg:grid-cols-3 text-sm text-slate-500 dark:text-slate-400 font-mono">
+          <div className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-2 font-mono text-sm text-slate-500 dark:text-slate-400">
             {profile.email && (
-              <div className="relative flex items-center justify-center md:justify-start gap-2.5">
+              <div className="relative flex items-center gap-2.5">
                 <Mail className="h-4 w-4 text-slate-400 dark:text-slate-500 shrink-0" />
                 <button
                   type="button"
@@ -147,13 +191,13 @@ export default function ResumeHeader({
               </div>
             )}
             {profile.phone && (
-              <div className="flex items-center justify-center md:justify-start gap-2.5">
+              <div className="flex items-center gap-2.5">
                 <Phone className="h-4 w-4 text-slate-400 shrink-0" />
                 <span className="truncate">{profile.phone}</span>
               </div>
             )}
             {profile.location && (
-              <div className="flex items-center justify-center md:justify-start gap-2.5">
+              <div className="flex items-center gap-2.5">
                 <MapPin className="h-4 w-4 text-slate-400 shrink-0" />
                 <span className="truncate">{profile.location}</span>
               </div>
@@ -162,7 +206,7 @@ export default function ResumeHeader({
 
           {/* Social / Academic Links Bar */}
           {(profile.github || profile.linkedin || profile.lattesUrl || profile.orcidUrl || profile.twitter) && (
-            <div className="mt-5 flex flex-wrap justify-center md:justify-start gap-3 no-print print:hidden">
+            <div className="mt-5 flex flex-wrap gap-3 no-print print:hidden">
               {profile.github && (
                 <a
                   href={profile.github.startsWith("http") ? profile.github : `https://github.com/${profile.github}`}
@@ -223,7 +267,7 @@ export default function ResumeHeader({
 
           {/* Hero Download CV CTA Button (Only when authenticated) */}
           {isAuthenticated && (
-            <div className="mt-5 flex flex-wrap items-center justify-center md:justify-start gap-3 no-print print:hidden">
+            <div className="mt-5 flex flex-wrap items-center gap-3 no-print print:hidden">
               <button
                 type="button"
                 onClick={() => {
