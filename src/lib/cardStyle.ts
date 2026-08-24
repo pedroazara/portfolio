@@ -18,8 +18,9 @@
  */
 export const SECTION_CARD_CLASS = [
   "scroll-mt-32 relative overflow-hidden rounded-3xl",
-  "border border-slate-100 bg-white shadow-sm transition-colors duration-300",
-  "dark:border-slate-800 dark:bg-slate-900",
+  // Tokens em vez do par claro/escuro: a variável troca com o tema, e o cartão
+  // deixa de precisar saber que existe tema. Ver o vocabulário em index.css.
+  "border border-borda-suave bg-superficie shadow-sm transition-colors duration-300",
   "p-6 sm:p-8 md:p-10",
   "print-border print-shadow-none print-m-0",
   // Fio de luz superior.

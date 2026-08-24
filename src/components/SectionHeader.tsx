@@ -182,13 +182,13 @@ export default function SectionHeader({
 
   return (
     <nav
-      className={`no-print print:hidden sticky ${topStyle} z-30 flex h-[46px] w-full items-center border-b border-[var(--border)] bg-[var(--surface-raised)] transition-all duration-200 font-sans text-xs select-none`}
+      className={`no-print print:hidden sticky ${topStyle} z-30 flex h-[46px] w-full items-center border-b border-borda bg-superficie-alta transition-all duration-200 font-sans text-xs select-none`}
       aria-label="Seções desta página"
     >
       {/* Background progress bar for reading */}
       {(isHomeOrCv || isBlogPost) && (
         <div
-          className="absolute bottom-0 left-0 h-[2px] bg-[var(--accent)] transition-all duration-150"
+          className="absolute bottom-0 left-0 h-[2px] bg-acento transition-all duration-150"
           style={{ width: `${readProgress}%` }}
         />
       )}
@@ -199,7 +199,7 @@ export default function SectionHeader({
         {isGlobalCollapsed && (
           <Link
             to={localePath("/", language)}
-            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[var(--accent)] text-white mr-3 shadow-xs"
+            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-acento text-white mr-3 shadow-xs"
             title="Voltar ao topo"
           >
             <Orbita size={22} color="#ffffff" />
@@ -229,8 +229,8 @@ export default function SectionHeader({
                     aria-current={isActive ? "true" : undefined}
                     className={`snap-start whitespace-nowrap rounded-[6px] px-3 py-1 font-medium transition-colors cursor-pointer ${
                       isActive
-                        ? "bg-[var(--accent-soft)] text-[var(--accent)] font-bold"
-                        : "text-[var(--text-muted)] hover:text-[var(--text)] hover:bg-[var(--surface)]"
+                        ? "bg-acento-suave text-acento font-bold"
+                        : "text-tinta-fraca hover:text-tinta hover:bg-superficie"
                     }`}
                   >
                     {item.label}
@@ -240,7 +240,7 @@ export default function SectionHeader({
             </div>
 
             {/* Right side: Monospace progress reading percentage */}
-            <div className="hidden sm:flex items-center gap-2 font-mono text-[11px] text-[var(--text-muted)] shrink-0 ml-4">
+            <div className="hidden sm:flex items-center gap-2 font-mono text-[11px] text-tinta-fraca shrink-0 ml-4">
               <span>{readProgress}% {language === "en" ? "read" : "lido"}</span>
             </div>
           </>
@@ -263,8 +263,8 @@ export default function SectionHeader({
                     onClick={() => handleSelectCategory(catName)}
                     className={`snap-start whitespace-nowrap rounded-full px-3 py-1 font-semibold transition-colors cursor-pointer ${
                       isActive
-                        ? "bg-[var(--accent)] text-white shadow-xs"
-                        : "bg-[var(--surface)] text-[var(--text-muted)] hover:text-[var(--text)] border border-[var(--border)]"
+                        ? "bg-acento text-white shadow-xs"
+                        : "bg-superficie text-tinta-fraca hover:text-tinta border border-borda"
                     }`}
                   >
                     {catName} <span className="opacity-80 text-[10px]">({count})</span>
@@ -276,11 +276,11 @@ export default function SectionHeader({
             {/* Right side: Compact expandable search */}
             <div className="flex items-center shrink-0 ml-3">
               <div
-                className={`flex items-center rounded-lg border border-[var(--border)] bg-[var(--surface)] px-2 py-1 transition-all ${
-                  isSearchFocused ? "w-48 border-[var(--accent)] ring-1 ring-[var(--accent)]" : "w-32 sm:w-40"
+                className={`flex items-center rounded-lg border border-borda bg-superficie px-2 py-1 transition-all ${
+                  isSearchFocused ? "w-48 border-acento ring-1 ring-acento" : "w-32 sm:w-40"
                 }`}
               >
-                <Search className="h-3.5 w-3.5 text-[var(--text-muted)] shrink-0 mr-1.5" />
+                <Search className="h-3.5 w-3.5 text-tinta-fraca shrink-0 mr-1.5" />
                 <input
                   type="text"
                   value={searchQuery}
@@ -288,7 +288,7 @@ export default function SectionHeader({
                   onFocus={() => setIsSearchFocused(true)}
                   onBlur={() => setIsSearchFocused(false)}
                   placeholder={language === "en" ? "Search posts..." : "Buscar artigos..."}
-                  className="w-full bg-transparent font-sans text-[11px] text-[var(--text)] placeholder:text-[var(--text-muted)] focus:outline-none"
+                  className="w-full bg-transparent font-sans text-[11px] text-tinta placeholder:text-tinta-fraca focus:outline-none"
                 />
               </div>
             </div>
@@ -301,14 +301,14 @@ export default function SectionHeader({
             <div className="flex items-center gap-3 min-w-0 pr-4">
               <Link
                 to={localePath("/blog", language)}
-                className="flex items-center gap-1.5 text-[var(--text-muted)] hover:text-[var(--text)] font-semibold transition-colors shrink-0"
+                className="flex items-center gap-1.5 text-tinta-fraca hover:text-tinta font-semibold transition-colors shrink-0"
               >
                 <ArrowLeft className="h-4 w-4" />
                 <span>{language === "en" ? "Blog" : "Blog"}</span>
               </Link>
 
               {blogPost && (
-                <span className="hidden sm:inline-block truncate text-[11px] font-medium text-[var(--text-muted)] border-l border-[var(--border)] pl-3">
+                <span className="hidden sm:inline-block truncate text-[11px] font-medium text-tinta-fraca border-l border-borda pl-3">
                   {language === "en" ? blogPost.titleEn || blogPost.title : blogPost.title}
                 </span>
               )}
@@ -317,7 +317,7 @@ export default function SectionHeader({
             {/* Right side: Estimated reading time + Copy Link */}
             <div className="flex items-center gap-3 shrink-0">
               {blogPost?.readTime && (
-                <span className="hidden sm:inline-block font-mono text-[11px] text-[var(--text-muted)]">
+                <span className="hidden sm:inline-block font-mono text-[11px] text-tinta-fraca">
                   {blogPost.readTime}
                 </span>
               )}
@@ -325,7 +325,7 @@ export default function SectionHeader({
               <button
                 type="button"
                 onClick={handleCopyPostLink}
-                className="flex items-center gap-1.5 rounded-md border border-[var(--border)] bg-[var(--surface)] px-2.5 py-1 font-semibold text-[var(--text-muted)] hover:text-[var(--text)] hover:border-[var(--border-strong)] transition-colors cursor-pointer"
+                className="flex items-center gap-1.5 rounded-md border border-borda bg-superficie px-2.5 py-1 font-semibold text-tinta-fraca hover:text-tinta hover:border-borda-forte transition-colors cursor-pointer"
               >
                 {copied ? (
                   <>
@@ -359,8 +359,8 @@ export default function SectionHeader({
                     onClick={() => handleSelectAreaCategory(cat)}
                     className={`snap-start whitespace-nowrap rounded-full px-3 py-1 font-semibold transition-colors cursor-pointer ${
                       isActive
-                        ? "bg-[var(--accent)] text-white shadow-xs"
-                        : "bg-[var(--surface)] text-[var(--text-muted)] hover:text-[var(--text)] border border-[var(--border)]"
+                        ? "bg-acento text-white shadow-xs"
+                        : "bg-superficie text-tinta-fraca hover:text-tinta border border-borda"
                     }`}
                   >
                     {cat}
@@ -369,7 +369,7 @@ export default function SectionHeader({
               })}
             </div>
 
-            <div className="hidden sm:flex items-center font-mono text-[11px] text-[var(--text-muted)] shrink-0 ml-3">
+            <div className="hidden sm:flex items-center font-mono text-[11px] text-tinta-fraca shrink-0 ml-3">
               <span>{resumeData.projects.length} {language === "en" ? "projects" : "projetos"}</span>
             </div>
           </>
@@ -381,14 +381,14 @@ export default function SectionHeader({
             <div className="flex items-center gap-3 min-w-0 pr-4">
               <Link
                 to={localePath("/projetos", language)}
-                className="flex items-center gap-1.5 text-[var(--text-muted)] hover:text-[var(--text)] font-semibold transition-colors shrink-0"
+                className="flex items-center gap-1.5 text-tinta-fraca hover:text-tinta font-semibold transition-colors shrink-0"
               >
                 <ArrowLeft className="h-4 w-4" />
                 <span>{language === "en" ? "Projects" : "Projetos"}</span>
               </Link>
 
               {projectItem && (
-                <span className="hidden sm:inline-block truncate text-[11px] font-medium text-[var(--text-muted)] border-l border-[var(--border)] pl-3">
+                <span className="hidden sm:inline-block truncate text-[11px] font-medium text-tinta-fraca border-l border-borda pl-3">
                   {language === "en" ? projectItem.titleEn || projectItem.title : projectItem.title}
                 </span>
               )}
@@ -400,9 +400,9 @@ export default function SectionHeader({
                 {projectItem.tags.slice(0, 4).map((tech, idx) => (
                   <span
                     key={`tech-${tech}-${idx}`}
-                    className="inline-flex items-center gap-1 rounded bg-[var(--surface)] px-2 py-0.5 text-[10px] font-mono font-medium text-[var(--text-muted)] border border-[var(--border)]"
+                    className="inline-flex items-center gap-1 rounded bg-superficie px-2 py-0.5 text-[10px] font-mono font-medium text-tinta-fraca border border-borda"
                   >
-                    <Tag className="h-2.5 w-2.5 text-[var(--accent)]" />
+                    <Tag className="h-2.5 w-2.5 text-acento" />
                     {tech}
                   </span>
                 ))}

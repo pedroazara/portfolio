@@ -10,26 +10,78 @@
   --animate-spin-slow: spin 12s linear infinite;
 }
 
+/**
+ * Vocabulário de cor do site.
+ *
+ * As mesmas cores de sempre — índigo e slate —, agora com nome de função em vez
+ * de posição na escala. `bg-superficie` diz o que a cor faz; `bg-white
+ * dark:bg-slate-900` diz de que tom ela é feita, repetido em cada componente e
+ * com o par de tema por conta de quem escreve.
+ *
+ * Dois ganhos: o tema escuro passa a ser responsabilidade do token (a variável
+ * muda, o componente não sabe de tema), e trocar a paleta um dia vira editar
+ * este bloco em vez de varrer centenas de classes.
+ *
+ * Os nomes vêm da metáfora impressa, que é o que o site é: papel de fundo,
+ * tinta para texto, superfície para o cartão que se sobrepõe ao papel.
+ */
 :root {
-  --surface: #ffffff;
-  --surface-raised: #f8fafc;
-  --border: #e2e8f0;
-  --border-strong: #cbd5e1;
-  --text: #0f172a;
-  --text-muted: #64748b;
-  --accent: #4f46e5;
-  --accent-soft: #eef2ff;
+  --papel: var(--color-slate-50);
+  --superficie: #ffffff;
+  --superficie-alta: var(--color-slate-50);
+
+  --tinta: var(--color-slate-900);
+  --tinta-suave: var(--color-slate-600);
+  --tinta-fraca: var(--color-slate-500);
+
+  --borda-suave: var(--color-slate-100);
+  --borda: var(--color-slate-200);
+  --borda-forte: var(--color-slate-300);
+
+  --acento: var(--color-indigo-600);
+  --acento-forte: var(--color-indigo-700);
+  --acento-suave: var(--color-indigo-50);
+  --acento-tinta: var(--color-indigo-700);
 }
 
 .dark {
-  --surface: #0f172a;
-  --surface-raised: #1e293b;
-  --border: #334155;
-  --border-strong: #475569;
-  --text: #f8fafc;
-  --text-muted: #94a3b8;
-  --accent: #6366f1;
-  --accent-soft: #1e1b4b;
+  --papel: var(--color-slate-950);
+  --superficie: var(--color-slate-900);
+  --superficie-alta: var(--color-slate-800);
+
+  --tinta: #ffffff;
+  --tinta-suave: var(--color-slate-300);
+  --tinta-fraca: var(--color-slate-400);
+
+  --borda-suave: var(--color-slate-800);
+  --borda: var(--color-slate-800);
+  --borda-forte: var(--color-slate-700);
+
+  --acento: var(--color-indigo-500);
+  --acento-forte: var(--color-indigo-400);
+  --acento-suave: var(--color-indigo-950);
+  --acento-tinta: var(--color-indigo-300);
+}
+
+/* `inline` para o utilitário apontar para a variável, e não copiar o valor:
+   é o que faz `bg-superficie` mudar sozinho quando o tema troca. */
+@theme inline {
+  --color-papel: var(--papel);
+  --color-superficie: var(--superficie);
+  --color-superficie-alta: var(--superficie-alta);
+
+  --color-tinta: var(--tinta);
+  --color-tinta-suave: var(--tinta-suave);
+  --color-tinta-fraca: var(--tinta-fraca);
+
+  --color-borda-suave: var(--borda-suave);
+  --color-borda: var(--borda);
+  --color-borda-forte: var(--borda-forte);
+
+  --color-acento: var(--acento);
+  --color-acento-forte: var(--acento-forte);
+  --color-acento-suave: var(--acento-suave);
+  --color-acento-tinta: var(--acento-tinta);
 }
 
 /* Skip link for keyboard accessibility */
@@ -37,7 +89,7 @@
   position: absolute;
   top: -100px;
   left: 16px;
-  background: var(--accent);
+  background: var(--acento);
   color: #ffffff;
   padding: 8px 16px;
   border-radius: 6px;

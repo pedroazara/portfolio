@@ -101,8 +101,8 @@ export default function GlobalHeader({
           isCollapsed ? "-translate-y-full opacity-0 pointer-events-none" : "translate-y-0 opacity-100"
         } ${
           isScrolled
-            ? "border-b border-[var(--border)] bg-[var(--surface)]/90 backdrop-blur-md shadow-xs"
-            : "border-b border-transparent bg-[var(--surface)]"
+            ? "border-b border-borda bg-superficie/90 backdrop-blur-md shadow-xs"
+            : "border-b border-transparent bg-superficie"
         }`}
         style={{ height: "var(--global-header-height, 64px)" }}
         role="banner"
@@ -115,13 +115,13 @@ export default function GlobalHeader({
             <div className="flex items-center gap-[8px] shrink-0">
               <Link
                 to={localePath("/", language)}
-                className="group orb-hover flex items-center gap-2.5 rounded-full focus-visible:outline-2 focus-visible:outline-[var(--accent)] focus-visible:outline-offset-2 hover:opacity-95 transition-opacity"
+                className="group orb-hover flex items-center gap-2.5 rounded-full focus-visible:outline-2 focus-visible:outline-acento focus-visible:outline-offset-2 hover:opacity-95 transition-opacity"
                 aria-label={language === "en" ? "Go to home page" : "Ir para a página inicial"}
               >
-                <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[var(--accent)] text-white p-0.5 shrink-0 shadow-xs">
+                <div className="flex h-11 w-11 items-center justify-center rounded-full bg-acento text-white p-0.5 shrink-0 shadow-xs">
                   <OrbitaIcon size={38} color="#ffffff" />
                 </div>
-                <span className="hidden sm:inline-block text-[16px] font-bold tracking-tight text-[var(--text)] font-display">
+                <span className="hidden sm:inline-block text-[16px] font-bold tracking-tight text-tinta font-display">
                   Pedro Ázara
                 </span>
               </Link>
@@ -142,14 +142,14 @@ export default function GlobalHeader({
                     aria-current={active ? "page" : undefined}
                     className={`relative px-3 py-2 text-[14.5px] rounded-[7px] transition-colors duration-160 font-sans cursor-pointer ${
                       active
-                        ? "text-[var(--text)] font-[550]"
-                        : "text-[var(--text-muted)] hover:text-[var(--text)] hover:bg-[var(--surface-raised)]"
+                        ? "text-tinta font-[550]"
+                        : "text-tinta-fraca hover:text-tinta hover:bg-superficie-alta"
                     }`}
                   >
                     {item.label}
                     {/* Active 2px bottom accent indicator */}
                     {active && (
-                      <span className="absolute bottom-0 left-[12px] right-[12px] h-[2px] bg-[var(--accent)] rounded-full transition-all duration-160" />
+                      <span className="absolute bottom-0 left-[12px] right-[12px] h-[2px] bg-acento rounded-full transition-all duration-160" />
                     )}
                   </Link>
                 );
@@ -159,14 +159,14 @@ export default function GlobalHeader({
             {/* Zone 3: Utilities & Primary CTA */}
             <div className="flex items-center gap-[8px]">
               {/* Segmented Language Selector PT | EN */}
-              <div className="hidden min-[860px]:flex items-center rounded-lg bg-[var(--surface-raised)] p-0.5 border border-[var(--border-strong)]">
+              <div className="hidden min-[860px]:flex items-center rounded-lg bg-superficie-alta p-0.5 border border-borda-forte">
                 <button
                   type="button"
                   onClick={() => changeLanguage("pt")}
                   className={`rounded-md px-2 py-1 text-[12px] font-bold transition-all cursor-pointer ${
                     language === "pt"
-                      ? "bg-[var(--surface)] text-[var(--accent)] shadow-xs"
-                      : "text-[var(--text-muted)] hover:text-[var(--text)]"
+                      ? "bg-superficie text-acento shadow-xs"
+                      : "text-tinta-fraca hover:text-tinta"
                   }`}
                   aria-label="Mudar idioma para Português"
                 >
@@ -177,8 +177,8 @@ export default function GlobalHeader({
                   onClick={() => changeLanguage("en")}
                   className={`rounded-md px-2 py-1 text-[12px] font-bold transition-all cursor-pointer ${
                     language === "en"
-                      ? "bg-[var(--surface)] text-[var(--accent)] shadow-xs"
-                      : "text-[var(--text-muted)] hover:text-[var(--text)]"
+                      ? "bg-superficie text-acento shadow-xs"
+                      : "text-tinta-fraca hover:text-tinta"
                   }`}
                   aria-label="Change language to English"
                 >
@@ -190,10 +190,10 @@ export default function GlobalHeader({
               <button
                 type="button"
                 onClick={toggleDarkMode}
-                className="hidden min-[860px]:flex h-8 w-8 items-center justify-center rounded-lg border border-[var(--border)] bg-[var(--surface)] text-[var(--text-muted)] hover:bg-[var(--surface-raised)] hover:text-[var(--text)] transition-colors cursor-pointer"
+                className="hidden min-[860px]:flex h-8 w-8 items-center justify-center rounded-lg border border-borda bg-superficie text-tinta-fraca hover:bg-superficie-alta hover:text-tinta transition-colors cursor-pointer"
                 aria-label={darkMode ? "Ativar tema claro" : "Ativar tema escuro"}
               >
-                {darkMode ? <Sun className="h-4 w-4 text-amber-400" /> : <Moon className="h-4 w-4 text-[var(--accent)]" />}
+                {darkMode ? <Sun className="h-4 w-4 text-amber-400" /> : <Moon className="h-4 w-4 text-acento" />}
               </button>
 
               {/* Painel pessoal: área privada, só faz sentido com sessão ativa */}
@@ -201,7 +201,7 @@ export default function GlobalHeader({
                 <button
                   type="button"
                   onClick={() => navigate(localePath("/admin/painel", language))}
-                  className="hidden min-[860px]:flex h-8 items-center gap-1.5 rounded-lg border border-[var(--border)] bg-[var(--surface)] px-2.5 text-[12px] font-medium text-[var(--text-muted)] transition-colors hover:bg-[var(--surface-raised)] hover:text-[var(--text)] cursor-pointer"
+                  className="hidden min-[860px]:flex h-8 items-center gap-1.5 rounded-lg border border-borda bg-superficie px-2.5 text-[12px] font-medium text-tinta-fraca transition-colors hover:bg-superficie-alta hover:text-tinta cursor-pointer"
                   title="Painel pessoal" aria-label="Painel pessoal"
                 >
                   <LayoutDashboard className="h-3.5 w-3.5 text-indigo-500" />
@@ -219,7 +219,7 @@ export default function GlobalHeader({
                 className={`hidden min-[860px]:flex h-8 items-center gap-1.5 rounded-lg border px-2.5 text-[12px] font-medium transition-colors cursor-pointer ${
                   isAuthenticated
                     ? "border-emerald-300 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 font-semibold"
-                    : "border-[var(--border)] bg-[var(--surface)] text-[var(--text-muted)] hover:bg-[var(--surface-raised)] hover:text-[var(--text)]"
+                    : "border-borda bg-superficie text-tinta-fraca hover:bg-superficie-alta hover:text-tinta"
                 }`}
                 title={isAuthenticated ? "Modo Admin Ativo" : "Acessar Área de Administração"} aria-label={isAuthenticated ? "Modo Admin Ativo" : "Acessar Área de Administração"}
                 id="header-admin-login-btn"
@@ -233,7 +233,7 @@ export default function GlobalHeader({
                 <button
                   type="button"
                   onClick={handleDownloadCV}
-                  className="flex items-center gap-1.5 rounded-lg bg-[var(--accent)] hover:opacity-90 px-3.5 py-2 text-[13px] font-bold text-white shadow-xs transition-all active:scale-95 cursor-pointer"
+                  className="flex items-center gap-1.5 rounded-lg bg-acento hover:opacity-90 px-3.5 py-2 text-[13px] font-bold text-white shadow-xs transition-all active:scale-95 cursor-pointer"
                   id="global-download-cv-cta"
                 >
                   <Download className="h-4 w-4 shrink-0" />
@@ -245,7 +245,7 @@ export default function GlobalHeader({
               <button
                 type="button"
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                className="min-[860px]:hidden flex h-9 w-9 items-center justify-center rounded-lg border border-[var(--border)] bg-[var(--surface-raised)] text-[var(--text)] cursor-pointer"
+                className="min-[860px]:hidden flex h-9 w-9 items-center justify-center rounded-lg border border-borda bg-superficie-alta text-tinta cursor-pointer"
                 aria-label={isMobileMenuOpen ? "Fechar menu" : "Abrir menu de navegação"}
                 aria-expanded={isMobileMenuOpen}
               >
@@ -259,10 +259,10 @@ export default function GlobalHeader({
 
       {/* Mobile Navigation Drawer Panel */}
       {isMobileMenuOpen && (
-        <div className="no-print print:hidden min-[860px]:hidden fixed inset-0 z-50 flex flex-col bg-[var(--surface)] text-[var(--text)] font-sans animate-in fade-in duration-150">
-          <div className="flex h-[56px] items-center justify-between border-b border-[var(--border)] px-4">
+        <div className="no-print print:hidden min-[860px]:hidden fixed inset-0 z-50 flex flex-col bg-superficie text-tinta font-sans animate-in fade-in duration-150">
+          <div className="flex h-[56px] items-center justify-between border-b border-borda px-4">
             <div className="flex items-center gap-2">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--accent)] text-white p-0.5 shrink-0 shadow-xs">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-acento text-white p-0.5 shrink-0 shadow-xs">
                 <OrbitaIcon size={34} color="#ffffff" />
               </div>
               <span className="text-base font-bold font-display">Pedro Ázara</span>
@@ -270,7 +270,7 @@ export default function GlobalHeader({
             <button
               type="button"
               onClick={() => setIsMobileMenuOpen(false)}
-              className="p-2 text-[var(--text-muted)] hover:text-[var(--text)] cursor-pointer"
+              className="p-2 text-tinta-fraca hover:text-tinta cursor-pointer"
               aria-label="Fechar menu"
             >
               <X className="h-6 w-6" />
@@ -288,8 +288,8 @@ export default function GlobalHeader({
                     onClick={() => setIsMobileMenuOpen(false)}
                     className={`flex items-center justify-between rounded-xl px-4 py-3 text-base font-medium transition-colors ${
                       active
-                        ? "bg-[var(--accent-soft)] text-[var(--accent)] font-bold"
-                        : "text-[var(--text-muted)] hover:bg-[var(--surface-raised)]"
+                        ? "bg-acento-suave text-acento font-bold"
+                        : "text-tinta-fraca hover:bg-superficie-alta"
                     }`}
                   >
                     <span>{item.label}</span>
@@ -298,19 +298,19 @@ export default function GlobalHeader({
               })}
             </nav>
 
-            <div className="border-t border-[var(--border)] pt-6 space-y-4">
+            <div className="border-t border-borda pt-6 space-y-4">
               <div className="flex items-center justify-between">
-                <span className="text-sm font-semibold text-[var(--text-muted)]">
+                <span className="text-sm font-semibold text-tinta-fraca">
                   {language === "en" ? "Language" : "Idioma"}
                 </span>
-                <div className="flex rounded-lg bg-[var(--surface-raised)] p-1 border border-[var(--border-strong)]">
+                <div className="flex rounded-lg bg-superficie-alta p-1 border border-borda-forte">
                   <button
                     type="button"
                     onClick={() => changeLanguage("pt")}
                     className={`rounded-md px-3 py-1.5 text-xs font-bold ${
                       language === "pt"
-                        ? "bg-[var(--surface)] text-[var(--accent)] shadow-xs"
-                        : "text-[var(--text-muted)]"
+                        ? "bg-superficie text-acento shadow-xs"
+                        : "text-tinta-fraca"
                     }`}
                   >
                     Português (PT)
@@ -320,8 +320,8 @@ export default function GlobalHeader({
                     onClick={() => changeLanguage("en")}
                     className={`rounded-md px-3 py-1.5 text-xs font-bold ${
                       language === "en"
-                        ? "bg-[var(--surface)] text-[var(--accent)] shadow-xs"
-                        : "text-[var(--text-muted)]"
+                        ? "bg-superficie text-acento shadow-xs"
+                        : "text-tinta-fraca"
                     }`}
                   >
                     English (EN)
@@ -330,21 +330,21 @@ export default function GlobalHeader({
               </div>
 
               <div className="flex items-center justify-between">
-                <span className="text-sm font-semibold text-[var(--text-muted)]">
+                <span className="text-sm font-semibold text-tinta-fraca">
                   {language === "en" ? "Theme" : "Tema"}
                 </span>
                 <button
                   type="button"
                   onClick={toggleDarkMode}
-                  className="flex items-center gap-2 rounded-lg border border-[var(--border)] bg-[var(--surface-raised)] px-3 py-1.5 text-xs font-semibold text-[var(--text)] cursor-pointer"
+                  className="flex items-center gap-2 rounded-lg border border-borda bg-superficie-alta px-3 py-1.5 text-xs font-semibold text-tinta cursor-pointer"
                 >
-                  {darkMode ? <Sun className="h-4 w-4 text-amber-400" /> : <Moon className="h-4 w-4 text-[var(--accent)]" />}
+                  {darkMode ? <Sun className="h-4 w-4 text-amber-400" /> : <Moon className="h-4 w-4 text-acento" />}
                   <span>{darkMode ? "Claro" : "Escuro"}</span>
                 </button>
               </div>
 
               <div className="flex items-center justify-between pt-2">
-                <span className="text-sm font-semibold text-[var(--text-muted)]">
+                <span className="text-sm font-semibold text-tinta-fraca">
                   {language === "en" ? "Administration" : "Administração"}
                 </span>
                 <button
@@ -354,7 +354,7 @@ export default function GlobalHeader({
                     if (onOpenLogin) onOpenLogin();
                     else navigate(localePath("/admin", language));
                   }}
-                  className="flex items-center gap-2 rounded-lg border border-[var(--border)] bg-[var(--surface-raised)] px-3 py-1.5 text-xs font-semibold text-[var(--text)] cursor-pointer"
+                  className="flex items-center gap-2 rounded-lg border border-borda bg-superficie-alta px-3 py-1.5 text-xs font-semibold text-tinta cursor-pointer"
                 >
                   <Lock className="h-4 w-4 text-indigo-500" />
                   <span>{isAuthenticated ? (language === "en" ? "Admin Mode" : "Modo Admin") : "Admin"}</span>
@@ -363,7 +363,7 @@ export default function GlobalHeader({
 
               {isAuthenticated && (
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-semibold text-[var(--text-muted)]">
+                  <span className="text-sm font-semibold text-tinta-fraca">
                     {language === "en" ? "Personal hub" : "Painel pessoal"}
                   </span>
                   <button
@@ -372,7 +372,7 @@ export default function GlobalHeader({
                       setIsMobileMenuOpen(false);
                       navigate(localePath("/admin/painel", language));
                     }}
-                    className="flex items-center gap-2 rounded-lg border border-[var(--border)] bg-[var(--surface-raised)] px-3 py-1.5 text-xs font-semibold text-[var(--text)] cursor-pointer"
+                    className="flex items-center gap-2 rounded-lg border border-borda bg-superficie-alta px-3 py-1.5 text-xs font-semibold text-tinta cursor-pointer"
                   >
                     <LayoutDashboard className="h-4 w-4 text-indigo-500" />
                     <span>{language === "en" ? "Open" : "Abrir"}</span>
@@ -387,7 +387,7 @@ export default function GlobalHeader({
                     setIsMobileMenuOpen(false);
                     handleDownloadCV();
                   }}
-                  className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-[var(--accent)] py-3 text-sm font-bold text-white shadow-md active:scale-95 transition-transform"
+                  className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-acento py-3 text-sm font-bold text-white shadow-md active:scale-95 transition-transform"
                 >
                   <Download className="h-4 w-4" />
                   <span>{language === "en" ? "Download Curriculum PDF" : "Baixar Currículo em PDF"}</span>
