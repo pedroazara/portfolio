@@ -322,12 +322,13 @@ export default function ProjectPage({
           <LinksDoProjeto project={project} language={language} />
         </div>
 
-        {/* Corpo. O `className` é explícito porque o padrão do renderizador
-            limita a coluna a 75ch — estreito demais para a largura desta página. */}
+        {/* Corpo. `max-w-none` esticava o texto até ~100+ caracteres por
+            linha — a coluna é larga, mas o texto não precisa preencher toda
+            ela; a margem à direita é intencional, não espaço desperdiçado. */}
         <div className="mt-10" data-md-field="detailedDescription">
           <MarkdownRenderer
             content={body}
-            className="max-w-none space-y-4 text-base leading-relaxed text-slate-700 dark:text-slate-300"
+            className="max-w-[58ch] space-y-4 text-base leading-relaxed text-slate-700 dark:text-slate-300"
           />
         </div>
 
@@ -371,7 +372,7 @@ export default function ProjectPage({
             <div data-md-field="scientificRelevance">
               <MarkdownRenderer
                 content={relevance}
-                className="max-w-none space-y-3 text-sm leading-relaxed text-slate-700 dark:text-slate-300"
+                className="max-w-[58ch] space-y-3 text-sm leading-relaxed text-slate-700 dark:text-slate-300"
               />
             </div>
           </section>
