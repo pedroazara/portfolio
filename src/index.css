@@ -315,16 +315,21 @@ html {
     margin-bottom: 0 !important;
   }
 
-  /* Ensure timeline vertical borders are visible and crisp */
-  .border-l.border-slate-100 {
-    border-left: 1.5px solid #cbd5e1 !important;
+  /* Linha do tempo da experiência: fio e contorno dos marcadores fixos no
+     papel, independente de o tema escuro estar ligado no navegador que
+     gerou o PDF. Só a borda — forçar o preenchimento apagaria a distinção
+     entre o vínculo em curso (marcador cheio) e os já encerrados (vazado). */
+  .timeline-rail,
+  .timeline-rail-sub {
+    background-color: #cbd5e1 !important;
   }
 
-  /* Ensure timeline bullet dots remain solid and properly colored */
-  span.absolute.bg-indigo-600 {
-    background-color: #4f46e5 !important;
-    border: 2px solid #ffffff !important;
-    box-shadow: 0 0 0 1px #4f46e5 !important;
+  .timeline-dot {
+    border-color: #4f46e5 !important;
+  }
+
+  .timeline-dot-sub {
+    border-color: #64748b !important;
   }
 
   /* Prevent text cutoff inside lists and grids */

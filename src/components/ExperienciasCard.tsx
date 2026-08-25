@@ -238,27 +238,44 @@ export default function ExperienciasCard({
             </p>
           </div>
         ) : (
-          <ReorderableList
-            items={experiences}
-            isEditMode={isEditMode}
-            onReorder={onUpdateExperiences}
-            getKey={(exp) => exp.id}
-            className="space-y-6"
-            itemClassName="group relative rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-900/80 p-5 sm:p-6 transition-all duration-200 hover:border-slate-300 dark:hover:border-slate-700"
-          >
-            {(exp, dragHandle) => {
+          /* Linha do tempo: um fio contínuo atrás de todo mundo, marcador por
+             vínculo. Antes cada experiência era um cartão independente com a
+             data num selo à direita — lia-se cada uma isolada, sem noção de
+             que "iniciação científica" é a MESMA linha de pesquisa em dois
+             períodos consecutivos. O fio é o que mostra isso de relance. */
+          <div className="relative">
+            <div
+              aria-hidden="true"
+              className="timeline-rail pointer-events-none absolute left-[5px] top-1 bottom-1 w-0.5 bg-borda"
+            />
+            <ReorderableList
+              items={experiences}
+              isEditMode={isEditMode}
+              onReorder={onUpdateExperiences}
+              getKey={(exp) => exp.id}
+              className="space-y-7"
+              itemClassName="group relative pl-8 print-break-inside-avoid"
+            >
+              {(exp, dragHandle) => {
               const roleText = language === "en" && exp.roleEn ? exp.roleEn : exp.role;
               const locationText = language === "en" && exp.locationEn ? exp.locationEn : exp.location;
               const descText = language === "en" && exp.descriptionEn ? exp.descriptionEn : exp.description;
               const hasDescription = descText && descText.trim().length > 0;
+              const anchorId = "research-" + exp.id;
 
               return (
-                <div id={`research-${exp.id}`} className="flex items-start gap-2">
-                  {dragHandle && (
-                    <div className="mt-1 sm:opacity-0 sm:group-hover:opacity-100 opacity-100 transition-opacity">
-                      {dragHandle}
-                    </div>
-                  )}
+                <div id={anchorId}>
+                  {/* Marcador: cheio e levemente maior enquanto em curso,
+                      vazado (a cor do papel por dentro) para vínculos
+                      encerrados — a mesma leitura de um "você está aqui". */}
+                  <span
+                    aria-hidden="true"
+                    className={
+                      "timeline-dot pointer-events-none absolute left-0 top-1 h-3 w-3 rounded-full ring-4 ring-superficie " +
+                      (exp.current ? "bg-acento" : "border-2 border-acento bg-superficie")
+                    }
+                  />
+
                   <div className="min-w-0 flex-1">
                     {/* Top Row: Role, Company, Location & Period */}
                     <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
@@ -289,6 +306,7 @@ export default function ExperienciasCard({
 
                         {isEditMode && (
                           <div className="flex items-center gap-1 no-print print:hidden">
+                            {dragHandle}
                             <button
                               onClick={() => handleOpenExpEdit(exp)}
                               className="rounded p-1 text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-800 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors cursor-pointer"
@@ -319,16 +337,29 @@ export default function ExperienciasCard({
                       ) : null}
                     </div>
 
-                    {/* Subperíodos (quando houver) */}
+                    {/* Subperíodos: as etapas dentro de um mesmo vínculo — o
+                        mesmo desenho da linha de cima, em escala menor, para
+                        ler como filho dela e não como uma lista solta. */}
                     {exp.subperiods && exp.subperiods.length > 0 && (
-                      <div className="mt-4 border-l-2 border-slate-300 dark:border-slate-700 pl-[14px] space-y-3.5 my-3.5">
+                      <div className="relative my-3.5 space-y-3">
+                        <div
+                          aria-hidden="true"
+                          className="timeline-rail-sub pointer-events-none absolute left-[3px] top-1 bottom-1 w-px bg-borda"
+                        />
                         {exp.subperiods.map((sub) => {
                           const subTitleText = language === "en" && sub.titleEn ? sub.titleEn : sub.title;
                           const subDescText = language === "en" && sub.descriptionEn ? sub.descriptionEn : sub.description;
                           const subHasText = (subTitleText && subTitleText.trim()) || (subDescText && subDescText.trim());
 
                           return (
-                            <div key={sub.id} className="space-y-0.5">
+                            <div key={sub.id} className="relative space-y-0.5 pl-5">
+                              <span
+                                aria-hidden="true"
+                                className={
+                                  "timeline-dot-sub pointer-events-none absolute left-0 top-[3px] h-2 w-2 rounded-full ring-2 ring-superficie " +
+                                  (sub.current ? "bg-tinta-fraca" : "border border-tinta-fraca bg-superficie")
+                                }
+                              />
                               {/* Período em monoespaçada 11px */}
                               <span className="font-mono text-[11px] text-slate-500 dark:text-slate-400 block">
                                 {formatarPeriodo(sub.startDate, sub.endDate, sub.current, language)}
@@ -341,7 +372,7 @@ export default function ExperienciasCard({
                                 </p>
                               ) : isEditMode ? (
                                 <p className="text-xs text-slate-500 dark:text-slate-500 italic font-sans">
-                                  {subTitleText ? `${subTitleText} — ` : ""}descrição pendente
+                                  {subTitleText ? subTitleText + " — " : ""}descrição pendente
                                 </p>
                               ) : null}
                             </div>
@@ -387,8 +418,9 @@ export default function ExperienciasCard({
                   </div>
                 </div>
               );
-            }}
-          </ReorderableList>
+              }}
+            </ReorderableList>
+          </div>
         )}
       </section>
 
