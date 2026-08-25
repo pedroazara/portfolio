@@ -84,6 +84,25 @@
   --color-acento-tinta: var(--acento-tinta);
 }
 
+/**
+ * Foco por teclado: um anel só, em todo o site.
+ *
+ * Cerca de trinta lugares usam `focus:outline-hidden` para tirar o contorno
+ * padrão do navegador — mas essa classe mira `:focus`, e o anel que o Chrome
+ * desenha ao tabular é regido por `:focus-visible`, um seletor diferente. Na
+ * prática o contorno nunca saía: sobrava o padrão do navegador, em âmbar, sem
+ * relação com a marca — inconsistente não porque cada componente desenhasse o
+ * próprio anel, mas porque nenhum desenhava, e o que aparecia era acidente.
+ *
+ * Fora de `@layer`, esta regra vale mais que qualquer utilitário do Tailwind
+ * (que vive dentro de `@layer utilities`) — é o que garante um anel só,
+ * mesmo nos componentes que ainda têm sua própria classe de foco esquecida.
+ */
+:focus-visible {
+  outline: 2px solid var(--acento);
+  outline-offset: 2px;
+}
+
 /* Skip link for keyboard accessibility */
 .skip-link {
   position: absolute;
