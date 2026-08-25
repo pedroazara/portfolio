@@ -197,6 +197,10 @@ export default function ProjectForm({
       },
       setFormData
     );
+    // Troca para a aba EN na hora — sem isso, quem clicou "Traduzir"
+    // continuava vendo os campos em português e podia achar que nada tinha
+    // acontecido.
+    setEditingLanguage("en");
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -295,7 +299,37 @@ export default function ProjectForm({
             <div>
               {activeTab === "edit" ? (
                 <form id="project-editor-form" onSubmit={handleSubmit} className="space-y-8 rounded-3xl border border-slate-200/80 bg-white p-6 shadow-xs sm:p-10 dark:border-slate-800 dark:bg-slate-900">
-                  
+
+                  {/* Alternância pt/en + tradução automática de título, resumo,
+                      corpo detalhado e relevância científica de uma vez. Antes
+                      a função já existia (handleAutoTranslate), mas nada na
+                      tela chamava — só a aba "Tradução" do painel cobria
+                      título/resumo/categoria; o corpo detalhado e a relevância
+                      científica nunca tinham tradução nenhuma. */}
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex items-center gap-1 rounded-xl border border-slate-200 bg-slate-100 p-1 dark:border-slate-700 dark:bg-slate-800/80">
+                      {(["pt", "en"] as const).map((lang) => (
+                        <button
+                          key={lang}
+                          type="button"
+                          onClick={() => setEditingLanguage(lang)}
+                          className={`rounded-lg px-3 py-1.5 text-[11px] font-bold uppercase transition-colors cursor-pointer ${
+                            editingLanguage === lang
+                              ? "bg-white text-indigo-600 shadow-xs dark:bg-slate-950 dark:text-indigo-400"
+                              : "text-slate-500 dark:text-slate-400"
+                          }`}
+                        >
+                          {lang === "pt" ? "Português" : "English"}
+                        </button>
+                      ))}
+                    </div>
+                    <TranslateButton
+                      onTranslate={handleAutoTranslate}
+                      label={language === "en" ? "Auto-Translate PT → EN" : "Traduzir PT → EN (Gemini AI)"}
+                      size="sm"
+                    />
+                  </div>
+
                   {/* 1. HERO COVER IMAGE SECTION */}
                   <div className="space-y-2">
                     <ImageSelectorInput
