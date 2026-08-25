@@ -13,18 +13,22 @@ interface FooterProps {
 export function Footer({ profile, language, buildDate }: FooterProps) {
   const currentYear = new Date().getFullYear();
 
-  // Format build date according to active locale (defaults to current date if omitted)
+  // Sem `buildDate` real (carregamento ainda em curso, ou nunca salvo na
+  // nuvem), não há data de atualização para mostrar — cair para "agora" dava
+  // a entender que o conteúdo tinha acabado de mudar, mesmo numa visita sem
+  // nenhuma edição.
   const formattedBuildDate = React.useMemo(() => {
+    if (!buildDate) return "";
     try {
-      const date = buildDate ? new Date(buildDate) : new Date();
-      if (isNaN(date.getTime())) return buildDate || "";
+      const date = new Date(buildDate);
+      if (isNaN(date.getTime())) return "";
       return new Intl.DateTimeFormat(language === "en" ? "en-US" : "pt-BR", {
         day: "numeric",
         month: "long",
         year: "numeric"
       }).format(date);
     } catch {
-      return buildDate || "";
+      return "";
     }
   }, [buildDate, language]);
 

@@ -134,6 +134,7 @@ export default function App() {
       try {
         const { data: cloudData, version } = await fetchResumeData();
         cloudVersionRef.current = version;
+        setLastUpdatedAt(version);
         if (cloudData) {
           setResumeData(sanitizeResumeData(cloudData));
         } else {
@@ -205,6 +206,11 @@ export default function App() {
   // Carimbo `updated_at` da linha lida. Vai em cada gravação para detectar que
   // outra aba escreveu no meio-tempo, em vez de sobrescrever cegamente.
   const cloudVersionRef = useRef<string | null>(null);
+  // Mesmo carimbo, mas em estado — é o que o rodapé mostra em "Atualizado em".
+  // Fica `null` até a leitura da nuvem responder, ou se não houver linha
+  // salva ainda; o rodapé some a linha inteira nesse caso, em vez de inventar
+  // a data de hoje.
+  const [lastUpdatedAt, setLastUpdatedAt] = useState<string | null>(null);
   const bannerTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Router hooks for URL deep linking and SPA routes
@@ -428,6 +434,7 @@ export default function App() {
     const timer = setTimeout(async () => {
       try {
         cloudVersionRef.current = await saveResumeData(resumeData, cloudVersionRef.current);
+        setLastUpdatedAt(cloudVersionRef.current);
         lastSyncedRef.current = serialized;
         setSaveError(null);
         setShowAutoSaveBanner(true);
@@ -837,6 +844,7 @@ export default function App() {
         profile={resumeData.profile}
         language={language}
         onOpenPdfPreview={() => setIsPdfPreviewOpen(true)}
+        buildDate={lastUpdatedAt ?? undefined}
       />
 
       {/* Faixa do modo de teste. O `import.meta.env.DEV` vira `false` literal no
