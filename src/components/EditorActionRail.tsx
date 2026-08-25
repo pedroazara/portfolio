@@ -1,6 +1,7 @@
 import React from "react";
 import { ArrowLeft, Save, FileEdit, Eye, PenTool, CircleDot, Link2, Check } from "lucide-react";
 import { Language } from "../lib/translations";
+import { STICKY_UNDER_HEADER_CLASS } from "../lib/cardStyle";
 
 export type EditorView = "edit" | "preview";
 
@@ -64,7 +65,7 @@ export default function EditorActionRail({
   };
 
   return (
-    <div className="sticky top-24 z-30 space-y-3 no-print max-lg:static max-lg:top-0">
+    <div className={`sticky ${STICKY_UNDER_HEADER_CLASS} z-30 space-y-3 no-print max-lg:static max-lg:top-0`}>
       <div className="space-y-3 rounded-2xl border border-slate-200 bg-white p-3 shadow-xs dark:border-slate-800 dark:bg-slate-900">
         <button
           type="button"

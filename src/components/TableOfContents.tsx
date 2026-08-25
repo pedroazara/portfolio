@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
-import { List } from "lucide-react";
+import { List, ArrowUp } from "lucide-react";
 import { TocEntry } from "../utils/toc";
 import { Language } from "../lib/translations";
+import { STICKY_UNDER_HEADER_CLASS } from "../lib/cardStyle";
 
 interface TableOfContentsProps {
   entries: TocEntry[];
@@ -91,11 +92,26 @@ export default function TableOfContents({ entries, language = "pt" }: TableOfCon
 
   if (entries.length === 0) return null;
 
+  // Volta ao início do artigo — e, com ele, o hash da URL some sozinho: sem
+  // título abaixo da linha de corte, o próximo cálculo zera `activeId`.
+  const voltarAoTopo = () => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
   return (
     <nav
       aria-label={language === "en" ? "Table of contents" : "Sumário"}
-      className="sticky top-24 max-h-[calc(100vh-8rem)] overflow-y-auto no-print"
+      className={`sticky ${STICKY_UNDER_HEADER_CLASS} max-h-[calc(100vh-9rem)] overflow-y-auto no-print`}
     >
+      <button
+        type="button"
+        onClick={voltarAoTopo}
+        className="mb-4 flex w-full items-center gap-1.5 rounded-lg border border-borda px-2.5 py-1.5 text-xs font-semibold text-tinta-suave transition-colors hover:border-acento hover:text-acento"
+      >
+        <ArrowUp className="h-3.5 w-3.5" />
+        {language === "en" ? "Back to top" : "Voltar ao início"}
+      </button>
+
       <p className="mb-3 flex items-center gap-1.5 font-mono text-[11px] font-bold uppercase tracking-wider text-slate-500">
         <List className="h-3.5 w-3.5" />
         {language === "en" ? "Contents" : "Sumário"}

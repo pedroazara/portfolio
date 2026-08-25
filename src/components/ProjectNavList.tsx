@@ -6,6 +6,7 @@ import { Language } from "../lib/translations";
 import { slugOf } from "../utils/slug";
 import LocalImage from "./LocalImage";
 import { useLocalePath } from "../lib/routes";
+import { STICKY_UNDER_HEADER_CLASS } from "../lib/cardStyle";
 
 interface ProjectNavListProps {
   projects: Project[];
@@ -27,7 +28,7 @@ export default function ProjectNavList({ projects, currentId, language = "pt" }:
   return (
     <nav
       aria-label={language === "en" ? "Other projects" : "Outros projetos"}
-      className="sticky top-24 max-h-[calc(100vh-8rem)] overflow-y-auto no-print"
+      className={`sticky ${STICKY_UNDER_HEADER_CLASS} max-h-[calc(100vh-9rem)] overflow-y-auto no-print`}
     >
       <p className="mb-3 flex items-center gap-1.5 font-mono text-[11px] font-bold uppercase tracking-wider text-slate-500">
         <FolderKanban className="h-3.5 w-3.5" />

@@ -16,6 +16,19 @@
  *
  * No papel os dois somem: tinta gasta à toa.
  */
+/**
+ * Distância do topo para qualquer coluna presa (`sticky`) sob o cabeçalho.
+ *
+ * O cabeçalho tem 64px; para quem está autenticado, a tira de administração
+ * soma mais 40px por cima — 104px no total. `top-24` (96px), usado nos quatro
+ * lugares com coluna presa (sumário do artigo, lista de outros projetos, e a
+ * barra de ações dos editores — esta última sempre em sessão autenticada),
+ * deixava 8px de sobra faltando: ao rolar para cima, o cabeçalho reaparece e
+ * cobre a borda de cima da coluna por um instante. `top-28` (112px) limpa o
+ * pior caso com folga.
+ */
+export const STICKY_UNDER_HEADER_CLASS = "top-28";
+
 export const SECTION_CARD_CLASS = [
   "scroll-mt-32 relative overflow-hidden rounded-3xl",
   // Tokens em vez do par claro/escuro: a variável troca com o tema, e o cartão

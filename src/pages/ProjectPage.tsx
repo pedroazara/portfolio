@@ -19,6 +19,7 @@ import { formatarData, formatarPeriodo } from "../lib/periodo";
 import { previaLiberada } from "../lib/previewLink";
 import ProjectNavList from "../components/ProjectNavList";
 import ProgressoLeitura from "../components/ProgressoLeitura";
+import { STICKY_UNDER_HEADER_CLASS } from "../lib/cardStyle";
 import { useLocalePath } from "../lib/routes";
 import { editTargetFromViewport } from "../utils/editTarget";
 
@@ -446,7 +447,7 @@ export default function ProjectPage({
 
       {/* Coluna da direita: as saídas do projeto e a lista dos outros. */}
       <aside className="hidden xl:block">
-        <div className="sticky top-24 space-y-6">
+        <div className={`sticky ${STICKY_UNDER_HEADER_CLASS} space-y-6`}>
           <LinksDoProjeto project={project} language={language} formato="barra" />
           <ProjectNavList projects={visibleProjects} currentId={project.id} language={language} />
         </div>
