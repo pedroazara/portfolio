@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
-  ArrowLeft, ArrowRight, Calendar, Clock, Share2, Check, Edit2, FolderKanban,
+  ArrowLeft, ArrowRight, Share2, Check, Edit2, FolderKanban,
   Github, ExternalLink, FlaskConical, BookOpen, Layers,
 } from "lucide-react";
 import { Project, ProjectCategory, BlogPost } from "../types";
@@ -13,6 +13,8 @@ import LocalImage from "../components/LocalImage";
 import { COVER_ASPECT_CLASS } from "../lib/coverAspect";
 import TableOfContents from "../components/TableOfContents";
 import ContentUnavailable from "../components/ContentUnavailable";
+import FichaProjeto from "../components/FichaProjeto";
+import { formatarData, formatarPeriodo } from "../lib/periodo";
 import { previaLiberada } from "../lib/previewLink";
 import ProjectNavList from "../components/ProjectNavList";
 import { useLocalePath } from "../lib/routes";
@@ -155,16 +157,25 @@ export default function ProjectPage({
   const words = `${title} ${summary} ${body}`.trim().split(/\s+/).length;
   const readMinutes = Math.max(1, Math.ceil(words / 180));
 
+  /**
+   * O período como se lê, não como se guarda.
+   *
+   * A data vem em ISO ("2026-06") e saía assim na tela — agora passa pelo
+   * mesmo formatador das seções do currículo, que devolve "jun 2026". Um
+   * período escrito à mão (texto livre) é respeitado como veio.
+   */
   const periodLabel = (() => {
     if (!project.periodo) return null;
     if (typeof project.periodo === "string") return project.periodo;
+
     const { inicio, fim } = project.periodo;
     if (!inicio) return null;
-    if (fim) return `${inicio} — ${fim}`;
+
     // Sem data de fim, "Presente" contradiria o selo de concluído.
-    return isConcluded
-      ? `${language === "en" ? "Started in" : "Início em"} ${inicio}`
-      : `${inicio} — ${language === "en" ? "Present" : "Presente"}`;
+    if (!fim && isConcluded) {
+      return `${language === "en" ? "Started in" : "Início em"} ${formatarData(inicio, language)}`;
+    }
+    return formatarPeriodo(inicio, fim, !fim, language);
   })();
 
   const currentIndex = visibleProjects.findIndex((p) => p.id === project.id);
@@ -230,9 +241,14 @@ export default function ProjectPage({
           </div>
         </div>
 
-        {/* Capa */}
+        {/* Abertura.
+
+            A capa continua um bloco só dela: as capas aqui são logotipos e
+            diagramas sobre fundo claro, e escrever o título por cima brigaria
+            com o desenho. O painel sobe sobre a borda de baixo da imagem — o
+            bastante para os dois lerem como uma peça, sem disputar espaço. */}
         {project.imageUrl && (
-          <div className={`relative mb-8 w-full overflow-hidden rounded-3xl bg-slate-100 dark:bg-slate-950/50 ${COVER_ASPECT_CLASS}`}>
+          <div className={`relative w-full overflow-hidden rounded-3xl bg-superficie-alta ${COVER_ASPECT_CLASS}`}>
             <LocalImage
               src={project.imageUrl}
               alt={title}
@@ -242,65 +258,50 @@ export default function ProjectPage({
           </div>
         )}
 
-        {/* Selos */}
-        <div className="mb-4 flex flex-wrap items-center gap-2">
-          {project.draft && (
-            <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-bold uppercase tracking-wider text-amber-800 dark:bg-amber-950/60 dark:text-amber-300">
-              {language === "en" ? "Draft" : "Rascunho"}
-            </span>
+        <div
+          className={`relative rounded-3xl border border-borda-suave bg-superficie p-6 shadow-sm sm:p-8 print:mt-0 print:border-0 print:p-0 print:shadow-none ${
+            project.imageUrl ? "-mt-10 sm:-mt-14" : "mt-0"
+          }`}
+        >
+          {(project.draft || projCategories.length > 0) && (
+            <div className="mb-4 flex flex-wrap items-center gap-2">
+              {project.draft && (
+                <span className="rounded-full bg-amber-100 px-3 py-1 font-mono text-[10px] font-bold uppercase tracking-widest text-amber-800 dark:bg-amber-950/60 dark:text-amber-300">
+                  {language === "en" ? "Draft" : "Rascunho"}
+                </span>
+              )}
+              {projCategories.map((cat) => (
+                <span
+                  key={cat.id}
+                  className="inline-flex items-center gap-1 rounded-full bg-acento-suave px-3 py-1 font-mono text-[10px] font-bold uppercase tracking-widest text-acento-tinta"
+                >
+                  <Layers className="h-3 w-3" />
+                  {(language === "en" && cat.nameEn) ? cat.nameEn : cat.name}
+                </span>
+              ))}
+            </div>
           )}
-          {projCategories.map((cat) => (
-            <span
-              key={cat.id}
-              className="inline-flex items-center gap-1 rounded-full bg-indigo-600 px-4 py-1 font-sans text-xs font-bold uppercase tracking-wider text-white shadow-sm dark:bg-indigo-500"
-            >
-              <Layers className="h-3 w-3" />
-              {(language === "en" && cat.nameEn) ? cat.nameEn : cat.name}
-            </span>
-          ))}
-          {project.status && (
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300">
-              {isInProgress && <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-500" />}
-              {isInProgress ? (language === "en" ? "In progress" : "Em andamento") : project.status}
-            </span>
+
+          <h1 className="font-display text-3xl font-black leading-[1.05] tracking-tight text-tinta text-balance sm:text-5xl">
+            {title}
+          </h1>
+
+          {summary && (
+            <p className="mt-4 max-w-3xl font-sans text-base leading-relaxed text-tinta-suave sm:text-lg">
+              {summary}
+            </p>
           )}
-          {(project.tags || []).map((tag, idx) => (
-            <span
-              key={idx}
-              className="rounded-full border border-indigo-100/50 bg-indigo-50 px-3 py-1 font-sans text-xs font-semibold text-indigo-700 dark:border-indigo-900/40 dark:bg-indigo-950/40 dark:text-indigo-300"
-            >
-              #{tag}
-            </span>
-          ))}
+
+          <FichaProjeto
+            periodo={periodLabel}
+            emAndamento={isInProgress}
+            situacao={project.status}
+            areas={projCategories.map((cat) => (language === "en" && cat.nameEn) ? cat.nameEn : cat.name)}
+            tecnologias={project.stack && project.stack.length > 0 ? project.stack : (project.tags || [])}
+            minutosDeLeitura={readMinutes}
+            language={language}
+          />
         </div>
-
-        <h1 className="font-display text-3xl font-black leading-tight tracking-tight text-slate-900 sm:text-5xl dark:text-white">
-          {title}
-        </h1>
-
-        {/* Metadados */}
-        <div className="mt-6 flex flex-wrap items-center gap-4 border-b border-slate-100 pb-6 font-mono text-xs text-slate-500 sm:text-sm dark:border-slate-800 dark:text-slate-500">
-          {periodLabel && (
-            <>
-              <span className="flex items-center gap-1">
-                <Calendar className="h-4 w-4" />
-                {periodLabel}
-              </span>
-              <span className="text-slate-200 dark:text-slate-800">•</span>
-            </>
-          )}
-          <span className="flex items-center gap-1">
-            <Clock className="h-4 w-4" />
-            {readMinutes} {language === "en" ? "min read" : "min de leitura"}
-          </span>
-        </div>
-
-        {/* Resumo em destaque */}
-        {summary && (
-          <p className="mt-8 border-l-4 border-indigo-500 bg-indigo-50/50 py-4 pl-5 pr-4 font-sans text-base leading-relaxed text-slate-700 dark:bg-indigo-950/20 dark:text-slate-200">
-            {summary}
-          </p>
-        )}
 
         {/* Links do projeto */}
         {(project.githubUrl || project.projectUrl || project.documentationUrl || project.paperUrl) && (
