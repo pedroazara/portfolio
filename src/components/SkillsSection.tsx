@@ -3,7 +3,6 @@ import { Skill, SkillCategory } from "../types";
 import { Award, Plus, FolderPlus, Edit2, Trash2, Star, Tag } from "lucide-react";
 import EditModal from "./EditModal";
 import ConfirmModal from "./ConfirmModal";
-import { ReorderableList } from "./Reorderable";
 import { Language } from "../lib/translations";
 import TranslateButton from "./TranslateButton";
 import { autoTranslateFields } from "../lib/translator";
@@ -31,6 +30,17 @@ const CATEGORY_ACCENTS = [
 ];
 
 const getCategoryAccent = (index: number) => CATEGORY_ACCENTS[index % CATEGORY_ACCENTS.length];
+
+/**
+ * Quantas habilidades ganham a barra e as estrelas por categoria.
+ *
+ * Com 38 habilidades em 7 categorias, a maior (Software, 10 itens) virava
+ * dez linhas de estrelas do mesmo tamanho — o de nível 5 pesando o mesmo que
+ * o de nível 2 na tela. Um teto fixo devolve à categoria grande a mesma
+ * legibilidade da pequena; o resto continua visível, só sem competir pelo
+ * mesmo espaço.
+ */
+const DESTAQUES_POR_CATEGORIA = 4;
 
 const LEVEL_LABELS: Record<number, { pt: string; en: string }> = {
   1: { pt: "Iniciante", en: "Beginner" },
@@ -146,6 +156,54 @@ function SkillRowContent({ skill, language, accent, isEditMode, onEdit, onDelete
   );
 }
 
+interface HabilidadeChipProps {
+  skill: Skill;
+  language: Language;
+  isEditMode: boolean;
+  onEdit: (skill: Skill) => void;
+  onDelete: (id: string) => void;
+}
+
+/**
+ * A habilidade fora do destaque: só o nome, numa pílula.
+ *
+ * Sem estrelas nem barra — é exatamente a informação que sobra quando se tira
+ * o peso visual. Continua editável: em modo de edição, os mesmos dois ícones
+ * da linha aparecem ao passar o mouse, só que pousados na pílula em vez de
+ * espalhados numa linha inteira.
+ */
+function HabilidadeChip({ skill, language, isEditMode, onEdit, onDelete }: HabilidadeChipProps) {
+  return (
+    <span className="group/chip inline-flex items-center gap-1 rounded-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 py-1 pl-2.5 pr-1 text-[11px] font-medium text-slate-600 dark:text-slate-400 font-sans">
+      {language === "en" && skill.nameEn ? skill.nameEn : skill.name}
+      <span className="hidden print:inline font-mono text-[9px] text-slate-400 dark:text-slate-600">
+        &nbsp;{skill.level}/5
+      </span>
+      {isEditMode && (
+        // Visível por padrão — só recolhe atrás do hover em telas largas.
+        // Sem :hover confiável no toque, esconder sempre deixaria a pílula
+        // sem jeito de editar ou apagar no celular.
+        <span className="flex items-center opacity-100 transition-opacity sm:opacity-0 sm:group-hover/chip:opacity-100 no-print print:hidden">
+          <button
+            onClick={() => onEdit(skill)}
+            className="rounded p-0.5 text-indigo-600 dark:text-indigo-400 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
+            title="Editar Habilidade" aria-label="Editar Habilidade"
+          >
+            <Edit2 className="h-2.5 w-2.5" />
+          </button>
+          <button
+            onClick={() => onDelete(skill.id)}
+            className="rounded p-0.5 text-rose-600 dark:text-rose-400 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
+            title="Excluir Habilidade" aria-label="Excluir Habilidade"
+          >
+            <Trash2 className="h-2.5 w-2.5" />
+          </button>
+        </span>
+      )}
+    </span>
+  );
+}
+
 interface MergedCategory {
   id: string;
   name: string;
@@ -230,14 +288,6 @@ export default function SkillsSection({
   ];
 
   const catDisplayName = (cat: MergedCategory, lang: Language) => (lang === "en" ? cat.nameEn || cat.name : cat.name);
-
-  // Reordering only moves skills within the same category — other categories'
-  // positions in the underlying flat array are left untouched.
-  const handleReorderCategory = (catName: string, reorderedCatSkills: Skill[]) => {
-    let i = 0;
-    const merged = skills.map((s) => (s.category === catName ? reorderedCatSkills[i++] : s));
-    onUpdateSkills(merged);
-  };
 
   // --- Section Handlers ---
   const handleOpenSectionAdd = () => {
@@ -387,6 +437,12 @@ export default function SkillsSection({
           {mergedCategories.map((cat, idx) => {
             const catSkills = skills.filter((s) => s.category === cat.name);
             const accent = getCategoryAccent(idx);
+
+            // Ordenação estável por nível: entre habilidades empatadas, a
+            // ordem de criação decide — não sobe nem desce nada sem motivo.
+            const porNivel = [...catSkills].sort((a, b) => b.level - a.level);
+            const destaques = porNivel.slice(0, DESTAQUES_POR_CATEGORIA);
+            const restante = porNivel.slice(DESTAQUES_POR_CATEGORIA);
             return (
               <div
                 key={cat.id}
@@ -429,27 +485,36 @@ export default function SkillsSection({
                     {t("Nenhuma habilidade ainda.", "No skills yet.")}
                   </p>
                 ) : (
-                  <ReorderableList
-                    items={catSkills}
-                    isEditMode={isEditMode}
-                    onReorder={(newOrder) => handleReorderCategory(cat.name, newOrder)}
-                    getKey={(skill) => skill.id}
-                    className="space-y-4"
-                    itemClassName="group relative"
-                  >
-                    {(skill, dragHandle) => (
-                      <SkillRowContent
-                        skill={skill}
-                        language={language}
-                        accent={accent}
-                        isEditMode={isEditMode}
-                        onEdit={handleOpenEdit}
-                        onDelete={handleDelete}
-                        onSetLevel={handleSetLevel}
-                        dragHandle={dragHandle}
-                      />
+                  <div className="space-y-4">
+                    {destaques.map((skill) => (
+                      <div key={skill.id} className="group relative">
+                        <SkillRowContent
+                          skill={skill}
+                          language={language}
+                          accent={accent}
+                          isEditMode={isEditMode}
+                          onEdit={handleOpenEdit}
+                          onDelete={handleDelete}
+                          onSetLevel={handleSetLevel}
+                        />
+                      </div>
+                    ))}
+
+                    {restante.length > 0 && (
+                      <div className="flex flex-wrap gap-1.5 border-t border-slate-100 dark:border-slate-800 pt-3.5">
+                        {restante.map((skill) => (
+                          <HabilidadeChip
+                            key={skill.id}
+                            skill={skill}
+                            language={language}
+                            isEditMode={isEditMode}
+                            onEdit={handleOpenEdit}
+                            onDelete={handleDelete}
+                          />
+                        ))}
+                      </div>
                     )}
-                  </ReorderableList>
+                  </div>
                 )}
               </div>
             );
