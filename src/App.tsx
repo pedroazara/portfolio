@@ -28,7 +28,7 @@ const AdminManagementModal = lazy(() => import("./components/AdminManagementModa
 const PdfPreviewModal = lazy(() => import("./components/PdfPreviewModal"));
 import Footer from "./components/Footer";
 import LocalImage from "./components/LocalImage";
-import { OrbitaIcon } from "./components/OrbitaIcon";
+import AppSkeleton from "./components/AppSkeleton";
 import { Sparkles, CheckCircle2, Lock, Atom, FileText, BookOpen, Cloud, CloudOff, Sun, Moon } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { Language, translations } from "./lib/translations";
@@ -592,18 +592,7 @@ export default function App() {
   };
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen bg-slate-50/50 dark:bg-slate-950 flex flex-col items-center justify-center p-4 transition-colors duration-300">
-        <div className="flex flex-col items-center max-w-sm text-center">
-          <div className="flex h-20 w-20 items-center justify-center rounded-3xl bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 mb-5 shadow-xl shadow-indigo-100/50 dark:shadow-none border border-indigo-100/50 dark:border-indigo-900/40">
-            <OrbitaIcon size={44} color="currentColor" className="text-indigo-600 dark:text-indigo-400 animate-pulse" />
-          </div>
-          <h2 className="text-base font-bold tracking-tight text-slate-800 dark:text-slate-200 font-sans">
-            Carregando site
-          </h2>
-        </div>
-      </div>
-    );
+    return <AppSkeleton />;
   }
 
   return (
