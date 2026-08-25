@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from "react";
 import {
   History, FileJson, FileText, ShieldAlert, RotateCcw, Download, Upload,
-  Loader2, AlertCircle, AlertTriangle, CheckCircle2, CloudOff, PlusCircle, Circle,
+  Loader2, AlertCircle, AlertTriangle, CheckCircle2, CloudOff, PlusCircle, Circle, Trash2,
 } from "lucide-react";
 import { ResumeData } from "../../types";
-import { BackupEntry, listBackups, createManualBackup } from "../../lib/backupService";
+import { BackupEntry, listBackups, createManualBackup, deleteBackup } from "../../lib/backupService";
 import {
-  FullBackupEntry, listFullBackups, createFullBackup, downloadFullBackup, restoreFullBackup,
+  FullBackupEntry, listFullBackups, createFullBackup, downloadFullBackup, restoreFullBackup, deleteFullBackup,
 } from "../../lib/fullBackupService";
 import ConfirmModal from "../ConfirmModal";
 import { Images } from "lucide-react";
@@ -14,8 +14,8 @@ import { Images } from "lucide-react";
 /** Qual lista de cópias está à mostra. */
 type BackupSubTab = "full" | "light";
 
-/** A cópia que está esperando confirmação para ser restaurada. */
-type PendingRestore = { kind: "light"; entry: BackupEntry } | { kind: "full"; entry: FullBackupEntry };
+/** Uma cópia específica, identificada para restaurar ou apagar. */
+type BackupRef = { kind: "light"; entry: BackupEntry } | { kind: "full"; entry: FullBackupEntry };
 
 /**
  * Cópias de segurança: as automáticas do conteúdo e as completas, que levam também as imagens.
@@ -49,7 +49,9 @@ export default function BackupsTab({
 
   const [error, setError] = useState("");
   const [restoringKey, setRestoringKey] = useState<string | null>(null);
-  const [pendingRestore, setPendingRestore] = useState<PendingRestore | null>(null);
+  const [pendingRestore, setPendingRestore] = useState<BackupRef | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<BackupRef | null>(null);
+  const [deletingKey, setDeletingKey] = useState<string | null>(null);
 
   const loadBackups = async () => {
     setIsLoading(true);
@@ -143,7 +145,7 @@ export default function BackupsTab({
     }
   };
 
-  const handleRestore = async (pending: PendingRestore) => {
+  const handleRestore = async (pending: BackupRef) => {
     const key = pending.kind === "light" ? `light-${pending.entry.id}` : `full-${pending.entry.name}`;
     setRestoringKey(key);
     setError("");
@@ -165,6 +167,27 @@ export default function BackupsTab({
       setRestoringKey(null);
       setFullProgress("");
       setPendingRestore(null);
+    }
+  };
+
+  const handleDelete = async (pending: BackupRef) => {
+    const key = pending.kind === "light" ? `light-${pending.entry.id}` : `full-${pending.entry.name}`;
+    setDeletingKey(key);
+    setError("");
+    try {
+      if (pending.kind === "light") {
+        await deleteBackup(pending.entry.id);
+        setBackups((prev) => prev.filter((b) => b.id !== pending.entry.id));
+      } else {
+        await deleteFullBackup(pending.entry.name);
+        setFullBackups((prev) => prev.filter((b) => b.name !== pending.entry.name));
+      }
+    } catch (err) {
+      console.error("Erro ao apagar backup:", err);
+      setError(t("Não foi possível apagar este backup.", "Could not delete this backup."));
+    } finally {
+      setDeletingKey(null);
+      setPendingDelete(null);
     }
   };
 
@@ -304,6 +327,19 @@ export default function BackupsTab({
                           <RotateCcw className="h-3.5 w-3.5" />
                         )}
                       </button>
+                      <button
+                        type="button"
+                        onClick={() => setPendingDelete({ kind: "full", entry })}
+                        disabled={deletingKey === key}
+                        title={t("Apagar backup", "Delete backup")} aria-label={t("Apagar backup", "Delete backup")}
+                        className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 hover:text-rose-600 dark:hover:text-rose-400 transition-colors cursor-pointer disabled:opacity-50"
+                      >
+                        {deletingKey === key ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          <Trash2 className="h-3.5 w-3.5" />
+                        )}
+                      </button>
                     </div>
                   </div>
                 );
@@ -386,6 +422,19 @@ export default function BackupsTab({
                           <RotateCcw className="h-3.5 w-3.5" />
                         )}
                       </button>
+                      <button
+                        type="button"
+                        onClick={() => setPendingDelete({ kind: "light", entry })}
+                        disabled={deletingKey === key}
+                        title={t("Apagar backup", "Delete backup")} aria-label={t("Apagar backup", "Delete backup")}
+                        className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 hover:text-rose-600 dark:hover:text-rose-400 transition-colors cursor-pointer disabled:opacity-50"
+                      >
+                        {deletingKey === key ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          <Trash2 className="h-3.5 w-3.5" />
+                        )}
+                      </button>
                     </div>
                   </div>
                 );
@@ -415,6 +464,29 @@ export default function BackupsTab({
             : ""
         }
         confirmText={t("Restaurar", "Restore")}
+        cancelText={t("Cancelar", "Cancel")}
+      />
+
+      <ConfirmModal
+        isOpen={pendingDelete !== null}
+        onClose={() => setPendingDelete(null)}
+        onConfirm={() => pendingDelete && handleDelete(pendingDelete)}
+        type="danger"
+        title={t("Apagar este backup?", "Delete this backup?")}
+        message={
+          pendingDelete
+            ? pendingDelete.kind === "full"
+              ? t(
+                  `O arquivo .zip da versão de ${pendingDelete.entry.createdAt ? formatDate(pendingDelete.entry.createdAt) : pendingDelete.entry.name} será apagado da nuvem. Não dá para desfazer.`,
+                  `The .zip file from the ${pendingDelete.entry.createdAt ? formatDate(pendingDelete.entry.createdAt) : pendingDelete.entry.name} version will be deleted from the cloud. This cannot be undone.`
+                )
+              : t(
+                  `O snapshot de ${formatDate(pendingDelete.entry.createdAt)} será apagado. Não dá para desfazer.`,
+                  `The ${formatDate(pendingDelete.entry.createdAt)} snapshot will be deleted. This cannot be undone.`
+                )
+            : ""
+        }
+        confirmText={t("Apagar", "Delete")}
         cancelText={t("Cancelar", "Cancel")}
       />
     </div>

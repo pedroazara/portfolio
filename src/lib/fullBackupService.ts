@@ -120,6 +120,15 @@ export async function createFullBackup(
   await trimOldFullBackups();
 }
 
+/** Apaga um backup completo específico — cada um pesa o tamanho de todas as imagens, então às vezes vale liberar espaço antes dos 10 da retenção automática. */
+export async function deleteFullBackup(name: string): Promise<void> {
+  if (!isSupabaseConfigured) {
+    throw new Error("Supabase não configurado — impossível apagar backup.");
+  }
+  const { error } = await supabase.storage.from(FULL_BACKUPS_BUCKET).remove([name]);
+  if (error) throw error;
+}
+
 /** Baixa os bytes de um backup completo (o próprio .zip). */
 export async function downloadFullBackup(name: string): Promise<Blob> {
   if (!isSupabaseConfigured) {

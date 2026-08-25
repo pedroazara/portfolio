@@ -48,3 +48,13 @@ export async function createManualBackup(): Promise<void> {
   const { error } = await supabase.rpc("create_portfolio_backup", { p_source: "manual" });
   if (error) throw error;
 }
+
+/** Apaga um snapshot específico — a retenção automática já limita a 30, mas nem sempre dá para esperar. */
+export async function deleteBackup(id: number): Promise<void> {
+  if (!isSupabaseConfigured) {
+    throw new Error("Supabase não configurado — impossível apagar backup.");
+  }
+
+  const { error } = await supabase.from(BACKUPS_TABLE).delete().eq("id", id);
+  if (error) throw error;
+}
