@@ -3,6 +3,8 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { ResumeData, Profile, Project, ProjectCategory, Experience, AcademicActivity, Education, Skill, SkillCategory, Course, BlogPost } from "./types";
 import { initialResumeData } from "./data/initialData";
 import ResumeHeader from "./components/ResumeHeader";
+import CurriculoResumo from "./components/CurriculoResumo";
+import HomePage from "./pages/HomePage";
 import ProjectSection from "./components/ProjectSection";
 import ExperienceEducationSection from "./components/ExperienceEducationSection";
 import CoursesSection from "./components/CoursesSection";
@@ -262,7 +264,16 @@ export default function App() {
 
   const isBlog = !isEditorRoute && routePath.startsWith("/blog");
   const isProjects = !isEditorRoute && (routePath.startsWith("/projetos") || routePath.startsWith("/project"));
-  const activePage: "cv" | "projetos" | "blog" = isBlog ? "blog" : isProjects ? "projetos" : "cv";
+  // A home só existe na raiz; qualquer outro caminho não reconhecido cai no
+  // currículo completo, que é a resposta segura de sempre.
+  const isHome = !isEditorRoute && !isBlog && !isProjects && routePath === "/";
+  const activePage: "home" | "cv" | "projetos" | "blog" = isBlog
+    ? "blog"
+    : isProjects
+      ? "projetos"
+      : isHome
+        ? "home"
+        : "cv";
 
   // Navega mantendo o idioma atual da URL.
   const go = (canonicalPath: string) => navigate(localePath(canonicalPath, language));
@@ -691,23 +702,34 @@ export default function App() {
               )}
             </Suspense>
           )
+        ) : activePage === "home" ? (
+          <HomePage
+            profile={resumeData.profile}
+            projects={resumeData.projects}
+            categories={resumeData.categories}
+            posts={resumeData.posts || []}
+            isEditMode={isEditMode}
+            onUpdateProfile={handleUpdateProfile}
+            isAuthenticated={isAuthenticated}
+            onOpenPdfPreview={() => setIsPdfPreviewOpen(true)}
+            language={language}
+            stats={{
+              projetos: resumeData.projects.filter((p) => !p.draft).length,
+              pesquisa: resumeData.experiences.length,
+              habilidades: resumeData.skills.length,
+            }}
+          />
         ) : activePage === "cv" ? (
-          /* High-Fidelity Active Resume / Portfolio View */
+          /* Currículo completo. A apresentação grande já aconteceu na home —
+             aqui só a tira de identidade, para quem chega direto por busca
+             ou link salvo sem passar por ela. */
           <div className="space-y-8 print:space-y-6">
-            
-            {/* Header Profile Section */}
-            <ResumeHeader
+
+            <CurriculoResumo
               profile={resumeData.profile}
               isEditMode={isEditMode}
-              onUpdateProfile={handleUpdateProfile}
-              language={language}
-              isAuthenticated={isAuthenticated}
               onOpenPdfPreview={() => setIsPdfPreviewOpen(true)}
-              stats={{
-                projetos: resumeData.projects.filter((p) => !p.draft).length,
-                pesquisa: resumeData.experiences.length,
-                habilidades: resumeData.skills.length,
-              }}
+              language={language}
             />
 
             {/* Academic Background & Research Experience Sections */}

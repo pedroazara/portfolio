@@ -73,7 +73,8 @@ export default function GlobalHeader({
   // Helper to test active route
   const isRouteActive = (path: string) => {
     if (path === "/curriculo") {
-      return routePath === "/" || routePath === "/curriculo";
+      // A home é página própria agora; só "/curriculo" acende este item.
+      return routePath === "/curriculo";
     }
     if (path === "/projetos") {
       return routePath.startsWith("/projetos") || routePath.startsWith("/project");
