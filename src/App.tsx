@@ -709,11 +709,6 @@ export default function App() {
             isAuthenticated={isAuthenticated}
             onOpenPdfPreview={() => setIsPdfPreviewOpen(true)}
             language={language}
-            stats={{
-              projetos: resumeData.projects.filter((p) => !p.draft).length,
-              pesquisa: resumeData.experiences.length,
-              habilidades: resumeData.skills.length,
-            }}
           />
         ) : activePage === "cv" ? (
           /* Currículo completo. A apresentação grande já aconteceu na home —

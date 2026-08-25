@@ -64,11 +64,6 @@ export default function AppSkeleton() {
                 <Bar className="h-9 w-32 rounded-xl" />
                 <Bar className="h-9 w-32 rounded-xl" />
               </div>
-              <div className="flex flex-wrap gap-8 border-t border-borda-suave pt-5">
-                <Bar className="h-10 w-16" />
-                <Bar className="h-10 w-16" />
-                <Bar className="h-10 w-16" />
-              </div>
             </div>
           </div>
         </div>

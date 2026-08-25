@@ -19,8 +19,6 @@ interface ResumeHeaderProps {
   language?: Language;
   isAuthenticated?: boolean;
   onOpenPdfPreview?: () => void;
-  /** Contagens do próprio currículo, exibidas como resumo do trabalho. */
-  stats?: { projetos: number; pesquisa: number; habilidades: number };
 }
 
 export default function ResumeHeader({
@@ -30,7 +28,6 @@ export default function ResumeHeader({
   language = "pt",
   isAuthenticated = false,
   onOpenPdfPreview,
-  stats,
 }: ResumeHeaderProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formData, setFormData] = useState<Profile>({ ...profile });
@@ -276,28 +273,6 @@ export default function ResumeHeader({
               <ArrowRight className="h-4 w-4 shrink-0 transition-transform group-hover:translate-x-0.5" />
             </Link>
           </div>
-
-          {/* Números do próprio currículo: o que já foi feito, antes de rolar. */}
-          {stats && (
-            <dl className="mt-7 flex flex-wrap gap-x-8 gap-y-4 border-t border-slate-100 pt-5 dark:border-slate-800">
-              {[
-                { valor: stats.projetos, pt: "projetos publicados", en: "published projects" },
-                { valor: stats.pesquisa, pt: "vínculos de pesquisa", en: "research positions" },
-                { valor: stats.habilidades, pt: "habilidades mapeadas", en: "mapped skills" },
-              ]
-                .filter((item) => item.valor > 0)
-                .map((item) => (
-                  <div key={item.pt}>
-                    <dt className="font-display text-2xl font-black tabular-nums text-slate-900 dark:text-white">
-                      {item.valor}
-                    </dt>
-                    <dd className="font-mono text-[11px] uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                      {language === "en" ? item.en : item.pt}
-                    </dd>
-                  </div>
-                ))}
-            </dl>
-          )}
 
           {/* Social Icons for Print (Shown as text in standard print) */}
           <div className="hidden print:flex flex-col gap-1 mt-3 pt-3 border-t border-slate-100 text-xs text-slate-500 font-mono">

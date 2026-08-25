@@ -15,7 +15,6 @@ interface HomePageProps {
   isAuthenticated: boolean;
   onOpenPdfPreview: () => void;
   language: Language;
-  stats: { projetos: number; pesquisa: number; habilidades: number };
 }
 
 /**
@@ -40,7 +39,6 @@ export default function HomePage({
   isAuthenticated,
   onOpenPdfPreview,
   language,
-  stats,
 }: HomePageProps) {
   return (
     <div className="space-y-10 print:space-y-6">
@@ -51,7 +49,6 @@ export default function HomePage({
         language={language}
         isAuthenticated={isAuthenticated}
         onOpenPdfPreview={onOpenPdfPreview}
-        stats={stats}
       />
 
       <ProjetosEmDestaque projects={projects} categories={categories} language={language} />
