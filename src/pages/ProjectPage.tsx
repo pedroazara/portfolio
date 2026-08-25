@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   ArrowLeft, ArrowRight, Share2, Check, Edit2, FolderKanban,
@@ -18,6 +18,7 @@ import LinksDoProjeto from "../components/LinksDoProjeto";
 import { formatarData, formatarPeriodo } from "../lib/periodo";
 import { previaLiberada } from "../lib/previewLink";
 import ProjectNavList from "../components/ProjectNavList";
+import ProgressoLeitura from "../components/ProgressoLeitura";
 import { useLocalePath } from "../lib/routes";
 import { editTargetFromViewport } from "../utils/editTarget";
 
@@ -144,7 +145,6 @@ export default function ProjectPage({
     : (project.categoryId ? [project.categoryId] : []);
   const projCategories = categories.filter((c) => projCatIds.includes(c.id));
 
-  const stack = project.stack || project.technologies || [];
   const gallery = (project.galleryImages || project.images || []).filter(Boolean) as string[];
 
   // Artigos do blog que referenciam este projeto, pelo código ou pelo id.
@@ -186,6 +186,10 @@ export default function ProjectPage({
       ? visibleProjects[currentIndex + 1]
       : null;
 
+  // O que a barra de progresso mede: da capa ao fim do corpo, sem contar
+  // galeria, relevância científica, artigos relacionados e navegação.
+  const leituraRef = useRef<HTMLDivElement>(null);
+
   const handleCopyLink = () => {
     navigator.clipboard.writeText(`${window.location.origin}${lp(`/project/${slugOf(project)}`)}`);
     setCopiedLink(true);
@@ -202,6 +206,8 @@ export default function ProjectPage({
       </aside>
 
       <article className="min-w-0">
+        <ProgressoLeitura targetRef={leituraRef} />
+
         {/* Barra de navegação do projeto */}
         <div className="mb-6 flex flex-wrap items-center justify-between gap-3 no-print">
           <Link
@@ -241,6 +247,9 @@ export default function ProjectPage({
             )}
           </div>
         </div>
+
+        {/* Da abertura ao fim do corpo: o que a barra de progresso mede. */}
+        <div ref={leituraRef}>
 
         {/* Abertura.
 
@@ -322,6 +331,9 @@ export default function ProjectPage({
           />
         </div>
 
+        </div>
+        {/* fim do bloco medido pela barra de progresso */}
+
         {/* Galeria */}
         {gallery.length > 0 && (
           <section className="mt-12 border-t border-slate-200 pt-8 dark:border-slate-800">
@@ -345,26 +357,11 @@ export default function ProjectPage({
           </section>
         )}
 
-        {/* Tecnologias */}
-        {stack.length > 0 && (
-          <section className="mt-12 border-t border-slate-200 pt-8 dark:border-slate-800">
-            <h2 className="mb-3 font-display text-lg font-bold text-slate-900 dark:text-white">
-              {language === "en" ? "Technologies" : "Tecnologias"}
-            </h2>
-            <div className="flex flex-wrap gap-2">
-              {stack.map((tech, idx) => (
-                <span
-                  key={idx}
-                  className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 font-mono text-xs text-slate-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300"
-                >
-                  {tech}
-                </span>
-              ))}
-            </div>
-          </section>
-        )}
+        {/* Relevância científica.
 
-        {/* Relevância científica */}
+            "Tecnologias" morava aqui também, repetindo a mesma lista de
+            chips que a ficha já mostra logo abaixo do título — a mesma
+            informação duas vezes na mesma página. */}
         {relevance && (
           <section className="mt-12 border-t border-slate-200 pt-8 dark:border-slate-800">
             <h2 className="mb-3 flex items-center gap-2 font-display text-lg font-bold text-slate-900 dark:text-white">

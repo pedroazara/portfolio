@@ -250,31 +250,37 @@ export default function BlogSection({
                 onClick={() => setSelectedPost(featuredPost)}
                 className="group relative overflow-hidden rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl hover:border-indigo-400 dark:hover:border-indigo-700 cursor-pointer"
               >
-                <div className="grid grid-cols-1 lg:grid-cols-12 items-stretch">
-                  {/* Cover Image (7 columns on desktop) */}
-                  <div className="lg:col-span-7 relative overflow-hidden min-h-[300px] sm:min-h-[380px] lg:min-h-[480px] bg-slate-100 dark:bg-slate-950">
-                    {featuredPost.imageUrl ? (
+                <div className={`grid grid-cols-1 items-stretch ${featuredPost.imageUrl ? "lg:grid-cols-12" : ""}`}>
+                  {/* Capa — só ocupa a metade da peça quando existe. Sem capa,
+                      a versão anterior ainda reservava até 480px de cinza vazio
+                      com um ícone no meio: a estreia do blog, sem foto, abria
+                      com um buraco. Sem imagem, o texto simplesmente toma a
+                      largura toda, e o selo de destaque migra para a linha de
+                      metadados abaixo. */}
+                  {featuredPost.imageUrl && (
+                    <div className="lg:col-span-7 relative overflow-hidden min-h-[300px] sm:min-h-[380px] lg:min-h-[480px] bg-slate-100 dark:bg-slate-950">
                       <LocalImage
                         src={featuredPost.imageUrl}
                         alt={featTitle}
                         referrerPolicy="no-referrer"
                         className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.03]"
                       />
-                    ) : (
-                      <div className="flex h-full w-full items-center justify-center text-slate-300 dark:text-slate-700">
-                        <BookOpen className="h-20 w-20" />
-                      </div>
-                    )}
-                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950/60 via-transparent to-transparent lg:hidden" />
-                    <span className="absolute top-5 left-5 rounded-full bg-indigo-600 dark:bg-indigo-500 px-4 py-1.5 text-xs font-black text-white uppercase tracking-wider shadow-md">
-                      {language === "en" ? "Featured Article" : "Artigo em Destaque"}
-                    </span>
-                  </div>
+                      <div className="absolute inset-0 bg-gradient-to-t from-slate-950/60 via-transparent to-transparent lg:hidden" />
+                      <span className="absolute top-5 left-5 rounded-full bg-indigo-600 dark:bg-indigo-500 px-4 py-1.5 text-xs font-black text-white uppercase tracking-wider shadow-md">
+                        {language === "en" ? "Featured Article" : "Artigo em Destaque"}
+                      </span>
+                    </div>
+                  )}
 
-                  {/* Content (5 columns on desktop) */}
-                  <div className="lg:col-span-5 p-8 sm:p-10 lg:p-12 flex flex-col justify-between">
+                  {/* Content (5 columns on desktop, full width without a cover) */}
+                  <div className={`p-8 sm:p-10 lg:p-12 flex flex-col justify-between ${featuredPost.imageUrl ? "lg:col-span-5" : ""}`}>
                     <div className="space-y-5">
-                      <div className="flex items-center gap-3 text-slate-500 dark:text-slate-500 font-mono text-xs">
+                      <div className="flex flex-wrap items-center gap-3 text-slate-500 dark:text-slate-500 font-mono text-xs">
+                        {!featuredPost.imageUrl && (
+                          <span className="rounded-full bg-indigo-600 dark:bg-indigo-500 px-3 py-1 text-[11px] font-black text-white uppercase tracking-wider">
+                            {language === "en" ? "Featured Article" : "Artigo em Destaque"}
+                          </span>
+                        )}
                         {getPostCategoryDisplay(featuredPost) && (
                           <span className="rounded-full bg-indigo-50 dark:bg-indigo-950/60 px-3 py-1 text-xs font-bold text-indigo-600 dark:text-indigo-400">
                             {getPostCategoryDisplay(featuredPost)}
@@ -372,8 +378,10 @@ export default function BlogSection({
                       </div>
                     )}
 
-                    {/* Cover Image */}
-                    {post.imageUrl ? (
+                    {/* Cover Image — sem capa, nada de placeholder cinza com
+                        ícone: o selo de categoria migra para a linha de
+                        metadados do corpo, e o cartão fica só texto. */}
+                    {post.imageUrl && (
                       <div className="relative aspect-[16/9] w-full overflow-hidden bg-slate-50 dark:bg-slate-950/30 shrink-0">
                         <LocalImage
                           src={post.imageUrl}
@@ -388,22 +396,18 @@ export default function BlogSection({
                           </span>
                         )}
                       </div>
-                    ) : (
-                      <div className="relative aspect-[16/9] w-full bg-slate-100 dark:bg-slate-950/30 shrink-0 flex items-center justify-center text-slate-500 dark:text-slate-500">
-                        <BookOpen className="h-12 w-12 text-slate-300 dark:text-slate-700" />
-                        {getPostCategoryDisplay(post) && (
-                          <span className="absolute top-4 left-4 rounded-full bg-slate-900/80 dark:bg-slate-950/80 backdrop-blur-xs px-3.5 py-1 text-xs font-bold text-white uppercase tracking-wider">
-                            {getPostCategoryDisplay(post)}
-                          </span>
-                        )}
-                      </div>
                     )}
 
                     {/* Card Body */}
                     <div className="flex-1 p-8 sm:p-10 lg:p-11 flex flex-col justify-between">
                       <div className="space-y-4">
                         {/* Meta */}
-                        <div className="flex items-center gap-3 text-slate-500 dark:text-slate-500 font-mono text-xs">
+                        <div className="flex flex-wrap items-center gap-3 text-slate-500 dark:text-slate-500 font-mono text-xs">
+                          {!post.imageUrl && getPostCategoryDisplay(post) && (
+                            <span className="rounded-full bg-slate-900 dark:bg-slate-100 px-3 py-1 text-[11px] font-bold text-white dark:text-slate-900 uppercase tracking-wider">
+                              {getPostCategoryDisplay(post)}
+                            </span>
+                          )}
                           <span className="flex items-center gap-1">
                             <Calendar className="h-3.5 w-3.5" />
                             {post.date}

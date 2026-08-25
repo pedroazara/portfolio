@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   ArrowLeft, ArrowRight, Calendar, Clock, Share2, Check, Edit2, Code, AlertCircle, FileText,
@@ -16,6 +16,7 @@ import LocalImage from "../components/LocalImage";
 import { COVER_ASPECT_CLASS } from "../lib/coverAspect";
 import { useLocalePath } from "../lib/routes";
 import { editTargetFromViewport } from "../utils/editTarget";
+import ProgressoLeitura from "../components/ProgressoLeitura";
 
 interface PostPageProps {
   /** Trecho da URL: o `codigo` ou `id` do artigo. */
@@ -46,6 +47,9 @@ export default function PostPage({
   const navigate = useNavigate();
   const lp = useLocalePath();
   const [copiedLink, setCopiedLink] = useState(false);
+  // O que a barra de progresso mede: da capa ao fim do corpo, sem contar
+  // projetos relacionados, navegação entre artigos e rodapé.
+  const leituraRef = useRef<HTMLDivElement>(null);
 
   const post = findBySlug(posts, slug);
 
@@ -169,6 +173,11 @@ export default function PostPage({
         </div>
       </div>
 
+      <ProgressoLeitura targetRef={leituraRef} />
+
+      {/* Da capa ao fim do corpo: o que a barra acima mede. */}
+      <div ref={leituraRef}>
+
       {/* Capa */}
       {post.imageUrl && (
         <div className={`relative mb-8 w-full overflow-hidden rounded-3xl bg-slate-100 dark:bg-slate-950/50 ${COVER_ASPECT_CLASS}`}>
@@ -226,6 +235,8 @@ export default function PostPage({
         className="prose prose-lg mt-10 max-w-none font-sans leading-relaxed text-slate-800 dark:prose-invert dark:text-slate-200"
       >
         <MarkdownRenderer content={content} />
+      </div>
+
       </div>
 
       {/* Projetos relacionados */}
