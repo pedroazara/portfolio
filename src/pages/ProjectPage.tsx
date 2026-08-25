@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   ArrowLeft, ArrowRight, Share2, Check, Edit2, FolderKanban,
-  Github, ExternalLink, FlaskConical, BookOpen, Layers,
+  FlaskConical, BookOpen, Layers,
 } from "lucide-react";
 import { Project, ProjectCategory, BlogPost } from "../types";
 import { Language } from "../lib/translations";
@@ -14,6 +14,7 @@ import { COVER_ASPECT_CLASS } from "../lib/coverAspect";
 import TableOfContents from "../components/TableOfContents";
 import ContentUnavailable from "../components/ContentUnavailable";
 import FichaProjeto from "../components/FichaProjeto";
+import LinksDoProjeto from "../components/LinksDoProjeto";
 import { formatarData, formatarPeriodo } from "../lib/periodo";
 import { previaLiberada } from "../lib/previewLink";
 import ProjectNavList from "../components/ProjectNavList";
@@ -303,44 +304,14 @@ export default function ProjectPage({
           />
         </div>
 
-        {/* Links do projeto */}
-        {(project.githubUrl || project.projectUrl || project.documentationUrl || project.paperUrl) && (
-          <div className="mt-6 flex flex-wrap gap-2 no-print">
-            {project.githubUrl && (
-              <a
-                href={project.githubUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 rounded-xl bg-slate-900 px-4 py-2.5 text-xs font-bold text-white transition-colors hover:bg-slate-800 dark:bg-slate-800 dark:hover:bg-slate-700"
-              >
-                <Github className="h-3.5 w-3.5" />
-                {language === "en" ? "Source code" : "Código-fonte"}
-              </a>
-            )}
-            {project.projectUrl && (
-              <a
-                href={project.projectUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 px-4 py-2.5 text-xs font-bold text-slate-700 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
-              >
-                <ExternalLink className="h-3.5 w-3.5" />
-                {language === "en" ? "Live demo" : "Ver funcionando"}
-              </a>
-            )}
-            {(project.documentationUrl || project.paperUrl) && (
-              <a
-                href={project.documentationUrl || project.paperUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 px-4 py-2.5 text-xs font-bold text-slate-700 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
-              >
-                <BookOpen className="h-3.5 w-3.5" />
-                {language === "en" ? "Documentation" : "Documentação"}
-              </a>
-            )}
-          </div>
-        )}
+        {/* Links do projeto.
+
+            No desktop eles moram na coluna da direita, à mão o tempo todo.
+            Aqui embaixo é a versão para quem não tem coluna lateral — sem
+            isso, o celular perderia o caminho para o código e a demonstração. */}
+        <div className="xl:hidden">
+          <LinksDoProjeto project={project} language={language} />
+        </div>
 
         {/* Corpo. O `className` é explícito porque o padrão do renderizador
             limita a coluna a 75ch — estreito demais para a largura desta página. */}
@@ -475,9 +446,12 @@ export default function ProjectPage({
         )}
       </article>
 
-      {/* Navegador de projetos (direita) */}
+      {/* Coluna da direita: as saídas do projeto e a lista dos outros. */}
       <aside className="hidden xl:block">
-        <ProjectNavList projects={visibleProjects} currentId={project.id} language={language} />
+        <div className="sticky top-24 space-y-6">
+          <LinksDoProjeto project={project} language={language} formato="barra" />
+          <ProjectNavList projects={visibleProjects} currentId={project.id} language={language} />
+        </div>
       </aside>
     </div>
   );
