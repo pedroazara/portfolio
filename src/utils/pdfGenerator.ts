@@ -1,5 +1,6 @@
 import type { jsPDF } from "jspdf";
 import { ResumeData } from "../types";
+import { slugOf } from "./slug";
 
 /**
  * O jsPDF pesa mais de 150 KB e só serve para exportar o currículo. Carregá-lo
@@ -381,8 +382,11 @@ export async function createResumePDFDoc(data?: ResumeData): Promise<jsPDF | nul
       projectsToRender.forEach((proj, idx) => {
         ensureSpace(18);
 
-        // Determine Project Link URL (link to the project on the curriculum website itself)
-        const projectLinkUrl = `${origin}/project/${encodeURIComponent(proj.id)}`;
+        // Link para o projeto no próprio site. Usa o mesmo `slugOf` das outras
+        // páginas — antes ia direto de `proj.id`, que ignora o código de URL
+        // editável no formulário do projeto: renomear o link não mudava o que
+        // ia para o PDF, e o link impresso apontava para um endereço vencido.
+        const projectLinkUrl = `${origin}/project/${encodeURIComponent(slugOf(proj))}`;
         const rightLabel = "Ver no Site";
         const projectTitle = proj.title;
 
