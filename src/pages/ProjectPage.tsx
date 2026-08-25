@@ -323,13 +323,14 @@ export default function ProjectPage({
           <LinksDoProjeto project={project} language={language} />
         </div>
 
-        {/* Corpo. `max-w-none` esticava o texto até ~100+ caracteres por
-            linha — a coluna é larga, mas o texto não precisa preencher toda
-            ela; a margem à direita é intencional, não espaço desperdiçado. */}
+        {/* Corpo. Sem limite de largura — a coluna já tem a ficha e o título
+            ocupando o espaço todo logo acima; um corpo mais estreito que o
+            próprio cartão que o envolve lia como um erro de layout, não como
+            medida de leitura deliberada. */}
         <div className="mt-10" data-md-field="detailedDescription">
           <MarkdownRenderer
             content={body}
-            className="max-w-[58ch] space-y-4 text-base leading-relaxed text-slate-700 dark:text-slate-300"
+            className="max-w-none space-y-4 text-base leading-relaxed text-slate-700 dark:text-slate-300"
           />
         </div>
 
@@ -373,7 +374,7 @@ export default function ProjectPage({
             <div data-md-field="scientificRelevance">
               <MarkdownRenderer
                 content={relevance}
-                className="max-w-[58ch] space-y-3 text-sm leading-relaxed text-slate-700 dark:text-slate-300"
+                className="max-w-none space-y-3 text-sm leading-relaxed text-slate-700 dark:text-slate-300"
               />
             </div>
           </section>

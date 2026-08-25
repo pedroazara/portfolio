@@ -234,7 +234,13 @@ export default function PostPage({
         data-md-field="content"
         className="prose prose-lg mt-10 max-w-none font-sans leading-relaxed text-slate-800 dark:prose-invert dark:text-slate-200"
       >
-        <MarkdownRenderer content={content} />
+        {/* Sem limite de largura — o mesmo ajuste da página de projeto: um
+            corpo mais estreito que a capa e o título acima dele lia como
+            espaço desperdiçado, não como medida de leitura deliberada. */}
+        <MarkdownRenderer
+          content={content}
+          className="max-w-none text-sm sm:text-base space-y-4 text-slate-600 dark:text-slate-300"
+        />
       </div>
 
       </div>

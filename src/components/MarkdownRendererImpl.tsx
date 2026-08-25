@@ -460,22 +460,17 @@ const RENDERERS = {
 };
 
 /**
- * Medida de leitura: 66 caracteres por linha, não 75.
+ * Padrão sem limite de largura — cada leitor real (artigo do blog, corpo do
+ * projeto) declara o próprio `className` hoje, explicitamente sem cap: os
+ * dois têm capa e título ocupando a coluna inteira acima do texto, e um corpo
+ * mais estreito do que o próprio cartão que o envolve lia como espaço
+ * desperdiçado, não como medida de leitura deliberada — foi um pedido direto
+ * depois de ver a página publicada.
  *
- * Os dois lugares que usavam este renderizador para prosa longa mediam mal.
- * O artigo do blog herdava este padrão e chegava a ~91 caracteres por linha
- * (757px em Inter 16px) — bem acima da faixa confortável de 65-75 que a
- * tipografia de texto corrido usa há muito tempo. A página de projeto ia
- * além: um comentário no código explicava que alguém achou 75ch "estreito
- * demais" para a coluna larga ali e trocou por `max-w-none`, chegando a
- * ~100+ caracteres por linha — sem limite nenhum.
- *
- * A largura maior da coluna de projeto é real, mas a resposta certa para
- * "sobra espaço" não é esticar o texto até preencher — é deixar a margem
- * em branco. Nenhuma publicação bem tipografada estica o corpo do texto só
- * porque o contêiner é largo.
+ * Este padrão só sobra para os contextos compactos (prévia do editor, painel
+ * de rascunhos), onde a largura já é limitada pelo próprio contêiner.
  */
-function MarkdownRenderer({ content, className = "max-w-[58ch] text-sm sm:text-base space-y-4 text-slate-600 dark:text-slate-300" }: MarkdownRendererProps) {
+function MarkdownRenderer({ content, className = "max-w-none text-sm sm:text-base space-y-4 text-slate-600 dark:text-slate-300" }: MarkdownRendererProps) {
   const [zoomedImage, setZoomedImage] = useState<{ url: string; alt: string } | null>(null);
 
   const handleImageClick = React.useCallback((url: string, alt: string) => {
