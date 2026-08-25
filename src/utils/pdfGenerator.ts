@@ -1,6 +1,19 @@
 import type { jsPDF } from "jspdf";
 import { ResumeData } from "../types";
 import { slugOf } from "./slug";
+import { formatarData, formatarPeriodo } from "../lib/periodo";
+
+/**
+ * Paleta do PDF: os mesmos índigos do site (ver `--acento` em index.css),
+ * não o azul-marinho genérico que existia antes — que não vinha de lugar
+ * nenhum da identidade visual, só de um exemplo de currículo qualquer.
+ */
+const INK_TITLE: [number, number, number] = [15, 23, 42]; // slate-900 — nome, cargo, títulos de item
+const INK_BODY: [number, number, number] = [51, 65, 85]; // slate-700 — corpo de texto
+const INK_META: [number, number, number] = [100, 116, 139]; // slate-500 — datas, metadados
+const INDIGO_HEADING: [number, number, number] = [67, 56, 202]; // indigo-700 — título de seção
+const INDIGO_ACCENT: [number, number, number] = [79, 70, 229]; // indigo-600 — sub-título, link, instituição
+const RULE_SOFT: [number, number, number] = [226, 232, 240]; // slate-200 — linha divisória
 
 /**
  * O jsPDF pesa mais de 150 KB e só serve para exportar o currículo. Carregá-lo
@@ -46,23 +59,31 @@ export async function createResumePDFDoc(data?: ResumeData): Promise<jsPDF | nul
     }
   };
 
-  // Helper: Render Section Title with LaTeX-style underline
+  // Helper: Render Section Title with a short accent bar and underline
   const renderSectionHeader = (title: string) => {
     ensureSpace(18);
     y += 4;
-    
-    // Navy Blue color for professional headings
+
+    // Traço de acento à esquerda do título — o mesmo fio de luz que abre
+    // cada cartão de seção no site (`SECTION_CARD_CLASS` em cardStyle.ts),
+    // só que vertical: um traço curto em vez da régua cinza de ponta a
+    // ponta que existia aqui.
+    doc.setFillColor(INDIGO_ACCENT[0], INDIGO_ACCENT[1], INDIGO_ACCENT[2]);
+    doc.rect(MARGIN_LEFT, y - 3.3, 1.1, 4.3, "F");
+
     doc.setFont("helvetica", "bold");
     doc.setFontSize(11);
-    doc.setTextColor(30, 58, 138); // slate-900 / dark navy accent
-    doc.text(title.toUpperCase(), MARGIN_LEFT, y);
-    
+    doc.setTextColor(INDIGO_HEADING[0], INDIGO_HEADING[1], INDIGO_HEADING[2]);
+    doc.setCharSpace(0.3);
+    doc.text(title.toUpperCase(), MARGIN_LEFT + 3.2, y);
+    doc.setCharSpace(0);
+
     y += 2.5;
-    // Section line
-    doc.setDrawColor(203, 213, 225); // slate-300
-    doc.setLineWidth(0.4);
+    // Linha divisória, mais discreta agora que o traço de acento já assina a seção.
+    doc.setDrawColor(RULE_SOFT[0], RULE_SOFT[1], RULE_SOFT[2]);
+    doc.setLineWidth(0.35);
     doc.line(MARGIN_LEFT, y, MARGIN_LEFT + CONTENT_WIDTH, y);
-    
+
     y += 5.5; // Space after header line
   };
 
@@ -74,7 +95,7 @@ export async function createResumePDFDoc(data?: ResumeData): Promise<jsPDF | nul
   // Name
   doc.setFont("helvetica", "bold");
   doc.setFontSize(22);
-  doc.setTextColor(15, 23, 42); // slate-900
+  doc.setTextColor(INK_TITLE[0], INK_TITLE[1], INK_TITLE[2]);
   doc.text(profile.name, MARGIN_LEFT, y);
   y += 7.5;
 
@@ -82,15 +103,23 @@ export async function createResumePDFDoc(data?: ResumeData): Promise<jsPDF | nul
   if (profile.title) {
     doc.setFont("helvetica", "normal");
     doc.setFontSize(11.5);
-    doc.setTextColor(79, 70, 229); // indigo-600
+    doc.setTextColor(INDIGO_ACCENT[0], INDIGO_ACCENT[1], INDIGO_ACCENT[2]);
     doc.text(profile.title, MARGIN_LEFT, y);
     y += 6;
   }
 
+  // Traço de acento sob o cabeçalho — o mesmo gesto da abertura do site
+  // (`bg-gradient-to-r ... from-indigo-600` em ResumeHeader.tsx), aqui como
+  // um traço sólido: o PDF não tem gradiente, mas a cor e a proporção vêm
+  // do mesmo lugar.
+  doc.setFillColor(INDIGO_ACCENT[0], INDIGO_ACCENT[1], INDIGO_ACCENT[2]);
+  doc.rect(MARGIN_LEFT, y - 2.6, 16, 0.9, "F");
+  y += 2.5;
+
   // Contact Grid - Simple, compact contact metadata string without trailing pipes
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8.5);
-  doc.setTextColor(100, 116, 139); // slate-500
+  doc.setTextColor(INK_META[0], INK_META[1], INK_META[2]);
 
   const rawContacts: (string | undefined)[] = [
     profile.location,
@@ -147,7 +176,7 @@ export async function createResumePDFDoc(data?: ResumeData): Promise<jsPDF | nul
     sortedEdu.forEach((edu, idx) => {
       ensureSpace(16);
 
-      const dateStr = `${edu.startDate} - ${edu.current ? "Presente" : edu.endDate}`;
+      const dateStr = formatarPeriodo(edu.startDate, edu.endDate, edu.current, "pt");
       doc.setFont("helvetica", "normal");
       doc.setFontSize(8.5);
       doc.setTextColor(100, 116, 139);
@@ -228,7 +257,7 @@ export async function createResumePDFDoc(data?: ResumeData): Promise<jsPDF | nul
     sortedExp.forEach((exp, idx) => {
       ensureSpace(18); // Header of experience block
 
-      const dateStr = `${exp.startDate} - ${exp.current ? "Presente" : exp.endDate}`;
+      const dateStr = formatarPeriodo(exp.startDate, exp.endDate, exp.current, "pt");
       const locationStr = exp.location ? ` | ${exp.location}` : "";
       const metaStr = `${dateStr}${locationStr}`;
 
@@ -301,7 +330,7 @@ export async function createResumePDFDoc(data?: ResumeData): Promise<jsPDF | nul
     sortedAct.forEach((act, idx) => {
       ensureSpace(16);
 
-      const dateStr = `${act.startDate} - ${act.current ? "Presente" : act.endDate}`;
+      const dateStr = formatarPeriodo(act.startDate, act.endDate, act.current, "pt");
       doc.setFont("helvetica", "normal");
       doc.setFontSize(8.5);
       doc.setTextColor(100, 116, 139);
@@ -397,7 +426,7 @@ export async function createResumePDFDoc(data?: ResumeData): Promise<jsPDF | nul
 
         doc.setFont("helvetica", "bold");
         doc.setFontSize(10.5);
-        doc.setTextColor(30, 58, 138); // Navy blue accent for link title
+        doc.setTextColor(INDIGO_ACCENT[0], INDIGO_ACCENT[1], INDIGO_ACCENT[2]);
 
         const maxTitleWidthLine1 = metaWidth > 0 ? (CONTENT_WIDTH - metaWidth - 5) : CONTENT_WIDTH;
         const titleLines = doc.splitTextToSize(projectTitle, maxTitleWidthLine1);
@@ -421,7 +450,7 @@ export async function createResumePDFDoc(data?: ResumeData): Promise<jsPDF | nul
         if (titleLines.length > 1) {
           doc.setFont("helvetica", "bold");
           doc.setFontSize(10.5);
-          doc.setTextColor(30, 58, 138); // Navy blue accent for title
+          doc.setTextColor(INDIGO_ACCENT[0], INDIGO_ACCENT[1], INDIGO_ACCENT[2]);
           for (let i = 1; i < titleLines.length; i++) {
             y += 4.5;
             ensureSpace(4.5);
@@ -485,32 +514,61 @@ export async function createResumePDFDoc(data?: ResumeData): Promise<jsPDF | nul
       groupedSkills[skill.category].push(`${skill.name} (${skill.level}/5)`);
     });
 
-    Object.entries(groupedSkills).forEach(([category, skillsList], idx) => {
-      ensureSpace(15);
+    /**
+     * Grade de duas colunas.
+     *
+     * Antes cada categoria ocupava a largura inteira da página — com ~38
+     * habilidades em 7 categorias, a seção estourava para uma segunda
+     * página que sobrava quase inteiramente em branco. Duas colunas usam
+     * a mesma largura total, mas em metade da altura: cada categoria entra
+     * na coluna mais curta no momento (um encaixe guloso simples), o que
+     * mantém as duas parelhas sem precisar calcular a altura de tudo antes
+     * de desenhar.
+     */
+    const GUTTER = 8;
+    const COL_WIDTH = (CONTENT_WIDTH - GUTTER) / 2;
+    const COL_X = [MARGIN_LEFT, MARGIN_LEFT + COL_WIDTH + GUTTER];
+    let colY: [number, number] = [y, y];
 
-      // Category Sub-heading
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(9.5);
-      doc.setTextColor(30, 58, 138); // Navy Blue
-      doc.text(category, MARGIN_LEFT, y);
-      y += 4;
-
-      // List skills inline
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(8.5);
-      doc.setTextColor(51, 65, 85); // Slate-700
-      
-      const skillsLineText = skillsList.join("  |  ");
-      const skillLines = doc.splitTextToSize(skillsLineText, CONTENT_WIDTH);
-      
-      for (const line of skillLines) {
-        ensureSpace(4.5);
-        doc.text(line, MARGIN_LEFT, y);
-        y += 4.5;
+    const renderSkillCategory = (col: 0 | 1, category: string, skillsList: string[]) => {
+      const x = COL_X[col];
+      if (colY[col] + 15 > BOTTOM_LIMIT) {
+        // Uma categoria não cabe nem começando: nova página, as duas
+        // colunas recomeçam do topo. Simples, e nunca acontece com o
+        // volume de habilidades que um currículo real acumula.
+        doc.addPage();
+        colY = [15, 15];
       }
-      
-      y += 2.5; // space between categories
+
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(9);
+      doc.setTextColor(INDIGO_ACCENT[0], INDIGO_ACCENT[1], INDIGO_ACCENT[2]);
+      doc.text(category, x, colY[col]);
+      colY[col] += 4;
+
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8);
+      doc.setTextColor(INK_BODY[0], INK_BODY[1], INK_BODY[2]);
+
+      const skillLines = doc.splitTextToSize(skillsList.join("  |  "), COL_WIDTH);
+      for (const line of skillLines) {
+        if (colY[col] + 4 > BOTTOM_LIMIT) {
+          doc.addPage();
+          colY = [15, 15];
+        }
+        doc.text(line, x, colY[col]);
+        colY[col] += 4;
+      }
+
+      colY[col] += 3; // espaço entre categorias, na mesma coluna
+    };
+
+    Object.entries(groupedSkills).forEach(([category, skillsList]) => {
+      const col: 0 | 1 = colY[0] <= colY[1] ? 0 : 1;
+      renderSkillCategory(col, category, skillsList);
     });
+
+    y = Math.max(colY[0], colY[1]);
   }
 
   // ==========================================
@@ -523,7 +581,7 @@ export async function createResumePDFDoc(data?: ResumeData): Promise<jsPDF | nul
       ensureSpace(12);
 
       // Course Name
-      const dateStr = course.issueDate || "";
+      const dateStr = formatarData(course.issueDate, "pt");
       doc.setFont("helvetica", "normal");
       doc.setFontSize(8.5);
       doc.setTextColor(100, 116, 139);
