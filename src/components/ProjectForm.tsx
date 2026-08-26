@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { 
-  X, PenTool, Eye, Sparkles, FolderKanban, Check, ExternalLink, Github, 
-  ImageIcon, FlaskConical, BookOpen, Star, Plus, Trash2, RefreshCw, Link2, Share2, Clock
+import {
+  X, PenTool, Eye, Sparkles, FolderKanban, Check, ExternalLink, Github,
+  ImageIcon, FlaskConical, BookOpen, Star, Plus, Trash2, RefreshCw, Link2, Share2, Clock,
+  ChevronDown, Tag
 } from "lucide-react";
 import { Project, ProjectCategory } from "../types";
 import { Language } from "../lib/translations";
@@ -341,153 +342,177 @@ export default function ProjectForm({
                     />
                   </div>
 
-                  {/* 2. METADATA STRIP (CATEGORY, FEATURED, TAGS, LINKS) */}
-                  <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-800/80 space-y-4">
-                    <div className="flex flex-wrap items-center justify-between gap-3">
-                      
-                      {/* Multi-Category Selector */}
-                      <div className="w-full space-y-2">
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs font-bold uppercase font-mono tracking-wider text-slate-500 dark:text-slate-400">
-                            {language === "en" ? "Specialty Areas (Multiple Selection):" : "Áreas de Atuação (Seleção Múltipla):"}
-                          </span>
-                          <span className="text-[11px] font-mono text-slate-500 font-semibold">
-                            {(formData.categoryIds || []).length} {language === "en" ? "selected" : "selecionada(s)"}
-                          </span>
-                        </div>
+                  {/* 2. METADATA STRIP (CATEGORY, FEATURED, TAGS, LINKS)
+                      Cada bloco é uma seção própria, separada por uma linha —
+                      antes categorias, destaque, "em andamento", links e tags
+                      viviam soltos no mesmo flex-wrap, então nada indicava
+                      onde uma coisa terminava e a próxima começava. */}
+                  <div className="rounded-2xl border border-slate-200/80 bg-slate-50 dark:border-slate-800/80 dark:bg-slate-800/40 divide-y divide-slate-200/70 dark:divide-slate-800/70 overflow-hidden">
 
-                        <div className="flex flex-wrap items-center gap-1.5">
-                          {categories.map((c) => {
-                            const isSelected = (formData.categoryIds || []).includes(c.id);
-                            const catName = (editingLanguage === "en" && c.nameEn) ? c.nameEn : c.name;
-                            return (
-                              <button
-                                key={`cat-select-${c.id}`}
-                                type="button"
-                                onClick={() => {
-                                  const current = formData.categoryIds || [];
-                                  const next = current.includes(c.id)
-                                    ? current.filter((id) => id !== c.id)
-                                    : [...current, c.id];
-                                  setFormData({
-                                    ...formData,
-                                    categoryIds: next,
-                                    categoryId: next[0] || (categories[0]?.id || ""),
-                                  });
-                                }}
-                                className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold transition-all cursor-pointer border ${
-                                  isSelected
-                                    ? "bg-indigo-600 text-white border-indigo-600 shadow-xs"
-                                    : "bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-indigo-400"
-                                }`}
-                              >
-                                {isSelected && <Check className="h-3.5 w-3.5 shrink-0 text-white" />}
-                                <span>{catName}</span>
-                              </button>
-                            );
-                          })}
-                        </div>
+                    {/* Categorias */}
+                    <div className="p-4 space-y-2.5">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="flex items-center gap-1.5 text-xs font-bold uppercase font-mono tracking-wider text-slate-500 dark:text-slate-400">
+                          <FolderKanban className="h-3.5 w-3.5" />
+                          {language === "en" ? "Specialty Areas" : "Áreas de Atuação"}
+                        </span>
+                        <span className="shrink-0 rounded-full border border-slate-200 bg-white px-2 py-0.5 text-[11px] font-mono font-semibold text-slate-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400">
+                          {(formData.categoryIds || []).length} {language === "en" ? "selected" : "selecionada(s)"}
+                        </span>
                       </div>
 
-                      {/* Featured Toggle */}
-                      <button
-                        type="button"
-                        onClick={() => setFormData({ ...formData, featured: !formData.featured })}
-                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer border ${
-                          formData.featured
-                            ? "bg-amber-500/10 border-amber-500/40 text-amber-600 dark:text-amber-400"
-                            : "bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
-                        }`}
-                      >
-                        <Star className={`h-3.5 w-3.5 ${formData.featured ? "fill-amber-500 text-amber-500" : ""}`} />
-                        <span>{language === "en" ? "Featured Project" : "Projeto em Destaque"}</span>
-                      </button>
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        {categories.map((c) => {
+                          const isSelected = (formData.categoryIds || []).includes(c.id);
+                          const catName = (editingLanguage === "en" && c.nameEn) ? c.nameEn : c.name;
+                          return (
+                            <button
+                              key={`cat-select-${c.id}`}
+                              type="button"
+                              onClick={() => {
+                                const current = formData.categoryIds || [];
+                                const next = current.includes(c.id)
+                                  ? current.filter((id) => id !== c.id)
+                                  : [...current, c.id];
+                                setFormData({
+                                  ...formData,
+                                  categoryIds: next,
+                                  categoryId: next[0] || (categories[0]?.id || ""),
+                                });
+                              }}
+                              className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold transition-all cursor-pointer border ${
+                                isSelected
+                                  ? "bg-indigo-600 text-white border-indigo-600 shadow-xs"
+                                  : "bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-indigo-400"
+                              }`}
+                            >
+                              {isSelected && <Check className="h-3.5 w-3.5 shrink-0 text-white" />}
+                              <span>{catName}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
 
-                      {/* Em Andamento Toggle */}
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const isCurrentlyInProgress = formData.emAndamento || formData.status === "Em andamento" || formData.status === "In Progress";
-                          const nextInProgress = !isCurrentlyInProgress;
-                          setFormData({
-                            ...formData,
-                            emAndamento: nextInProgress,
-                            status: nextInProgress
-                              ? "Em andamento"
-                              : undefined,
-                          });
-                        }}
-                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer border ${
-                          formData.emAndamento || formData.status === "Em andamento" || formData.status === "In Progress"
-                            ? "bg-emerald-500/15 border-emerald-500/40 text-emerald-700 dark:text-emerald-300 font-bold"
-                            : "bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
-                        }`}
-                      >
-                        <span className={`h-2 w-2 rounded-full ${formData.emAndamento || formData.status === "Em andamento" || formData.status === "In Progress" ? "bg-emerald-500 animate-pulse" : "bg-slate-400"}`} />
-                        <Clock className="h-3.5 w-3.5" />
-                        <span>
-                          {language === "en"
-                            ? (formData.emAndamento || formData.status === "Em andamento" || formData.status === "In Progress" ? "In Progress" : "Mark as In Progress")
-                            : (formData.emAndamento || formData.status === "Em andamento" || formData.status === "In Progress" ? "Em Andamento" : "Em Andamento")}
-                        </span>
-                      </button>
+                    {/* Status: destaque + em andamento, lado a lado por serem
+                        do mesmo tipo (marcadores de estado do projeto) */}
+                    <div className="p-4 space-y-2.5">
+                      <span className="block text-xs font-bold uppercase font-mono tracking-wider text-slate-500 dark:text-slate-400">
+                        {language === "en" ? "Project Status" : "Status do Projeto"}
+                      </span>
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        {/* Featured Toggle */}
+                        <button
+                          type="button"
+                          onClick={() => setFormData({ ...formData, featured: !formData.featured })}
+                          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer border ${
+                            formData.featured
+                              ? "bg-amber-500/10 border-amber-500/40 text-amber-600 dark:text-amber-400"
+                              : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
+                          }`}
+                        >
+                          <Star className={`h-3.5 w-3.5 ${formData.featured ? "fill-amber-500 text-amber-500" : ""}`} />
+                          <span>{language === "en" ? "Featured Project" : "Projeto em Destaque"}</span>
+                        </button>
 
-                      {/* Links Drawer Toggle */}
+                        {/* Em Andamento Toggle */}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const isCurrentlyInProgress = formData.emAndamento || formData.status === "Em andamento" || formData.status === "In Progress";
+                            const nextInProgress = !isCurrentlyInProgress;
+                            setFormData({
+                              ...formData,
+                              emAndamento: nextInProgress,
+                              status: nextInProgress
+                                ? "Em andamento"
+                                : undefined,
+                            });
+                          }}
+                          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer border ${
+                            formData.emAndamento || formData.status === "Em andamento" || formData.status === "In Progress"
+                              ? "bg-emerald-500/15 border-emerald-500/40 text-emerald-700 dark:text-emerald-300"
+                              : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
+                          }`}
+                        >
+                          <span className={`h-2 w-2 rounded-full ${formData.emAndamento || formData.status === "Em andamento" || formData.status === "In Progress" ? "bg-emerald-500 animate-pulse" : "bg-slate-400"}`} />
+                          <Clock className="h-3.5 w-3.5" />
+                          <span>{language === "en" ? "In Progress" : "Em Andamento"}</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Links externos: expansível, com seta indicando que
+                        clicar revela campos — em vez de parecer mais um
+                        toggle de estado como os de cima */}
+                    <div className="p-4 space-y-3">
                       <button
                         type="button"
                         onClick={() => setShowLinkFields(!showLinkFields)}
-                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer border ${
-                          showLinkFields || formData.projectUrl || formData.githubUrl
-                            ? "bg-indigo-50 dark:bg-indigo-950/60 border-indigo-200 dark:border-indigo-800 text-indigo-600 dark:text-indigo-400"
-                            : "bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
-                        }`}
+                        className="flex w-full items-center justify-between gap-2 cursor-pointer group"
                       >
-                        <Link2 className="h-3.5 w-3.5" />
-                        <span>{language === "en" ? "External Links & Demo" : "Links de Demo e Repositório"}</span>
+                        <span className={`flex items-center gap-1.5 text-xs font-bold uppercase font-mono tracking-wider transition-colors ${
+                          showLinkFields || formData.projectUrl || formData.githubUrl
+                            ? "text-indigo-600 dark:text-indigo-400"
+                            : "text-slate-500 dark:text-slate-400 group-hover:text-slate-800 dark:group-hover:text-slate-200"
+                        }`}>
+                          <Link2 className="h-3.5 w-3.5" />
+                          {language === "en" ? "External Links & Demo" : "Links de Demo e Repositório"}
+                          {(formData.projectUrl || formData.githubUrl) && !showLinkFields && (
+                            <span className="rounded-full bg-indigo-100 px-1.5 py-0.5 text-[10px] font-bold text-indigo-600 dark:bg-indigo-950 dark:text-indigo-400">
+                              {[formData.projectUrl, formData.githubUrl].filter(Boolean).length}
+                            </span>
+                          )}
+                        </span>
+                        <ChevronDown className={`h-4 w-4 text-slate-400 transition-transform ${showLinkFields ? "rotate-180" : ""}`} />
                       </button>
+
+                      <AnimatePresence initial={false}>
+                        {showLinkFields && (
+                          <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: "auto" }}
+                            exit={{ opacity: 0, height: 0 }}
+                            className="overflow-hidden"
+                          >
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                              <div>
+                                <label className="block text-[11px] font-bold uppercase font-mono text-slate-500 dark:text-slate-400 mb-1 flex items-center gap-1">
+                                  <ExternalLink className="h-3 w-3 text-indigo-500" />
+                                  <span>{language === "en" ? "Demo / Publication URL" : "URL de Demonstração / Artigo"}</span>
+                                </label>
+                                <input
+                                  type="url"
+                                  placeholder="https://meuprojeto.com"
+                                  value={formData.projectUrl || ""}
+                                  onChange={(e) => setFormData({ ...formData, projectUrl: e.target.value })}
+                                  className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-1.5 text-xs text-slate-800 dark:text-slate-200 focus:border-indigo-500 focus:outline-hidden"
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-[11px] font-bold uppercase font-mono text-slate-500 dark:text-slate-400 mb-1 flex items-center gap-1">
+                                  <Github className="h-3 w-3 text-indigo-500" />
+                                  <span>{language === "en" ? "Repository URL (GitHub)" : "URL do Repositório (GitHub)"}</span>
+                                </label>
+                                <input
+                                  type="text"
+                                  placeholder="https://github.com/usuario/projeto"
+                                  value={formData.githubUrl || ""}
+                                  onChange={(e) => setFormData({ ...formData, githubUrl: e.target.value })}
+                                  className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-1.5 text-xs text-slate-800 dark:text-slate-200 focus:border-indigo-500 focus:outline-hidden"
+                                />
+                              </div>
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
                     </div>
 
-                    {/* Collapsible External Links */}
-                    {showLinkFields && (
-                      <motion.div
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: "auto" }}
-                        exit={{ opacity: 0, height: 0 }}
-                        className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-3 border-t border-slate-200/60 dark:border-slate-700/60"
-                      >
-                        <div>
-                          <label className="block text-[11px] font-bold uppercase font-mono text-slate-500 dark:text-slate-400 mb-1 flex items-center gap-1">
-                            <ExternalLink className="h-3 w-3 text-indigo-500" />
-                            <span>{language === "en" ? "Demo / Publication URL" : "URL de Demonstração / Artigo"}</span>
-                          </label>
-                          <input
-                            type="url"
-                            placeholder="https://meuprojeto.com"
-                            value={formData.projectUrl || ""}
-                            onChange={(e) => setFormData({ ...formData, projectUrl: e.target.value })}
-                            className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-1.5 text-xs text-slate-800 dark:text-slate-200 focus:border-indigo-500 focus:outline-hidden"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-[11px] font-bold uppercase font-mono text-slate-500 dark:text-slate-400 mb-1 flex items-center gap-1">
-                            <Github className="h-3 w-3 text-indigo-500" />
-                            <span>{language === "en" ? "Repository URL (GitHub)" : "URL do Repositório (GitHub)"}</span>
-                          </label>
-                          <input
-                            type="text"
-                            placeholder="https://github.com/usuario/projeto"
-                            value={formData.githubUrl || ""}
-                            onChange={(e) => setFormData({ ...formData, githubUrl: e.target.value })}
-                            className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-1.5 text-xs text-slate-800 dark:text-slate-200 focus:border-indigo-500 focus:outline-hidden"
-                          />
-                        </div>
-                      </motion.div>
-                    )}
-
-                    {/* Tags Input */}
-                    <div>
-                      <label className="block text-[11px] font-bold uppercase font-mono text-slate-500 dark:text-slate-400 mb-1">
-                        {language === "en" ? "Tags / Technologies (comma separated)" : "Tags / Tecnologias Utilizadas (separadas por vírgula)"}
+                    {/* Tags */}
+                    <div className="p-4 space-y-2">
+                      <label className="flex items-center gap-1.5 text-xs font-bold uppercase font-mono tracking-wider text-slate-500 dark:text-slate-400">
+                        <Tag className="h-3.5 w-3.5" />
+                        {language === "en" ? "Tags / Technologies" : "Tags / Tecnologias Utilizadas"}
                       </label>
                       <input
                         type="text"
@@ -496,6 +521,9 @@ export default function ProjectForm({
                         onChange={(e) => setTagsInput(e.target.value)}
                         className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3.5 py-2 text-xs font-mono text-slate-800 dark:text-slate-200 focus:border-indigo-500 focus:outline-hidden"
                       />
+                      <p className="text-[11px] text-slate-400 dark:text-slate-500">
+                        {language === "en" ? "Separate each one with a comma." : "Separe cada uma por vírgula."}
+                      </p>
                     </div>
                   </div>
 
