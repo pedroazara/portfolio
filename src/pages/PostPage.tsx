@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
-  ArrowLeft, ArrowRight, Calendar, Clock, Share2, Check, Edit2, Code, AlertCircle, FileText,
+  ArrowLeft, ArrowRight, Calendar, Clock, Share2, Check, Edit2, Code, AlertCircle, FileText, BookOpen,
 } from "lucide-react";
 import { BlogPost, Project } from "../types";
 import { Language } from "../lib/translations";
@@ -123,6 +123,23 @@ export default function PostPage({
   const currentIndex = published.findIndex((p) => p.id === post.id);
   const newerPost = currentIndex > 0 ? published[currentIndex - 1] : null;
   const olderPost = currentIndex >= 0 && currentIndex < published.length - 1 ? published[currentIndex + 1] : null;
+
+  // "Veja também": outros artigos que compartilham tag ou categoria, os mais
+  // próximos primeiro. Tag em comum pesa mais que categoria porque é uma
+  // escolha mais específica de quem escreveu — duas tags batendo diz mais
+  // sobre o assunto do que estar na mesma categoria ampla.
+  const postTags = new Set((post.tags || []).map((t) => t.toLowerCase()));
+  const relatedPosts = published
+    .filter((p) => p.id !== post.id)
+    .map((p) => {
+      const sharedTags = (p.tags || []).filter((t) => postTags.has(t.toLowerCase())).length;
+      const sameCategory = post.category && p.category === post.category ? 1 : 0;
+      return { post: p, score: sharedTags * 2 + sameCategory };
+    })
+    .filter((entry) => entry.score > 0)
+    .sort((a, b) => b.score - a.score || (b.post.date || "").localeCompare(a.post.date || ""))
+    .slice(0, 3)
+    .map((entry) => entry.post);
 
   return (
     <div className="mx-auto grid max-w-[1400px] grid-cols-1 gap-10 xl:grid-cols-[14rem_minmax(0,1fr)]">
@@ -315,6 +332,48 @@ export default function PostPage({
                         )}
                       </div>
                     )}
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Veja também: outros artigos por assunto, não por ordem cronológica */}
+      {relatedPosts.length > 0 && (
+        <div className="mt-12 border-t border-slate-200 pt-8 dark:border-slate-800 no-print">
+          <h2 className="mb-4 flex items-center gap-2 font-display text-lg font-bold text-slate-900 dark:text-white">
+            <BookOpen className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
+            <span>{language === "en" ? "You Might Also Like" : "Veja Também"}</span>
+          </h2>
+
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+            {relatedPosts.map((relPost) => {
+              const relTitle = (language === "en" ? relPost.titleEn : relPost.title) || relPost.title;
+              return (
+                <Link
+                  key={relPost.id}
+                  to={lp(`/blog/${slugOf(relPost)}`)}
+                  className="group flex flex-col overflow-hidden rounded-xl border border-slate-200 bg-slate-50/70 transition-all hover:border-indigo-500 hover:shadow-md dark:border-slate-800 dark:bg-slate-900/60 dark:hover:border-indigo-500"
+                >
+                  {relPost.imageUrl && (
+                    <div className="aspect-video w-full shrink-0 overflow-hidden bg-slate-200 dark:bg-slate-800">
+                      <LocalImage
+                        src={relPost.imageUrl}
+                        alt={relTitle}
+                        className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                      />
+                    </div>
+                  )}
+                  <div className="flex flex-1 flex-col justify-between p-4">
+                    <h3 className="line-clamp-2 font-display text-sm font-bold text-slate-900 transition-colors group-hover:text-indigo-600 dark:text-white dark:group-hover:text-indigo-400">
+                      {relTitle}
+                    </h3>
+                    <span className="mt-2 flex items-center gap-1 font-mono text-[11px] text-slate-500 dark:text-slate-500">
+                      <Calendar className="h-3 w-3" />
+                      {relPost.date}
+                    </span>
                   </div>
                 </Link>
               );

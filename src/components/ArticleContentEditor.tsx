@@ -1,10 +1,11 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { ImagePlus, X, Loader2, Search } from "lucide-react";
+import { ImagePlus, X, Loader2, Search, Columns2 } from "lucide-react";
 import { StoredImage, listImages, saveImage, fileNameOf, joinPath, GENERAL_FOLDER } from "../utils/imageDb";
 import { processImagePreservingFormat } from "../utils/imageOptimizer";
 import { Language } from "../lib/translations";
 import { isDevPreview } from "../lib/devPreview";
 import MarkdownHighlight, { EDITOR_TEXT_CLASS } from "./MarkdownHighlight";
+import MarkdownRenderer from "./MarkdownRenderer";
 import { scrollTextareaToLine } from "../utils/editTarget";
 
 interface ArticleContentEditorProps {
@@ -79,6 +80,7 @@ export default function ArticleContentEditor({
   const [images, setImages] = useState<StoredImage[]>([]);
   const [search, setSearch] = useState("");
   const [isDragging, setIsDragging] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -239,16 +241,38 @@ export default function ArticleContentEditor({
           {helpText && <p className="text-[11px] text-slate-500">{helpText}</p>}
         </div>
 
-        <button
-          type="button"
-          onClick={() => setIsPicking(true)}
-          disabled={isBusy}
-          className="flex shrink-0 items-center gap-1.5 rounded-lg border border-slate-200 px-2.5 py-1.5 text-[11px] font-semibold text-slate-600 transition-colors hover:bg-slate-50 disabled:opacity-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
-        >
-          {isBusy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ImagePlus className="h-3.5 w-3.5" />}
-          {language === "en" ? "Image" : "Imagem"}
-        </button>
+        <div className="flex shrink-0 items-center gap-1.5">
+          <button
+            type="button"
+            onClick={() => setShowPreview((v) => !v)}
+            aria-pressed={showPreview}
+            className={`flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-[11px] font-semibold transition-colors cursor-pointer ${
+              showPreview
+                ? "border-indigo-200 bg-indigo-50 text-indigo-600 dark:border-indigo-800 dark:bg-indigo-950/60 dark:text-indigo-400"
+                : "border-slate-200 text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+            }`}
+          >
+            <Columns2 className="h-3.5 w-3.5" />
+            {language === "en" ? "Preview" : "Prévia ao lado"}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setIsPicking(true)}
+            disabled={isBusy}
+            className="flex items-center gap-1.5 rounded-lg border border-slate-200 px-2.5 py-1.5 text-[11px] font-semibold text-slate-600 transition-colors hover:bg-slate-50 disabled:opacity-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+          >
+            {isBusy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ImagePlus className="h-3.5 w-3.5" />}
+            {language === "en" ? "Image" : "Imagem"}
+          </button>
+        </div>
       </div>
+
+      {/* Com prévia ligada, o texto vai para a coluna esquerda e o resultado
+          renderizado acompanha ao lado, rolando junto — sem precisar trocar de
+          aba para saber como o Markdown vai ficar. Em telas estreitas as duas
+          colunas empilham, porque lado a lado não caberia. */}
+      <div className={showPreview ? "grid grid-cols-1 gap-4 lg:grid-cols-2 lg:items-start" : ""}>
 
       {/* Área de escrita. Arrastar e colar inserem imagens sem interface extra. */}
       <div
@@ -287,6 +311,20 @@ export default function ArticleContentEditor({
         <span className="pointer-events-none absolute bottom-2.5 right-3 font-mono text-[10px] text-slate-400 dark:text-slate-500">
           {value.length}
         </span>
+      </div>
+
+      {showPreview && (
+        <div className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900 lg:max-h-[32rem] lg:overflow-y-auto">
+          {value.trim() ? (
+            <MarkdownRenderer content={value} className="max-w-none text-sm text-slate-600 dark:text-slate-300" />
+          ) : (
+            <p className="text-xs text-slate-400 dark:text-slate-600">
+              {language === "en" ? "The preview appears as you write." : "A prévia aparece conforme você escreve."}
+            </p>
+          )}
+        </div>
+      )}
+
       </div>
 
       {status && (

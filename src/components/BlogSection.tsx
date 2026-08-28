@@ -1,10 +1,10 @@
 import React, { useState } from "react";
 import { useSearchParams, useNavigate, Link } from "react-router-dom";
 import { BlogPost, Project } from "../types";
-import { 
-  BookOpen, Calendar, Clock, Plus, Edit2, Trash2, X, FileText, 
+import {
+  BookOpen, Calendar, Clock, Plus, Edit2, Trash2, X, FileText,
   Tag, Image as ImageIcon, ArrowRight, User, Share2, Check,
-  Code, AlertCircle
+  Code, AlertCircle, Rss
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import EditModal from "./EditModal";
@@ -191,16 +191,29 @@ export default function BlogSection({
           </p>
         </div>
 
-        {isEditMode && (
-          <button
-            onClick={handleOpenAdd}
-            className="flex items-center gap-1.5 rounded-xl bg-indigo-600 px-4 py-2 text-xs font-bold text-white shadow-md shadow-indigo-100 hover:bg-indigo-700 transition-all active:scale-95 no-print print:hidden"
-            id="add-post-btn"
+        <div className="flex items-center gap-2 no-print print:hidden">
+          <a
+            href="/feed.xml"
+            target="_blank"
+            rel="noopener noreferrer"
+            title={language === "en" ? "Subscribe via RSS" : "Assinar via RSS"}
+            className="flex items-center gap-1.5 rounded-xl border border-slate-200 px-3 py-2 text-xs font-bold text-slate-500 transition-colors hover:border-orange-300 hover:text-orange-500 dark:border-slate-800 dark:text-slate-400 dark:hover:border-orange-800 dark:hover:text-orange-400"
           >
-            <Plus className="h-4 w-4" />
-            <span>{language === "en" ? "New Article" : "Novo Artigo"}</span>
-          </button>
-        )}
+            <Rss className="h-3.5 w-3.5" />
+            <span>RSS</span>
+          </a>
+
+          {isEditMode && (
+            <button
+              onClick={handleOpenAdd}
+              className="flex items-center gap-1.5 rounded-xl bg-indigo-600 px-4 py-2 text-xs font-bold text-white shadow-md shadow-indigo-100 hover:bg-indigo-700 transition-all active:scale-95"
+              id="add-post-btn"
+            >
+              <Plus className="h-4 w-4" />
+              <span>{language === "en" ? "New Article" : "Novo Artigo"}</span>
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Category Tabs */}

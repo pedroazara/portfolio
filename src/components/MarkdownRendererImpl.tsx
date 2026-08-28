@@ -4,6 +4,7 @@ import remarkMath from "remark-math";
 import remarkGfm from "remark-gfm";
 import rehypeKatex from "rehype-katex";
 import "katex/dist/katex.min.css";
+import { Highlight, themes } from "prism-react-renderer";
 import { ZoomIn, X, Copy, Check } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import LocalImage from "./LocalImage";
@@ -234,9 +235,29 @@ function CodeBlock({ code, lang }: { code: string; lang?: string }) {
           )}
         </button>
       </div>
-      <pre className="p-4 overflow-x-auto text-xs sm:text-sm font-mono text-slate-100 leading-relaxed max-h-[450px]">
-        <code>{code}</code>
-      </pre>
+      {/* `nightOwl` já é escuro o bastante para conviver com o `bg-slate-950`
+          do contêiner; zeramos só o fundo do tema para não abrir um retângulo
+          de cor levemente diferente por trás do texto. */}
+      <Highlight code={code} language={lang || "text"} theme={themes.nightOwl}>
+        {({ className, style, tokens, getLineProps, getTokenProps }) => (
+          <pre
+            className={`${className} p-4 overflow-x-auto text-xs sm:text-sm font-mono leading-relaxed max-h-[450px]`}
+            style={{ ...style, background: "transparent" }}
+          >
+            {tokens.map((line, i) => {
+              const { key: lineKey, ...lineProps } = getLineProps({ line });
+              return (
+                <div key={i} {...lineProps}>
+                  {line.map((token, tokenIdx) => {
+                    const { key: tokenKey, ...tokenProps } = getTokenProps({ token });
+                    return <span key={tokenIdx} {...tokenProps} />;
+                  })}
+                </div>
+              );
+            })}
+          </pre>
+        )}
+      </Highlight>
     </div>
   );
 }
