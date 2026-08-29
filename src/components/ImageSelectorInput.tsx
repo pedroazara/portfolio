@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { ImagePlus, Crop, Trash2, Loader2, Link as LinkIcon, X } from "lucide-react";
-import { StoredImage, listImages, saveImage, fileNameOf, joinPath, GENERAL_FOLDER, originalPathFor, isCoverCrop } from "../utils/imageDb";
-import { optimizeImage } from "../utils/imageOptimizer";
+import { ImagePlus, Crop, Trash2, Loader2, Link as LinkIcon, X, FileText } from "lucide-react";
+import { StoredImage, listImages, saveImage, fileNameOf, joinPath, GENERAL_FOLDER, originalPathFor, isCoverCrop, isPdfRef } from "../utils/imageDb";
+import { optimizeImage, processImagePreservingFormat } from "../utils/imageOptimizer";
 /**
  * O recorte só existe depois de alguém pedir para recortar — e já é montado
  * sob condição, então `lazy` tira o editor de imagem inteiro (canvas, cálculo
@@ -50,6 +50,14 @@ export default function ImageSelectorInput({
   const [isDragging, setIsDragging] = useState(false);
   const [showUrlField, setShowUrlField] = useState(false);
   const [error, setError] = useState("");
+  /**
+   * Reenquadrar substitui o mesmo arquivo no bucket (é assim que evita lixo
+   * acumulado), então a referência `db:` que volta do recorte é idêntica à de
+   * antes — nada no valor em si avisa que o conteúdo mudou. Sem isso, a prévia
+   * ficava presa na miniatura antiga: mesma string, nenhum motivo para o
+   * `LocalImage` buscar de novo. Este contador força a remontagem.
+   */
+  const [coverVersion, setCoverVersion] = useState(0);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   // Original desta escolha, para reenquadrar sempre da imagem cheia mesmo
@@ -69,8 +77,13 @@ export default function ImageSelectorInput({
   }, [isPicking, loadImages]);
 
   const upload = async (file: File) => {
-    if (!file.type.startsWith("image/")) {
-      setError("Selecione um arquivo de imagem.");
+    const isPdf = file.type === "application/pdf" || /\.pdf$/i.test(file.name);
+    // O vetor sai intacto do otimizador; qualquer outra coisa que não seja
+    // imagem (exceto PDF, aceito à parte) é rejeitada como antes.
+    const isVector = file.type === "image/svg+xml" || /\.svg$/i.test(file.name);
+
+    if (!file.type.startsWith("image/") && !isPdf) {
+      setError("Selecione uma imagem ou um PDF.");
       return;
     }
 
@@ -78,15 +91,24 @@ export default function ImageSelectorInput({
     setError("");
 
     try {
-      const optimized = await optimizeImage(file, 1600, 0.8);
+      // SVG e PDF passam intactos — recomprimir um vetor no Canvas o
+      // rasterizaria, e um PDF nem carrega como `<img>` para começo de conversa.
+      // Formatos comuns (JPG, PNG…) continuam indo para WebP como sempre.
+      const { dataUrl, extension, size } = isVector || isPdf
+        ? await processImagePreservingFormat(file, 1600)
+        : { ...(await optimizeImage(file, 1600, 0.8)), extension: "webp" };
+
+      // Só faz sentido forçar o enquadramento 16:9 numa foto — um vetor já se
+      // adapta a qualquer proporção e um PDF nem entra no Canvas de recorte.
+      const skipCrop = isVector || isPdf;
 
       // Modo de teste: sem sessão o Storage recusaria o envio, então a imagem
       // fica embutida e visível só neste navegador.
       if (isDevPreview()) {
-        originalRef.current = optimized.dataUrl;
-        onChange(optimized.dataUrl);
+        originalRef.current = dataUrl;
+        onChange(dataUrl);
         setIsPicking(false);
-        setIsCropping(true);
+        if (!skipCrop) setIsCropping(true);
         return;
       }
 
@@ -99,16 +121,16 @@ export default function ImageSelectorInput({
         .replace(/^-+|-+$/g, "");
       const path = joinPath(
         GENERAL_FOLDER,
-        `${base || "imagem"}-${Date.now().toString().slice(-5)}.webp`
+        `${base || "imagem"}-${Date.now().toString().slice(-5)}.${extension}`
       );
 
-      await saveImage(path, optimized.dataUrl, optimized.size);
+      await saveImage(path, dataUrl, size);
       originalRef.current = `db:${path}`;
       onChange(`db:${path}`);
       setIsPicking(false);
       // Decidir o enquadramento faz parte de escolher a capa, não é um passo
       // extra opcional — abrimos direto, com a imagem cheia à vista.
-      setIsCropping(true);
+      if (!skipCrop) setIsCropping(true);
     } catch (err) {
       setError(`Falha ao enviar: ${err instanceof Error ? err.message : String(err)}`);
     } finally {
@@ -138,7 +160,7 @@ export default function ImageSelectorInput({
       <input
         ref={fileInputRef}
         type="file"
-        accept="image/*"
+        accept="image/*,.pdf,application/pdf"
         className="hidden"
         onChange={(e) => {
           const file = e.target.files?.[0];
@@ -150,7 +172,7 @@ export default function ImageSelectorInput({
       {value ? (
         <div className="space-y-2">
           <div className="relative aspect-video w-full overflow-hidden rounded-xl border border-slate-200 bg-slate-100 dark:border-slate-800 dark:bg-slate-950">
-            <LocalImage src={value} alt="" className="h-full w-full object-cover" />
+            <LocalImage key={coverVersion} src={value} alt="" className="h-full w-full object-cover" />
             {isUploading && (
               <div className="absolute inset-0 flex items-center justify-center bg-slate-950/50">
                 <Loader2 className="h-6 w-6 animate-spin text-white" />
@@ -163,10 +185,14 @@ export default function ImageSelectorInput({
               <ImagePlus className="h-3.5 w-3.5" />
               Trocar
             </button>
-            <button type="button" onClick={() => setIsCropping(true)} disabled={isUploading} className={acaoClass}>
-              <Crop className="h-3.5 w-3.5" />
-              Enquadrar
-            </button>
+            {/* Um PDF nem carrega no Canvas de recorte — a ação some em vez de
+                oferecer algo que só terminaria em erro. */}
+            {!isPdfRef(value) && (
+              <button type="button" onClick={() => setIsCropping(true)} disabled={isUploading} className={acaoClass}>
+                <Crop className="h-3.5 w-3.5" />
+                Enquadrar
+              </button>
+            )}
             <button
               type="button"
               onClick={() => onChange("")}
@@ -281,34 +307,45 @@ export default function ImageSelectorInput({
               </div>
             </div>
 
-            <div className="grid flex-1 grid-cols-2 gap-3 overflow-y-auto p-5 sm:grid-cols-3">
+            <div className="grid flex-1 auto-rows-min grid-cols-2 gap-3 overflow-y-auto p-5 sm:grid-cols-3">
               {images.length === 0 && (
                 <p className="col-span-full py-8 text-center text-xs text-slate-500">
                   Nenhuma imagem no banco ainda.
                 </p>
               )}
-              {images.map((img) => (
-                <button
-                  key={img.name}
-                  type="button"
-                  onClick={() => {
-                    originalRef.current = `db:${img.name}`;
-                    onChange(`db:${img.name}`);
-                    setIsPicking(false);
-                    setIsCropping(true);
-                  }}
-                  className={`overflow-hidden rounded-xl border-2 text-left transition-all hover:border-indigo-400 ${
-                    value === `db:${img.name}` ? "border-indigo-600" : "border-transparent"
-                  }`}
-                >
-                  <div className="aspect-video w-full overflow-hidden bg-slate-100 dark:bg-slate-950">
-                    <img src={img.url} alt="" loading="lazy" className="h-full w-full object-cover" />
-                  </div>
-                  <span className="block truncate px-1.5 py-1 font-mono text-[10px] text-slate-500">
-                    {fileNameOf(img.name)}
-                  </span>
-                </button>
-              ))}
+              {images.map((img) => {
+                const isPdf = isPdfRef(img.name);
+                const isVector = /\.svg$/i.test(img.name);
+                return (
+                  <button
+                    key={img.name}
+                    type="button"
+                    onClick={() => {
+                      originalRef.current = `db:${img.name}`;
+                      onChange(`db:${img.name}`);
+                      setIsPicking(false);
+                      if (!isPdf && !isVector) setIsCropping(true);
+                    }}
+                    className={`overflow-hidden rounded-xl border-2 text-left transition-all hover:border-indigo-400 ${
+                      value === `db:${img.name}` ? "border-indigo-600" : "border-transparent"
+                    }`}
+                  >
+                    <div className="aspect-video w-full overflow-hidden bg-slate-100 dark:bg-slate-950">
+                      {isPdf ? (
+                        <div className="flex h-full w-full items-center justify-center gap-1.5 text-slate-500 dark:text-slate-400">
+                          <FileText className="h-5 w-5 shrink-0" />
+                          <span className="text-xs font-semibold">PDF</span>
+                        </div>
+                      ) : (
+                        <img src={img.url} alt="" loading="lazy" className="h-full w-full object-cover" />
+                      )}
+                    </div>
+                    <span className="block truncate px-1.5 py-1 font-mono text-[10px] text-slate-500">
+                      {fileNameOf(img.name)}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
           </div>
         </div>
@@ -323,6 +360,7 @@ export default function ImageSelectorInput({
           originalSrc={originalRef.current || undefined}
           onSave={(ref) => {
             onChange(ref);
+            setCoverVersion((v) => v + 1);
             setIsCropping(false);
           }}
         />

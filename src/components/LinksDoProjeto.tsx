@@ -3,6 +3,15 @@ import { Github, ExternalLink, BookOpen } from "lucide-react";
 import { Project } from "../types";
 import { Language } from "../lib/translations";
 
+/**
+ * Sem protocolo, um `href="github.com/..."` vira um link relativo — o
+ * navegador o resolve contra a própria página do site em vez de abrir o
+ * GitHub. Quem preenche o campo nem sempre lembra do `https://`.
+ */
+function comProtocolo(url: string): string {
+  return /^https?:\/\//i.test(url) ? url : `https://${url}`;
+}
+
 interface LinksDoProjetoProps {
   project: Project;
   language?: Language;
@@ -46,7 +55,7 @@ export default function LinksDoProjeto({
     <div className={emBarra ? "flex flex-col gap-2" : "mt-6 flex flex-wrap gap-2"}>
       {project.githubUrl && (
         <a
-          href={project.githubUrl}
+          href={comProtocolo(project.githubUrl)}
           target="_blank"
           rel="noopener noreferrer"
           className={`${base} ${solido}`}
@@ -58,7 +67,7 @@ export default function LinksDoProjeto({
 
       {project.projectUrl && (
         <a
-          href={project.projectUrl}
+          href={comProtocolo(project.projectUrl)}
           target="_blank"
           rel="noopener noreferrer"
           className={`${base} ${vazado}`}
@@ -70,7 +79,7 @@ export default function LinksDoProjeto({
 
       {documentacao && (
         <a
-          href={documentacao}
+          href={comProtocolo(documentacao)}
           target="_blank"
           rel="noopener noreferrer"
           className={`${base} ${vazado}`}

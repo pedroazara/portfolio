@@ -168,23 +168,39 @@ export default function BlogSection({
   const canReorderPosts =
     isEditMode && (activeCategoryFilter === "Todos" || activeCategoryFilter === "All") && !searchQuery.trim();
 
+  // A listagem anima ao trocar de aba/busca, mas não na primeira renderização —
+  // sem isso, o feed inteiro "nascia" deslizando de baixo para cima assim que
+  // a página abria, o que parecia um soluço de carregamento, não uma transição.
+  //
+  // Isso precisa ser estado, não uma ref mutada durante o render: em
+  // StrictMode (ativo em `main.tsx`) o React chama a função do componente duas
+  // vezes por montagem, e uma ref já viraria `false` na primeira chamada —
+  // fazendo a renderização que de fato vai para a tela pensar que não é mais a
+  // primeira. Estado não sofre disso, porque não é alterado durante o render.
+  const [hasAnimatedFeedOnce, setHasAnimatedFeedOnce] = useState(false);
+  React.useEffect(() => {
+    setHasAnimatedFeedOnce(true);
+  }, []);
+  const feedKey = `${activeCategoryFilter}-${searchQuery.trim()}`;
+  const feedInitial = hasAnimatedFeedOnce ? { opacity: 0, y: 8 } : false;
+
   return (
     <div className="mt-16 border-t border-slate-100 dark:border-slate-800/80 pt-16 no-print print:hidden" id="blog-section">
       {/* Header */}
       <div className="mb-10 flex flex-col md:flex-row md:items-end md:justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600">
+            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400">
               <BookOpen className="h-4.5 w-4.5" />
             </span>
-            <span className="text-xs font-bold uppercase tracking-widest text-indigo-600 font-mono">
+            <span className="text-xs font-bold uppercase tracking-widest text-indigo-600 dark:text-indigo-400 font-mono">
               {language === "en" ? "Scientific Communication" : "Divulgação Científica"}
             </span>
           </div>
-          <h2 className="mt-2 text-2xl font-black text-slate-900 tracking-tight font-display sm:text-3xl">
+          <h2 className="mt-2 text-2xl font-black text-slate-900 dark:text-white tracking-tight font-display sm:text-3xl">
             {translations[language].blog}
           </h2>
-          <p className="mt-2 text-sm text-slate-500 font-sans">
+          <p className="mt-2 text-sm text-slate-500 dark:text-slate-400 font-sans">
             {language === "en"
               ? "Articles, research notes and reflections on Physics Engineering, instrumentation and computational science."
               : "Artigos, notas de pesquisa e pensamentos sobre Engenharia Física, instrumentação e física computacional."}
@@ -206,7 +222,7 @@ export default function BlogSection({
           {isEditMode && (
             <button
               onClick={handleOpenAdd}
-              className="flex items-center gap-1.5 rounded-xl bg-indigo-600 px-4 py-2 text-xs font-bold text-white shadow-md shadow-indigo-100 hover:bg-indigo-700 transition-all active:scale-95"
+              className="flex items-center gap-1.5 rounded-xl bg-indigo-600 px-4 py-2 text-xs font-bold text-white shadow-md shadow-indigo-100 dark:shadow-none hover:bg-indigo-700 transition-all active:scale-95"
               id="add-post-btn"
             >
               <Plus className="h-4 w-4" />
@@ -225,18 +241,33 @@ export default function BlogSection({
             <button
               key={`blog-cat-${cat}-${idx}`}
               onClick={() => setSelectedCategory(cat)}
-              className={`rounded-full px-4 py-1.5 text-xs font-bold transition-all cursor-pointer ${
+              className={`relative rounded-full px-4 py-1.5 text-xs font-bold transition-colors cursor-pointer ${
                 isActive
-                  ? "bg-indigo-600 dark:bg-indigo-500 text-white shadow-sm shadow-indigo-100 dark:shadow-none"
+                  ? "text-white"
                   : "bg-slate-50 dark:bg-slate-900 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-800 dark:hover:text-slate-200"
               }`}
             >
-              {displayLabel}
+              {isActive && (
+                <motion.span
+                  layoutId="blog-tab-pill"
+                  className="absolute inset-0 rounded-full bg-indigo-600 dark:bg-indigo-500 shadow-sm shadow-indigo-100 dark:shadow-none"
+                  transition={{ type: "spring", stiffness: 500, damping: 35 }}
+                />
+              )}
+              <span className="relative">{displayLabel}</span>
             </button>
           );
         })}
       </div>
 
+      <AnimatePresence mode="wait">
+      <motion.div
+        key={feedKey}
+        initial={feedInitial}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.2, ease: "easeOut" }}
+      >
       {filteredPosts.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 p-12 text-center">
           <FileText className="mx-auto h-12 w-12 text-slate-300 dark:text-slate-700" />
@@ -244,8 +275,8 @@ export default function BlogSection({
             {language === "en" ? "No articles found" : "Sem artigos publicados"}
           </h3>
           <p className="mt-1 text-xs text-slate-500 dark:text-slate-400 font-sans">
-            {isEditMode 
-              ? (language === "en" ? "Click 'New Article' to create your first post." : "Clique em 'Novo Artigo' para criar sua primeira publicação no blog.") 
+            {isEditMode
+              ? (language === "en" ? "Click 'New Article' to create your first post." : "Clique em 'Novo Artigo' para criar sua primeira publicação no blog.")
               : (language === "en" ? "No publications available under this category." : "Nenhuma publicação disponível nesta seção.")}
           </p>
         </div>
@@ -497,6 +528,8 @@ export default function BlogSection({
           )}
         </div>
       )}
+      </motion.div>
+      </AnimatePresence>
 
       {/* A leitura do artigo virou página dedicada (PostPage), roteada em App.
           O que sobra aqui é só a listagem. */}

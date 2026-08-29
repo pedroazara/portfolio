@@ -152,7 +152,7 @@ export default function ResumeHeader({
                       initial={{ opacity: 0, y: 10, scale: 0.95 }}
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       exit={{ opacity: 0, y: -10, scale: 0.95 }}
-                      className="absolute -top-9 left-1/2 -translate-x-1/2 md:left-6 md:translate-x-0 z-50 whitespace-nowrap rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-bold text-white shadow-lg shadow-emerald-200"
+                      className="absolute -top-9 left-1/2 -translate-x-1/2 md:left-6 md:translate-x-0 z-50 whitespace-nowrap rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-bold text-white shadow-lg shadow-emerald-200 dark:shadow-none"
                     >
                       {translations[language].copiedEmail}
                     </motion.span>

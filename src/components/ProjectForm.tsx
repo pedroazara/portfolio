@@ -17,6 +17,14 @@ import { projectFolder } from "../utils/imageDb";
 import { EditTarget, scrollTextareaToLine } from "../utils/editTarget";
 import LocalImage from "./LocalImage";
 
+/**
+ * Sem protocolo, um `href="github.com/..."` vira um link relativo — o
+ * navegador o resolve contra a própria página em vez de abrir o GitHub.
+ */
+function comProtocolo(url: string): string {
+  return /^https?:\/\//i.test(url) ? url : `https://${url}`;
+}
+
 /** Slug de URL a partir de um título: minúsculas, sem acentos, hífens. */
 function slugify(text: string): string {
   return text
@@ -727,7 +735,7 @@ export default function ProjectForm({
                     <div className="flex flex-wrap gap-2 pt-1">
                       {formData.projectUrl && (
                         <a
-                          href={formData.projectUrl}
+                          href={comProtocolo(formData.projectUrl)}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="inline-flex items-center gap-1.5 rounded-xl bg-indigo-600 px-4 py-2 text-xs font-bold text-white shadow-xs hover:bg-indigo-700 transition-colors"
@@ -738,7 +746,7 @@ export default function ProjectForm({
                       )}
                       {formData.githubUrl && (
                         <a
-                          href={formData.githubUrl}
+                          href={comProtocolo(formData.githubUrl)}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 py-2 text-xs font-bold text-slate-800 dark:text-slate-200 hover:bg-slate-50 transition-colors"

@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useId } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import { motion, AnimatePresence } from "motion/react";
 import { Project, ProjectCategory, BlogPost } from "../types";
 import { FolderKanban, Plus, Edit2, Trash2, ExternalLink, Github, Settings, Info, Eye, BookOpen, Image as ImageIcon, Check, RefreshCw, Search, ArrowLeft } from "lucide-react";
 import EditModal from "./EditModal";
@@ -47,11 +48,34 @@ export default function ProjectSection({
 }: ProjectSectionProps) {
   const navigate = useNavigate();
   const lp = useLocalePath();
+  // `ProjectSection` monta tanto embutido na página de currículo quanto
+  // sozinho em /projetos — ao trocar de rota, uma instância desmonta e a
+  // outra monta. Sem um id único por instância, o `layoutId` da pílula das
+  // abas via a nova instância como "a mesma pílula que se moveu" e animava um
+  // salto da posição antiga (lá no meio da página de currículo) até a nova,
+  // em vez de simplesmente aparecer no lugar.
+  const tabPillId = useId();
   const [activeCategory, setActiveCategory] = useState<string>("all");
   const [localSearch, setLocalSearch] = useState(searchQuery);
   useEffect(() => {
     setLocalSearch(searchQuery);
   }, [searchQuery]);
+
+  // A grade anima ao trocar de aba/busca, mas não na primeira renderização —
+  // sem isso, o grid inteiro "nascia" deslizando de baixo para cima assim que
+  // a página abria, o que parecia um soluço de carregamento, não uma transição.
+  //
+  // Isso precisa ser estado, não uma ref mutada durante o render: em
+  // StrictMode (ativo em `main.tsx`) o React chama a função do componente duas
+  // vezes por montagem, e uma ref já viraria `false` na primeira chamada —
+  // fazendo a renderização que de fato vai para a tela pensar que não é mais a
+  // primeira. Estado não sofre disso, porque não é alterado durante o render.
+  const [hasAnimatedGridOnce, setHasAnimatedGridOnce] = useState(false);
+  useEffect(() => {
+    setHasAnimatedGridOnce(true);
+  }, []);
+  const gridKey = `${activeCategory}-${localSearch.trim()}`;
+  const gridInitial = hasAnimatedGridOnce ? { opacity: 0, y: 8 } : false;
 
   const handleSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
@@ -316,13 +340,20 @@ export default function ProjectSection({
         <div className="mb-6 -mx-1 flex gap-1.5 overflow-x-auto border-b border-slate-100 px-1 pb-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:flex-wrap sm:overflow-visible dark:border-slate-800 no-print print:hidden">
           <button
             onClick={() => setActiveCategory("all")}
-            className={`shrink-0 rounded-lg px-4 py-2 text-xs font-semibold transition-all cursor-pointer ${
+            className={`relative shrink-0 rounded-lg px-4 py-2 text-xs font-semibold transition-colors cursor-pointer ${
               activeCategory === "all"
-                ? "bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 shadow-xs"
+                ? "text-white dark:text-slate-900"
                 : "bg-slate-50 dark:bg-slate-950 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
             }`}
           >
-            <span className="whitespace-nowrap">
+            {activeCategory === "all" && (
+              <motion.span
+                layoutId={`project-tab-pill-${tabPillId}`}
+                className="absolute inset-0 rounded-lg bg-slate-900 dark:bg-slate-100 shadow-xs"
+                transition={{ type: "spring", stiffness: 500, damping: 35 }}
+              />
+            )}
+            <span className="relative whitespace-nowrap">
               {language === "en" ? `All Projects (${visibleProjects.length})` : `Todos os Projetos (${visibleProjects.length})`}
             </span>
           </button>
@@ -337,13 +368,20 @@ export default function ProjectSection({
               <div key={cat.id} className="relative flex shrink-0 items-center group">
                 <button
                   onClick={() => setActiveCategory(cat.id)}
-                  className={`rounded-lg px-4 py-2 text-xs font-semibold transition-all cursor-pointer ${
+                  className={`relative rounded-lg px-4 py-2 text-xs font-semibold transition-colors cursor-pointer ${
                     activeCategory === cat.id
-                      ? "bg-indigo-600 text-white shadow-xs"
+                      ? "text-white"
                       : "bg-slate-50 dark:bg-slate-950 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
                   }`}
                 >
-                  <span className="whitespace-nowrap">
+                  {activeCategory === cat.id && (
+                    <motion.span
+                      layoutId={`project-tab-pill-${tabPillId}`}
+                      className="absolute inset-0 rounded-lg bg-indigo-600 shadow-xs"
+                      transition={{ type: "spring", stiffness: 500, damping: 35 }}
+                    />
+                  )}
+                  <span className="relative whitespace-nowrap">
                     {cat.nameEn && language === "en" ? cat.nameEn : cat.name} ({count})
                   </span>
                 </button>
@@ -386,7 +424,16 @@ export default function ProjectSection({
         </div>
       )}
 
-      {/* Projects Grid */}
+      {/* Projects Grid — cross-fade suave ao trocar de aba ou buscar, nunca na
+          primeira renderização da página (ver `gridInitial` acima). */}
+      <AnimatePresence mode="wait">
+      <motion.div
+        key={gridKey}
+        initial={gridInitial}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.2, ease: "easeOut" }}
+      >
       {filteredProjects.length === 0 ? (
         <div className="rounded-xl border border-dashed border-slate-200 dark:border-slate-800 p-10 text-center font-sans">
           <FolderKanban className="mx-auto h-8 w-8 text-slate-300 dark:text-slate-700" />
@@ -559,6 +606,8 @@ export default function ProjectSection({
           }}
         </ReorderableList>
       )}
+      </motion.div>
+      </AnimatePresence>
 
       {/* Os detalhes do projeto são uma página (/project/<slug>), não um modal. */}
 

@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { ImagePlus, Trash2, Loader2, X, Search } from "lucide-react";
+import { ImagePlus, Trash2, Loader2, X, Search, FileText } from "lucide-react";
 import {
   StoredImage,
   listImages,
@@ -7,8 +7,9 @@ import {
   fileNameOf,
   joinPath,
   GENERAL_FOLDER,
+  isPdfRef,
 } from "../utils/imageDb";
-import { optimizeImage } from "../utils/imageOptimizer";
+import { optimizeImage, processImagePreservingFormat } from "../utils/imageOptimizer";
 import { Language } from "../lib/translations";
 import { isDevPreview } from "../lib/devPreview";
 import LocalImage from "./LocalImage";
@@ -64,9 +65,11 @@ export default function ImageGalleryInput({
   };
 
   const upload = async (files: File[]) => {
-    const imageFiles = files.filter((f) => f.type.startsWith("image/"));
-    if (imageFiles.length === 0) {
-      setError(language === "en" ? "Images only." : "Apenas arquivos de imagem.");
+    const acceptedFiles = files.filter(
+      (f) => f.type.startsWith("image/") || f.type === "application/pdf" || /\.pdf$/i.test(f.name)
+    );
+    if (acceptedFiles.length === 0) {
+      setError(language === "en" ? "Images or PDFs only." : "Apenas imagens ou PDFs.");
       return;
     }
 
@@ -76,12 +79,19 @@ export default function ImageGalleryInput({
     try {
       const added: string[] = [];
 
-      for (const file of imageFiles) {
-        const optimized = await optimizeImage(file, 1600, 0.8);
+      for (const file of acceptedFiles) {
+        const isVector = file.type === "image/svg+xml" || /\.svg$/i.test(file.name);
+        const isPdf = file.type === "application/pdf" || /\.pdf$/i.test(file.name);
+
+        // SVG e PDF passam intactos — recomprimir um vetor no Canvas o
+        // rasterizaria, e um PDF nem carrega como `<img>`.
+        const { dataUrl, extension, size } = isVector || isPdf
+          ? await processImagePreservingFormat(file, 1600)
+          : { ...(await optimizeImage(file, 1600, 0.8)), extension: "webp" };
 
         // Modo de teste: sem sessão o Storage recusaria; fica embutida.
         if (isDevPreview()) {
-          added.push(optimized.dataUrl);
+          added.push(dataUrl);
           continue;
         }
 
@@ -94,10 +104,10 @@ export default function ImageGalleryInput({
           .replace(/^-+|-+$/g, "");
         const path = joinPath(
           destination,
-          `${base || "imagem"}-${Date.now().toString().slice(-5)}.webp`
+          `${base || "imagem"}-${Date.now().toString().slice(-5)}.${extension}`
         );
 
-        await saveImage(path, optimized.dataUrl, optimized.size);
+        await saveImage(path, dataUrl, size);
         added.push(`db:${path}`);
       }
 
@@ -123,7 +133,7 @@ export default function ImageGalleryInput({
       <input
         ref={fileInputRef}
         type="file"
-        accept="image/*"
+        accept="image/*,.pdf,application/pdf"
         multiple
         className="hidden"
         onChange={(e) => {
@@ -255,7 +265,7 @@ export default function ImageGalleryInput({
               </div>
             )}
 
-            <div className="grid flex-1 grid-cols-2 gap-3 overflow-y-auto p-5 sm:grid-cols-3">
+            <div className="grid flex-1 auto-rows-min grid-cols-2 gap-3 overflow-y-auto p-5 sm:grid-cols-3">
               {visibleImages.length === 0 && (
                 <p className="col-span-full py-8 text-center text-xs text-slate-500">
                   {language === "en" ? "No saved images yet." : "Nenhuma imagem salva ainda."}
@@ -274,7 +284,14 @@ export default function ImageGalleryInput({
                     }`}
                   >
                     <div className="aspect-video w-full overflow-hidden bg-slate-100 dark:bg-slate-950">
-                      <img src={img.url} alt="" loading="lazy" className="h-full w-full object-cover" />
+                      {isPdfRef(img.name) ? (
+                        <div className="flex h-full w-full items-center justify-center gap-1.5 text-slate-500 dark:text-slate-400">
+                          <FileText className="h-5 w-5 shrink-0" />
+                          <span className="text-xs font-semibold">PDF</span>
+                        </div>
+                      ) : (
+                        <img src={img.url} alt="" loading="lazy" className="h-full w-full object-cover" />
+                      )}
                     </div>
                     <span className="block truncate px-1.5 py-1 font-mono text-[10px] text-slate-500">
                       {isSelected ? "✓ " : ""}

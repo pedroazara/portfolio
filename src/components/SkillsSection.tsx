@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { motion } from "motion/react";
 import { Skill, SkillCategory } from "../types";
 import { Award, Plus, FolderPlus, Edit2, Trash2, Star, Tag } from "lucide-react";
 import EditModal from "./EditModal";
@@ -126,10 +127,12 @@ function SkillRowContent({ skill, language, accent, isEditMode, onEdit, onDelete
 
         {/* Visual progress bar tinted per category */}
         <div className="h-1.5 w-full rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden print:hidden">
-          <div
+          <motion.div
             className={`h-full rounded-full ${accent.bar}`}
-            style={{ width: `${(shownLevel / 5) * 100}%` }}
-          ></div>
+            initial={{ width: 0 }}
+            animate={{ width: `${(shownLevel / 5) * 100}%` }}
+            transition={{ duration: 0.6, ease: "easeOut" }}
+          />
         </div>
       </div>
 

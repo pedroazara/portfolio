@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { ImagePlus, X, Loader2, Search, Columns2 } from "lucide-react";
-import { StoredImage, listImages, saveImage, fileNameOf, joinPath, GENERAL_FOLDER } from "../utils/imageDb";
+import { StoredImage, listImages, saveImage, fileNameOf, joinPath, GENERAL_FOLDER, isPdfRef } from "../utils/imageDb";
 import { processImagePreservingFormat } from "../utils/imageOptimizer";
 import { Language } from "../lib/translations";
 import { isDevPreview } from "../lib/devPreview";
@@ -212,9 +212,12 @@ export default function ArticleContentEditor({
     onChange((value || "").replace(fullMatch, "").replace(/\n{3,}/g, "\n\n"));
   };
 
+  // Um PDF não é algo que a marcação `![]()` consiga embutir no corpo do
+  // artigo — este seletor é só para imagens que entram inline no texto.
+  const pickable = images.filter((img) => !isPdfRef(img.name));
   const visibleImages = search
-    ? images.filter((img) => img.name.toLowerCase().includes(search.toLowerCase()))
-    : images;
+    ? pickable.filter((img) => img.name.toLowerCase().includes(search.toLowerCase()))
+    : pickable;
 
   return (
     <div className="space-y-2 font-sans">
@@ -406,7 +409,7 @@ export default function ArticleContentEditor({
               </div>
             )}
 
-            <div className="grid flex-1 grid-cols-2 gap-3 overflow-y-auto p-5 sm:grid-cols-3">
+            <div className="grid flex-1 auto-rows-min grid-cols-2 gap-3 overflow-y-auto p-5 sm:grid-cols-3">
               {visibleImages.length === 0 && (
                 <p className="col-span-full py-8 text-center text-xs text-slate-500">
                   {language === "en" ? "No saved images yet." : "Nenhuma imagem salva ainda."}

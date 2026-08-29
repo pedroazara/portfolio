@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Download, Sun, Moon, Menu, X, Lock, ChevronDown, ArrowRight, LayoutDashboard } from "lucide-react";
+import { motion, AnimatePresence } from "motion/react";
 import { OrbitaIcon } from "./OrbitaIcon";
 import { generateResumePDF } from "../utils/pdfGenerator";
 import { stripLocale, localePath } from "../lib/routes";
@@ -148,9 +149,13 @@ export default function GlobalHeader({
                     }`}
                   >
                     {item.label}
-                    {/* Active 2px bottom accent indicator */}
+                    {/* Active 2px bottom accent indicator — desliza entre os itens ao trocar de rota */}
                     {active && (
-                      <span className="absolute bottom-0 left-[12px] right-[12px] h-[2px] bg-acento rounded-full transition-all duration-160" />
+                      <motion.span
+                        layoutId="nav-active-indicator"
+                        className="absolute bottom-0 left-[12px] right-[12px] h-[2px] bg-acento rounded-full"
+                        transition={{ type: "spring", stiffness: 500, damping: 35 }}
+                      />
                     )}
                   </Link>
                 );
@@ -164,26 +169,36 @@ export default function GlobalHeader({
                 <button
                   type="button"
                   onClick={() => changeLanguage("pt")}
-                  className={`rounded-md px-2 py-1 text-[12px] font-bold transition-all cursor-pointer ${
-                    language === "pt"
-                      ? "bg-superficie text-acento shadow-xs"
-                      : "text-tinta-fraca hover:text-tinta"
+                  className={`relative rounded-md px-2 py-1 text-[12px] font-bold transition-colors cursor-pointer ${
+                    language === "pt" ? "text-acento" : "text-tinta-fraca hover:text-tinta"
                   }`}
                   aria-label="Mudar idioma para Português"
                 >
-                  PT
+                  {language === "pt" && (
+                    <motion.span
+                      layoutId="lang-pill-desktop"
+                      className="absolute inset-0 rounded-md bg-superficie shadow-xs"
+                      transition={{ type: "spring", stiffness: 500, damping: 35 }}
+                    />
+                  )}
+                  <span className="relative">PT</span>
                 </button>
                 <button
                   type="button"
                   onClick={() => changeLanguage("en")}
-                  className={`rounded-md px-2 py-1 text-[12px] font-bold transition-all cursor-pointer ${
-                    language === "en"
-                      ? "bg-superficie text-acento shadow-xs"
-                      : "text-tinta-fraca hover:text-tinta"
+                  className={`relative rounded-md px-2 py-1 text-[12px] font-bold transition-colors cursor-pointer ${
+                    language === "en" ? "text-acento" : "text-tinta-fraca hover:text-tinta"
                   }`}
                   aria-label="Change language to English"
                 >
-                  EN
+                  {language === "en" && (
+                    <motion.span
+                      layoutId="lang-pill-desktop"
+                      className="absolute inset-0 rounded-md bg-superficie shadow-xs"
+                      transition={{ type: "spring", stiffness: 500, damping: 35 }}
+                    />
+                  )}
+                  <span className="relative">EN</span>
                 </button>
               </div>
 
@@ -259,8 +274,15 @@ export default function GlobalHeader({
       </header>
 
       {/* Mobile Navigation Drawer Panel */}
-      {isMobileMenuOpen && (
-        <div className="no-print print:hidden min-[860px]:hidden fixed inset-0 z-50 flex flex-col bg-superficie text-tinta font-sans animate-in fade-in duration-150">
+      <AnimatePresence>
+        {isMobileMenuOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.15 }}
+            className="no-print print:hidden min-[860px]:hidden fixed inset-0 z-50 flex flex-col bg-superficie text-tinta font-sans"
+          >
           <div className="flex h-[56px] items-center justify-between border-b border-borda px-4">
             <div className="flex items-center gap-2">
               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-acento text-white p-0.5 shrink-0 shadow-xs">
@@ -278,7 +300,12 @@ export default function GlobalHeader({
             </button>
           </div>
 
-          <div className="flex-1 overflow-y-auto p-6 space-y-6">
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.2, delay: 0.05 }}
+            className="flex-1 overflow-y-auto p-6 space-y-6"
+          >
             <nav className="flex flex-col space-y-2" aria-label="Navegação mobile">
               {navItems.map((item) => {
                 const active = isRouteActive(item.path);
@@ -304,28 +331,38 @@ export default function GlobalHeader({
                 <span className="text-sm font-semibold text-tinta-fraca">
                   {language === "en" ? "Language" : "Idioma"}
                 </span>
-                <div className="flex rounded-lg bg-superficie-alta p-1 border border-borda-forte">
+                <div className="relative flex rounded-lg bg-superficie-alta p-1 border border-borda-forte">
                   <button
                     type="button"
                     onClick={() => changeLanguage("pt")}
-                    className={`rounded-md px-3 py-1.5 text-xs font-bold ${
-                      language === "pt"
-                        ? "bg-superficie text-acento shadow-xs"
-                        : "text-tinta-fraca"
+                    className={`relative rounded-md px-3 py-1.5 text-xs font-bold ${
+                      language === "pt" ? "text-acento" : "text-tinta-fraca"
                     }`}
                   >
-                    Português (PT)
+                    {language === "pt" && (
+                      <motion.span
+                        layoutId="lang-pill-mobile"
+                        className="absolute inset-0 rounded-md bg-superficie shadow-xs"
+                        transition={{ type: "spring", stiffness: 500, damping: 35 }}
+                      />
+                    )}
+                    <span className="relative">Português (PT)</span>
                   </button>
                   <button
                     type="button"
                     onClick={() => changeLanguage("en")}
-                    className={`rounded-md px-3 py-1.5 text-xs font-bold ${
-                      language === "en"
-                        ? "bg-superficie text-acento shadow-xs"
-                        : "text-tinta-fraca"
+                    className={`relative rounded-md px-3 py-1.5 text-xs font-bold ${
+                      language === "en" ? "text-acento" : "text-tinta-fraca"
                     }`}
                   >
-                    English (EN)
+                    {language === "en" && (
+                      <motion.span
+                        layoutId="lang-pill-mobile"
+                        className="absolute inset-0 rounded-md bg-superficie shadow-xs"
+                        transition={{ type: "spring", stiffness: 500, damping: 35 }}
+                      />
+                    )}
+                    <span className="relative">English (EN)</span>
                   </button>
                 </div>
               </div>
@@ -395,9 +432,10 @@ export default function GlobalHeader({
                 </button>
               )}
             </div>
-          </div>
-        </div>
-      )}
+          </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </>
   );
 }

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { getImage, getSyncImage } from "../utils/imageDb";
+import { FileText } from "lucide-react";
+import { getImage, getSyncImage, isPdfRef } from "../utils/imageDb";
 
 interface LocalImageProps {
   src?: string;
@@ -68,6 +69,17 @@ export default function LocalImage({ src, fallback, ...props }: LocalImageProps)
   if (isLoading) {
     return (
       <div className={`animate-pulse bg-slate-100 rounded-lg ${props.className || "w-full h-48"}`} />
+    );
+  }
+
+  // Um PDF não abre dentro de uma tag <img> — mostramos um cartão com ícone
+  // no lugar da miniatura que o navegador nunca conseguiria desenhar.
+  if (src && isPdfRef(src)) {
+    return (
+      <div className={`flex items-center justify-center gap-1.5 bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400 ${props.className || "w-full h-48"}`}>
+        <FileText className="h-5 w-5 shrink-0" />
+        <span className="truncate text-xs font-semibold">PDF</span>
+      </div>
     );
   }
 

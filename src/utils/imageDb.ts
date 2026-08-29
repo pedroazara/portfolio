@@ -35,6 +35,16 @@ export function fileNameOf(path: string): string {
   return path.split("/").pop() || path;
 }
 
+/**
+ * Indica se uma referência de imagem — caminho do bucket, `db:caminho`, URL
+ * comum ou data URL embutida (modo de teste) — aponta para um PDF, o único
+ * formato aceito que uma tag `<img>` não consegue exibir. Quem for montar uma
+ * miniatura ou decidir se oferece o recorte 16:9 precisa desviar nesse caso.
+ */
+export function isPdfRef(ref: string): boolean {
+  return ref.startsWith("data:application/pdf") || /\.pdf$/i.test(ref);
+}
+
 /** Só a pasta de um caminho; string vazia quando o arquivo está na raiz. */
 export function folderOf(path: string): string {
   const parts = path.split("/");

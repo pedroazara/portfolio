@@ -30,7 +30,7 @@ export async function processImagePreservingFormat(
   maxDimension: number = 1600
 ): Promise<FormatPreservedImageResult> {
   const mimeType = file.type || "image/png";
-  
+
   // Extension mapping
   let extension = "png";
   if (mimeType.includes("jpeg") || mimeType.includes("jpg")) {
@@ -43,6 +43,8 @@ export async function processImagePreservingFormat(
     extension = "svg";
   } else if (mimeType.includes("png")) {
     extension = "png";
+  } else if (mimeType.includes("pdf")) {
+    extension = "pdf";
   } else {
     // try reading extension from file name
     const match = file.name.match(/\.([a-zA-Z0-9]+)$/);
@@ -52,13 +54,15 @@ export async function processImagePreservingFormat(
   }
 
   /**
-   * Animação e vetor saem daqui intactos.
+   * Vetor, animação e documento saem daqui intactos.
    *
-   * Redesenhar um GIF no canvas o deixaria parado no primeiro quadro, e um SVG
-   * não tem tamanho fixo para reduzir — ele já se adapta a qualquer largura.
+   * Redesenhar um GIF no canvas o deixaria parado no primeiro quadro; um SVG
+   * não tem tamanho fixo para reduzir — ele já se adapta a qualquer largura; e
+   * um PDF nem chega a carregar como `<img>`, então passar pelo Canvas não é
+   * uma opção.
    */
-  if (extension === "gif" || extension === "svg") {
-    return lerComoEsta(file, extension, mimeType);
+  if (extension === "gif" || extension === "svg" || extension === "pdf") {
+    return lerComoEsta(file, extension, extension === "pdf" ? "application/pdf" : mimeType);
   }
 
   const dataUrlOriginal = await lerDataUrl(file);
