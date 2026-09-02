@@ -84,6 +84,8 @@ export interface Project {
   draft?: boolean;
   /** Chave que revela este rascunho por um link de prévia. */
   chavePrevia?: string;
+  /** Fontes, artigos e materiais citados — exibidos como "Referências". */
+  references?: ExperienceLink[];
 }
 
 export interface Subperiod {
@@ -200,6 +202,8 @@ export interface BlogPost {
   draft?: boolean;
   /** Chave que revela este rascunho por um link de prévia. */
   chavePrevia?: string;
+  /** Fontes, artigos e materiais citados — exibidos como "Referências". */
+  references?: ExperienceLink[];
 }
 
 export interface ResumeData {

@@ -12,6 +12,8 @@ import ImageGalleryInput from "./ImageGalleryInput";
 import ArticleContentEditor from "./ArticleContentEditor";
 import MarkdownRenderer from "./MarkdownRenderer";
 import TranslateButton from "./TranslateButton";
+import ReferenciasEditor from "./ReferenciasEditor";
+import ReferenciasSection from "./ReferenciasSection";
 import { autoTranslateFields } from "../lib/translator";
 import { projectFolder } from "../utils/imageDb";
 import { EditTarget, scrollTextareaToLine } from "../utils/editTarget";
@@ -277,6 +279,7 @@ export default function ProjectForm({
       scientificRelevance: formData.scientificRelevance || "",
       scientificRelevanceEn: formData.scientificRelevanceEn || "",
       galleryImages: formData.galleryImages || [],
+      references: (formData.references || []).filter((r) => r.title.trim() || r.url.trim()),
       featured: formData.featured || false,
       emAndamento: formData.emAndamento || formData.status === "Em andamento" || formData.status === "In Progress",
       status: formData.emAndamento || formData.status === "Em andamento"
@@ -686,6 +689,15 @@ export default function ProjectForm({
                     />
                   </div>
 
+                  {/* 8. REFERÊNCIAS */}
+                  <div className="space-y-3 pt-2 border-t border-slate-100 dark:border-slate-800">
+                    <ReferenciasEditor
+                      value={formData.references || []}
+                      onChange={(refs) => setFormData({ ...formData, references: refs })}
+                      language={language}
+                    />
+                  </div>
+
                 </form>
               ) : (
                 /* --- PREVIEW MODE (EXACT ARTICLE/POST READING VIEW) --- */
@@ -803,6 +815,9 @@ export default function ProjectForm({
                       </div>
                     </div>
                   )}
+
+                  {/* Referências */}
+                  <ReferenciasSection references={formData.references} language={language} />
                 </div>
               )}
             </div>

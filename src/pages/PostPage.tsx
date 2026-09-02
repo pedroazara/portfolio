@@ -17,6 +17,7 @@ import { COVER_ASPECT_CLASS } from "../lib/coverAspect";
 import { useLocalePath } from "../lib/routes";
 import { editTargetFromViewport } from "../utils/editTarget";
 import ProgressoLeitura from "../components/ProgressoLeitura";
+import ReferenciasSection from "../components/ReferenciasSection";
 
 interface PostPageProps {
   /** Trecho da URL: o `codigo` ou `id` do artigo. */
@@ -381,6 +382,9 @@ export default function PostPage({
           </div>
         </div>
       )}
+
+      {/* Referências */}
+      <ReferenciasSection references={post.references} language={language} />
 
       {/* Anterior / próximo */}
       {(newerPost || olderPost) && (

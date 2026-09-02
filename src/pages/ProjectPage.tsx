@@ -15,6 +15,7 @@ import TableOfContents from "../components/TableOfContents";
 import ContentUnavailable from "../components/ContentUnavailable";
 import FichaProjeto from "../components/FichaProjeto";
 import LinksDoProjeto from "../components/LinksDoProjeto";
+import ReferenciasSection from "../components/ReferenciasSection";
 import { formatarData, formatarPeriodo } from "../lib/periodo";
 import { previaLiberada } from "../lib/previewLink";
 import ProjectNavList from "../components/ProjectNavList";
@@ -405,6 +406,9 @@ export default function ProjectPage({
             </div>
           </section>
         )}
+
+        {/* Referências */}
+        <ReferenciasSection references={project.references} language={language} />
 
         {/* Anterior / próximo */}
         {(previousProject || nextProject) && (

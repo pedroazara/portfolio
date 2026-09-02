@@ -9,6 +9,7 @@ import ArticleContentEditor from "../components/ArticleContentEditor";
 import ImageSelectorInput from "../components/ImageSelectorInput";
 import MarkdownRenderer from "../components/MarkdownRenderer";
 import TranslateButton from "../components/TranslateButton";
+import ReferenciasEditor from "../components/ReferenciasEditor";
 import EditorActionRail from "../components/EditorActionRail";
 import { autoTranslateFields } from "../lib/translator";
 import { localePath } from "../lib/routes";
@@ -38,6 +39,7 @@ const emptyPost = (): Partial<BlogPost> => ({
   content: "",
   contentEn: "",
   tags: [],
+  references: [],
   imageUrl: "",
   readTime: "",
   date: new Date().toISOString().split("T")[0],
@@ -171,6 +173,7 @@ export default function PostEditorPage({ slug, posts, onUpdatePosts, language }:
       readTime: form.readTime?.trim() || estimateReadTime(content, "pt"),
       category: form.category || "Instrumentação",
       categoryEn: form.categoryEn || "Instrumentation",
+      references: (form.references || []).filter((r) => r.title.trim() || r.url.trim()),
       draft: draftIntentRef.current ?? isDraft,
       // A chave de prévia nasce fora do formulário visível, ao pedir o link;
       // sem esta linha o `...existing` acima a descartaria no salvamento.
@@ -321,6 +324,14 @@ export default function PostEditorPage({ slug, posts, onUpdatePosts, language }:
                   {language === "en" ? "Blank calculates from the text." : "Em branco, calcula pelo texto."}
                 </p>
               </div>
+            </div>
+
+            <div className="border-t border-slate-200 pt-5 dark:border-slate-800">
+              <ReferenciasEditor
+                value={form.references || []}
+                onChange={(refs) => update({ references: refs })}
+                language={language}
+              />
             </div>
 
             {/* O estado de rascunho é decidido pelos botões da barra lateral —
