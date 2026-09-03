@@ -782,6 +782,7 @@ export default function App() {
               projects={resumeData.projects}
               categories={resumeData.categories}
               posts={resumeData.posts || []}
+              authorName={resumeData.profile.name || "Pedro Henrique Almeida"}
               isEditMode={isEditMode}
               language={language}
             />

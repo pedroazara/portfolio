@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "motion/react";
 import {
   X, PenTool, Eye, Sparkles, FolderKanban, Check, ExternalLink, Github,
   ImageIcon, FlaskConical, BookOpen, Star, Plus, Trash2, RefreshCw, Link2, Share2, Clock,
-  ChevronDown, Tag
+  ChevronDown, Tag, Lightbulb
 } from "lucide-react";
 import { Project, ProjectCategory } from "../types";
 import { Language } from "../lib/translations";
@@ -217,6 +217,11 @@ export default function ProjectForm({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
+    // Estado do projeto: mutuamente exclusivos, "em andamento" prevalece se os
+    // dois vierem marcados de algum jeito (não deveria acontecer pela UI).
+    const isInProgress = Boolean(formData.emAndamento) || formData.status === "Em andamento" || formData.status === "In Progress";
+    const isPlanned = !isInProgress && (Boolean(formData.emPlanejamento) || formData.status === "Em planejamento" || formData.status === "Planning");
+
     // Endereço do link: o que foi digitado, ou o título como antes.
     const codigo = slugify(formData.codigo || "") || slugify(formData.title || "");
     if (codigo && reservedSlugs.includes(codigo)) {
@@ -281,10 +286,13 @@ export default function ProjectForm({
       galleryImages: formData.galleryImages || [],
       references: (formData.references || []).filter((r) => r.title.trim() || r.url.trim()),
       featured: formData.featured || false,
-      emAndamento: formData.emAndamento || formData.status === "Em andamento" || formData.status === "In Progress",
-      status: formData.emAndamento || formData.status === "Em andamento"
+      emAndamento: isInProgress,
+      emPlanejamento: isPlanned,
+      status: isInProgress
         ? "Em andamento"
-        : (formData.status || undefined),
+        : isPlanned
+          ? "Em planejamento"
+          : (formData.status || undefined),
       blogPostId: formData.blogPostId || undefined,
     };
 
@@ -435,6 +443,9 @@ export default function ProjectForm({
                             setFormData({
                               ...formData,
                               emAndamento: nextInProgress,
+                              // Mutuamente exclusivo com "em planejamento" — um projeto
+                              // não está nos dois estados ao mesmo tempo.
+                              emPlanejamento: nextInProgress ? false : formData.emPlanejamento,
                               status: nextInProgress
                                 ? "Em andamento"
                                 : undefined,
@@ -449,6 +460,33 @@ export default function ProjectForm({
                           <span className={`h-2 w-2 rounded-full ${formData.emAndamento || formData.status === "Em andamento" || formData.status === "In Progress" ? "bg-emerald-500 animate-pulse" : "bg-slate-400"}`} />
                           <Clock className="h-3.5 w-3.5" />
                           <span>{language === "en" ? "In Progress" : "Em Andamento"}</span>
+                        </button>
+
+                        {/* Em Planejamento Toggle */}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const isCurrentlyPlanned = formData.emPlanejamento || formData.status === "Em planejamento" || formData.status === "Planning";
+                            const nextPlanned = !isCurrentlyPlanned;
+                            setFormData({
+                              ...formData,
+                              emPlanejamento: nextPlanned,
+                              // Mutuamente exclusivo com "em andamento".
+                              emAndamento: nextPlanned ? false : formData.emAndamento,
+                              status: nextPlanned
+                                ? "Em planejamento"
+                                : undefined,
+                            });
+                          }}
+                          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer border ${
+                            formData.emPlanejamento || formData.status === "Em planejamento" || formData.status === "Planning"
+                              ? "bg-sky-500/15 border-sky-500/40 text-sky-700 dark:text-sky-300"
+                              : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
+                          }`}
+                        >
+                          <span className={`h-2 w-2 rounded-full ${formData.emPlanejamento || formData.status === "Em planejamento" || formData.status === "Planning" ? "bg-sky-500" : "bg-slate-400"}`} />
+                          <Lightbulb className="h-3.5 w-3.5" />
+                          <span>{language === "en" ? "Planning" : "Em Planejamento"}</span>
                         </button>
                       </div>
                     </div>

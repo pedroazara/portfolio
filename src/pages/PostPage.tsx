@@ -18,6 +18,8 @@ import { useLocalePath } from "../lib/routes";
 import { editTargetFromViewport } from "../utils/editTarget";
 import ProgressoLeitura from "../components/ProgressoLeitura";
 import ReferenciasSection from "../components/ReferenciasSection";
+import CitarBotao from "../components/CitarBotao";
+import { extractYear } from "../lib/citation";
 
 interface PostPageProps {
   /** Trecho da URL: o `codigo` ou `id` do artigo. */
@@ -116,6 +118,14 @@ export default function PostPage({
     setTimeout(() => setCopiedLink(false), 2000);
   };
 
+  const citationSource = {
+    title,
+    authorName,
+    year: extractYear(post.date),
+    siteName: language === "en" ? `${authorName}'s Blog` : `Blog de ${authorName}`,
+    url: `${window.location.origin}${lp(`/blog/${slugOf(post)}`)}`,
+  };
+
   // Navegação anterior/próximo entre posts publicados, do mais novo ao mais
   // antigo. "Anterior" é o post mais recente que este; "próximo", o seguinte.
   const published = posts
@@ -171,6 +181,8 @@ export default function PostPage({
               ? language === "en" ? "Copied!" : "Copiado!"
               : language === "en" ? "Share" : "Compartilhar"}
           </button>
+
+          <CitarBotao source={citationSource} language={language} />
 
           {isEditMode && (
             <button

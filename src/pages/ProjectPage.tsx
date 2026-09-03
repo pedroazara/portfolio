@@ -16,6 +16,8 @@ import ContentUnavailable from "../components/ContentUnavailable";
 import FichaProjeto from "../components/FichaProjeto";
 import LinksDoProjeto from "../components/LinksDoProjeto";
 import ReferenciasSection from "../components/ReferenciasSection";
+import CitarBotao from "../components/CitarBotao";
+import { extractYear } from "../lib/citation";
 import { formatarData, formatarPeriodo } from "../lib/periodo";
 import { previaLiberada } from "../lib/previewLink";
 import ProjectNavList from "../components/ProjectNavList";
@@ -30,6 +32,7 @@ interface ProjectPageProps {
   projects: Project[];
   categories: ProjectCategory[];
   posts: BlogPost[];
+  authorName: string;
   isEditMode: boolean;
   language: Language;
   /** Se os dados já chegaram, e se a leitura da nuvem falhou. */
@@ -52,6 +55,7 @@ export default function ProjectPage({
   projects,
   categories,
   posts,
+  authorName,
   isEditMode,
   language,
   isDataLoaded = true,
@@ -140,7 +144,12 @@ export default function ProjectPage({
     Boolean(project.emAndamento) ||
     project.status === "Em andamento" ||
     project.status === "In Progress";
-  const isConcluded = Boolean(project.status) && !isInProgress;
+  const isPlanned =
+    !isInProgress &&
+    (Boolean(project.emPlanejamento) ||
+      project.status === "Em planejamento" ||
+      project.status === "Planning");
+  const isConcluded = Boolean(project.status) && !isInProgress && !isPlanned;
 
   const projCatIds = project.categoryIds && project.categoryIds.length > 0
     ? project.categoryIds
@@ -198,6 +207,16 @@ export default function ProjectPage({
     setTimeout(() => setCopiedLink(false), 2000);
   };
 
+  const citationSource = {
+    title,
+    authorName,
+    year: extractYear(
+      typeof project.periodo === "string" ? project.periodo : (project.periodo?.fim || project.periodo?.inicio)
+    ),
+    siteName: language === "en" ? `${authorName}'s Projects` : `Projetos de ${authorName}`,
+    url: `${window.location.origin}${lp(`/project/${slugOf(project)}`)}`,
+  };
+
   return (
     // Três colunas em telas largas: sumário | leitura | projetos.
     // Abaixo de `xl` as laterais somem e sobra só a coluna de leitura.
@@ -231,6 +250,8 @@ export default function ProjectPage({
                 ? language === "en" ? "Copied!" : "Copiado!"
                 : language === "en" ? "Share" : "Compartilhar"}
             </button>
+
+            <CitarBotao source={citationSource} language={language} />
 
             {isEditMode && (
               <button
@@ -307,6 +328,7 @@ export default function ProjectPage({
           <FichaProjeto
             periodo={periodLabel}
             emAndamento={isInProgress}
+            emPlanejamento={isPlanned}
             situacao={project.status}
             areas={projCategories.map((cat) => (language === "en" && cat.nameEn) ? cat.nameEn : cat.name)}
             tecnologias={project.stack && project.stack.length > 0 ? project.stack : (project.tags || [])}

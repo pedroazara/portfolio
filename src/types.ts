@@ -65,6 +65,8 @@ export interface Project {
   blogPostId?: string; // Direct link to blog post
   status?: string;
   emAndamento?: boolean;
+  /** Ainda não começou a ser executado — só planejado. */
+  emPlanejamento?: boolean;
   periodo?: string | {
     inicio: string;
     fim?: string;

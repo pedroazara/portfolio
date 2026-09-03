@@ -530,10 +530,15 @@ export default function ProjectSection({
                       )}
                     </div>
 
-                    {(proj.emAndamento || proj.status === "Em andamento" || proj.status === "em_andamento" || proj.status === "In Progress") && (
+                    {(proj.emAndamento || proj.status === "Em andamento" || proj.status === "em_andamento" || proj.status === "In Progress") ? (
                       <span className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full bg-emerald-500/10 border border-emerald-500/30 px-2 py-1 text-[9.5px] font-bold text-emerald-700 dark:text-emerald-400 font-mono">
                         <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-500 animate-pulse" />
                         {language === "en" ? "In Progress" : "Em Andamento"}
+                      </span>
+                    ) : (proj.emPlanejamento || proj.status === "Em planejamento" || proj.status === "em_planejamento" || proj.status === "Planning") && (
+                      <span className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full bg-sky-500/10 border border-sky-500/30 px-2 py-1 text-[9.5px] font-bold text-sky-700 dark:text-sky-400 font-mono">
+                        <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-sky-500" />
+                        {language === "en" ? "Planning" : "Em Planejamento"}
                       </span>
                     )}
                   </div>

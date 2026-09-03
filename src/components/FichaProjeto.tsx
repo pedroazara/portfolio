@@ -4,6 +4,7 @@ import { Language } from "../lib/translations";
 interface FichaProjetoProps {
   periodo?: string | null;
   emAndamento?: boolean;
+  emPlanejamento?: boolean;
   situacao?: string | null;
   areas?: string[];
   tecnologias?: string[];
@@ -37,6 +38,7 @@ const ROTULO = "font-mono text-[10px] font-bold uppercase tracking-widest text-t
 export default function FichaProjeto({
   periodo,
   emAndamento,
+  emPlanejamento,
   situacao,
   areas = [],
   tecnologias = [],
@@ -51,7 +53,7 @@ export default function FichaProjeto({
     curtos.push({ rotulo: isEn ? "Period" : "Período", valor: periodo });
   }
 
-  if (emAndamento || situacao) {
+  if (emAndamento || emPlanejamento || situacao) {
     curtos.push({
       rotulo: isEn ? "Status" : "Situação",
       valor: (
@@ -59,7 +61,14 @@ export default function FichaProjeto({
           {emAndamento && (
             <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-500 animate-pulse no-print" />
           )}
-          {emAndamento ? (isEn ? "In progress" : "Em andamento") : situacao}
+          {!emAndamento && emPlanejamento && (
+            <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-sky-500 no-print" />
+          )}
+          {emAndamento
+            ? (isEn ? "In progress" : "Em andamento")
+            : emPlanejamento
+              ? (isEn ? "Planning" : "Em planejamento")
+              : situacao}
         </span>
       ),
     });
