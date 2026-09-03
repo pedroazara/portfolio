@@ -8,6 +8,15 @@
   --font-display: "Plus Jakarta Sans", sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
   --animate-spin-slow: spin 12s linear infinite;
+  /* Fundo do elevator pitch: o gradiente escorrega devagar entre as pontas
+     da paleta em vez de ficar parado — usado com `bg-[length:200%_200%]`,
+     que dá espaço para a posição andar sem repetir a mesma faixa de cor. */
+  --animate-gradient-flow: gradient-flow 18s ease-in-out infinite;
+}
+
+@keyframes gradient-flow {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
 }
 
 /**

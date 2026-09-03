@@ -26,6 +26,7 @@ const LoginModal = lazy(() => import("./components/LoginModal"));
 const ImageBankModal = lazy(() => import("./components/ImageBankModal"));
 const AdminManagementModal = lazy(() => import("./components/AdminManagementModal"));
 const PdfPreviewModal = lazy(() => import("./components/PdfPreviewModal"));
+const ElevatorPitchModal = lazy(() => import("./components/ElevatorPitchModal"));
 import Footer from "./components/Footer";
 import LocalImage from "./components/LocalImage";
 import AppSkeleton from "./components/AppSkeleton";
@@ -191,12 +192,26 @@ export default function App() {
   const [isAdminManagementOpen, setIsAdminManagementOpen] = useState(false);
 
   const [isPdfPreviewOpen, setIsPdfPreviewOpen] = useState(false);
+  const [isElevatorPitchOpen, setIsElevatorPitchOpen] = useState(false);
+  // Duas portas de entrada, um modal só: o botão ao lado de "Baixar CV" leva
+  // direto à apresentação, o de "Editar perfil" leva ao preparo — a tela
+  // inicial guarda qual delas foi usada.
+  const [vistaInicialElevatorPitch, setVistaInicialElevatorPitch] = useState<"editar" | "apresentar">("editar");
+  const abrirElevatorPitchEditor = () => {
+    setVistaInicialElevatorPitch("editar");
+    setIsElevatorPitchOpen(true);
+  };
+  const abrirElevatorPitchApresentacao = () => {
+    setVistaInicialElevatorPitch("apresentar");
+    setIsElevatorPitchOpen(true);
+  };
   // Cada modal do painel entra no DOM na primeira vez que abre e fica montado
   // depois disso — o pedaço já foi baixado, e a animação de saída sobrevive.
   const precisaLogin = useMountedOnce(isLoginModalOpen);
   const precisaBancoDeImagens = useMountedOnce(isImageBankOpen);
   const precisaPainel = useMountedOnce(isAdminManagementOpen);
   const precisaPdf = useMountedOnce(isPdfPreviewOpen);
+  const precisaElevatorPitch = useMountedOnce(isElevatorPitchOpen);
   const [showAutoSaveBanner, setShowAutoSaveBanner] = useState(false);
   const [isGlobalCollapsed, setIsGlobalCollapsed] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -708,6 +723,7 @@ export default function App() {
             onUpdateProfile={handleUpdateProfile}
             isAuthenticated={isAuthenticated}
             onOpenPdfPreview={() => setIsPdfPreviewOpen(true)}
+            onOpenElevatorPitchPresent={abrirElevatorPitchApresentacao}
             language={language}
           />
         ) : activePage === "cv" ? (
@@ -720,6 +736,7 @@ export default function App() {
               profile={resumeData.profile}
               isEditMode={isEditMode}
               onOpenPdfPreview={() => setIsPdfPreviewOpen(true)}
+              onOpenElevatorPitchEditor={abrirElevatorPitchEditor}
               language={language}
             />
 
@@ -911,6 +928,16 @@ export default function App() {
             isOpen={isPdfPreviewOpen}
             onClose={() => setIsPdfPreviewOpen(false)}
             resumeData={resumeData}
+            language={language}
+          />
+        )}
+
+        {precisaElevatorPitch && (
+          <ElevatorPitchModal
+            isOpen={isElevatorPitchOpen}
+            onClose={() => setIsElevatorPitchOpen(false)}
+            data={resumeData}
+            vistaInicial={vistaInicialElevatorPitch}
             language={language}
           />
         )}

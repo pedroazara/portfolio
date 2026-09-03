@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { Profile } from "../types";
-import { Mail, Phone, MapPin, Globe, Github, Linkedin, Twitter, Edit3, Camera, Download, FileText, ArrowRight } from "lucide-react";
+import { Mail, Phone, MapPin, Globe, Github, Linkedin, Twitter, Edit3, Camera, Download, FileText, ArrowRight, Presentation } from "lucide-react";
 import EditModal from "./EditModal";
 import { motion, AnimatePresence } from "motion/react";
 import LocalImage from "./LocalImage";
@@ -19,6 +19,8 @@ interface ResumeHeaderProps {
   language?: Language;
   isAuthenticated?: boolean;
   onOpenPdfPreview?: () => void;
+  /** Abre o elevator pitch direto na apresentação. Omitido, o botão não aparece. */
+  onOpenElevatorPitchPresent?: () => void;
 }
 
 export default function ResumeHeader({
@@ -28,6 +30,7 @@ export default function ResumeHeader({
   language = "pt",
   isAuthenticated = false,
   onOpenPdfPreview,
+  onOpenElevatorPitchPresent,
 }: ResumeHeaderProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formData, setFormData] = useState<Profile>({ ...profile });
@@ -264,6 +267,17 @@ export default function ResumeHeader({
               <Download className="h-4 w-4 shrink-0" />
               <span>{language === "en" ? "Download CV (PDF)" : "Baixar currículo (PDF)"}</span>
             </button>
+
+            {isEditMode && onOpenElevatorPitchPresent && (
+              <button
+                type="button"
+                onClick={onOpenElevatorPitchPresent}
+                className="inline-flex items-center gap-2 rounded-xl border border-slate-200 px-5 py-2.5 text-sm font-bold text-slate-700 transition-all hover:border-indigo-500 hover:text-indigo-600 dark:border-slate-700 dark:text-slate-200 dark:hover:border-indigo-500 dark:hover:text-indigo-400"
+              >
+                <Presentation className="h-4 w-4 shrink-0" />
+                <span>Elevator Pitch</span>
+              </button>
+            )}
 
             <Link
               to={localePath("/projetos", language)}

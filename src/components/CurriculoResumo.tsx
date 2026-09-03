@@ -1,6 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { Mail, MapPin, Download, PenLine } from "lucide-react";
+import { Mail, MapPin, Download, PenLine, Presentation } from "lucide-react";
 import { Profile } from "../types";
 import { Language } from "../lib/translations";
 import { localePath } from "../lib/routes";
@@ -10,6 +10,8 @@ interface CurriculoResumoProps {
   profile: Profile;
   isEditMode: boolean;
   onOpenPdfPreview: () => void;
+  /** Abre o preparo do elevator pitch. Omitido, o botão não aparece. */
+  onOpenElevatorPitchEditor?: () => void;
   language?: Language;
 }
 
@@ -31,6 +33,7 @@ export default function CurriculoResumo({
   profile,
   isEditMode,
   onOpenPdfPreview,
+  onOpenElevatorPitchEditor,
   language = "pt",
 }: CurriculoResumoProps) {
   const isEn = language === "en";
@@ -86,6 +89,16 @@ export default function CurriculoResumo({
               <PenLine className="h-3.5 w-3.5" />
               {isEn ? "Edit profile" : "Editar perfil"}
             </Link>
+          )}
+          {isEditMode && onOpenElevatorPitchEditor && (
+            <button
+              type="button"
+              onClick={onOpenElevatorPitchEditor}
+              className="flex items-center gap-1.5 rounded-lg border border-borda px-3 py-1.5 text-xs font-semibold text-tinta-suave transition-colors hover:bg-superficie-alta hover:text-tinta"
+            >
+              <Presentation className="h-3.5 w-3.5" />
+              Elevator Pitch
+            </button>
           )}
           <button
             type="button"

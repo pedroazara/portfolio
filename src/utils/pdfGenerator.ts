@@ -8,21 +8,27 @@ import { formatarData, formatarPeriodo } from "../lib/periodo";
  * não o azul-marinho genérico que existia antes — que não vinha de lugar
  * nenhum da identidade visual, só de um exemplo de currículo qualquer.
  */
-const INK_TITLE: [number, number, number] = [15, 23, 42]; // slate-900 — nome, cargo, títulos de item
-const INK_BODY: [number, number, number] = [51, 65, 85]; // slate-700 — corpo de texto
-const INK_META: [number, number, number] = [100, 116, 139]; // slate-500 — datas, metadados
-const INDIGO_HEADING: [number, number, number] = [67, 56, 202]; // indigo-700 — título de seção
-const INDIGO_ACCENT: [number, number, number] = [79, 70, 229]; // indigo-600 — sub-título, link, instituição
-const RULE_SOFT: [number, number, number] = [226, 232, 240]; // slate-200 — linha divisória
+export const INK_TITLE: [number, number, number] = [15, 23, 42]; // slate-900 — nome, cargo, títulos de item
+export const INK_BODY: [number, number, number] = [51, 65, 85]; // slate-700 — corpo de texto
+export const INK_META: [number, number, number] = [100, 116, 139]; // slate-500 — datas, metadados
+export const INDIGO_HEADING: [number, number, number] = [67, 56, 202]; // indigo-700 — título de seção
+export const INDIGO_ACCENT: [number, number, number] = [79, 70, 229]; // indigo-600 — sub-título, link, instituição
+export const RULE_SOFT: [number, number, number] = [226, 232, 240]; // slate-200 — linha divisória
 
 /**
- * O jsPDF pesa mais de 150 KB e só serve para exportar o currículo. Carregá-lo
- * sob demanda tira esse peso do carregamento inicial de quem só quer ler o site.
+ * O jsPDF pesa mais de 150 KB e só serve para exportar PDFs. Carregá-lo sob
+ * demanda tira esse peso do carregamento inicial de quem só quer ler o site.
  * O `import type` acima é apagado na compilação — não custa nada em runtime.
  */
-async function loadJsPDF() {
+export async function loadJsPDF() {
   const mod = await import("jspdf");
   return mod.jsPDF;
+}
+
+/** Mesma ideia do jsPDF acima: só entra no bundle de quem pede o PDF. */
+async function loadQRCode() {
+  const mod = await import("qrcode");
+  return mod.default;
 }
 
 /**
@@ -96,6 +102,7 @@ export async function createResumePDFDoc(data?: ResumeData): Promise<jsPDF | nul
   doc.setFont("helvetica", "bold");
   doc.setFontSize(22);
   doc.setTextColor(INK_TITLE[0], INK_TITLE[1], INK_TITLE[2]);
+  const nameWidth = doc.getTextWidth(profile.name);
   doc.text(profile.name, MARGIN_LEFT, y);
   y += 7.5;
 
@@ -115,6 +122,35 @@ export async function createResumePDFDoc(data?: ResumeData): Promise<jsPDF | nul
   doc.setFillColor(INDIGO_ACCENT[0], INDIGO_ACCENT[1], INDIGO_ACCENT[2]);
   doc.rect(MARGIN_LEFT, y - 2.6, 16, 0.9, "F");
   y += 2.5;
+
+  // QR code para o portfólio online, no canto superior direito. Só entra se
+  // houver espaço de sobra ao lado do nome — nomes compridos já ocupam a
+  // largura toda, e um QR por cima do texto seria pior do que nenhum QR.
+  const QR_SIZE = 16;
+  const QR_Y = 9;
+  const qrX = PAGE_WIDTH - MARGIN_RIGHT - QR_SIZE;
+  if (MARGIN_LEFT + nameWidth < qrX - 4) {
+    try {
+      const siteUrlRaw = (profile.website && profile.website.trim()) || "https://pedroazara.vercel.app";
+      const qrTarget = /^https?:\/\//i.test(siteUrlRaw) ? siteUrlRaw : `https://${siteUrlRaw}`;
+      const QRCode = await loadQRCode();
+      const qrDataUrl = await QRCode.toDataURL(qrTarget, {
+        margin: 0,
+        width: 240,
+        color: { dark: "#0f172a", light: "#ffffff" },
+      });
+      doc.addImage(qrDataUrl, "PNG", qrX, QR_Y, QR_SIZE, QR_SIZE);
+
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(6.5);
+      doc.setTextColor(INK_META[0], INK_META[1], INK_META[2]);
+      const qrLabel = qrTarget.replace(/^https?:\/\//i, "").replace(/\/$/, "");
+      doc.text(qrLabel, qrX + QR_SIZE / 2, QR_Y + QR_SIZE + 3, { align: "center" });
+    } catch (err) {
+      // Um QR a menos não impede o resto do currículo de sair.
+      console.error("Não foi possível gerar o QR code do currículo.", err);
+    }
+  }
 
   // Contact Grid - Simple, compact contact metadata string without trailing pipes
   doc.setFont("helvetica", "normal");

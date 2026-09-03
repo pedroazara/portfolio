@@ -14,6 +14,7 @@ interface HomePageProps {
   onUpdateProfile: (updated: Profile) => void;
   isAuthenticated: boolean;
   onOpenPdfPreview: () => void;
+  onOpenElevatorPitchPresent?: () => void;
   language: Language;
 }
 
@@ -38,6 +39,7 @@ export default function HomePage({
   onUpdateProfile,
   isAuthenticated,
   onOpenPdfPreview,
+  onOpenElevatorPitchPresent,
   language,
 }: HomePageProps) {
   return (
@@ -49,6 +51,7 @@ export default function HomePage({
         language={language}
         isAuthenticated={isAuthenticated}
         onOpenPdfPreview={onOpenPdfPreview}
+        onOpenElevatorPitchPresent={onOpenElevatorPitchPresent}
       />
 
       <ProjetosEmDestaque projects={projects} categories={categories} language={language} />
