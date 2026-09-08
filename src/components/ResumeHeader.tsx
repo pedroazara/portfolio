@@ -110,6 +110,9 @@ export default function ResumeHeader({
               <LocalImage
                 src={profile.avatarUrl}
                 alt={profile.name}
+                loading="eager"
+                fetchPriority="high"
+                sizes="(max-width: 768px) 176px, 240px"
                 referrerPolicy="no-referrer"
                 className="h-full w-full object-cover"
                 fallback={`https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(profile.name)}`}

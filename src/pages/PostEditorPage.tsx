@@ -15,6 +15,8 @@ import { autoTranslateFields } from "../lib/translator";
 import { localePath } from "../lib/routes";
 import { EditTargetState } from "../utils/editTarget";
 import { linkDePrevia, novaChavePrevia } from "../lib/previewLink";
+import { useEditorDraft } from "../hooks/useEditorDraft";
+import DraftRecovery from "../components/DraftRecovery";
 
 const CATEGORIES = [
   "Física Computacional",
@@ -62,6 +64,7 @@ export default function PostEditorPage({ slug, posts, onUpdatePosts, language }:
   const [editingLanguage, setEditingLanguage] = useState<Language>(language);
   const [view, setView] = useState<"edit" | "preview">("edit");
   const [isDirty, setIsDirty] = useState(false);
+  const recovery = useEditorDraft(`post:${existing?.id || "novo"}`, { form, tagsInput }, isDirty);
   // Artigo novo nasce rascunho: publicar é uma decisão, não um efeito colateral.
   const [isDraft, setIsDraft] = useState(() => existing?.draft ?? true);
 
@@ -187,6 +190,7 @@ export default function PostEditorPage({ slug, posts, onUpdatePosts, language }:
     const draft = complete.draft ?? false;
     draftIntentRef.current = null;
     setIsDraft(draft);
+    recovery.clear();
     setIsDirty(false);
 
     // Um rascunho não tem página pública; ficamos no editor para continuar.
@@ -207,6 +211,8 @@ export default function PostEditorPage({ slug, posts, onUpdatePosts, language }:
       <div className="min-w-0 lg:order-1">
         {/* Escondido, e não desmontado, na prévia: a barra lateral submete este
             formulário pelo id, e um formulário fora do DOM não seria alcançado. */}
+        {recovery.saved && <DraftRecovery at={recovery.saved.at} onDiscard={recovery.clear} onRestore={() => { setForm(recovery.saved!.value.form); setTagsInput(recovery.saved!.value.tagsInput); setIsDirty(true); recovery.dismiss(); }} />}
+        {recovery.error && <p role="alert">{recovery.error}</p>}
         <form
           id="post-editor-form"
           onSubmit={handleSave}

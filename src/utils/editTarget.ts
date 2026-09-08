@@ -85,7 +85,7 @@ export function offsetOfLine(text: string, line: number): number {
  * a caractere: um `Range` sobre ela diz onde a linha caiu depois das quebras
  * automáticas, o que uma conta com altura de linha não conseguiria.
  */
-function rectAtOffset(layer: HTMLElement, offset: number): DOMRect | null {
+export function rectAtOffset(layer: HTMLElement, offset: number): DOMRect | null {
   const walker = document.createTreeWalker(layer, NodeFilter.SHOW_TEXT);
   let seen = 0;
   let node = walker.nextNode();

@@ -4,6 +4,7 @@ import { createManualBackup } from "../../lib/backupService";
 import { AlertTriangle, RotateCcw, ShieldAlert, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
 import { ResumeData } from "../../types";
 import ConfirmModal from "../ConfirmModal";
+import { parseResumeData } from "../../lib/contentSchema";
 
 /**
  * Ações destrutivas: restaurar o modelo e apagar o conteúdo.
@@ -52,7 +53,7 @@ export default function AdvancedTab({
     const reader = new FileReader();
     reader.onload = (event) => {
       try {
-        const json = JSON.parse(event.target?.result as string);
+        const json = parseResumeData(JSON.parse(event.target?.result as string));
         if (json && json.profile && Array.isArray(json.projects)) {
           setPendingJson(json as ResumeData);
           setConfirmText("");

@@ -9,6 +9,15 @@
  * it from the deployed bundle and run up usage on it.
  */
 import { ResumeData } from "../types";
+import { supabase } from "./supabase";
+import { isDevPreview } from "./devPreview";
+
+async function translationHeaders() {
+  if (isDevPreview()) throw new Error("Tradução externa desativada no modo de teste.");
+  const { data } = await supabase.auth.getSession();
+  if (!data.session) throw new Error("Entre como administrador para traduzir.");
+  return { "Content-Type": "application/json", Authorization: `Bearer ${data.session.access_token}` };
+}
 
 export interface TranslationResponse {
   translations?: Record<string, string>;
@@ -24,7 +33,7 @@ export async function translateText(text: string): Promise<string> {
 
   const res = await fetch("/api/translate", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: await translationHeaders(),
     body: JSON.stringify({ text }),
   });
 
@@ -65,7 +74,7 @@ export async function translateFields<T extends Record<string, string>>(
 
   const res = await fetch("/api/translate", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: await translationHeaders(),
     body: JSON.stringify({ texts: validFields }),
   });
 

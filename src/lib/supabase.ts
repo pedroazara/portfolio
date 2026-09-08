@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+import { isDevPreview } from "./devPreview";
 
 const rawUrl = import.meta.env.VITE_SUPABASE_URL as string | undefined;
 const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
@@ -41,9 +42,16 @@ export const supabase = createClient(
   anonKey || "placeholder-anon-key",
   {
     auth: {
-      persistSession: true,
-      autoRefreshToken: true,
+      persistSession: !isDevPreview(),
+      autoRefreshToken: !isDevPreview(),
+      detectSessionInUrl: !isDevPreview(),
+      storageKey: isDevPreview() ? "portfolio_sandbox_auth" : undefined,
     },
+    global: { fetch: async (input, init) => {
+      const method = (init?.method || (input instanceof Request ? input.method : "GET")).toUpperCase();
+      if (isDevPreview() && !["GET", "HEAD"].includes(method)) throw new Error("Operação externa bloqueada no modo de teste.");
+      return fetch(input, init);
+    } },
   }
 );
 

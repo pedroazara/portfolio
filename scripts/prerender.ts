@@ -1,13 +1,25 @@
 import fs from "fs";
 import path from "path";
 import dotenv from "dotenv";
-import { initialResumeData } from "../src/data/initialData";
+import { initialResumeData as templateData } from "../src/data/initialData";
+import { parseResumeData } from "../src/lib/contentSchema";
+import sanitizeHtml from "sanitize-html";
+import sharp from "sharp";
 import { slugOf } from "../src/utils/slug";
 import { localePath } from "../src/lib/routes";
 
 dotenv.config();
 
-const BASE_URL = "https://pedroazara.vercel.app";
+const BASE_URL = (process.env.VITE_SITE_URL || "https://pedroazara.vercel.app").replace(/\/$/, "");
+let initialResumeData = templateData;
+if (process.env.PRERENDER_SOURCE !== "template" && process.env.VITE_SUPABASE_URL && process.env.VITE_SUPABASE_ANON_KEY) {
+  const origin = process.env.VITE_SUPABASE_URL.replace(/\/(rest|auth|storage)\/v1\/?$/, "").replace(/\/$/, "");
+  const response = await fetch(`${origin}/rest/v1/portfolio?id=eq.main&select=data`, { headers: { apikey: process.env.VITE_SUPABASE_ANON_KEY, Authorization: `Bearer ${process.env.VITE_SUPABASE_ANON_KEY}` }, signal: AbortSignal.timeout(15000) });
+  if (!response.ok) throw new Error(`Cannot read published content for prerender: ${response.status}`);
+  const rows = await response.json();
+  if (!rows[0]?.data) throw new Error("Published portfolio missing. Use PRERENDER_SOURCE=template only for an intentional template build.");
+  initialResumeData = parseResumeData(rows[0].data);
+}
 
 // URL publica do Storage, para transformar referencias `db:` em URLs absolutas.
 // Sem a variavel de ambiente, caimos no banner generico em vez de emitir um
@@ -264,6 +276,7 @@ function buildRoutes(lang: Lang): RouteMeta[] {
       description: projDescription,
       type: "website",
       ogImage: resolveOgImage(project.imageUrl, `${BASE_URL}/og-home.svg`),
+      jsonLd: { "@context": "https://schema.org", "@type": "CreativeWork", name: projTitle, description: projDescription, author: { "@type": "Person", name: authorName }, url: `${BASE_URL}${localePath(`/projetos/${slugOf(project)}`, lang)}` },
       prerenderContent: content
     });
 
@@ -294,7 +307,8 @@ const allRoutes = [...ptRoutes, ...enRoutes];
 // Write static HTML files for each route
 allRoutes.forEach(route => {
   const urlPath = localePath(route.canonicalPath, route.lang);
-  const canonicalUrl = `${BASE_URL}${urlPath === "/" ? "" : urlPath}`;
+  if (!/^\/[a-zA-Z0-9_/-]*$/.test(urlPath) || urlPath.includes("..")) throw new Error("Unsafe prerender route");
+  const canonicalUrl = `${BASE_URL}${urlPath === "/" ? "" : urlPath.replace('/project/', '/projetos/')}`;
   const ptUrl = `${BASE_URL}${localePath(route.canonicalPath, "pt")}`;
   const enUrl = `${BASE_URL}${localePath(route.canonicalPath, "en")}`;
 
@@ -308,26 +322,27 @@ allRoutes.forEach(route => {
     <link rel="alternate" hreflang="x-default" href="${ptUrl}" />
     <meta property="og:title" content="${escapeXml(route.title || "")}" />
     <meta property="og:description" content="${escapeXml(route.description || "")}" />
-    <meta property="og:image" content="${route.ogImage}" />
+    <meta property="og:image" content="${escapeXml(route.ogImage.replace('/og-home.svg', '/og-home.png'))}" />
     <meta property="og:url" content="${canonicalUrl}" />
     <meta property="og:type" content="${route.type}" />
     <meta property="og:locale" content="${route.lang === "en" ? "en_US" : "pt_BR"}" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="${escapeXml(route.title || "")}" />
     <meta name="twitter:description" content="${escapeXml(route.description || "")}" />
-    <meta name="twitter:image" content="${route.ogImage}" />
+    <meta name="twitter:image" content="${escapeXml(route.ogImage.replace('/og-home.svg', '/og-home.png'))}" />
   `;
 
   if (route.jsonLd) {
-    headTags += `\n    <script type="application/ld+json">${JSON.stringify(route.jsonLd)}</script>`;
+    headTags += `\n    <script type="application/ld+json">${JSON.stringify(route.jsonLd).replace(/</g, "\\u003c")}</script>`;
   }
 
   let pageHtml = templateHtml.replace(/<title>.*?<\/title>/i, "");
+  pageHtml = pageHtml.replace(/<meta name="description"[^>]*>/i, "");
   pageHtml = pageHtml.replace(/<html([^>]*)lang="[^"]*"/i, `<html$1lang="${route.lang === "en" ? "en" : "pt-BR"}"`);
   pageHtml = pageHtml.replace(/<head>/i, `<head>\n${headTags}`);
   pageHtml = pageHtml.replace(
     `<div id="root"></div>`,
-    `<div id="root"><noscript>${route.prerenderContent}</noscript></div>`
+    `<div id="root">${sanitizeHtml(route.prerenderContent)}</div>`
   );
 
   let targetFilePath: string;
@@ -346,6 +361,9 @@ allRoutes.forEach(route => {
 // Generate robots.txt
 const robotsTxt = `User-agent: *
 Allow: /
+Disallow: /admin
+Disallow: /en/admin
+Disallow: /api/
 Sitemap: ${BASE_URL}/sitemap.xml
 `;
 fs.writeFileSync(path.join(DIST_DIR, "robots.txt"), robotsTxt, "utf-8");
@@ -354,7 +372,7 @@ fs.writeFileSync(path.join(DIST_DIR, "robots.txt"), robotsTxt, "utf-8");
 // apontando pra irmã via <xhtml:link hreflang>, como o Google recomenda para
 // conteúdo traduzido.
 const buildDate = new Date().toISOString().split("T")[0];
-const sitemapUrls = allRoutes.map(route => {
+const sitemapUrls = allRoutes.filter(route => !route.canonicalPath.startsWith('/project/')).map(route => {
   const urlPath = localePath(route.canonicalPath, route.lang);
   const loc = `${BASE_URL}${urlPath === "/" ? "" : urlPath}`;
   const ptUrl = `${BASE_URL}${localePath(route.canonicalPath, "pt")}`;
@@ -394,7 +412,7 @@ const ogSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630"
 </svg>`;
 
 fs.writeFileSync(path.join(DIST_DIR, "og-home.svg"), ogSvg, "utf-8");
-fs.writeFileSync(path.resolve(process.cwd(), "public/og-home.svg"), ogSvg, "utf-8");
+await sharp(Buffer.from(ogSvg)).png().toFile(path.join(DIST_DIR, 'og-home.png'));
 
 // Generate RSS feed for the blog (Portuguese — the canonical language)
 const feedItems = [...publishedPosts]

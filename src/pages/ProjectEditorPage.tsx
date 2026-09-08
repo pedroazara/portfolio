@@ -145,6 +145,7 @@ export default function ProjectEditorPage({
     <div className="no-print mx-auto grid max-w-[1500px] gap-6 lg:grid-cols-[minmax(0,1fr)_15rem]">
       <div className="min-w-0 lg:order-1">
         <ProjectForm
+          key={existing?.id || slug}
           project={existing}
           categories={categories}
           onUpdateCategories={onUpdateCategories}

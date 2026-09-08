@@ -18,6 +18,8 @@ import { autoTranslateFields } from "../lib/translator";
 import { projectFolder } from "../utils/imageDb";
 import { EditTarget, scrollTextareaToLine } from "../utils/editTarget";
 import LocalImage from "./LocalImage";
+import { useEditorDraft } from "../hooks/useEditorDraft";
+import DraftRecovery from "./DraftRecovery";
 
 /**
  * Sem protocolo, um `href="github.com/..."` vira um link relativo — o
@@ -128,6 +130,8 @@ export default function ProjectForm({
    * "alterações não salvas" mentindo.
    */
   const baselineRef = useRef<string>("");
+  const [dirty, setDirty] = useState(false);
+  const recovery = useEditorDraft(`project:${project?.id || "novo"}`, { formData, tagsInput }, dirty);
 
   useEffect(() => {
     const agora = JSON.stringify({ formData, tagsInput });
@@ -137,6 +141,7 @@ export default function ProjectForm({
       return;
     }
     onDirtyChange?.(agora !== baselineRef.current);
+    setDirty(agora !== baselineRef.current);
   }, [formData, tagsInput, onDirtyChange]);
   const [showLinkFields, setShowLinkFields] = useState(false);
 
@@ -298,6 +303,9 @@ export default function ProjectForm({
 
     onDirtyChange?.(false);
     onSave(completeProject);
+    recovery.clear();
+    baselineRef.current = JSON.stringify({ formData, tagsInput });
+    setDirty(false);
   };
 
   // Selected Category Objects for preview
@@ -319,6 +327,8 @@ export default function ProjectForm({
             <div>
               {activeTab === "edit" ? (
                 <form id="project-editor-form" onSubmit={handleSubmit} className="space-y-8 rounded-3xl border border-slate-200/80 bg-white p-6 shadow-xs sm:p-10 dark:border-slate-800 dark:bg-slate-900">
+                  {recovery.saved && <DraftRecovery at={recovery.saved.at} onDiscard={recovery.clear} onRestore={() => { setFormData(recovery.saved!.value.formData); setTagsInput(recovery.saved!.value.tagsInput); recovery.dismiss(); }} />}
+                  {recovery.error && <p role="alert">{recovery.error}</p>}
 
                   {/* Alternância pt/en + tradução automática de título, resumo,
                       corpo detalhado e relevância científica de uma vez. Antes

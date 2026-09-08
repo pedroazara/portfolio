@@ -2,6 +2,11 @@ import React, { useState, useEffect, useRef, lazy, Suspense } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { ResumeData, Profile, Project, ProjectCategory, Experience, AcademicActivity, Education, Skill, SkillCategory, Course, BlogPost } from "./types";
 import { initialResumeData } from "./data/initialData";
+import { parseResumeData } from "./lib/contentSchema";
+import { workspaceKey, readLocalData, recordRevision } from "./lib/localWorkspace";
+import ConnectionStatus from "./components/ConnectionStatus";
+import { trackPage, reportError } from "./lib/observability";
+const WorkspaceTools = lazy(() => import("./components/WorkspaceTools"));
 import ResumeHeader from "./components/ResumeHeader";
 import CurriculoResumo from "./components/CurriculoResumo";
 import HomePage from "./pages/HomePage";
@@ -56,8 +61,10 @@ const EDIT_MODE_KEY = "curriculo_portfolio_edit_mode_v1";
 const CLOUD_SAVE_DEBOUNCE_MS = 1200;
 
 const sanitizeResumeData = (data: any): ResumeData => {
+  data = parseResumeData(data);
   return {
     profile: {
+      ...data.profile,
       name: data?.profile?.name ?? initialResumeData.profile.name,
       title: data?.profile?.title ?? initialResumeData.profile.title,
       titleEn: data?.profile?.titleEn ?? initialResumeData.profile.titleEn ?? "",
@@ -90,6 +97,9 @@ const sanitizeResumeData = (data: any): ResumeData => {
 };
 
 export default function App() {
+  const [devPreview] = useState(() => isDevPreview());
+  const localRevisionRef = useRef<ResumeData | null>(null);
+  const [hasConflict, setHasConflict] = useState(false);
   const [darkMode, setDarkMode] = useState<boolean>(() => {
     const saved = localStorage.getItem("portfolio_dark_mode_v1");
     if (saved !== null) return saved === "true";
@@ -122,7 +132,7 @@ export default function App() {
   // Busca os dados na nuvem, com queda para a cópia local
   useEffect(() => {
     function loadFromLocalStorage() {
-      const saved = localStorage.getItem(STORAGE_KEY);
+      const saved = localStorage.getItem(workspaceKey());
       if (!saved) return;
       try {
         setResumeData(sanitizeResumeData(JSON.parse(saved)));
@@ -133,6 +143,10 @@ export default function App() {
 
     async function loadData() {
       try {
+        if (devPreview) {
+          const local = readLocalData();
+          if (local) { setResumeData(local); return; }
+        }
         const { data: cloudData, version } = await fetchResumeData();
         cloudVersionRef.current = version;
         setLastUpdatedAt(version);
@@ -144,6 +158,7 @@ export default function App() {
         }
       } catch (err) {
         console.error("Erro ao carregar dados da nuvem:", err);
+        reportError(err);
         setCloudReadFailed(true);
         loadFromLocalStorage();
       } finally {
@@ -164,7 +179,6 @@ export default function App() {
 
   // Modo de teste local (?dev). Libera a edição sem sessão, mas nunca grava na
   // nuvem — as alterações ficam só no localStorage deste navegador.
-  const [devPreview] = useState(() => isDevPreview());
 
   useEffect(() => {
     if (!devPreview) return;
@@ -173,7 +187,7 @@ export default function App() {
 
   useEffect(() => {
     return observeAuth((user) => {
-      const signedIn = user !== null;
+      const signedIn = user !== null && !devPreview;
       setIsAuthenticated(signedIn);
       setIsAuthReady(true);
       if (signedIn) {
@@ -230,6 +244,7 @@ export default function App() {
 
   // Router hooks for URL deep linking and SPA routes
   const location = useLocation();
+  useEffect(() => trackPage(location.pathname), [location.pathname]);
   const navigate = useNavigate();
 
   // O idioma vem da URL (`/en/...` = inglês), não de uma preferência salva:
@@ -419,7 +434,11 @@ export default function App() {
   // Cópia local: gravada imediatamente a cada alteração.
   useEffect(() => {
     if (!isDataLoaded) return; // Prevent overwriting during initialization
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(resumeData));
+    try {
+      if ((isAuthenticated || devPreview) && localRevisionRef.current) recordRevision(localRevisionRef.current, resumeData);
+      localStorage.setItem(workspaceKey(), JSON.stringify(resumeData));
+      localRevisionRef.current = resumeData;
+    } catch { setSaveError("Armazenamento local cheio. Exporte seus dados antes de continuar."); }
   }, [resumeData, isDataLoaded]);
 
   // Backup completo (conteúdo + imagens) uma vez por dia, no máximo, quando o
@@ -427,7 +446,7 @@ export default function App() {
   // a ref aqui só evita disparar de novo a cada edição nesta mesma sessão.
   const dailyFullBackupTriggeredRef = useRef(false);
   useEffect(() => {
-    if (!isDataLoaded || !isAuthenticated || dailyFullBackupTriggeredRef.current) return;
+    if (!isDataLoaded || !isAuthenticated || devPreview || dailyFullBackupTriggeredRef.current) return;
     dailyFullBackupTriggeredRef.current = true;
     maybeRunDailyFullBackup(resumeData);
   }, [isDataLoaded, isAuthenticated, resumeData]);
@@ -435,7 +454,7 @@ export default function App() {
   // Cópia na nuvem: agrupada por debounce, para que uma sequência de digitação
   // gere uma única gravação no Supabase em vez de uma por tecla.
   useEffect(() => {
-    if (!isDataLoaded || !isAuthenticated || cloudReadFailed) return;
+    if (!isDataLoaded || !isAuthenticated || devPreview || cloudReadFailed || hasConflict) return;
 
     const serialized = JSON.stringify(resumeData);
     if (lastSyncedRef.current === null) {
@@ -458,6 +477,7 @@ export default function App() {
       } catch (err) {
         console.error("Erro ao salvar dados na nuvem:", err);
         if (err instanceof StaleWriteError) {
+          setHasConflict(true);
           // Outra aba gravou depois desta carregar. Não sobrescrevemos: seria
           // apagar o trabalho dela. Recarregar traz a versão nova.
           setSaveError(
@@ -472,7 +492,7 @@ export default function App() {
     }, CLOUD_SAVE_DEBOUNCE_MS);
 
     return () => clearTimeout(timer);
-  }, [resumeData, isDataLoaded, isAuthenticated, cloudReadFailed]);
+  }, [resumeData, isDataLoaded, isAuthenticated, cloudReadFailed, hasConflict, devPreview]);
 
   // Se a leitura inicial da nuvem falhou, a gravação fica bloqueada nesta sessão.
   // O admin precisa saber disso — caso contrário editaria achando que está salvando.
@@ -619,6 +639,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-slate-50/50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 antialiased selection:bg-indigo-500 selection:text-white print:bg-white print:p-0 transition-colors duration-300">
+      <ConnectionStatus />
       {/* Skip Link for Accessibility */}
       <a
         href="#conteudo-principal"
@@ -661,6 +682,10 @@ export default function App() {
 
       {/* Main Content Area */}
       <main id="conteudo-principal" className="mx-auto max-w-[1600px] px-4 py-8 sm:px-8 lg:px-12 print:p-0 print:max-w-none focus:outline-hidden">
+        {(isAuthenticated || devPreview) && <Suspense fallback={null}><WorkspaceTools data={resumeData} sandbox={devPreview} conflict={hasConflict} onApply={(data, version) => {
+          if (version !== undefined) { cloudVersionRef.current = version; setCloudReadFailed(false); setHasConflict(false); }
+          setResumeData(sanitizeResumeData(data)); setSaveError(null);
+        }} /></Suspense>}
         {isEditorRoute ? (
           /* Editores em página dedicada. Exigem sessão ativa: sem ela, mostramos
              o aviso em vez do formulário — as políticas RLS recusariam a gravação
@@ -696,6 +721,7 @@ export default function App() {
                 <AdminHubPage tab={adminHubTab} />
               ) : postEditorMatch ? (
                 <PostEditorPage
+                  key={postEditorMatch[1]}
                   slug={decodeURIComponent(postEditorMatch[1])}
                   posts={resumeData.posts || []}
                   onUpdatePosts={handleUpdatePosts}
@@ -703,6 +729,7 @@ export default function App() {
                 />
               ) : (
                 <ProjectEditorPage
+                  key={projectEditorMatch![1]}
                   slug={decodeURIComponent(projectEditorMatch![1])}
                   projects={resumeData.projects}
                   categories={resumeData.categories}

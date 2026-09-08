@@ -159,7 +159,8 @@ export async function restoreFullBackup(
   if (!contentEntry) {
     throw new Error("Backup inválido: content.json não encontrado dentro do .zip.");
   }
-  const data = JSON.parse(await contentEntry.async("string")) as ResumeData;
+  const { parseResumeData } = await import("./contentSchema");
+  const data = parseResumeData(JSON.parse(await contentEntry.async("string")));
 
   const imagePaths = Object.keys(zip.files).filter(
     (path) => path.startsWith("images/") && !zip.files[path].dir

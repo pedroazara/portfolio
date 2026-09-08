@@ -1,12 +1,13 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { ImagePlus, X, Loader2, Search, Columns2 } from "lucide-react";
+import { ImagePlus, X, Loader2, Search, Columns2, Play, AlertTriangle } from "lucide-react";
 import { StoredImage, listImages, saveImage, fileNameOf, joinPath, GENERAL_FOLDER, isPdfRef } from "../utils/imageDb";
 import { processImagePreservingFormat } from "../utils/imageOptimizer";
 import { Language } from "../lib/translations";
 import { isDevPreview } from "../lib/devPreview";
 import MarkdownHighlight, { EDITOR_TEXT_CLASS } from "./MarkdownHighlight";
 import MarkdownRenderer from "./MarkdownRenderer";
-import { scrollTextareaToLine } from "../utils/editTarget";
+import { scrollTextareaToLine, offsetOfLine, rectAtOffset } from "../utils/editTarget";
+import { bakePythonBlocks, bakeSinglePythonBlock, findPythonBlockLines } from "../lib/pyBake";
 
 interface ArticleContentEditorProps {
   value: string;
@@ -81,6 +82,8 @@ export default function ArticleContentEditor({
   const [search, setSearch] = useState("");
   const [isDragging, setIsDragging] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
+  const [isBaking, setIsBaking] = useState(false);
+  const [runningLine, setRunningLine] = useState<number | null>(null);
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -102,6 +105,50 @@ export default function ArticleContentEditor({
 
   // Reajusta quando o texto muda por fora (troca de idioma, imagem inserida).
   useEffect(fitHeight, [value]);
+
+  const [pyButtonTops, setPyButtonTops] = useState<Map<number, number>>(new Map());
+
+  /**
+   * Posição (em px, relativa à caixa do texto) de cada bloco ```python — é
+   * onde o botão de rodar aquele bloco flutua, colado à linha certa mesmo com
+   * quebra automática. Reaproveita a mesma camada de destaque que já espelha
+   * o textarea caractere a caractere (ver `MarkdownHighlight`): um `Range`
+   * sobre ela acerta a posição mesmo quando uma linha longa quebra em duas.
+   */
+  const measurePyButtons = useCallback(() => {
+    const layer = highlightRef.current;
+    const container = layer?.parentElement as HTMLElement | null;
+    const lines = findPythonBlockLines(value);
+    if (!layer || !container || lines.length === 0) {
+      setPyButtonTops(new Map());
+      return;
+    }
+    const containerTop = container.getBoundingClientRect().top;
+    const next = new Map<number, number>();
+    for (const line of lines) {
+      const rect = rectAtOffset(layer, offsetOfLine(value, line));
+      if (rect) next.set(line, rect.top - containerTop);
+    }
+    setPyButtonTops(next);
+  }, [value]);
+
+  // Espera o quadro seguinte: a altura do campo (efeito acima) e a quebra de
+  // linha da camada de destaque precisam estar assentadas antes de medir.
+  useEffect(() => {
+    const frame = requestAnimationFrame(measurePyButtons);
+    return () => cancelAnimationFrame(frame);
+  }, [measurePyButtons]);
+
+  // A largura do campo muda a quebra de linha (e por tabela a posição de
+  // cada bloco) sem que o texto em si mude — redimensionar a janela, por
+  // exemplo.
+  useEffect(() => {
+    const container = highlightRef.current?.parentElement;
+    if (!container || typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(() => measurePyButtons());
+    observer.observe(container);
+    return () => observer.disconnect();
+  }, [measurePyButtons]);
 
   /**
    * Abre o campo na linha que estava sendo lida.
@@ -196,6 +243,66 @@ export default function ArticleContentEditor({
     }
   };
 
+  /** Sobe uma figura gerada por um bloco Python para o banco de imagens do artigo. */
+  const uploadPlotImage = async (dataUrl: string, i: number) => {
+    if (isDevPreview()) return dataUrl;
+    const name = `${slugify(articleTitle) || "grafico"}-${Date.now().toString().slice(-6)}-${i}.png`;
+    const path = joinPath(GENERAL_FOLDER, name);
+    await saveImage(path, dataUrl, 0);
+    return `db:${path}`;
+  };
+
+  /**
+   * Executa cada bloco ```python do texto (via Pyodide, no navegador de quem
+   * escreve) e grava a saída — texto e gráficos — junto ao Markdown, como
+   * `PyBlocks.tsx` espera. Gráficos vão para o mesmo banco de imagens das
+   * demais figuras do artigo; sem sessão na nuvem (modo de teste), ficam
+   * embutidos como o resto das imagens nesse modo.
+   */
+  const handleBakePython = async () => {
+    setIsBaking(true);
+    setStatus("");
+    try {
+      const baked = await bakePythonBlocks(value, { onProgress: setStatus, uploadImage: uploadPlotImage });
+      onChange(baked);
+      setStatus("");
+    } catch (err) {
+      setStatus(
+        `${language === "en" ? "Failed to run" : "Falha ao executar"}: ${
+          err instanceof Error ? err.message : String(err)
+        }`
+      );
+    } finally {
+      setIsBaking(false);
+    }
+  };
+
+  /**
+   * Roda só o bloco que começa na linha `line` — chamado pelo botão de rodar
+   * de um `PyCodeBlock` na prévia. Não mexe na saída dos demais blocos, então
+   * não gera imagem nova para quem já estava certo.
+   */
+  const handleRunSingleBlock = useCallback(
+    async (line: number) => {
+      setRunningLine(line);
+      setStatus("");
+      try {
+        const baked = await bakeSinglePythonBlock(value, line, { onProgress: setStatus, uploadImage: uploadPlotImage });
+        onChange(baked);
+        setStatus("");
+      } catch (err) {
+        setStatus(
+          `${language === "en" ? "Failed to run" : "Falha ao executar"}: ${
+            err instanceof Error ? err.message : String(err)
+          }`
+        );
+      } finally {
+        setRunningLine(null);
+      }
+    },
+    [value, articleTitle, language, onChange]
+  );
+
   const handlePaste = (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
     const file =
       Array.from(e.clipboardData?.files || []).find((f) => f.type.startsWith("image/")) ||
@@ -211,6 +318,9 @@ export default function ArticleContentEditor({
   const removeFromText = (fullMatch: string) => {
     onChange((value || "").replace(fullMatch, "").replace(/\n{3,}/g, "\n\n"));
   };
+
+  const pythonBlockCount = findPythonBlockLines(value).length;
+  const isRunningPython = isBaking || runningLine !== null;
 
   // Um PDF não é algo que a marcação `![]()` consiga embutir no corpo do
   // artigo — este seletor é só para imagens que entram inline no texto.
@@ -244,7 +354,28 @@ export default function ArticleContentEditor({
           {helpText && <p className="text-[11px] text-slate-500">{helpText}</p>}
         </div>
 
-        <div className="flex shrink-0 items-center gap-1.5">
+        <div className="flex shrink-0 flex-wrap items-center gap-1.5">
+          {pythonBlockCount > 0 && (
+            <>
+              <button
+                type="button"
+                onClick={handleBakePython}
+                disabled={isBaking || runningLine !== null}
+                title={
+                  language === "en"
+                    ? "Runs the Python blocks and writes their output into the text, in order"
+                    : "Executa os blocos Python, em ordem, e grava a saída de cada um no texto"
+                }
+                className="flex items-center gap-1.5 rounded-lg bg-emerald-600 px-2.5 py-1.5 text-[11px] font-bold text-white shadow-xs transition-colors hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {isBaking ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Play className="h-3.5 w-3.5" />}
+                {language === "en" ? "Run Python" : "Executar Python"}
+                <span className="rounded-full bg-white/20 px-1.5 py-px text-[10px]">{pythonBlockCount}</span>
+              </button>
+              <div className="h-4 w-px bg-slate-200 dark:bg-slate-700" />
+            </>
+          )}
+
           <button
             type="button"
             onClick={() => setShowPreview((v) => !v)}
@@ -297,7 +428,9 @@ export default function ArticleContentEditor({
           <MarkdownHighlight ref={highlightRef} value={value} />
 
           {/* Texto transparente: o que se enxerga é a camada acima. O cursor e a
-              seleção continuam sendo os nativos do textarea. */}
+              seleção continuam sendo os nativos do textarea. Fica só-leitura
+              enquanto "Executar Python" roda — editar nesse meio-tempo faria o
+              resultado do bake sobrescrever o que acabou de ser digitado. */}
           <textarea
             ref={textareaRef}
             required={required}
@@ -307,8 +440,38 @@ export default function ArticleContentEditor({
             onPaste={handlePaste}
             placeholder={placeholder}
             spellCheck={false}
+            readOnly={isRunningPython}
             className={`relative block w-full resize-none overflow-hidden bg-transparent text-transparent caret-slate-800 placeholder:text-slate-500 focus:outline-hidden dark:caret-white ${EDITOR_TEXT_CLASS}`}
           />
+
+          {/* Um botão por bloco ```python, colado à linha onde ele começa —
+              roda só aquele bloco, sem mexer na saída dos demais. */}
+          {Array.from(pyButtonTops.entries()).map(([line, top]) => {
+            const isThisRunning = runningLine === line;
+            return (
+              <button
+                key={line}
+                type="button"
+                onClick={() => handleRunSingleBlock(line)}
+                disabled={isRunningPython}
+                title={language === "en" ? "Run this block" : "Executar este bloco"}
+                aria-label={language === "en" ? "Run this block" : "Executar este bloco"}
+                style={{ top: `${top + 6}px` }}
+                className="absolute right-2 z-10 flex h-5 w-5 items-center justify-center rounded-md bg-emerald-600 text-white shadow-sm transition-colors hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                {isThisRunning ? <Loader2 className="h-3 w-3 animate-spin" /> : <Play className="h-2.5 w-2.5" />}
+              </button>
+            );
+          })}
+
+          {isRunningPython && (
+            <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-white/85 text-center backdrop-blur-[1px] dark:bg-slate-900/85">
+              <Loader2 className="h-5 w-5 animate-spin text-emerald-600 dark:text-emerald-400" />
+              <p className="max-w-xs px-4 text-xs font-semibold text-slate-700 dark:text-slate-300">
+                {status || (language === "en" ? "Running Python…" : "Executando Python…")}
+              </p>
+            </div>
+          )}
         </div>
 
         <span className="pointer-events-none absolute bottom-2.5 right-3 font-mono text-[10px] text-slate-400 dark:text-slate-500">
@@ -330,8 +493,13 @@ export default function ArticleContentEditor({
 
       </div>
 
-      {status && (
-        <p className="text-[11px] font-semibold text-rose-600 dark:text-rose-400">{status}</p>
+      {/* Enquanto roda, o status já aparece no overlay sobre o texto — aqui só
+          sobra o que vem depois: uma falha (de upload ou de execução). */}
+      {status && !isRunningPython && (
+        <div className="flex items-start gap-1.5 rounded-lg bg-rose-50 px-2.5 py-1.5 text-[11px] font-semibold text-rose-600 dark:bg-rose-950/30 dark:text-rose-400">
+          <AlertTriangle className="h-3.5 w-3.5 shrink-0 mt-px" />
+          <span>{status}</span>
+        </div>
       )}
 
       {/* Imagens no texto: só o suficiente para removê-las. O conteúdo em si

@@ -13,6 +13,10 @@ interface LocalImageProps {
 }
 
 export default function LocalImage({ src, fallback, ...props }: LocalImageProps) {
+  const [originalOnly, setOriginalOnly] = useState(false);
+  useEffect(() => setOriginalOnly(false), [src]);
+  const responsive = !originalOnly && src?.startsWith("db:") && /\.(png|jpe?g|webp)$/i.test(src);
+  const optimized = (width: number) => `/api/image?path=${encodeURIComponent(src!.slice(3))}&w=${width}`;
   const [resolvedSrc, setResolvedSrc] = useState<string | undefined>(() => {
     if (src && src.startsWith("db:")) {
       const cached = getSyncImage(src.substring(3));
@@ -85,7 +89,9 @@ export default function LocalImage({ src, fallback, ...props }: LocalImageProps)
 
   return (
     <img
-      src={resolvedSrc}
+      src={responsive ? optimized(960) : resolvedSrc}
+      srcSet={responsive ? [320, 640, 960, 1600].map(w => `${optimized(w)} ${w}w`).join(", ") : undefined}
+      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 800px"
       // Padrões de desempenho: o navegador só baixa a imagem ao aproximá-la do
       // viewport e decodifica fora da thread principal. Props explícitas nos
       // usos individuais (ex.: a capa de um artigo) sobrescrevem os dois.
@@ -93,6 +99,7 @@ export default function LocalImage({ src, fallback, ...props }: LocalImageProps)
       decoding="async"
       {...props}
       onError={(e) => {
+        if (responsive) { setOriginalOnly(true); return; }
         if (props.onError) props.onError(e);
         // Fallback on load error
         if (fallback && resolvedSrc !== fallback) {

@@ -10,6 +10,7 @@ import { motion, AnimatePresence } from "motion/react";
 import LocalImage from "./LocalImage";
 import { headingIdsByLine } from "../utils/toc";
 import { parseYouTubeUrl, YouTubeVideo } from "../utils/videoEmbed";
+import { PyCodeBlock, PyOutputBlock } from "./PyBlocks";
 
 interface MarkdownRendererProps {
   content: string;
@@ -38,7 +39,6 @@ const MarkdownContext = React.createContext<MarkdownContextValue>({
   headingIds: new Map(),
   onImageClick: () => {},
 });
-
 /**
  * Player do YouTube no lugar do link.
  *
@@ -297,6 +297,13 @@ const RENDERERS = {
       const match = /language-(\w+)/.exec(className || "");
       const codeVal = String(children).replace(/\n$/, "");
       if (!inline && match) {
+        if (match[1] === "python" || match[1] === "py") {
+          return <PyCodeBlock code={codeVal} />;
+        }
+        // Saída já executada de um bloco Python — sempre logo após ele.
+        if (match[1] === "pyresult") {
+          return <PyOutputBlock raw={codeVal} />;
+        }
         return <CodeBlock code={codeVal} lang={match[1]} />;
       }
       return (
@@ -491,7 +498,10 @@ const RENDERERS = {
  * Este padrão só sobra para os contextos compactos (prévia do editor, painel
  * de rascunhos), onde a largura já é limitada pelo próprio contêiner.
  */
-function MarkdownRenderer({ content, className = "max-w-none text-sm sm:text-base space-y-4 text-slate-600 dark:text-slate-300" }: MarkdownRendererProps) {
+function MarkdownRenderer({
+  content,
+  className = "max-w-none text-sm sm:text-base space-y-4 text-slate-600 dark:text-slate-300",
+}: MarkdownRendererProps) {
   const [zoomedImage, setZoomedImage] = useState<{ url: string; alt: string } | null>(null);
 
   const handleImageClick = React.useCallback((url: string, alt: string) => {

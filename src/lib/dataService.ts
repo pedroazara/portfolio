@@ -1,4 +1,6 @@
 import { ResumeData } from "../types";
+import { parseResumeData } from "./contentSchema";
+import { isDevPreview } from "./devPreview";
 import {
   supabase,
   isSupabaseConfigured,
@@ -48,7 +50,7 @@ export async function fetchResumeData(): Promise<FetchResult> {
   if (!data) return { data: null, version: null };
 
   return {
-    data: (data.data as ResumeData) ?? null,
+    data: data.data == null ? null : parseResumeData(data.data),
     version: (data.updated_at as string) ?? null,
   };
 }
@@ -71,6 +73,8 @@ export async function saveResumeData(
   data: ResumeData,
   expectedVersion: string | null
 ): Promise<string> {
+  if (isDevPreview()) throw new Error("Gravação na nuvem bloqueada no modo de teste.");
+  data = parseResumeData(data);
   if (!isSupabaseConfigured) {
     throw new Error("Supabase não configurado — impossível salvar na nuvem.");
   }
@@ -79,14 +83,12 @@ export async function saveResumeData(
 
   // Primeira gravação: a linha ainda não existe, não há versão a conferir.
   if (expectedVersion === null) {
-    const { error } = await supabase
+    const { data: inserted, error } = await supabase
       .from(PORTFOLIO_TABLE)
-      .upsert(
-        { id: PORTFOLIO_ROW_ID, data, updated_at: nextVersion },
-        { onConflict: "id" }
-      );
+      .insert({ id: PORTFOLIO_ROW_ID, data, updated_at: nextVersion }).select("updated_at").single();
+    if (error?.code === "23505") throw new StaleWriteError();
     if (error) throw error;
-    return nextVersion;
+    return inserted.updated_at;
   }
 
   // Update condicional: o filtro por `updated_at` faz o Postgres não casar
@@ -101,5 +103,5 @@ export async function saveResumeData(
   if (error) throw error;
   if (!updated || updated.length === 0) throw new StaleWriteError();
 
-  return nextVersion;
+  return updated[0].updated_at;
 }

@@ -1,6 +1,7 @@
 import { Component, ReactNode } from "react";
 import { AlertTriangle, RotateCw, Home } from "lucide-react";
 import { useLanguage, useLocalePath } from "../lib/routes";
+import { reportError } from "../lib/observability";
 
 interface Props {
   children: ReactNode;
@@ -28,6 +29,7 @@ export default class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, info: { componentStack: string }) {
+    reportError(error);
     console.error("ErrorBoundary capturou um erro:", error, info.componentStack);
   }
 
