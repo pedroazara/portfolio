@@ -8,6 +8,9 @@ import { Language } from "../lib/translations";
 import TranslateButton from "./TranslateButton";
 import { autoTranslateFields } from "../lib/translator";
 import { SECTION_CARD_CLASS } from "../lib/cardStyle";
+import { getCategoryAccent } from "../lib/skillAccents";
+import { SKILL_ICON_KEYS, getSkillIcon } from "../lib/skillIcons";
+import { MergedSkillCategory, mergeSkillCategories } from "../lib/skillCategoryMerge";
 
 interface SkillsSectionProps {
   skills: Skill[];
@@ -17,20 +20,6 @@ interface SkillsSectionProps {
   onUpdateSkillCategories: (updatedCategories: SkillCategory[]) => void;
   language?: Language;
 }
-
-// Accent palette cycled per category so groups are visually easy to tell apart.
-const CATEGORY_ACCENTS = [
-  { bg: "bg-indigo-50 dark:bg-indigo-950/40", text: "text-indigo-600 dark:text-indigo-400", bar: "bg-indigo-600 dark:bg-indigo-500" },
-  { bg: "bg-sky-50 dark:bg-sky-950/40", text: "text-sky-600 dark:text-sky-400", bar: "bg-sky-600 dark:bg-sky-500" },
-  { bg: "bg-emerald-50 dark:bg-emerald-950/40", text: "text-emerald-600 dark:text-emerald-400", bar: "bg-emerald-600 dark:bg-emerald-500" },
-  { bg: "bg-amber-50 dark:bg-amber-950/40", text: "text-amber-600 dark:text-amber-400", bar: "bg-amber-500 dark:bg-amber-500" },
-  { bg: "bg-violet-50 dark:bg-violet-950/40", text: "text-violet-600 dark:text-violet-400", bar: "bg-violet-600 dark:bg-violet-500" },
-  { bg: "bg-rose-50 dark:bg-rose-950/40", text: "text-rose-600 dark:text-rose-400", bar: "bg-rose-600 dark:bg-rose-500" },
-  { bg: "bg-teal-50 dark:bg-teal-950/40", text: "text-teal-600 dark:text-teal-400", bar: "bg-teal-600 dark:bg-teal-500" },
-  { bg: "bg-fuchsia-50 dark:bg-fuchsia-950/40", text: "text-fuchsia-600 dark:text-fuchsia-400", bar: "bg-fuchsia-600 dark:bg-fuchsia-500" },
-];
-
-const getCategoryAccent = (index: number) => CATEGORY_ACCENTS[index % CATEGORY_ACCENTS.length];
 
 /**
  * Quantas habilidades ganham a barra e as estrelas por categoria.
@@ -207,14 +196,6 @@ function HabilidadeChip({ skill, language, isEditMode, onEdit, onDelete }: Habil
   );
 }
 
-interface MergedCategory {
-  id: string;
-  name: string;
-  nameEn?: string;
-  /** Not in skillCategories — exists only because a skill still references it. */
-  isOrphan: boolean;
-}
-
 export default function SkillsSection({
   skills,
   skillCategories,
@@ -260,7 +241,12 @@ export default function SkillsSection({
 
   // --- Section (Category) Modal State ---
   const [isSectionModalOpen, setIsSectionModalOpen] = useState(false);
-  const [sectionForm, setSectionForm] = useState<{ name: string; nameEn: string }>({ name: "", nameEn: "" });
+  const [editingCategory, setEditingCategory] = useState<MergedSkillCategory | null>(null);
+  const [sectionForm, setSectionForm] = useState<{ name: string; nameEn: string; icon: string }>({
+    name: "",
+    nameEn: "",
+    icon: "",
+  });
 
   const handleAutoTranslateSkill = async () => {
     const fields: Record<string, string> = { nameEn: skillForm.name || "" };
@@ -274,27 +260,21 @@ export default function SkillsSection({
     setEditingLanguage("en");
   };
 
-  // Sections (categories) are explicit entities now (`skillCategories`), so a
-  // section can exist before it has any skills. Legacy/imported skills whose
-  // category isn't in that list yet still show up as an "orphan" section, so
-  // nothing already saved disappears.
-  const mergedCategories: MergedCategory[] = [
-    ...skillCategories.map((c) => ({ ...c, isOrphan: false })),
-    ...Array.from(new Set(skills.map((s) => s.category)))
-      .filter((name) => !skillCategories.some((c) => c.name === name))
-      .map((name) => ({
-        id: `orphan-${name}`,
-        name,
-        nameEn: skills.find((s) => s.category === name && s.categoryEn)?.categoryEn,
-        isOrphan: true,
-      })),
-  ];
+  const mergedCategories = mergeSkillCategories(skills, skillCategories);
 
-  const catDisplayName = (cat: MergedCategory, lang: Language) => (lang === "en" ? cat.nameEn || cat.name : cat.name);
+  const catDisplayName = (cat: MergedSkillCategory, lang: Language) => (lang === "en" ? cat.nameEn || cat.name : cat.name);
 
   // --- Section Handlers ---
   const handleOpenSectionAdd = () => {
-    setSectionForm({ name: "", nameEn: "" });
+    setEditingCategory(null);
+    setSectionForm({ name: "", nameEn: "", icon: "" });
+    setEditingLanguage(language);
+    setIsSectionModalOpen(true);
+  };
+
+  const handleOpenSectionEdit = (cat: MergedSkillCategory) => {
+    setEditingCategory(cat);
+    setSectionForm({ name: cat.name, nameEn: cat.nameEn || "", icon: cat.icon || "" });
     setEditingLanguage(language);
     setIsSectionModalOpen(true);
   };
@@ -303,16 +283,49 @@ export default function SkillsSection({
     e.preventDefault();
     const name = (sectionForm.name || "").trim();
     if (!name) return;
-    const newCategory: SkillCategory = {
-      id: `skillcat-${Date.now()}`,
-      name,
-      nameEn: (sectionForm.nameEn || "").trim() || undefined,
-    };
-    onUpdateSkillCategories([...skillCategories, newCategory]);
+
+    if (editingCategory) {
+      const oldName = editingCategory.name;
+      if (editingCategory.isOrphan) {
+        // Orphan sections aren't in skillCategories yet — editing one materializes it.
+        const newCategory: SkillCategory = {
+          id: `skillcat-${Date.now()}`,
+          name,
+          nameEn: (sectionForm.nameEn || "").trim() || undefined,
+          icon: sectionForm.icon || undefined,
+        };
+        onUpdateSkillCategories([...skillCategories, newCategory]);
+      } else {
+        const updated: SkillCategory = {
+          id: editingCategory.id,
+          name,
+          nameEn: (sectionForm.nameEn || "").trim() || undefined,
+          icon: sectionForm.icon || undefined,
+        };
+        onUpdateSkillCategories(skillCategories.map((c) => (c.id === editingCategory.id ? updated : c)));
+      }
+      // Skills reference categories by name, so a rename must cascade to them too.
+      if (oldName !== name) {
+        onUpdateSkills(
+          skills.map((s) =>
+            s.category === oldName ? { ...s, category: name, categoryEn: sectionForm.nameEn || s.categoryEn } : s
+          )
+        );
+      }
+    } else {
+      const newCategory: SkillCategory = {
+        id: `skillcat-${Date.now()}`,
+        name,
+        nameEn: (sectionForm.nameEn || "").trim() || undefined,
+        icon: sectionForm.icon || undefined,
+      };
+      onUpdateSkillCategories([...skillCategories, newCategory]);
+    }
     setIsSectionModalOpen(false);
+    setEditingCategory(null);
   };
 
-  const handleDeleteCategory = (cat: MergedCategory) => {
+  const handleDeleteCategory = (cat: MergedSkillCategory) => {
     const hasSkills = skills.some((s) => s.category === cat.name);
     if (hasSkills) {
       triggerConfirm(
@@ -339,7 +352,7 @@ export default function SkillsSection({
   };
 
   // --- Skill Handlers ---
-  const handleOpenAddToCategory = (cat: MergedCategory) => {
+  const handleOpenAddToCategory = (cat: MergedSkillCategory) => {
     setEditingSkill(null);
     setLockedCategory({ name: cat.name, nameEn: cat.nameEn });
     setSkillForm({ name: "", nameEn: "", category: cat.name, categoryEn: cat.nameEn || "", level: 4 });
@@ -440,6 +453,7 @@ export default function SkillsSection({
           {mergedCategories.map((cat, idx) => {
             const catSkills = skills.filter((s) => s.category === cat.name);
             const accent = getCategoryAccent(idx);
+            const CatIcon = getSkillIcon(cat.icon);
 
             // Ordenação estável por nível: entre habilidades empatadas, a
             // ordem de criação decide — não sobe nem desce nada sem motivo.
@@ -453,7 +467,7 @@ export default function SkillsSection({
               >
                 <div className="flex items-center gap-2 mb-4 pb-3 border-b border-slate-100 dark:border-slate-800">
                   <div className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md ${accent.bg} ${accent.text} print-border print-bg-none`}>
-                    <Tag className="h-3 w-3" />
+                    <CatIcon className="h-3 w-3" />
                   </div>
                   <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 font-sans truncate">
                     {catDisplayName(cat, language)}
@@ -469,6 +483,13 @@ export default function SkillsSection({
                         title={t("Adicionar habilidade", "Add skill")} aria-label={t("Adicionar habilidade", "Add skill")}
                       >
                         <Plus className="h-3.5 w-3.5" />
+                      </button>
+                      <button
+                        onClick={() => handleOpenSectionEdit(cat)}
+                        className="rounded p-1 text-slate-500 hover:bg-slate-200/70 dark:hover:bg-slate-800 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors cursor-pointer"
+                        title={t("Editar seção", "Edit section")} aria-label={t("Editar seção", "Edit section")}
+                      >
+                        <Edit2 className="h-3.5 w-3.5" />
                       </button>
                       {!cat.isOrphan && (
                         <button
@@ -487,6 +508,36 @@ export default function SkillsSection({
                   <p className="text-[11px] text-slate-500 dark:text-slate-600 font-sans italic">
                     {t("Nenhuma habilidade ainda.", "No skills yet.")}
                   </p>
+                ) : !isEditMode ? (
+                  // Public view: plain cards, no star ratings. A real grid (not
+                  // flex-wrap) so every card lines up in neat columns instead of
+                  // the ragged look long/short names produce when left to flow.
+                  <div className="grid grid-cols-1 min-[420px]:grid-cols-2 gap-1.5">
+                    {catSkills.map((skill) => (
+                      <div
+                        key={skill.id}
+                        className="group flex items-start justify-between gap-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-2.5 py-1.5 text-[11px] font-medium text-slate-600 dark:text-slate-400 font-sans transition-colors hover:border-slate-300 dark:hover:border-slate-600"
+                      >
+                        <span>
+                          {language === "en" && skill.nameEn ? skill.nameEn : skill.name}
+                        </span>
+                        <span className="hidden print:inline font-mono text-[9px] text-slate-400 dark:text-slate-600">
+                          &nbsp;{skill.level}/5
+                        </span>
+                        {/* Stars stay hidden until hover — a discreet detail, not the headline. */}
+                        <span className="mt-0.5 flex max-w-0 shrink-0 gap-0.5 overflow-hidden opacity-0 transition-all duration-200 group-hover:max-w-[4rem] group-hover:opacity-100 print:hidden">
+                          {[1, 2, 3, 4, 5].map((lvl) => (
+                            <Star
+                              key={lvl}
+                              className={`h-2.5 w-2.5 shrink-0 ${
+                                lvl <= skill.level ? "text-amber-400 fill-amber-400" : "text-slate-200 dark:text-slate-700"
+                              }`}
+                            />
+                          ))}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
                 ) : (
                   <div className="space-y-4">
                     {destaques.map((skill) => (
@@ -697,11 +748,11 @@ export default function SkillsSection({
         </form>
       </EditModal>
 
-      {/* New Section Modal */}
+      {/* Section Modal (create or edit) */}
       <EditModal
         isOpen={isSectionModalOpen}
         onClose={() => setIsSectionModalOpen(false)}
-        title={t("Nova Seção", "New Section")}
+        title={editingCategory ? t("Editar Seção", "Edit Section") : t("Nova Seção", "New Section")}
       >
         <form onSubmit={handleSectionSubmit} className="space-y-4">
           <div className="bg-slate-50 dark:bg-slate-800/50 p-3 rounded-2xl border border-slate-200/60 dark:border-slate-700/60 mb-1 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -743,6 +794,35 @@ export default function SkillsSection({
             />
           </div>
 
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-slate-600 dark:text-slate-300 font-sans">
+              {t("Ícone (usado na visualização em bolhas)", "Icon (used in the bubble view)")}
+            </label>
+            <div className="grid grid-cols-8 gap-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-2.5 max-h-40 overflow-y-auto">
+              {SKILL_ICON_KEYS.map((key) => {
+                const IconOption = getSkillIcon(key);
+                const selected = sectionForm.icon === key;
+                return (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() => setSectionForm({ ...sectionForm, icon: selected ? "" : key })}
+                    title={key}
+                    aria-label={key}
+                    aria-pressed={selected}
+                    className={`flex aspect-square items-center justify-center rounded-md transition-colors cursor-pointer ${
+                      selected
+                        ? "bg-indigo-600 text-white"
+                        : "text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+                    }`}
+                  >
+                    <IconOption className="h-4 w-4" />
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
           <div className="flex justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
             <button
               type="button"
@@ -755,7 +835,7 @@ export default function SkillsSection({
               type="submit"
               className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-xs transition-colors hover:bg-indigo-700"
             >
-              {t("Criar Seção", "Create Section")}
+              {editingCategory ? t("Salvar Alterações", "Save Changes") : t("Criar Seção", "Create Section")}
             </button>
           </div>
         </form>

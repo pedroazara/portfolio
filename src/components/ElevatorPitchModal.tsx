@@ -9,6 +9,29 @@ import PitchProjectsSlide from "./PitchProjectsSlide";
 import PitchProjectPicker from "./PitchProjectPicker";
 import PitchSlideCanvas, { PitchAccent, ACCENT_SOLIDO } from "./PitchSlideCanvas";
 import PitchIdentitySlide from "./PitchIdentitySlide";
+import SkillsNetwork, { NetworkCategory } from "./SkillsNetwork";
+import { Skill } from "../types";
+
+/**
+ * Placeholder para o slide de bolhas de habilidades — ainda não editável.
+ * Deliberadamente não vem do currículo: as habilidades desse slide serão
+ * escolhidas à parte (com ícone próprio), específicas para a apresentação.
+ * Troque por dados reais quando a edição desse slide existir.
+ */
+const HABILIDADES_MOCK_CATEGORIAS: NetworkCategory[] = [
+  { id: "mock-cat-1", name: "Instrumentação", nameEn: "Instrumentation", icon: "Cpu" },
+  { id: "mock-cat-2", name: "Software", nameEn: "Software", icon: "Code2" },
+  { id: "mock-cat-3", name: "Física", nameEn: "Physics", icon: "Atom" },
+];
+
+const HABILIDADES_MOCK_SKILLS: Skill[] = [
+  { id: "mock-skill-1", name: "Aquisição de dados e sensores", nameEn: "Sensors & data acquisition", category: "Instrumentação", level: 5 },
+  { id: "mock-skill-2", name: "Sistemas embarcados", nameEn: "Embedded systems", category: "Instrumentação", level: 4 },
+  { id: "mock-skill-3", name: "Python", nameEn: "Python", category: "Software", level: 5 },
+  { id: "mock-skill-4", name: "Visão computacional", nameEn: "Computer vision", category: "Software", level: 4 },
+  { id: "mock-skill-5", name: "Mecânica Quântica", nameEn: "Quantum Mechanics", category: "Física", level: 4 },
+  { id: "mock-skill-6", name: "Termodinâmica", nameEn: "Thermodynamics", category: "Física", level: 4 },
+];
 
 /** Cada linha do rascunho vira um elemento visual próprio no slide. */
 function linhasDoTexto(texto: string): string[] {
@@ -241,21 +264,31 @@ export default function ElevatorPitchModal({
                       {isEn ? "Regenerate" : "Recompor"}
                     </button>
                   </div>
-                  <textarea
-                    value={draft[chave].body}
-                    onChange={(e) => atualizarSlide(chave, { body: e.target.value })}
-                    rows={5}
-                    className="w-full resize-y rounded-xl border border-slate-200 bg-white p-3 text-sm leading-relaxed text-slate-700 focus:border-indigo-500 focus:outline-hidden dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300"
-                  />
-                  <p className="text-[11px] text-slate-400 dark:text-slate-600">
-                    {chave === "quemSouEu"
-                      ? isEn
-                        ? "The title above is what shows huge on the slide — your name works well there. Short lines below become badges."
-                        : "O título acima é o que aparece grande no slide — seu nome funciona bem aí. As linhas abaixo viram selos."
-                      : isEn
-                        ? "One short line per idea — the slide is a cue to speak from, not a script to read."
-                        : "Uma frase curta por linha — o slide é uma deixa para falar, não um texto para ler."}
-                  </p>
+                  {chave === "habilidades" ? (
+                    <p className="rounded-xl border border-dashed border-slate-200 bg-slate-50 p-3 text-[11px] text-slate-500 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400">
+                      {isEn
+                        ? "This slide shows animated skill bubbles — hover (or tap) a category to reveal its skills. It's still placeholder content; picking your own categories, skills and icons here is coming soon."
+                        : "Este slide mostra bolhas de habilidades animadas — passe o mouse (ou toque) numa categoria para revelar as habilidades. Ainda é conteúdo de exemplo; escolher aqui suas próprias categorias, habilidades e ícones vem em breve."}
+                    </p>
+                  ) : (
+                    <>
+                      <textarea
+                        value={draft[chave].body}
+                        onChange={(e) => atualizarSlide(chave, { body: e.target.value })}
+                        rows={5}
+                        className="w-full resize-y rounded-xl border border-slate-200 bg-white p-3 text-sm leading-relaxed text-slate-700 focus:border-indigo-500 focus:outline-hidden dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300"
+                      />
+                      <p className="text-[11px] text-slate-400 dark:text-slate-600">
+                        {chave === "quemSouEu"
+                          ? isEn
+                            ? "The title above is what shows huge on the slide — your name works well there. Short lines below become badges."
+                            : "O título acima é o que aparece grande no slide — seu nome funciona bem aí. As linhas abaixo viram selos."
+                          : isEn
+                            ? "One short line per idea — the slide is a cue to speak from, not a script to read."
+                            : "Uma frase curta por linha — o slide é uma deixa para falar, não um texto para ler."}
+                      </p>
+                    </>
+                  )}
                 </section>
 
                 {/* Slide de projetos entra entre "quem sou eu" e "habilidades" —
@@ -312,6 +345,16 @@ export default function ElevatorPitchModal({
                         avatarUrl={data.profile.avatarUrl}
                         linhas={linhasDoTexto(draft.quemSouEu.body)}
                       />
+                    </PitchSlideCanvas>
+                  ) : chaveAtual === "habilidades" ? (
+                    <PitchSlideCanvas title={draft.habilidades.title} accent={accentAtual} numero={indice + 1} fill>
+                      <div className="h-full overflow-y-auto rounded-2xl bg-white/95 p-2 shadow-lg sm:p-4 dark:bg-slate-900/95">
+                        <SkillsNetwork
+                          categories={HABILIDADES_MOCK_CATEGORIAS}
+                          skills={HABILIDADES_MOCK_SKILLS}
+                          language={language}
+                        />
+                      </div>
                     </PitchSlideCanvas>
                   ) : chaveAtual ? (
                     <PitchSlideCanvas title={draft[chaveAtual].title} accent={accentAtual} numero={indice + 1}>

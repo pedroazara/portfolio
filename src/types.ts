@@ -170,6 +170,8 @@ export interface SkillCategory {
   id: string;
   name: string;
   nameEn?: string;
+  /** Key into the curated icon registry (see src/lib/skillIcons.ts). */
+  icon?: string;
 }
 
 export interface Course {
