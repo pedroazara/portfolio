@@ -1,5 +1,19 @@
 # Retomada técnica
 
+## Terceira etapa — experiência de uso
+
+- Busca, categoria e ordenação de projetos persistem na URL. Voltar à lista a partir do projeto preserva os filtros.
+- Galeria em diálogo nativo: zoom, setas, deslize horizontal, Escape e retorno do foco. Legendas opcionais PT/EN editáveis no formulário existente, sem alterar os conteúdos atuais.
+- Sumário existente reaproveitado no celular com expansão, cópia de links de seção e correção de âncoras durante carregamento do Markdown.
+- Menu móvel com contenção de foco, Escape e bloqueio de rolagem; foco visível, campos maiores no celular e respeito à preferência de movimento reduzido.
+- Imagens com placeholder neutro e proteção contra respostas atrasadas; removida a imagem externa genérica que aparecia em falhas. Galeria reserva proporção antes do carregamento.
+- Rotas e exportação PDF carregadas sob demanda. Bundle principal reduziu de aproximadamente 948 kB para 763 kB (antes de gzip); ainda existem chunks grandes, especialmente Markdown.
+- Correções direcionadas de dependências: auditorias completa e de produção sem vulnerabilidades reportadas nesta execução. Vitest atualizado para 4.1.11 e override de qs no Express.
+- Leitura offline usa imediatamente os dados locais; leitura online tem timeout de 15 segundos e preserva bloqueio de gravação caso falhe.
+- Testes adicionados para filtros, galeria, navegação móvel, rascunhos, falhas de imagens, concorrência e cache offline. Comandos: `npm test`, `npm run test:e2e`, `npm run build`, `npm run test:production`.
+- Resultado final: 77 testes unitários, 9 E2E de desenvolvimento e 2 E2E de produção local passaram; TypeScript e build passaram. Cache offline de páginas filtradas e exclusão de páginas administrativas verificados. Auditoria completa: zero vulnerabilidades reportadas.
+- Sem deploy ou migração remota. Testes locais não substituem validação na hospedagem nem garantem conformidade completa de acessibilidade em todos os dispositivos.
+
 ## Segunda etapa
 
 - Painel duplicado “Histórico e recuperação” removido da interface a pedido do usuário; ferramentas administrativas existentes preservadas.

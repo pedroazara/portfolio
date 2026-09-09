@@ -383,3 +383,12 @@ html {
     display: none !important;
   }
 }
+/* Keyboard focus remains visible on public pages and administration alike. */
+:where(a, button, input, select, textarea, summary):focus-visible {
+  outline: 3px solid var(--color-acento, #6366f1);
+  outline-offset: 3px;
+}
+@media (max-width: 640px) {
+  input, select, textarea { font-size: 16px; }
+  #conteudo-principal { overflow-wrap: anywhere; }
+}

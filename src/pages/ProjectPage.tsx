@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
+import ProjectGallery from "../components/ProjectGallery";
 import {
   ArrowLeft, ArrowRight, Share2, Check, Edit2, FolderKanban,
   FlaskConical, BookOpen, Layers,
@@ -64,12 +65,15 @@ export default function ProjectPage({
 }: ProjectPageProps) {
   const navigate = useNavigate();
   const lp = useLocalePath();
+  const location = useLocation();
+  const listSearch = typeof location.state?.projectListSearch === "string" && location.state.projectListSearch.startsWith("?") ? location.state.projectListSearch : "";
+  const leituraRef = useRef<HTMLDivElement>(null);
   const [copiedLink, setCopiedLink] = useState(false);
 
   const project = findBySlug(projects, slug);
 
   useEffect(() => {
-    window.scrollTo({ top: 0, behavior: "auto" });
+    if (!window.location.hash) window.scrollTo({ top: 0, behavior: "auto" });
   }, [slug]);
 
   /**
@@ -125,7 +129,7 @@ export default function ProjectPage({
             : "Ele pode ter sido excluído, ou o link está errado."}
         </p>
         <Link
-          to={lp("/projetos")}
+          to={lp("/projetos") + listSearch}
           className="mt-5 inline-block rounded-xl bg-indigo-600 px-5 py-2.5 text-xs font-bold text-white transition-colors hover:bg-indigo-700"
         >
           {language === "en" ? "Back to projects" : "Voltar aos projetos"}
@@ -199,7 +203,6 @@ export default function ProjectPage({
 
   // O que a barra de progresso mede: da capa ao fim do corpo, sem contar
   // galeria, relevância científica, artigos relacionados e navegação.
-  const leituraRef = useRef<HTMLDivElement>(null);
 
   const handleCopyLink = () => {
     navigator.clipboard.writeText(`${window.location.origin}${lp(`/project/${slugOf(project)}`)}`);
@@ -222,7 +225,7 @@ export default function ProjectPage({
     // Abaixo de `xl` as laterais somem e sobra só a coluna de leitura.
     <div className="mx-auto grid max-w-[1700px] grid-cols-1 gap-10 xl:grid-cols-[14rem_minmax(0,1fr)_16rem]">
       {/* Sumário (esquerda) */}
-      <aside className="hidden xl:block">
+      <aside className="min-w-0">
         <TableOfContents entries={toc} language={language} />
       </aside>
 
@@ -232,7 +235,7 @@ export default function ProjectPage({
         {/* Barra de navegação do projeto */}
         <div className="mb-6 flex flex-wrap items-center justify-between gap-3 no-print">
           <Link
-            to={lp("/projetos")}
+            to={lp("/projetos") + listSearch}
             className="flex items-center gap-1.5 rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-600 transition-colors hover:bg-slate-50 dark:border-slate-800 dark:text-slate-300 dark:hover:bg-slate-800"
           >
             <ArrowLeft className="h-3.5 w-3.5" />
@@ -366,20 +369,7 @@ export default function ProjectPage({
             <h2 className="mb-4 font-display text-lg font-bold text-slate-900 dark:text-white">
               {language === "en" ? "Gallery" : "Galeria"}
             </h2>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              {gallery.map((img, idx) => (
-                <div
-                  key={idx}
-                  className="overflow-hidden rounded-2xl border border-slate-200 bg-slate-100 dark:border-slate-800 dark:bg-slate-950"
-                >
-                  <LocalImage
-                    src={img}
-                    alt={`${title} — ${idx + 1}`}
-                    className="h-full w-full object-cover"
-                  />
-                </div>
-              ))}
-            </div>
+            <ProjectGallery key={project.id} images={gallery} title={title} language={language} captions={language === "en" ? { ...project.galleryCaptions, ...project.galleryCaptionsEn } : project.galleryCaptions} />
           </section>
         )}
 

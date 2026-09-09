@@ -58,7 +58,7 @@ export default function PostPage({
 
   // Toda troca de artigo começa no topo, como numa navegação de página comum.
   useEffect(() => {
-    window.scrollTo({ top: 0, behavior: "auto" });
+    if (!window.location.hash) window.scrollTo({ top: 0, behavior: "auto" });
   }, [slug]);
 
   // Sem artigo pode ser link errado — ou dado que ainda não chegou.
@@ -110,7 +110,7 @@ export default function PostPage({
   const title = (language === "en" ? post.titleEn : post.title) || post.title;
   const content = (language === "en" ? post.contentEn : post.content) || post.content;
   const category = (language === "en" ? post.categoryEn : post.category) || post.category;
-  const toc = useMemo(() => extractToc(content), [content]);
+  const toc = extractToc(content);
 
   const handleCopyLink = () => {
     navigator.clipboard.writeText(`${window.location.origin}${lp(`/blog/${slugOf(post)}`)}`);
@@ -155,7 +155,7 @@ export default function PostPage({
   return (
     <div className="mx-auto grid max-w-[1400px] grid-cols-1 gap-10 xl:grid-cols-[14rem_minmax(0,1fr)]">
       {/* Sumário (esquerda), só quando há títulos e largura para ele */}
-      <aside className="hidden xl:block">
+      <aside className="min-w-0">
         {toc.length > 0 && <TableOfContents entries={toc} language={language} />}
       </aside>
 

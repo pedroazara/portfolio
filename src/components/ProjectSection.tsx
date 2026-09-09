@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useId } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useSearchParams, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "motion/react";
 import { Project, ProjectCategory, BlogPost } from "../types";
 import { FolderKanban, Plus, Edit2, Trash2, ExternalLink, Github, Settings, Info, Eye, BookOpen, Image as ImageIcon, Check, RefreshCw, Search, ArrowLeft } from "lucide-react";
@@ -48,6 +48,13 @@ export default function ProjectSection({
 }: ProjectSectionProps) {
   const navigate = useNavigate();
   const lp = useLocalePath();
+  const location = useLocation();
+  const [params, setParams] = useSearchParams();
+  const updateFilter = (key: string, value: string) => setParams(previous => {
+    const next = new URLSearchParams(previous);
+    if (value && value !== "all" && value !== "default") next.set(key, value); else next.delete(key);
+    return next;
+  }, { replace: true });
   // `ProjectSection` monta tanto embutido na página de currículo quanto
   // sozinho em /projetos — ao trocar de rota, uma instância desmonta e a
   // outra monta. Sem um id único por instância, o `layoutId` da pílula das
@@ -55,8 +62,12 @@ export default function ProjectSection({
   // salto da posição antiga (lá no meio da página de currículo) até a nova,
   // em vez de simplesmente aparecer no lugar.
   const tabPillId = useId();
-  const [activeCategory, setActiveCategory] = useState<string>("all");
-  const [localSearch, setLocalSearch] = useState(searchQuery);
+  const [embeddedCategory, setEmbeddedCategory] = useState("all");
+  const activeCategory = isStandalonePage ? params.get("category") || "all" : embeddedCategory;
+  const setActiveCategory = (value: string) => isStandalonePage ? updateFilter("category", value) : setEmbeddedCategory(value);
+  const [embeddedSearch, setLocalSearch] = useState(searchQuery);
+  const localSearch = isStandalonePage ? params.get("q") || "" : embeddedSearch;
+  const sort = params.get("sort") || "default";
   useEffect(() => {
     setLocalSearch(searchQuery);
   }, [searchQuery]);
@@ -79,6 +90,7 @@ export default function ProjectSection({
 
   const handleSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
+    if (isStandalonePage) { updateFilter("q", val); return; }
     setLocalSearch(val);
     if (onSearchChange) {
       onSearchChange(val);
@@ -141,7 +153,9 @@ export default function ProjectSection({
   // Reordering only makes sense against the full, unfiltered list — with a
   // category tab or search active, dragging within that subset would shuffle
   // items relative to ones the admin can't currently see.
-  const canReorderProjects = isEditMode && activeCategory === "all" && !localSearch.trim();
+  if (isStandalonePage && sort === "title") filteredProjects.sort((a, b) => ((language === "en" ? a.titleEn : a.title) || a.title).localeCompare((language === "en" ? b.titleEn : b.title) || b.title, language));
+  if (isStandalonePage && sort === "featured") filteredProjects.sort((a, b) => Number(!!b.featured) - Number(!!a.featured));
+  const canReorderProjects = isEditMode && activeCategory === "all" && !localSearch.trim() && sort === "default";
 
   // --- Project Handlers ---
   // A edição acontece em página dedicada (/admin/projetos/...), onde cabe também
@@ -302,12 +316,22 @@ export default function ProjectSection({
             <input
               type="text"
               value={localSearch}
+              aria-label={language === "en" ? "Search projects" : "Buscar projetos"}
               onChange={handleSearchInputChange}
               placeholder={language === "en" ? "Search projects..." : "Buscar projetos..."}
               className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 pl-9 pr-3 py-1.5 text-xs text-slate-800 dark:text-slate-200 placeholder:text-slate-500 focus:border-indigo-500 focus:outline-hidden focus:ring-1 focus:ring-indigo-500 transition-colors"
             />
           </div>
 
+          {isStandalonePage && <>
+            <select aria-label={language === "en" ? "Sort projects" : "Ordenar projetos"} value={sort} onChange={e => updateFilter("sort", e.target.value)} className="min-h-11 max-w-full rounded-xl border border-borda bg-superficie px-3 text-sm text-tinta">
+              <option value="default">{language === "en" ? "Original order" : "Ordem original"}</option>
+              <option value="title">{language === "en" ? "Title A–Z" : "Título A–Z"}</option>
+              <option value="featured">{language === "en" ? "Featured first" : "Destaques primeiro"}</option>
+            </select>
+            {(localSearch || activeCategory !== "all" || sort !== "default") && <button className="min-h-11 rounded-xl border border-borda px-3 text-sm" onClick={() => setParams(previous => { const next = new URLSearchParams(previous); ["q", "category", "sort"].forEach(key => next.delete(key)); return next; }, { replace: true })}>{language === "en" ? "Clear filters" : "Limpar filtros"}</button>}
+            <span role="status" className="text-xs text-tinta-suave">{filteredProjects.length} {language === "en" ? "results" : "resultados"}</span>
+          </>}
           {/* Admin Tools for Projects and Areas */}
           {isEditMode && (
             <div className="flex flex-wrap gap-2">
@@ -464,8 +488,14 @@ export default function ProjectSection({
             const projCategories = categories.filter((c) => projCatIds.includes(c.id));
             return (
               <article
+                tabIndex={0}
+                role="link"
+                aria-label={(language === "en" ? proj.titleEn : proj.title) || proj.title}
+                onKeyDown={e => { if (e.target === e.currentTarget && e.key === "Enter") { e.preventDefault(); e.currentTarget.click(); } }}
                 onClick={() => {
-                  if (onSelectProject) {
+                  if (isStandalonePage) {
+                    navigate(lp(`/projetos/${encodeURIComponent(slugOf(proj))}`), { state: { projectListSearch: location.search } });
+                  } else if (onSelectProject) {
                     onSelectProject(slugOf(proj));
                   } else {
                     navigate(lp(`/projetos/${encodeURIComponent(slugOf(proj))}`));

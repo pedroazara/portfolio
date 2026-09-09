@@ -18,6 +18,20 @@ interface TableOfContentsProps {
  */
 export default function TableOfContents({ entries, language = "pt" }: TableOfContentsProps) {
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [expanded, setExpanded] = useState(false);
+  const [copyStatus, setCopyStatus] = useState("");
+  const entryKey = entries.map(entry => entry.id).join("|");
+  useEffect(() => {
+    // Markdown is lazy-loaded; wait for the target rather than erasing its hash.
+    let id: string; try { id = decodeURIComponent(window.location.hash.slice(1)); } catch { return; }
+    if (!id) return;
+    const reveal = () => { const target = document.getElementById(id); if (!target) return false; target.scrollIntoView({ behavior: "auto", block: "start" }); return true; };
+    if (reveal()) return;
+    const observer = new MutationObserver(() => { if (reveal()) observer.disconnect(); });
+    observer.observe(document.getElementById("conteudo-principal") || document.body, { childList: true, subtree: true });
+    const timeout = window.setTimeout(() => observer.disconnect(), 10000);
+    return () => { observer.disconnect(); clearTimeout(timeout); };
+  }, [entryKey]);
 
   useEffect(() => {
     if (entries.length === 0) return;
@@ -79,16 +93,13 @@ export default function TableOfContents({ entries, language = "pt" }: TableOfCon
    * apertar "voltar" uma vez por seção. `replaceState` também evita re-render
    * da árvore a cada rolagem.
    */
-  useEffect(() => {
-    const target = activeId ? `#${activeId}` : "";
-    if (window.location.hash === target) return;
-
-    window.history.replaceState(
-      window.history.state,
-      "",
-      `${window.location.pathname}${window.location.search}${target}`
-    );
-  }, [activeId]);
+  const copySection = async (id: string) => {
+    const url = new URL(window.location.href); url.hash = id;
+    // Never share a sandbox toggle or a preview access token accidentally.
+    url.search = "";
+    try { await navigator.clipboard.writeText(url.href); setCopyStatus(language === "en" ? "Section link copied" : "Link da seção copiado"); }
+    catch { setCopyStatus(language === "en" ? "Could not copy. Use the section link." : "Não foi possível copiar. Use o link da seção."); }
+  };
 
   if (entries.length === 0) return null;
 
@@ -103,6 +114,8 @@ export default function TableOfContents({ entries, language = "pt" }: TableOfCon
       aria-label={language === "en" ? "Table of contents" : "Sumário"}
       className={`sticky ${STICKY_UNDER_HEADER_CLASS} max-h-[calc(100vh-9rem)] overflow-y-auto no-print`}
     >
+      <button type="button" aria-expanded={expanded} onClick={() => setExpanded(value => !value)} className="mb-3 min-h-11 w-full rounded-xl border border-borda px-3 text-left text-sm xl:hidden">{language === "en" ? "On this page" : "Nesta página"} {expanded ? "−" : "+"}</button>
+      <div className={expanded ? "block" : "hidden xl:block"}>
       <button
         type="button"
         onClick={voltarAoTopo}
@@ -121,11 +134,11 @@ export default function TableOfContents({ entries, language = "pt" }: TableOfCon
         {entries.map((entry) => {
           const isActive = entry.id === activeId;
           return (
-            <li key={entry.id}>
+            <li key={entry.id} className="flex items-center">
               <a
                 href={`#${entry.id}`}
                 aria-current={isActive ? "location" : undefined}
-                className={`-ml-px block rounded-r-lg border-l-2 py-1.5 pr-2 text-xs leading-snug transition-all ${
+                className={`-ml-px block min-w-0 flex-1 rounded-r-lg border-l-2 py-1.5 pr-2 text-xs leading-snug transition-all ${
                   entry.level === 3 ? "pl-6" : "pl-3 font-semibold"
                 } ${
                   isActive
@@ -135,10 +148,13 @@ export default function TableOfContents({ entries, language = "pt" }: TableOfCon
               >
                 {entry.text}
               </a>
+              <button type="button" onClick={() => copySection(entry.id)} aria-label={`${language === "en" ? "Copy section link" : "Copiar link da seção"}: ${entry.text}`} className="min-h-11 min-w-11 shrink-0 rounded text-sm text-tinta-suave hover:text-acento">#</button>
             </li>
           );
         })}
       </ul>
+      </div>
+      <p role="status" className="text-xs text-tinta-suave">{copyStatus}</p>
     </nav>
   );
 }

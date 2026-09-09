@@ -4,6 +4,7 @@ import {BrowserRouter} from 'react-router-dom';
 import App from './App.tsx';
 import ErrorBoundary from './components/ErrorBoundary.tsx';
 import './index.css';
+import { MotionConfig } from 'motion/react';
 import { initializeAnalytics, initializeMonitoring } from './lib/observability';
 initializeMonitoring().catch(() => {});
 initializeAnalytics();
@@ -23,7 +24,7 @@ createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <BrowserRouter>
       <ErrorBoundary>
-        <App />
+        <MotionConfig reducedMotion="user"><App /></MotionConfig>
       </ErrorBoundary>
     </BrowserRouter>
   </StrictMode>,

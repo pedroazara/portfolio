@@ -44,6 +44,7 @@ export async function fetchResumeData(): Promise<FetchResult> {
     .from(PORTFOLIO_TABLE)
     .select("data,updated_at")
     .eq("id", PORTFOLIO_ROW_ID)
+    .abortSignal(AbortSignal.timeout(15000))
     .maybeSingle();
 
   if (error) throw error;

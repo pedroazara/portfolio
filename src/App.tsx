@@ -9,14 +9,14 @@ import { trackPage, reportError } from "./lib/observability";
 import ResumeHeader from "./components/ResumeHeader";
 import CurriculoResumo from "./components/CurriculoResumo";
 import HomePage from "./pages/HomePage";
-import ProjectSection from "./components/ProjectSection";
-import ExperienceEducationSection from "./components/ExperienceEducationSection";
-import CoursesSection from "./components/CoursesSection";
-import SkillsSection from "./components/SkillsSection";
+const ProjectSection = lazy(() => import("./components/ProjectSection"));
+const ExperienceEducationSection = lazy(() => import("./components/ExperienceEducationSection"));
+const CoursesSection = lazy(() => import("./components/CoursesSection"));
+const SkillsSection = lazy(() => import("./components/SkillsSection"));
 import AdminStrip from "./components/AdminStrip";
 import GlobalHeader from "./components/GlobalHeader";
 import SectionHeader from "./components/SectionHeader";
-import BlogSection from "./components/BlogSection";
+const BlogSection = lazy(() => import("./components/BlogSection"));
 /**
  * Telas de administração, carregadas sob demanda.
  *
@@ -50,8 +50,8 @@ const PostEditorPage = lazy(() => import("./pages/PostEditorPage"));
 const ProjectEditorPage = lazy(() => import("./pages/ProjectEditorPage"));
 const AdminHubPage = lazy(() => import("./pages/AdminHubPage"));
 import { AdminHubTab, ADMIN_HUB_TABS } from "./lib/adminHubTabs";
-import PostPage from "./pages/PostPage";
-import ProjectPage from "./pages/ProjectPage";
+const PostPage = lazy(() => import("./pages/PostPage"));
+const ProjectPage = lazy(() => import("./pages/ProjectPage"));
 
 const STORAGE_KEY = "curriculo_portfolio_data_v1";
 const EDIT_MODE_KEY = "curriculo_portfolio_edit_mode_v1";
@@ -131,9 +131,9 @@ export default function App() {
   // Busca os dados na nuvem, com queda para a cópia local
   useEffect(() => {
     function loadFromLocalStorage() {
-      const saved = localStorage.getItem(workspaceKey());
-      if (!saved) return;
       try {
+        const saved = localStorage.getItem(workspaceKey());
+        if (!saved) return;
         setResumeData(sanitizeResumeData(JSON.parse(saved)));
       } catch (err) {
         console.error("Erro ao ler dados salvos no LocalStorage:", err);
@@ -142,6 +142,7 @@ export default function App() {
 
     async function loadData() {
       try {
+        if (!navigator.onLine) { setCloudReadFailed(true); loadFromLocalStorage(); return; }
         if (devPreview) {
           const local = readLocalData();
           if (local) { setResumeData(local); return; }
@@ -676,6 +677,7 @@ export default function App() {
 
       {/* Main Content Area */}
       <main id="conteudo-principal" className="mx-auto max-w-[1600px] px-4 py-8 sm:px-8 lg:px-12 print:p-0 print:max-w-none focus:outline-hidden">
+        <Suspense fallback={<AppSkeleton />}>
         {isEditorRoute ? (
           /* Editores em página dedicada. Exigem sessão ativa: sem ela, mostramos
              o aviso em vez do formulário — as políticas RLS recusariam a gravação
@@ -867,6 +869,7 @@ export default function App() {
             />
           )
         )}
+        </Suspense>
       </main>
 
       {/* Footer Design */}

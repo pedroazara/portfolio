@@ -1,111 +1,48 @@
-import React, { useState, useEffect } from "react";
-import { FileText } from "lucide-react";
+import React, { useEffect, useState } from "react";
+import { FileText, ImageOff } from "lucide-react";
 import { getImage, getSyncImage, isPdfRef } from "../utils/imageDb";
 
-interface LocalImageProps {
-  src?: string;
-  fallback?: string;
-  alt?: string;
-  className?: string;
-  referrerPolicy?: React.HTMLAttributeReferrerPolicy;
-  onClick?: (e: React.MouseEvent<HTMLImageElement>) => void;
-  [key: string]: any;
+interface LocalImageProps extends React.ImgHTMLAttributes<HTMLImageElement> { fallback?: string }
+
+export default function LocalImage(props: LocalImageProps) {
+  return <ResolvedImage key={props.src} {...props} />;
 }
 
-export default function LocalImage({ src, fallback, ...props }: LocalImageProps) {
+function ResolvedImage({ src, fallback, className, onLoad, onError, ...props }: LocalImageProps) {
+  const [resolved, setResolved] = useState(() => src?.startsWith("db:") ? getSyncImage(src.slice(3)) : src);
   const [originalOnly, setOriginalOnly] = useState(false);
-  useEffect(() => setOriginalOnly(false), [src]);
-  const responsive = !originalOnly && src?.startsWith("db:") && /\.(png|jpe?g|webp)$/i.test(src);
-  const optimized = (width: number) => `/api/image?path=${encodeURIComponent(src!.slice(3))}&w=${width}`;
-  const [resolvedSrc, setResolvedSrc] = useState<string | undefined>(() => {
-    if (src && src.startsWith("db:")) {
-      const cached = getSyncImage(src.substring(3));
-      if (cached) return cached;
-    }
-    return src && !src.startsWith("db:") ? src : undefined;
-  });
-  const [isLoading, setIsLoading] = useState<boolean>(() => {
-    if (!src) return false;
-    if (src.startsWith("db:")) {
-      return !getSyncImage(src.substring(3));
-    }
-    return false;
-  });
-
+  const [loaded, setLoaded] = useState(false);
+  const [failed, setFailed] = useState(false);
   useEffect(() => {
-    if (!src) {
-      setResolvedSrc(undefined);
-      setIsLoading(false);
-      return;
-    }
-
-    if (src.startsWith("db:")) {
-      const dbKey = src.substring(3); // remove "db:" prefix
-      const syncVal = getSyncImage(dbKey);
-      if (syncVal) {
-        setResolvedSrc(syncVal);
-        setIsLoading(false);
-        return;
-      }
-
-      setIsLoading(true);
-      getImage(dbKey)
-        .then((dataUrl) => {
-          if (dataUrl) {
-            setResolvedSrc(dataUrl);
-          } else {
-            // Show custom elegant fallback placeholder
-            setResolvedSrc(fallback || "https://images.unsplash.com/photo-1594322436404-5a0526db4d13?auto=format&fit=crop&w=400&q=80");
-          }
-        })
-        .catch(() => {
-          setResolvedSrc(fallback || "https://images.unsplash.com/photo-1594322436404-5a0526db4d13?auto=format&fit=crop&w=400&q=80");
-        })
-        .finally(() => {
-          setIsLoading(false);
-        });
-    } else {
-      setResolvedSrc(src);
-      setIsLoading(false);
-    }
+    if (!src?.startsWith("db:") || resolved || isPdfRef(src)) return;
+    let cancelled = false;
+    getImage(src.slice(3)).then(value => {
+      if (cancelled) return;
+      setResolved(value || fallback);
+      if (!value && !fallback) setFailed(true);
+    }).catch(() => {
+      if (!cancelled) { setResolved(fallback); if (!fallback) setFailed(true); }
+    });
+    return () => { cancelled = true; };
   }, [src, fallback]);
 
-  if (isLoading) {
-    return (
-      <div className={`animate-pulse bg-slate-100 rounded-lg ${props.className || "w-full h-48"}`} />
-    );
-  }
-
-  // Um PDF não abre dentro de uma tag <img> — mostramos um cartão com ícone
-  // no lugar da miniatura que o navegador nunca conseguiria desenhar.
-  if (src && isPdfRef(src)) {
-    return (
-      <div className={`flex items-center justify-center gap-1.5 bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400 ${props.className || "w-full h-48"}`}>
-        <FileText className="h-5 w-5 shrink-0" />
-        <span className="truncate text-xs font-semibold">PDF</span>
-      </div>
-    );
-  }
-
-  return (
-    <img
-      src={responsive ? optimized(960) : resolvedSrc}
-      srcSet={responsive ? [320, 640, 960, 1600].map(w => `${optimized(w)} ${w}w`).join(", ") : undefined}
-      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 800px"
-      // Padrões de desempenho: o navegador só baixa a imagem ao aproximá-la do
-      // viewport e decodifica fora da thread principal. Props explícitas nos
-      // usos individuais (ex.: a capa de um artigo) sobrescrevem os dois.
-      loading="lazy"
-      decoding="async"
-      {...props}
-      onError={(e) => {
-        if (responsive) { setOriginalOnly(true); return; }
-        if (props.onError) props.onError(e);
-        // Fallback on load error
-        if (fallback && resolvedSrc !== fallback) {
-          setResolvedSrc(fallback);
-        }
-      }}
-    />
-  );
+  const responsive = !originalOnly && src?.startsWith("db:") && /\.(png|jpe?g|webp)$/i.test(src);
+  const optimized = (width: number) => `/api/image?path=${encodeURIComponent(src!.slice(3))}&w=${width}`;
+  if (src && isPdfRef(src)) return <span role="img" aria-label={props.alt || "PDF"} className={`flex items-center justify-center gap-2 bg-slate-100 text-slate-500 dark:bg-slate-800 ${className || "h-48 w-full"}`}><FileText aria-hidden className="h-5 w-5" />PDF</span>;
+  if (failed || !src) return <span role="img" aria-label={props.alt || "Imagem indisponível"} className={`flex items-center justify-center bg-slate-100 text-slate-500 dark:bg-slate-800 ${className || "h-48 w-full"}`}><ImageOff aria-hidden className="h-6 w-6" /></span>;
+  if (!resolved && !responsive) return <span aria-busy="true" aria-label={props.alt} className={`block animate-pulse bg-slate-100 dark:bg-slate-800 ${className || "h-48 w-full"}`} />;
+  return <img
+    src={responsive ? optimized(960) : resolved}
+    srcSet={responsive ? [320, 640, 960, 1600].map(w => `${optimized(w)} ${w}w`).join(", ") : undefined}
+    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 800px"
+    loading="lazy" decoding="async"
+    {...props}
+    className={`${className || ""} ${loaded ? "" : "bg-slate-100 dark:bg-slate-800"}`}
+    onLoad={event => { setLoaded(true); onLoad?.(event); }}
+    onError={event => {
+      if (responsive) { setOriginalOnly(true); return; }
+      if (fallback && resolved !== fallback) { setResolved(fallback); return; }
+      setFailed(true); onError?.(event);
+    }}
+  />;
 }

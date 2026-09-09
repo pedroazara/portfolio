@@ -18,6 +18,9 @@ export function useEditorDraft<T>(id: string, value: T, dirty: boolean) {
   };
   useEffect(() => { const timer = setTimeout(persist, 350); return () => clearTimeout(timer); }, [value, dirty, key]);
   useEffect(() => { window.addEventListener("pagehide", persist); return () => { persist(); window.removeEventListener("pagehide", persist); }; }, [key]);
-  const clear = () => { cleared.current = JSON.stringify(latest.current.value); localStorage.removeItem(key); setSaved(null); };
+  const clear = () => {
+    try { localStorage.removeItem(key); cleared.current = JSON.stringify(latest.current.value); setSaved(null); setError(""); }
+    catch { setError("Não foi possível remover a recuperação local neste navegador."); }
+  };
   return { saved, error, clear, dismiss: () => setSaved(null) };
 }

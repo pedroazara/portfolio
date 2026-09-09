@@ -289,6 +289,8 @@ export default function ProjectForm({
       scientificRelevance: formData.scientificRelevance || "",
       scientificRelevanceEn: formData.scientificRelevanceEn || "",
       galleryImages: formData.galleryImages || [],
+      galleryCaptions: formData.galleryCaptions,
+      galleryCaptionsEn: formData.galleryCaptionsEn,
       references: (formData.references || []).filter((r) => r.title.trim() || r.url.trim()),
       featured: formData.featured || false,
       emAndamento: isInProgress,
@@ -735,6 +737,13 @@ export default function ProjectForm({
                       folder={galleryFolder}
                       language={language}
                     />
+                    {(formData.galleryImages || []).map((src, index) => {
+                      const field = editingLanguage === "en" ? "galleryCaptionsEn" : "galleryCaptions";
+                      return <label key={`${src}-${index}`} className="block text-sm text-tinta-suave">
+                        {editingLanguage === "en" ? "Image caption" : "Legenda da imagem"} {index + 1}
+                        <input className="mt-1 block min-h-11 w-full rounded-lg border border-borda bg-superficie px-3 text-tinta" value={formData[field]?.[src] || ""} maxLength={1000} onChange={e => setFormData({ ...formData, [field]: { ...formData[field], [src]: e.target.value } })} />
+                      </label>;
+                    })}
                   </div>
 
                   {/* 8. REFERÊNCIAS */}

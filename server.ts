@@ -16,7 +16,7 @@ app.all("/api/image", image);
 app.get("/api/health", (_req, res) => res.json({ status: "ok" }));
 async function startServer() {
   if (process.env.NODE_ENV !== "production") {
-    const vite = await createViteServer({ server: { middlewareMode: true }, appType: "spa" });
+    const vite = await createViteServer({ server: { middlewareMode: true, hmr: process.env.DISABLE_HMR === "true" ? false : { port: 24678 } }, appType: "spa" });
     app.use(vite.middlewares);
   } else {
     const dist = path.join(process.cwd(), "dist");

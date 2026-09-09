@@ -3,7 +3,6 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Download, Sun, Moon, Menu, X, Lock, ChevronDown, ArrowRight, LayoutDashboard } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { OrbitaIcon } from "./OrbitaIcon";
-import { generateResumePDF } from "../utils/pdfGenerator";
 import { stripLocale, localePath } from "../lib/routes";
 import { ResumeData } from "../types";
 
@@ -45,6 +44,26 @@ export default function GlobalHeader({
   const location = useLocation();
   const navigate = useNavigate();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const mobilePanel = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!isMobileMenuOpen) return;
+    const previousFocus = document.activeElement as HTMLElement | null;
+    const overflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const panel = mobilePanel.current;
+    const focusable = () => Array.from(panel?.querySelectorAll<HTMLElement>('a[href], button:not([disabled]), select, input') || []);
+    focusable()[0]?.focus();
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") { e.preventDefault(); setIsMobileMenuOpen(false); }
+      if (e.key === "Tab") {
+        const elements = focusable(); const first = elements[0]; const last = elements.at(-1);
+        if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last?.focus(); }
+        else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first?.focus(); }
+      }
+    };
+    document.addEventListener("keydown", onKey);
+    return () => { document.removeEventListener("keydown", onKey); document.body.style.overflow = overflow; previousFocus?.focus(); };
+  }, [isMobileMenuOpen]);
   const [isScrolled, setIsScrolled] = useState(false);
 
   // Monitor scroll distance for backdrop blur & bottom border
@@ -90,7 +109,7 @@ export default function GlobalHeader({
     if (onOpenPdfPreview) {
       onOpenPdfPreview();
     } else {
-      generateResumePDF(resumeData).catch((err) => console.error("Erro ao gerar PDF:", err));
+      import("../utils/pdfGenerator").then(({ generateResumePDF }) => generateResumePDF(resumeData)).catch((err) => console.error("Erro ao gerar PDF:", err));
     }
   };
 
@@ -277,6 +296,10 @@ export default function GlobalHeader({
       <AnimatePresence>
         {isMobileMenuOpen && (
           <motion.div
+            ref={mobilePanel}
+            role="dialog"
+            aria-modal="true"
+            aria-label={language === "en" ? "Navigation menu" : "Menu de navegação"}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}

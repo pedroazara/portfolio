@@ -1,6 +1,11 @@
 {
   "name": "react-example",
   "private": true,
+  "overrides": {
+    "express": {
+      "qs": "^6.16.0"
+    }
+  },
   "version": "0.0.0",
   "type": "module",
   "scripts": {
@@ -14,6 +19,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
+    "test:production": "playwright test --config playwright.production.config.ts",
     "check": "npm run lint && npm test && npm run build"
   },
   "dependencies": {
@@ -56,7 +62,7 @@
     "tsx": "^4.21.0",
     "typescript": "~5.8.2",
     "vite": "^6.2.3",
-    "vitest": "^3.2.7",
+    "vitest": "^4.1.11",
     "workbox-build": "^7.4.1"
   }
 }

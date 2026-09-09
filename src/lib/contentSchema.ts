@@ -9,6 +9,7 @@ export const projectSchema = item.extend({
   title: text, description: text.default(""), categoryId: text.default(""), tags: strings.default([]),
   codigo: text.optional(), categoryIds: strings.optional(), imageUrl: text.optional(),
   githubUrl: text.optional(), projectUrl: text.optional(), galleryImages: strings.optional(),
+  galleryCaptions: z.record(text, text).optional(), galleryCaptionsEn: z.record(text, text).optional(),
   detailedDescription: text.optional(), featured: z.boolean().optional(), draft: z.boolean().optional(),
   emAndamento: z.boolean().optional(), emPlanejamento: z.boolean().optional(),
   references: z.array(link).optional(), stack: strings.optional(),

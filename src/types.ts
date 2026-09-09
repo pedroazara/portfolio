@@ -52,6 +52,8 @@ export interface Project {
   repositoryUrl?: string;
   imageUrl?: string; // Main cover
   galleryImages?: string[]; // Additional gallery images
+  galleryCaptions?: Record<string, string>;
+  galleryCaptionsEn?: Record<string, string>;
   images?: string[]; // Alias for galleryImages
   detailedDescription?: string; // Main MDX/Markdown content body
   detailedDescriptionEn?: string;
