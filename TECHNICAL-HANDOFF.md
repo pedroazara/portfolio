@@ -1,5 +1,17 @@
 # Retomada técnica
 
+## Segunda etapa
+
+- Painel duplicado “Histórico e recuperação” removido da interface a pedido do usuário; ferramentas administrativas existentes preservadas.
+- Cabeçalhos de segurança adicionados no Express e na configuração Vercel; publicação ainda não executada.
+- Salvamentos da mesma aba serializados para evitar sobreposição; conflitos entre abas continuam bloqueando a escrita.
+- Metadados sociais, canonical e JSON-LD sincronizados durante navegação SPA.
+- Backup administrativo carregado sob demanda; bundle do servidor movido para `.server/`, fora da pasta pública `dist/`.
+- Testes unitários adicionais e suíte E2E inicial adicionados. Validações de produção e serviços externos continuam pendentes.
+- Validação desta etapa: 73 testes unitários e 3 E2E passaram, além de TypeScript e build. O E2E usa respostas simuladas, sem acessar dados reais do Supabase.
+- `npm audit --omit=dev` ainda reporta 7 alertas (5 moderados, 2 altos); correções de dependências ficaram para uma etapa dedicada.
+- Use `npm start` após o build para o servidor de produção local; `npm run dev` mantém o modo fictício disponível.
+
 Implementação interrompida a pedido do usuário para revisão local antes do commit. Nenhum deploy, commit ou migração remota foi executado.
 
 ## Implementado nesta etapa
@@ -22,7 +34,7 @@ Implementação interrompida a pedido do usuário para revisão local antes do c
 - Analytics opcional: `VITE_UMAMI_SCRIPT_URL` (HTTPS) e `VITE_UMAMI_WEBSITE_ID`.
 - SEO: configurar `VITE_SITE_URL`. O build usa o Supabase; `PRERENDER_SOURCE=template` é apenas uma alternativa explícita para dados de exemplo.
 
-## Pendências para próxima etapa
+## Pendências registradas na primeira etapa (atualizações acima)
 
 - Testes E2E e testes dedicados às funcionalidades novas (Playwright instalado, suíte ainda não criada).
 - Cabeçalhos HTTP de segurança e validação em hospedagem real.

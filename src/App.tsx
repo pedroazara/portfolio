@@ -3,10 +3,9 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { ResumeData, Profile, Project, ProjectCategory, Experience, AcademicActivity, Education, Skill, SkillCategory, Course, BlogPost } from "./types";
 import { initialResumeData } from "./data/initialData";
 import { parseResumeData } from "./lib/contentSchema";
-import { workspaceKey, readLocalData, recordRevision } from "./lib/localWorkspace";
+import { workspaceKey, readLocalData } from "./lib/localWorkspace";
 import ConnectionStatus from "./components/ConnectionStatus";
 import { trackPage, reportError } from "./lib/observability";
-const WorkspaceTools = lazy(() => import("./components/WorkspaceTools"));
 import ResumeHeader from "./components/ResumeHeader";
 import CurriculoResumo from "./components/CurriculoResumo";
 import HomePage from "./pages/HomePage";
@@ -39,7 +38,8 @@ import { Sparkles, CheckCircle2, Lock, Atom, FileText, BookOpen, Cloud, CloudOff
 import { motion, AnimatePresence } from "motion/react";
 import { Language, translations } from "./lib/translations";
 import { fetchResumeData, saveResumeData, StaleWriteError } from "./lib/dataService";
-import { maybeRunDailyFullBackup } from "./lib/fullBackupService";
+import { createSerialQueue } from "./lib/serialQueue";
+import { siteOrigin, syncPageMetadata } from "./lib/pageMetadata";
 import { observeAuth, logout } from "./lib/auth";
 import { findBySlug } from "./utils/slug";
 import { isDevPreview } from "./lib/devPreview";
@@ -98,7 +98,6 @@ const sanitizeResumeData = (data: any): ResumeData => {
 
 export default function App() {
   const [devPreview] = useState(() => isDevPreview());
-  const localRevisionRef = useRef<ResumeData | null>(null);
   const [hasConflict, setHasConflict] = useState(false);
   const [darkMode, setDarkMode] = useState<boolean>(() => {
     const saved = localStorage.getItem("portfolio_dark_mode_v1");
@@ -235,6 +234,8 @@ export default function App() {
   // Carimbo `updated_at` da linha lida. Vai em cada gravação para detectar que
   // outra aba escreveu no meio-tempo, em vez de sobrescrever cegamente.
   const cloudVersionRef = useRef<string | null>(null);
+  const saveQueueRef = useRef(createSerialQueue());
+  const conflictRef = useRef(false);
   // Mesmo carimbo, mas em estado — é o que o rodapé mostra em "Atualizado em".
   // Fica `null` até a leitura da nuvem responder, ou se não houver linha
   // salva ainda; o rodapé some a linha inteira nesse caso, em vez de inventar
@@ -371,6 +372,7 @@ export default function App() {
     const name = resumeData?.profile?.name || "Pedro Henrique Almeida";
     let title = isEn ? `${name} | Resume, Portfolio & Blog` : `${name} | Currículo, Portfólio & Blog`;
     let description = (isEn ? resumeData?.profile?.bioEn : resumeData?.profile?.bio) || resumeData?.profile?.bio || "";
+    let image: string | undefined;
 
     if (routePath === "/curriculo") {
       title = isEn ? `Resume | ${name}` : `Currículo | ${name}`;
@@ -387,6 +389,7 @@ export default function App() {
       // a página em si já os esconde, e o título da aba vazaria o mesmo conteúdo.
       const post = findBySlug(resumeData.posts, selectedBlogPostId);
       if (post && (!post.draft || isEditMode)) {
+        image = post.imageUrl;
         const postTitle = isEn ? post.titleEn || post.title : post.title;
         title = isEn ? `${postTitle} | ${name}'s Blog` : `${postTitle} | Blog de ${name}`;
         description = (isEn ? post.summaryEn || post.summary : post.summary) || description;
@@ -394,24 +397,14 @@ export default function App() {
     } else if (selectedProjectId) {
       const proj = findBySlug(resumeData.projects, selectedProjectId);
       if (proj && (!proj.draft || isEditMode)) {
+        image = proj.imageUrl;
         const projTitle = isEn ? proj.titleEn || proj.title : proj.title;
         title = isEn ? `${projTitle} | ${name}'s Projects` : `${projTitle} | Projetos de ${name}`;
         description = (isEn ? proj.descriptionEn || proj.description : proj.description) || description;
       }
     }
 
-    document.title = title;
-    document.documentElement.lang = isEn ? "en" : "pt-BR";
-
-    const metaDesc = document.querySelector('meta[name="description"]');
-    if (metaDesc) {
-      metaDesc.setAttribute("content", description);
-    }
-
-    const canonical = document.querySelector('link[rel="canonical"]');
-    if (canonical) {
-      canonical.setAttribute("href", `https://pedroazara.vercel.app${location.pathname}`);
-    }
+    syncPageMetadata({ title, description, image, language, path: localePath(routePath.replace(/^\/project\//, "/projetos/"), language), privatePage: devPreview || routePath.startsWith("/admin") || isEditMode });
 
     // hreflang: aponta cada página para a sua irmã no outro idioma, para o
     // buscador entender que são traduções e não conteúdo duplicado.
@@ -425,7 +418,7 @@ export default function App() {
       }
       link.setAttribute("href", href);
     };
-    const base = "https://pedroazara.vercel.app";
+    const base = siteOrigin;
     setAlternate("pt-BR", `${base}${localePath(routePath, "pt")}`);
     setAlternate("en", `${base}${localePath(routePath, "en")}`);
     setAlternate("x-default", `${base}${localePath(routePath, "pt")}`);
@@ -435,9 +428,7 @@ export default function App() {
   useEffect(() => {
     if (!isDataLoaded) return; // Prevent overwriting during initialization
     try {
-      if ((isAuthenticated || devPreview) && localRevisionRef.current) recordRevision(localRevisionRef.current, resumeData);
       localStorage.setItem(workspaceKey(), JSON.stringify(resumeData));
-      localRevisionRef.current = resumeData;
     } catch { setSaveError("Armazenamento local cheio. Exporte seus dados antes de continuar."); }
   }, [resumeData, isDataLoaded]);
 
@@ -448,7 +439,7 @@ export default function App() {
   useEffect(() => {
     if (!isDataLoaded || !isAuthenticated || devPreview || dailyFullBackupTriggeredRef.current) return;
     dailyFullBackupTriggeredRef.current = true;
-    maybeRunDailyFullBackup(resumeData);
+    import("./lib/fullBackupService").then(({ maybeRunDailyFullBackup }) => maybeRunDailyFullBackup(resumeData)).catch(reportError);
   }, [isDataLoaded, isAuthenticated, resumeData]);
 
   // Cópia na nuvem: agrupada por debounce, para que uma sequência de digitação
@@ -465,7 +456,9 @@ export default function App() {
     if (lastSyncedRef.current === serialized) return;
 
     setIsSaving(true);
-    const timer = setTimeout(async () => {
+    let cancelled = false;
+    const timer = setTimeout(() => { void saveQueueRef.current(async () => {
+      if (cancelled || conflictRef.current) return;
       try {
         cloudVersionRef.current = await saveResumeData(resumeData, cloudVersionRef.current);
         setLastUpdatedAt(cloudVersionRef.current);
@@ -477,6 +470,7 @@ export default function App() {
       } catch (err) {
         console.error("Erro ao salvar dados na nuvem:", err);
         if (err instanceof StaleWriteError) {
+          conflictRef.current = true;
           setHasConflict(true);
           // Outra aba gravou depois desta carregar. Não sobrescrevemos: seria
           // apagar o trabalho dela. Recarregar traz a versão nova.
@@ -489,9 +483,9 @@ export default function App() {
       } finally {
         setIsSaving(false);
       }
-    }, CLOUD_SAVE_DEBOUNCE_MS);
+    }); }, CLOUD_SAVE_DEBOUNCE_MS);
 
-    return () => clearTimeout(timer);
+    return () => { cancelled = true; clearTimeout(timer); };
   }, [resumeData, isDataLoaded, isAuthenticated, cloudReadFailed, hasConflict, devPreview]);
 
   // Se a leitura inicial da nuvem falhou, a gravação fica bloqueada nesta sessão.
@@ -682,10 +676,6 @@ export default function App() {
 
       {/* Main Content Area */}
       <main id="conteudo-principal" className="mx-auto max-w-[1600px] px-4 py-8 sm:px-8 lg:px-12 print:p-0 print:max-w-none focus:outline-hidden">
-        {(isAuthenticated || devPreview) && <Suspense fallback={null}><WorkspaceTools data={resumeData} sandbox={devPreview} conflict={hasConflict} onApply={(data, version) => {
-          if (version !== undefined) { cloudVersionRef.current = version; setCloudReadFailed(false); setHasConflict(false); }
-          setResumeData(sanitizeResumeData(data)); setSaveError(null);
-        }} /></Suspense>}
         {isEditorRoute ? (
           /* Editores em página dedicada. Exigem sessão ativa: sem ela, mostramos
              o aviso em vez do formulário — as políticas RLS recusariam a gravação
