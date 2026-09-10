@@ -1,10 +1,11 @@
 import React, { useState } from "react";
-import { Highlight, themes } from "prism-react-renderer";
+import { Highlight } from "prism-react-renderer";
 import { Copy, Check, Terminal } from "lucide-react";
 import LocalImage from "./LocalImage";
+import { codeTheme } from "../lib/codeTheme";
 
 /**
- * Código Python com moldura de terminal (as três bolinhas), no tema Dracula.
+ * Código Python com moldura de terminal (as três bolinhas), no tema do site.
  * Puramente estático — a execução acontece no editor (o botão de rodar fica
  * sobre o próprio texto-fonte que se digita, não aqui) e o resultado vira o
  * bloco `PyOutputBlock` logo abaixo, gravado no próprio Markdown. Quem lê
@@ -21,8 +22,8 @@ export function PyCodeBlock({ code }: { code: string }) {
   };
 
   return (
-    <div className="group/code relative mt-5 mb-2 rounded-xl overflow-hidden shadow-md border border-[#44475a] bg-[#282a36]">
-      <div className="flex items-center justify-between px-4 py-2 border-b border-[#44475a] text-[10px] font-mono text-[#6272a4] select-none">
+    <div className="group/code relative mt-5 mb-2 rounded-xl overflow-hidden shadow-md border border-slate-700 bg-slate-900">
+      <div className="flex items-center justify-between px-4 py-2 border-b border-slate-700 text-[10px] font-mono text-slate-400 select-none">
         <div className="flex items-center gap-1.5">
           <span className="h-2.5 w-2.5 rounded-full bg-red-500/70" />
           <span className="h-2.5 w-2.5 rounded-full bg-amber-400/70" />
@@ -33,12 +34,12 @@ export function PyCodeBlock({ code }: { code: string }) {
           type="button"
           aria-label={copied ? "Copiado" : "Copiar código"}
           title={copied ? "Copiado" : "Copiar código"}
-          className="flex items-center rounded-md p-1.5 bg-[#44475a] text-[#f8f8f2] hover:bg-[#6272a4] hover:text-white transition-colors cursor-pointer"
+          className="flex items-center rounded-md p-1.5 bg-slate-700 text-slate-100 hover:bg-indigo-600 hover:text-white transition-colors cursor-pointer"
         >
-          {copied ? <Check className="h-3 w-3 text-[#50fa7b]" /> : <Copy className="h-3 w-3" />}
+          {copied ? <Check className="h-3 w-3 text-emerald-400" /> : <Copy className="h-3 w-3" />}
         </button>
       </div>
-      <Highlight code={code} language="python" theme={themes.dracula}>
+      <Highlight code={code} language="python" theme={codeTheme}>
         {({ className, style, tokens, getLineProps, getTokenProps }) => (
           <pre
             className={`${className} p-4 overflow-x-auto text-xs sm:text-sm font-mono leading-relaxed max-h-[450px]`}
@@ -91,30 +92,30 @@ export function PyOutputBlock({ raw }: { raw: string }) {
   const hasContent = Boolean(data.stdout || data.stderr || data.error || data.images?.length);
 
   return (
-    <div className="mb-5 rounded-xl overflow-hidden shadow-md border border-[#44475a] bg-[#282a36]">
-      <div className="flex items-center gap-1.5 px-4 py-2 border-b border-[#44475a] text-[10px] font-mono uppercase tracking-wider text-[#6272a4] select-none">
+    <div className="mb-5 rounded-xl overflow-hidden shadow-md border border-slate-700 bg-slate-900">
+      <div className="flex items-center gap-1.5 px-4 py-2 border-b border-slate-700 text-[10px] font-mono uppercase tracking-wider text-slate-400 select-none">
         <Terminal className="h-3 w-3" />
         Saída
       </div>
       <div className="px-4 py-3 space-y-2.5">
-        {!hasContent && <p className="text-xs font-mono italic text-[#6272a4]">(sem saída)</p>}
+        {!hasContent && <p className="text-xs font-mono italic text-slate-500">(sem saída)</p>}
         {data.stdout && (
-          <pre className="text-xs sm:text-sm font-mono whitespace-pre-wrap break-words leading-relaxed text-[#50fa7b]">
+          <pre className="text-xs sm:text-sm font-mono whitespace-pre-wrap break-words leading-relaxed text-emerald-400">
             {data.stdout}
           </pre>
         )}
         {data.stderr && (
-          <pre className="text-xs sm:text-sm font-mono whitespace-pre-wrap break-words leading-relaxed text-[#ffb86c]">
+          <pre className="text-xs sm:text-sm font-mono whitespace-pre-wrap break-words leading-relaxed text-amber-400">
             {data.stderr}
           </pre>
         )}
         {data.error && (
-          <pre className="text-xs sm:text-sm font-mono whitespace-pre-wrap break-words leading-relaxed text-[#ff5555]">
+          <pre className="text-xs sm:text-sm font-mono whitespace-pre-wrap break-words leading-relaxed text-red-400">
             {data.error}
           </pre>
         )}
         {data.images?.map((src, idx) => (
-          <div key={idx} className="overflow-hidden rounded-lg border border-[#44475a] bg-white inline-block max-w-full">
+          <div key={idx} className="overflow-hidden rounded-lg border border-slate-700 bg-white inline-block max-w-full">
             <LocalImage src={src} alt={`Gráfico gerado ${idx + 1}`} className="max-w-full h-auto block" />
           </div>
         ))}
