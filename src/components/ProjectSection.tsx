@@ -2,7 +2,7 @@ import React, { useState, useEffect, useId } from "react";
 import { useNavigate, Link, useSearchParams, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "motion/react";
 import { Project, ProjectCategory, BlogPost } from "../types";
-import { FolderKanban, Plus, Edit2, Trash2, ExternalLink, Github, Settings, Info, Eye, BookOpen, Image as ImageIcon, Check, RefreshCw, Search, ArrowLeft } from "lucide-react";
+import { FolderKanban, Plus, Edit2, Trash2, Settings, Info, Search, ArrowLeft, ArrowUpRight } from "lucide-react";
 import EditModal from "./EditModal";
 import ConfirmModal from "./ConfirmModal";
 import { ReorderableList, mergeReorderedSubset } from "./Reorderable";
@@ -14,6 +14,7 @@ import TranslateButton from "./TranslateButton";
 import { autoTranslateFields } from "../lib/translator";
 import { useLocalePath } from "../lib/routes";
 import { slugOf } from "../utils/slug";
+import { COVER_ASPECT_CLASS } from "../lib/coverAspect";
 
 interface ProjectSectionProps {
   projects: Project[];
@@ -479,18 +480,23 @@ export default function ProjectSection({
           isEditMode={canReorderProjects}
           onReorder={(newOrder) => onUpdateProjects(mergeReorderedSubset(projects, newOrder))}
           getKey={(proj) => proj.id}
-          className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 print:grid-cols-1 print:gap-4"
+          className="grid gap-6 min-[720px]:grid-cols-2 min-[1200px]:grid-cols-3 print:grid-cols-1 print:gap-4"
+          itemClassName="min-w-0"
         >
           {(proj, dragHandle) => {
             const projCatIds = proj.categoryIds && proj.categoryIds.length > 0
               ? proj.categoryIds
               : (proj.categoryId ? [proj.categoryId] : []);
             const projCategories = categories.filter((c) => projCatIds.includes(c.id));
+            const title = (language === "en" && proj.titleEn) || proj.title;
+            const categoryNames = projCategories.map(c => (language === "en" && c.nameEn) || c.name);
+            const inProgress = proj.emAndamento || ["Em andamento", "em_andamento", "In Progress"].includes(proj.status || "");
+            const planned = proj.emPlanejamento || ["Em planejamento", "em_planejamento", "Planning"].includes(proj.status || "");
             return (
               <article
                 tabIndex={0}
                 role="link"
-                aria-label={(language === "en" ? proj.titleEn : proj.title) || proj.title}
+                aria-label={title}
                 onKeyDown={e => { if (e.target === e.currentTarget && e.key === "Enter") { e.preventDefault(); e.currentTarget.click(); } }}
                 onClick={() => {
                   if (isStandalonePage) {
@@ -501,14 +507,14 @@ export default function ProjectSection({
                     navigate(lp(`/projetos/${encodeURIComponent(slugOf(proj))}`));
                   }
                 }}
-                className="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-slate-100 dark:border-slate-800/80 bg-white dark:bg-slate-900/40 shadow-xs transition-all hover:shadow-lg hover:border-slate-200 dark:hover:border-slate-700 hover:-translate-y-1 cursor-pointer print-border print-shadow-none print-translate-none print-break-inside-avoid duration-300"
+                className="project-preview group relative flex h-full min-w-0 flex-col rounded-2xl border border-borda bg-superficie cursor-pointer print-border print-shadow-none print-translate-none print-break-inside-avoid"
               >
                 {/* Alça de arrastar — só existe quando a lista está reordenável
                     (aba "Todos", sem busca ativa). */}
                 {dragHandle && (
                   <div
                     onClick={(e) => e.stopPropagation()}
-                    className="absolute left-3 top-3 z-10 rounded-full bg-white/90 dark:bg-slate-900/90 p-1.5 shadow-sm sm:opacity-0 sm:group-hover:opacity-100 opacity-100 transition-opacity no-print"
+                    className="absolute left-3 top-3 z-10 rounded-lg border border-borda bg-superficie p-1.5 shadow-sm no-print"
                   >
                     {dragHandle}
                   </div>
@@ -523,90 +529,47 @@ export default function ProjectSection({
                 )}
 
                 {/* Project Image */}
-                {proj.imageUrl && (
-                  <div className="relative aspect-video w-full overflow-hidden bg-slate-50 dark:bg-slate-950/30 print:hidden rounded-t-2xl">
+                <div className={`relative ${COVER_ASPECT_CLASS} w-full shrink-0 overflow-hidden rounded-t-2xl border-b border-borda bg-superficie-alta print:hidden`}>
+                  {proj.imageUrl ? (
                     <LocalImage
                       src={proj.imageUrl}
-                      alt={proj.title}
+                      alt={title}
                       referrerPolicy="no-referrer"
-                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105 rounded-t-2xl"
+                      sizes="(min-width: 1600px) 450px, (min-width: 1200px) 30vw, (min-width: 720px) 45vw, 90vw"
+                      className="h-full w-full object-contain"
                     />
-                    {/* View overlay icon */}
-                    <div className="absolute inset-0 bg-slate-900/10 dark:bg-slate-950/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                      <div className="rounded-full bg-white/90 dark:bg-slate-900/90 p-2.5 shadow-sm text-slate-950 dark:text-white scale-90 group-hover:scale-100 transition-transform">
-                        <Eye className="h-4.5 w-4.5" />
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Project Body */}
-                <div className="flex flex-1 flex-col p-5">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="flex flex-wrap items-center gap-1">
-                      {projCategories.length > 0 ? (
-                        projCategories.map((c) => (
-                          <span
-                            key={`card-cat-${proj.id}-${c.id}`}
-                            className="text-[10px] font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 font-mono bg-indigo-50/80 dark:bg-indigo-950/60 border border-indigo-200/50 dark:border-indigo-800/50 rounded-md px-1.5 py-0.5"
-                          >
-                            {(language === "en" && c.nameEn) ? c.nameEn : c.name}
-                          </span>
-                        ))
-                      ) : (
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 font-mono">
-                          {language === "en" ? "Uncategorized" : "Sem Categoria"}
-                        </span>
-                      )}
-                    </div>
-
-                    {(proj.emAndamento || proj.status === "Em andamento" || proj.status === "em_andamento" || proj.status === "In Progress") ? (
-                      <span className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full bg-emerald-500/10 border border-emerald-500/30 px-2 py-1 text-[9.5px] font-bold text-emerald-700 dark:text-emerald-400 font-mono">
-                        <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-500 animate-pulse" />
-                        {language === "en" ? "In Progress" : "Em Andamento"}
-                      </span>
-                    ) : (proj.emPlanejamento || proj.status === "Em planejamento" || proj.status === "em_planejamento" || proj.status === "Planning") && (
-                      <span className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full bg-sky-500/10 border border-sky-500/30 px-2 py-1 text-[9.5px] font-bold text-sky-700 dark:text-sky-400 font-mono">
-                        <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-sky-500" />
-                        {language === "en" ? "Planning" : "Em Planejamento"}
-                      </span>
-                    )}
-                  </div>
-
-                  <h3 className="mt-1.5 text-base font-bold text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors font-display leading-tight">
-                    {(language === "en" && proj.titleEn) ? proj.titleEn : proj.title}
-                  </h3>
-
-                  <div className="mt-2 text-xs leading-relaxed text-slate-500 dark:text-slate-400 line-clamp-3 font-sans print:line-clamp-none overflow-hidden">
-                    <MarkdownRenderer content={(language === "en" && proj.descriptionEn) ? proj.descriptionEn : proj.description} className="text-xs text-slate-500 dark:text-slate-400 font-sans space-y-1" />
-                  </div>
-
-                  {/* Tags */}
-                  {proj.tags.length > 0 && (
-                    <div className="mt-4 flex flex-wrap gap-1">
-                      {proj.tags.slice(0, 4).map((tag, idx) => (
-                        <span
-                          key={`proj-card-tag-${proj.id}-${idx}`}
-                          className="rounded bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 text-[9px] font-medium text-slate-600 dark:text-slate-400 font-mono"
-                        >
-                          {tag}
-                        </span>
-                      ))}
-                      {proj.tags.length > 4 && (
-                        <span className="rounded bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 text-[9px] font-medium text-slate-500 dark:text-slate-500 font-mono">
-                          +{proj.tags.length - 4}
-                        </span>
-                      )}
+                  ) : (
+                    <div className="flex h-full flex-col items-center justify-center gap-3 px-6 text-tinta-fraca" aria-hidden="true">
+                      <FolderKanban className="h-9 w-9 stroke-1" />
+                      <span className="text-xs">{language === "en" ? "Project without a cover" : "Projeto sem capa"}</span>
                     </div>
                   )}
+                </div>
+
+                {/* Project Body */}
+                <div className="flex min-w-0 flex-1 flex-col p-5 sm:p-6">
+                  <div className="flex min-h-5 items-baseline gap-2 text-xs font-medium text-tinta-suave" title={categoryNames.join(" · ")}>
+                    <span className="line-clamp-1 break-words">{categoryNames[0] || (language === "en" ? "Project" : "Projeto")}</span>
+                    {categoryNames.length > 1 && <span className="shrink-0 text-tinta-fraca" aria-label={language === "en" ? `${categoryNames.length - 1} more areas: ${categoryNames.slice(1).join(", ")}` : `Mais ${categoryNames.length - 1} áreas: ${categoryNames.slice(1).join(", ")}`}>+{categoryNames.length - 1}</span>}
+                  </div>
+
+                  <h3 className="mt-3 break-words text-xl font-bold leading-snug tracking-tight text-tinta transition-colors group-hover:text-acento group-focus-visible:text-acento font-display">
+                    {title}
+                  </h3>
+
+                  <div className="mt-3 mb-6 text-sm leading-relaxed text-tinta-suave line-clamp-3 font-sans print:line-clamp-none overflow-hidden">
+                    <MarkdownRenderer content={(language === "en" && proj.descriptionEn) ? proj.descriptionEn : proj.description} className="text-sm leading-relaxed text-tinta-suave font-sans space-y-1" />
+                  </div>
 
                   {/* Actions / Links */}
-                  <div className="mt-auto pt-4 flex items-center justify-between border-t border-slate-50 dark:border-slate-800/80 no-print print:hidden">
-                    <div className="flex items-center gap-2">
-                      <span className="text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 flex items-center gap-1">
-                        {language === "en" ? "View full post" : "Ler post completo"}
-                      </span>
-                    </div>
+                  <div className="mt-auto flex flex-wrap items-center justify-between gap-3 border-t border-borda-suave pt-4 no-print print:hidden">
+                    <span className="inline-flex items-center gap-2 text-xs font-semibold text-acento">
+                      {language === "en" ? "View project" : "Ver projeto"}<ArrowUpRight className="project-preview-arrow h-4 w-4" aria-hidden="true" />
+                    </span>
+                    {(inProgress || planned) && <span className="inline-flex items-center gap-1.5 text-[11px] text-tinta-suave">
+                      <span className={`h-1.5 w-1.5 rounded-full ${inProgress ? "bg-emerald-500" : "bg-sky-500"}`} aria-hidden="true" />
+                      {inProgress ? (language === "en" ? "In progress" : "Em andamento") : (language === "en" ? "Planning" : "Em planejamento")}
+                    </span>}
 
                     {/* Edit controls for Project */}
                     {isEditMode && (
@@ -614,14 +577,14 @@ export default function ProjectSection({
                         {/* Toggle Featured Star Button */}
                         <button
                           onClick={(e) => handleOpenProjectEdit(proj, e)}
-                          className="rounded-lg p-1.5 text-slate-500 dark:text-slate-500 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors cursor-pointer"
+                          className="min-h-9 min-w-9 rounded-lg p-2 text-tinta-suave hover:bg-acento-suave hover:text-acento transition-colors cursor-pointer"
                           title="Editar Projeto" aria-label="Editar Projeto"
                         >
                           <Edit2 className="h-3.5 w-3.5" />
                         </button>
                         <button
                           onClick={(e) => handleDeleteProject(proj.id, e)}
-                          className="rounded-lg p-1.5 text-slate-500 dark:text-slate-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 hover:text-rose-600 dark:hover:text-rose-400 transition-colors cursor-pointer"
+                          className="min-h-9 min-w-9 rounded-lg p-2 text-tinta-suave hover:bg-rose-50 dark:hover:bg-rose-950/40 hover:text-rose-600 dark:hover:text-rose-400 transition-colors cursor-pointer"
                           title="Excluir Projeto" aria-label="Excluir Projeto"
                         >
                           <Trash2 className="h-3.5 w-3.5" />
