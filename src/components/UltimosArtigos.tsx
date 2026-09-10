@@ -1,11 +1,13 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, Calendar, Clock } from "lucide-react";
+import { ArrowRight, Calendar, Clock, FileText } from "lucide-react";
 import { BlogPost } from "../types";
 import { Language } from "../lib/translations";
 import { localePath } from "../lib/routes";
 import { slugOf } from "../utils/slug";
 import { estimateReadTime } from "../utils/readTime";
+import { COVER_ASPECT_CLASS } from "../lib/coverAspect";
+import LocalImage from "./LocalImage";
 
 interface UltimosArtigosProps {
   posts: BlogPost[];
@@ -47,7 +49,7 @@ export default function UltimosArtigos({ posts, language = "pt" }: UltimosArtigo
         </Link>
       </div>
 
-      <div className="flex flex-col gap-3">
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
         {publicados.map((post) => {
           const titulo = (isEn && post.titleEn) || post.title;
           const resumo = (isEn && post.summaryEn) || post.summary;
@@ -56,24 +58,39 @@ export default function UltimosArtigos({ posts, language = "pt" }: UltimosArtigo
             <Link
               key={post.id}
               to={localePath(`/blog/${slugOf(post)}`, language)}
-              className="group flex flex-col gap-1 rounded-2xl border border-borda-suave bg-superficie p-4 transition-all hover:-translate-y-0.5 hover:shadow-md sm:flex-row sm:items-baseline sm:gap-5 sm:p-5"
+              className="group flex flex-col overflow-hidden rounded-2xl border border-borda-suave bg-superficie shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md"
             >
-              <span className="flex shrink-0 items-center gap-3 font-mono text-[11px] text-tinta-fraca sm:w-32">
-                <span className="flex items-center gap-1">
-                  <Calendar className="h-3 w-3" />
-                  {post.date}
+              <div className={`relative w-full overflow-hidden bg-superficie-alta ${COVER_ASPECT_CLASS}`}>
+                {post.imageUrl ? (
+                  <LocalImage
+                    src={post.imageUrl}
+                    alt={titulo}
+                    referrerPolicy="no-referrer"
+                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center text-tinta-fraca">
+                    <FileText className="h-8 w-8" />
+                  </div>
+                )}
+              </div>
+
+              <div className="flex flex-1 flex-col gap-1.5 p-4">
+                <span className="flex items-center gap-3 font-mono text-[10px] font-bold uppercase tracking-widest text-acento">
+                  <span className="flex items-center gap-1">
+                    <Calendar className="h-3 w-3" />
+                    {post.date}
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <Clock className="h-3 w-3" />
+                    {post.readTime || estimateReadTime(post.content, language)}
+                  </span>
                 </span>
-                <span className="flex items-center gap-1">
-                  <Clock className="h-3 w-3" />
-                  {post.readTime || estimateReadTime(post.content, language)}
-                </span>
-              </span>
-              <span className="min-w-0">
-                <span className="block font-display text-base font-bold text-tinta transition-colors group-hover:text-acento">
+                <h3 className="font-display text-base font-bold leading-snug text-tinta transition-colors group-hover:text-acento">
                   {titulo}
-                </span>
-                <span className="line-clamp-1 block text-sm text-tinta-suave">{resumo}</span>
-              </span>
+                </h3>
+                <p className="line-clamp-2 text-sm text-tinta-suave">{resumo}</p>
+              </div>
             </Link>
           );
         })}
