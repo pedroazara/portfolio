@@ -132,20 +132,20 @@
 }
 
 /* Custom transitions and scrollbar */
-.project-preview {
+.project-preview, .blog-preview {
   transition: border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
 }
 .project-preview:focus-visible,
-.project-preview:focus-within {
+.project-preview:focus-within, .blog-preview:focus-within {
   border-color: var(--acento);
 }
-.project-preview-arrow { transition: transform 180ms ease; }
+.project-preview-arrow, .blog-preview-arrow { transition: transform 180ms ease; }
 @media (hover: hover) and (prefers-reduced-motion: no-preference) {
-  .project-preview:hover { transform: translateY(-3px); }
-  .project-preview:hover .project-preview-arrow { transform: translate(2px, -2px); }
+  .project-preview:hover, .blog-preview:hover { transform: translateY(-3px); }
+  .project-preview:hover .project-preview-arrow, .blog-preview:hover .blog-preview-arrow { transform: translate(2px, -2px); }
 }
 @media (hover: hover) {
-  .project-preview:hover {
+  .project-preview:hover, .blog-preview:hover {
     border-color: var(--borda-forte);
     box-shadow: 0 8px 24px -16px color-mix(in srgb, var(--tinta) 25%, transparent);
   }
