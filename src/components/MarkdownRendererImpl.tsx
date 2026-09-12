@@ -4,13 +4,14 @@ import remarkMath from "remark-math";
 import remarkGfm from "remark-gfm";
 import rehypeKatex from "rehype-katex";
 import "katex/dist/katex.min.css";
-import { Highlight, themes } from "prism-react-renderer";
+import { Highlight } from "prism-react-renderer";
 import { ZoomIn, X, Copy, Check } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import LocalImage from "./LocalImage";
 import { headingIdsByLine } from "../utils/toc";
 import { parseYouTubeUrl, YouTubeVideo } from "../utils/videoEmbed";
 import { PyCodeBlock, PyOutputBlock } from "./PyBlocks";
+import { codeTheme } from "../lib/codeTheme";
 
 interface MarkdownRendererProps {
   content: string;
@@ -235,10 +236,10 @@ function CodeBlock({ code, lang }: { code: string; lang?: string }) {
           )}
         </button>
       </div>
-      {/* `nightOwl` já é escuro o bastante para conviver com o `bg-slate-950`
+      {/* `codeTheme` já é escuro o bastante para conviver com o `bg-slate-950`
           do contêiner; zeramos só o fundo do tema para não abrir um retângulo
           de cor levemente diferente por trás do texto. */}
-      <Highlight code={code} language={lang || "text"} theme={themes.nightOwl}>
+      <Highlight code={code} language={lang || "text"} theme={codeTheme}>
         {({ className, style, tokens, getLineProps, getTokenProps }) => (
           <pre
             className={`${className} p-4 overflow-x-auto text-xs sm:text-sm font-mono leading-relaxed max-h-[450px]`}

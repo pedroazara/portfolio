@@ -1,8 +1,8 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import ProjectGallery from "../components/ProjectGallery";
 import {
-  ArrowLeft, ArrowRight, Share2, Check, Edit2, FolderKanban,
+  ArrowLeft, ArrowRight, Edit2, FolderKanban,
   FlaskConical, BookOpen, Layers,
 } from "lucide-react";
 import { Project, ProjectCategory, BlogPost } from "../types";
@@ -21,9 +21,7 @@ import CitarBotao from "../components/CitarBotao";
 import { extractYear } from "../lib/citation";
 import { formatarData, formatarPeriodo } from "../lib/periodo";
 import { previaLiberada } from "../lib/previewLink";
-import ProjectNavList from "../components/ProjectNavList";
 import ProgressoLeitura from "../components/ProgressoLeitura";
-import { STICKY_UNDER_HEADER_CLASS } from "../lib/cardStyle";
 import { useLocalePath } from "../lib/routes";
 import { editTargetFromViewport } from "../utils/editTarget";
 
@@ -68,7 +66,6 @@ export default function ProjectPage({
   const location = useLocation();
   const listSearch = typeof location.state?.projectListSearch === "string" && location.state.projectListSearch.startsWith("?") ? location.state.projectListSearch : "";
   const leituraRef = useRef<HTMLDivElement>(null);
-  const [copiedLink, setCopiedLink] = useState(false);
 
   const project = findBySlug(projects, slug);
 
@@ -118,19 +115,19 @@ export default function ProjectPage({
 
   if (isMissing) {
     return (
-      <div className="mx-auto max-w-2xl rounded-3xl border border-slate-200 bg-white p-10 text-center dark:border-slate-800 dark:bg-slate-900">
-        <FolderKanban className="mx-auto mb-3 h-10 w-10 text-slate-300 dark:text-slate-700" />
-        <h1 className="font-display text-lg font-bold text-slate-900 dark:text-white">
+      <div className="mx-auto max-w-2xl rounded-3xl border border-borda-suave bg-superficie p-10 text-center">
+        <FolderKanban className="mx-auto mb-3 h-10 w-10 text-tinta-fraca" />
+        <h1 className="font-display text-lg font-bold text-tinta">
           {language === "en" ? "Project not found" : "Projeto não encontrado"}
         </h1>
-        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+        <p className="mt-1 text-sm text-tinta-suave">
           {language === "en"
             ? "It may have been deleted, or the link is wrong."
             : "Ele pode ter sido excluído, ou o link está errado."}
         </p>
         <Link
           to={lp("/projetos") + listSearch}
-          className="mt-5 inline-block rounded-xl bg-indigo-600 px-5 py-2.5 text-xs font-bold text-white transition-colors hover:bg-indigo-700"
+          className="mt-5 inline-block rounded-xl bg-acento px-5 py-2.5 text-xs font-bold text-white transition-colors hover:bg-acento-forte"
         >
           {language === "en" ? "Back to projects" : "Voltar aos projetos"}
         </Link>
@@ -204,12 +201,6 @@ export default function ProjectPage({
   // O que a barra de progresso mede: da capa ao fim do corpo, sem contar
   // galeria, relevância científica, artigos relacionados e navegação.
 
-  const handleCopyLink = () => {
-    navigator.clipboard.writeText(`${window.location.origin}${lp(`/project/${slugOf(project)}`)}`);
-    setCopiedLink(true);
-    setTimeout(() => setCopiedLink(false), 2000);
-  };
-
   const citationSource = {
     title,
     authorName,
@@ -221,9 +212,11 @@ export default function ProjectPage({
   };
 
   return (
-    // Três colunas em telas largas: sumário | leitura | projetos.
-    // Abaixo de `xl` as laterais somem e sobra só a coluna de leitura.
-    <div className="mx-auto grid max-w-[1700px] grid-cols-1 gap-10 xl:grid-cols-[14rem_minmax(0,1fr)_16rem]">
+    // Duas colunas em telas largas: sumário | leitura. Sem largura máxima
+    // própria — usa todo o espaço que `<main>` já reserva, em vez de abrir
+    // mais uma margem centralizada por cima da que a página já tem.
+    // Abaixo de `xl` o sumário some e sobra só a coluna de leitura.
+    <div className="grid grid-cols-1 gap-10 xl:grid-cols-[10rem_minmax(0,1fr)]">
       {/* Sumário (esquerda) */}
       <aside className="min-w-0">
         <TableOfContents entries={toc} language={language} />
@@ -236,25 +229,14 @@ export default function ProjectPage({
         <div className="mb-6 flex flex-wrap items-center justify-between gap-3 no-print">
           <Link
             to={lp("/projetos") + listSearch}
-            className="flex items-center gap-1.5 rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-600 transition-colors hover:bg-slate-50 dark:border-slate-800 dark:text-slate-300 dark:hover:bg-slate-800"
+            className="flex items-center gap-1.5 rounded-xl border border-borda px-3 py-2 text-xs font-semibold text-tinta-suave transition-colors hover:bg-superficie-alta"
           >
             <ArrowLeft className="h-3.5 w-3.5" />
             {language === "en" ? "All projects" : "Todos os projetos"}
           </Link>
 
           <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={handleCopyLink}
-              className="flex items-center gap-1.5 rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-600 transition-colors hover:bg-slate-50 dark:border-slate-800 dark:text-slate-300 dark:hover:bg-slate-800"
-            >
-              {copiedLink ? <Check className="h-3.5 w-3.5 text-emerald-500" /> : <Share2 className="h-3.5 w-3.5" />}
-              {copiedLink
-                ? language === "en" ? "Copied!" : "Copiado!"
-                : language === "en" ? "Share" : "Compartilhar"}
-            </button>
-
-            <CitarBotao source={citationSource} language={language} />
+            <CitarBotao source={citationSource} shareUrl={citationSource.url} language={language} />
 
             {isEditMode && (
               <button
@@ -265,7 +247,7 @@ export default function ProjectPage({
                     state: { editTarget: editTargetFromViewport() },
                   })
                 }
-                className="flex items-center gap-1.5 rounded-xl bg-indigo-600 px-4 py-2 text-xs font-bold text-white transition-colors hover:bg-indigo-700"
+                className="flex items-center gap-1.5 rounded-xl bg-acento px-4 py-2 text-xs font-bold text-white transition-colors hover:bg-acento-forte"
               >
                 <Edit2 className="h-3.5 w-3.5" />
                 {language === "en" ? "Edit" : "Editar"}
@@ -340,14 +322,8 @@ export default function ProjectPage({
           />
         </div>
 
-        {/* Links do projeto.
-
-            No desktop eles moram na coluna da direita, à mão o tempo todo.
-            Aqui embaixo é a versão para quem não tem coluna lateral — sem
-            isso, o celular perderia o caminho para o código e a demonstração. */}
-        <div className="xl:hidden">
-          <LinksDoProjeto project={project} language={language} />
-        </div>
+        {/* Links do projeto: caminho para código-fonte, demonstração e docs. */}
+        <LinksDoProjeto project={project} language={language} />
 
         {/* Corpo. Sem limite de largura — a coluna já tem a ficha e o título
             ocupando o espaço todo logo acima; um corpo mais estreito que o
@@ -356,7 +332,7 @@ export default function ProjectPage({
         <div className="mt-10" data-md-field="detailedDescription">
           <MarkdownRenderer
             content={body}
-            className="max-w-none space-y-4 text-base leading-relaxed text-slate-700 dark:text-slate-300"
+            className="max-w-none space-y-4 text-base leading-relaxed text-tinta-suave"
           />
         </div>
 
@@ -365,8 +341,8 @@ export default function ProjectPage({
 
         {/* Galeria */}
         {gallery.length > 0 && (
-          <section className="mt-12 border-t border-slate-200 pt-8 dark:border-slate-800">
-            <h2 className="mb-4 font-display text-lg font-bold text-slate-900 dark:text-white">
+          <section className="mt-12 border-t border-borda-suave pt-8">
+            <h2 className="mb-4 font-display text-lg font-bold text-tinta">
               {language === "en" ? "Gallery" : "Galeria"}
             </h2>
             <ProjectGallery key={project.id} images={gallery} title={title} language={language} captions={language === "en" ? { ...project.galleryCaptions, ...project.galleryCaptionsEn } : project.galleryCaptions} />
@@ -379,15 +355,15 @@ export default function ProjectPage({
             chips que a ficha já mostra logo abaixo do título — a mesma
             informação duas vezes na mesma página. */}
         {relevance && (
-          <section className="mt-12 border-t border-slate-200 pt-8 dark:border-slate-800">
-            <h2 className="mb-3 flex items-center gap-2 font-display text-lg font-bold text-slate-900 dark:text-white">
-              <FlaskConical className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
+          <section className="mt-12 border-t border-borda-suave pt-8">
+            <h2 className="mb-3 flex items-center gap-2 font-display text-lg font-bold text-tinta">
+              <FlaskConical className="h-5 w-5 text-acento" />
               {language === "en" ? "Scientific relevance" : "Relevância científica"}
             </h2>
             <div data-md-field="scientificRelevance">
               <MarkdownRenderer
                 content={relevance}
-                className="max-w-none space-y-3 text-sm leading-relaxed text-slate-700 dark:text-slate-300"
+                className="max-w-none space-y-3 text-sm leading-relaxed text-tinta-suave"
               />
             </div>
           </section>
@@ -395,9 +371,9 @@ export default function ProjectPage({
 
         {/* Artigos relacionados */}
         {relatedPosts.length > 0 && (
-          <section className="mt-12 border-t border-slate-200 pt-8 dark:border-slate-800">
-            <h2 className="mb-4 flex items-center gap-2 font-display text-lg font-bold text-slate-900 dark:text-white">
-              <BookOpen className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
+          <section className="mt-12 border-t border-borda-suave pt-8">
+            <h2 className="mb-4 flex items-center gap-2 font-display text-lg font-bold text-tinta">
+              <BookOpen className="h-5 w-5 text-acento" />
               {language === "en" ? "Related articles" : "Artigos relacionados"}
             </h2>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -405,12 +381,12 @@ export default function ProjectPage({
                 <Link
                   key={post.id}
                   to={lp(`/blog/${slugOf(post)}`)}
-                  className="group rounded-xl border border-slate-200 p-3.5 transition-all hover:border-indigo-500 hover:shadow-md dark:border-slate-800 dark:hover:border-indigo-500"
+                  className="group rounded-xl border border-borda-suave p-3.5 transition-all hover:border-acento hover:shadow-md"
                 >
-                  <span className="block font-display text-sm font-bold text-slate-900 transition-colors group-hover:text-indigo-600 dark:text-white dark:group-hover:text-indigo-400">
+                  <span className="block font-display text-sm font-bold text-tinta transition-colors group-hover:text-acento">
                     {(language === "en" ? post.titleEn : post.title) || post.title}
                   </span>
-                  <span className="mt-1 line-clamp-2 block font-sans text-xs text-slate-600 dark:text-slate-400">
+                  <span className="mt-1 line-clamp-2 block font-sans text-xs text-tinta-suave">
                     {(language === "en" ? post.summaryEn : post.summary) || post.summary}
                   </span>
                 </Link>
@@ -426,18 +402,18 @@ export default function ProjectPage({
         {(previousProject || nextProject) && (
           <nav
             aria-label={language === "en" ? "More projects" : "Mais projetos"}
-            className="mt-12 grid grid-cols-1 gap-3 border-t border-slate-200 pt-8 sm:grid-cols-2 dark:border-slate-800 no-print"
+            className="mt-12 grid grid-cols-1 gap-3 border-t border-borda-suave pt-8 sm:grid-cols-2 no-print"
           >
             {previousProject ? (
               <Link
                 to={lp(`/project/${slugOf(previousProject)}`)}
-                className="group rounded-2xl border border-slate-200 p-4 transition-all hover:border-indigo-500 hover:shadow-md dark:border-slate-800 dark:hover:border-indigo-500"
+                className="group rounded-2xl border border-borda-suave p-4 transition-all hover:border-acento hover:shadow-md"
               >
-                <span className="flex items-center gap-1 font-mono text-[11px] uppercase tracking-wider text-slate-500">
+                <span className="flex items-center gap-1 font-mono text-[11px] uppercase tracking-wider text-tinta-fraca">
                   <ArrowLeft className="h-3 w-3" />
                   {language === "en" ? "Previous" : "Anterior"}
                 </span>
-                <span className="mt-1 block font-display text-sm font-bold text-slate-900 transition-colors group-hover:text-indigo-600 dark:text-white dark:group-hover:text-indigo-400">
+                <span className="mt-1 block font-display text-sm font-bold text-tinta transition-colors group-hover:text-acento">
                   {(language === "en" && previousProject.titleEn ? previousProject.titleEn : previousProject.title)}
                 </span>
               </Link>
@@ -447,13 +423,13 @@ export default function ProjectPage({
             {nextProject && (
               <Link
                 to={lp(`/project/${slugOf(nextProject)}`)}
-                className="group rounded-2xl border border-slate-200 p-4 text-right transition-all hover:border-indigo-500 hover:shadow-md dark:border-slate-800 dark:hover:border-indigo-500"
+                className="group rounded-2xl border border-borda-suave p-4 text-right transition-all hover:border-acento hover:shadow-md"
               >
-                <span className="flex items-center justify-end gap-1 font-mono text-[11px] uppercase tracking-wider text-slate-500">
+                <span className="flex items-center justify-end gap-1 font-mono text-[11px] uppercase tracking-wider text-tinta-fraca">
                   {language === "en" ? "Next" : "Próximo"}
                   <ArrowRight className="h-3 w-3" />
                 </span>
-                <span className="mt-1 block font-display text-sm font-bold text-slate-900 transition-colors group-hover:text-indigo-600 dark:text-white dark:group-hover:text-indigo-400">
+                <span className="mt-1 block font-display text-sm font-bold text-tinta transition-colors group-hover:text-acento">
                   {(language === "en" && nextProject.titleEn ? nextProject.titleEn : nextProject.title)}
                 </span>
               </Link>
@@ -461,14 +437,6 @@ export default function ProjectPage({
           </nav>
         )}
       </article>
-
-      {/* Coluna da direita: as saídas do projeto e a lista dos outros. */}
-      <aside className="hidden xl:block">
-        <div className={`sticky ${STICKY_UNDER_HEADER_CLASS} space-y-6`}>
-          <LinksDoProjeto project={project} language={language} formato="barra" />
-          <ProjectNavList projects={visibleProjects} currentId={project.id} language={language} />
-        </div>
-      </aside>
     </div>
   );
 }
