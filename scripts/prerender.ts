@@ -2,7 +2,7 @@ import fs from "fs";
 import path from "path";
 import dotenv from "dotenv";
 import { initialResumeData as templateData } from "../src/data/initialData";
-import { parseResumeData } from "../src/lib/contentSchema";
+import { fetchPublishedContent } from "./fetchPublishedContent";
 import sanitizeHtml from "sanitize-html";
 import sharp from "sharp";
 import { slugOf } from "../src/utils/slug";
@@ -17,11 +17,7 @@ const BASE_URL = (process.env.VITE_SITE_URL || "https://pedroazara.vercel.app").
 let initialResumeData = templateData;
 if (process.env.PRERENDER_SOURCE !== "template" && process.env.VITE_SUPABASE_URL && process.env.VITE_SUPABASE_ANON_KEY) {
   const origin = process.env.VITE_SUPABASE_URL.replace(/\/(rest|auth|storage)\/v1\/?$/, "").replace(/\/$/, "");
-  const response = await fetch(`${origin}/rest/v1/portfolio?id=eq.main&select=data`, { headers: { apikey: process.env.VITE_SUPABASE_ANON_KEY, Authorization: `Bearer ${process.env.VITE_SUPABASE_ANON_KEY}` }, signal: AbortSignal.timeout(15000) });
-  if (!response.ok) throw new Error(`Cannot read published content for prerender: ${response.status}`);
-  const rows = await response.json();
-  if (!rows[0]?.data) throw new Error("Published portfolio missing. Use PRERENDER_SOURCE=template only for an intentional template build.");
-  initialResumeData = parseResumeData(rows[0].data);
+  initialResumeData = await fetchPublishedContent(origin, process.env.VITE_SUPABASE_ANON_KEY);
 }
 
 // URL publica do Storage, para transformar referencias `db:` em URLs absolutas.

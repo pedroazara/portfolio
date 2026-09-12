@@ -201,9 +201,9 @@ export default function ExperienciasCard({
       {/* SEÇÃO 2: EXPERIÊNCIA EM PESQUISA (Research Experience) */}
       <section
         id="pesquisa"
-        className={SECTION_CARD_CLASS}
+        className={`cv-section ${SECTION_CARD_CLASS}`}
       >
-        <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800/80 pb-5 mb-6">
+        <div className="cv-section-heading flex flex-wrap gap-4 items-center justify-between border-b border-slate-100 dark:border-slate-800/80 pb-5 mb-6">
           <div className="flex items-center gap-3">
             <div className="rounded-xl bg-indigo-50 dark:bg-indigo-950/50 p-2.5 text-indigo-600 dark:text-indigo-400 print-border">
               <FlaskConical className="h-6 w-6" />
@@ -281,7 +281,7 @@ export default function ExperienciasCard({
                     <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
                       <div className="space-y-1">
                         {/* Cargo (15px, weight 500) */}
-                        <h3 className="text-[15px] font-medium text-slate-900 dark:text-white font-sans leading-snug">
+                        <h3 className="text-lg font-semibold text-slate-900 dark:text-white font-sans leading-snug">
                           {roleText}
                         </h3>
 
@@ -329,7 +329,7 @@ export default function ExperienciasCard({
                     {/* Descrição Corrida */}
                     <div className="mt-3.5 text-sm leading-relaxed text-slate-700 dark:text-slate-300 font-sans">
                       {hasDescription ? (
-                        <MarkdownRenderer content={descText} className="text-sm text-slate-700 dark:text-slate-300 font-sans space-y-1" />
+                        <MarkdownRenderer content={descText} className="cv-description text-base text-slate-700 dark:text-slate-300 font-sans space-y-2" />
                       ) : isEditMode ? (
                         <p className="text-xs text-slate-500 dark:text-slate-500 italic">
                           descrição pendente

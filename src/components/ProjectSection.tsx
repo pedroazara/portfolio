@@ -480,7 +480,7 @@ export default function ProjectSection({
           isEditMode={canReorderProjects}
           onReorder={(newOrder) => onUpdateProjects(mergeReorderedSubset(projects, newOrder))}
           getKey={(proj) => proj.id}
-          className="grid gap-6 min-[720px]:grid-cols-2 min-[1200px]:grid-cols-3 print:grid-cols-1 print:gap-4"
+          className="project-preview-grid grid gap-6 min-[720px]:grid-cols-2 min-[1200px]:grid-cols-3 print:grid-cols-1 print:gap-4"
           itemClassName="min-w-0"
         >
           {(proj, dragHandle) => {
@@ -529,7 +529,7 @@ export default function ProjectSection({
                 )}
 
                 {/* Project Image */}
-                <div className={`relative ${COVER_ASPECT_CLASS} w-full shrink-0 overflow-hidden rounded-t-2xl border-b border-borda bg-superficie-alta print:hidden`}>
+                <div className={`project-preview-cover relative ${COVER_ASPECT_CLASS} w-full shrink-0 overflow-hidden rounded-t-2xl border-b border-borda bg-superficie-alta print:hidden`}>
                   {proj.imageUrl ? (
                     <LocalImage
                       src={proj.imageUrl}
@@ -547,7 +547,7 @@ export default function ProjectSection({
                 </div>
 
                 {/* Project Body */}
-                <div className="flex min-w-0 flex-1 flex-col p-5 sm:p-6">
+                <div className="project-preview-body flex min-w-0 flex-1 flex-col p-5 sm:p-6">
                   <div className="flex min-h-5 items-baseline gap-2 text-xs font-medium text-tinta-suave" title={categoryNames.join(" · ")}>
                     <span className="line-clamp-1 break-words">{categoryNames[0] || (language === "en" ? "Project" : "Projeto")}</span>
                     {categoryNames.length > 1 && <span className="shrink-0 text-tinta-fraca" aria-label={language === "en" ? `${categoryNames.length - 1} more areas: ${categoryNames.slice(1).join(", ")}` : `Mais ${categoryNames.length - 1} áreas: ${categoryNames.slice(1).join(", ")}`}>+{categoryNames.length - 1}</span>}

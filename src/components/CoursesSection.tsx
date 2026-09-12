@@ -113,8 +113,8 @@ export default function CoursesSection({
   };
 
   return (
-    <section id="certificacoes" className={SECTION_CARD_CLASS}>
-      <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-5 mb-6">
+    <section id="certificacoes" className={`cv-section ${SECTION_CARD_CLASS}`}>
+      <div className="cv-section-heading flex flex-wrap gap-4 items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-5 mb-6">
         <div className="flex items-center gap-3">
           <div className="rounded-xl bg-amber-50 dark:bg-amber-950/40 p-2.5 text-amber-600 dark:text-amber-400 print-border">
             <Award className="h-6 w-6" />
@@ -156,8 +156,8 @@ export default function CoursesSection({
           isEditMode={isEditMode}
           onReorder={onUpdateCourses}
           getKey={(course) => course.id}
-          className="grid gap-6 sm:grid-cols-2 print:grid-cols-1"
-          itemClassName="group relative flex flex-col justify-between rounded-xl border border-slate-100 dark:border-slate-800/60 bg-slate-50/30 dark:bg-slate-950/20 p-5 transition-all hover:border-slate-200 dark:hover:border-slate-700 hover:bg-slate-50/60 dark:hover:bg-slate-950/40 print-border print-bg-none print:p-4 print-break-inside-avoid"
+          className="cv-courses-grid grid gap-4 sm:grid-cols-2 print:grid-cols-1"
+          itemClassName="cv-course group relative flex flex-col justify-between rounded-xl border border-slate-100 dark:border-slate-800/60 bg-slate-50/30 dark:bg-slate-950/20 p-5 transition-all hover:border-slate-200 dark:hover:border-slate-700 hover:bg-slate-50/60 dark:hover:bg-slate-950/40 print-border print-bg-none print:p-4 print-break-inside-avoid"
         >
           {(course, dragHandle) => (
             <>
@@ -176,7 +176,7 @@ export default function CoursesSection({
                       <h3 className="font-semibold text-slate-900 dark:text-white font-display text-sm sm:text-base leading-tight">
                         {language === "en" && course.nameEn ? course.nameEn : course.name}
                       </h3>
-                      <p className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 font-sans mt-0.5">
+                      <p className="text-sm font-semibold text-indigo-600 dark:text-indigo-400 font-sans mt-0.5">
                         {course.organization}
                       </p>
                     </div>
@@ -203,14 +203,14 @@ export default function CoursesSection({
                   )}
                 </div>
 
-                <div className="mt-3 flex items-center gap-1.5 text-slate-500 dark:text-slate-500 font-sans text-xs">
+                {course.issueDate && <div className="mt-3 flex items-center gap-1.5 text-slate-500 dark:text-slate-500 font-sans text-xs">
                   <Calendar className="h-3.5 w-3.5 text-slate-300 dark:text-slate-600" />
                   <span>{language === "en" ? `Issued in ${formatDate(course.issueDate)}` : `Emitido em ${formatDate(course.issueDate)}`}</span>
-                </div>
+                </div>}
 
                 {(course.description || course.descriptionEn) && (
                   <div className="mt-2.5 text-xs text-slate-500 dark:text-slate-400 font-sans leading-relaxed">
-                    <MarkdownRenderer content={language === "en" && course.descriptionEn ? course.descriptionEn : course.description} className="text-xs text-slate-500 dark:text-slate-400 font-sans space-y-1" />
+                    <MarkdownRenderer content={language === "en" && course.descriptionEn ? course.descriptionEn : course.description} className="cv-description text-base text-slate-600 dark:text-slate-300 font-sans space-y-2" />
                   </div>
                 )}
               </div>

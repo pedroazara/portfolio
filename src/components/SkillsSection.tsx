@@ -408,8 +408,8 @@ export default function SkillsSection({
   const levelLabel = LEVEL_LABELS[skillForm.level && skillForm.level >= 1 && skillForm.level <= 5 ? skillForm.level : 4];
 
   return (
-    <section id="habilidades" className={`mb-8 ${SECTION_CARD_CLASS}`}>
-      <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-5 mb-6">
+    <section id="habilidades" className={`cv-section ${SECTION_CARD_CLASS}`}>
+      <div className="cv-section-heading flex flex-wrap gap-4 items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-5 mb-6">
         <div className="flex items-center gap-3">
           <div className="rounded-xl bg-indigo-50 dark:bg-indigo-950/40 p-2.5 text-indigo-600 dark:text-indigo-400 print-border">
             <Award className="h-6 w-6" />
@@ -420,8 +420,8 @@ export default function SkillsSection({
             </h2>
             <p className="text-sm text-slate-500 dark:text-slate-400 font-sans">
               {t(
-                "Minhas qualificações técnicas, frameworks e ferramentas de trabalho.",
-                "My technical qualifications, frameworks and work tools."
+                "Ferramentas e conhecimentos por área de atuação.",
+                "Tools and knowledge by area of practice."
               )}
             </p>
           </div>
@@ -449,7 +449,7 @@ export default function SkillsSection({
           </p>
         </div>
       ) : (
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4 print:grid-cols-2 print:gap-4">
+        <div className="cv-skills-groups">
           {mergedCategories.map((cat, idx) => {
             const catSkills = skills.filter((s) => s.category === cat.name);
             const accent = getCategoryAccent(idx);
@@ -463,16 +463,16 @@ export default function SkillsSection({
             return (
               <div
                 key={cat.id}
-                className="rounded-xl border border-slate-100/50 dark:border-slate-800/80 bg-slate-50/50 dark:bg-slate-950/20 p-5 print-border print-bg-transparent print-break-inside-avoid"
+                className="cv-skill-category print-break-inside-avoid"
               >
-                <div className="flex items-center gap-2 mb-4 pb-3 border-b border-slate-100 dark:border-slate-800">
+                <div className="cv-skill-heading">
                   <div className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md ${accent.bg} ${accent.text} print-border print-bg-none`}>
                     <CatIcon className="h-3 w-3" />
                   </div>
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 font-sans truncate">
+                  <h3 className="cv-skill-title">
                     {catDisplayName(cat, language)}
                   </h3>
-                  <span className="ml-auto shrink-0 text-[10px] font-mono font-semibold text-slate-300 dark:text-slate-600">
+                  <span className="cv-skill-count">
                     {catSkills.length}
                   </span>
                   {isEditMode && (
@@ -509,35 +509,13 @@ export default function SkillsSection({
                     {t("Nenhuma habilidade ainda.", "No skills yet.")}
                   </p>
                 ) : !isEditMode ? (
-                  // Public view: plain cards, no star ratings. A real grid (not
-                  // flex-wrap) so every card lines up in neat columns instead of
-                  // the ragged look long/short names produce when left to flow.
-                  <div className="grid grid-cols-1 min-[420px]:grid-cols-2 gap-1.5">
-                    {catSkills.map((skill) => (
-                      <div
-                        key={skill.id}
-                        className="group flex items-start justify-between gap-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-2.5 py-1.5 text-[11px] font-medium text-slate-600 dark:text-slate-400 font-sans transition-colors hover:border-slate-300 dark:hover:border-slate-600"
-                      >
-                        <span>
-                          {language === "en" && skill.nameEn ? skill.nameEn : skill.name}
-                        </span>
-                        <span className="hidden print:inline font-mono text-[9px] text-slate-400 dark:text-slate-600">
-                          &nbsp;{skill.level}/5
-                        </span>
-                        {/* Stars stay hidden until hover — a discreet detail, not the headline. */}
-                        <span className="mt-0.5 flex max-w-0 shrink-0 gap-0.5 overflow-hidden opacity-0 transition-all duration-200 group-hover:max-w-[4rem] group-hover:opacity-100 print:hidden">
-                          {[1, 2, 3, 4, 5].map((lvl) => (
-                            <Star
-                              key={lvl}
-                              className={`h-2.5 w-2.5 shrink-0 ${
-                                lvl <= skill.level ? "text-amber-400 fill-amber-400" : "text-slate-200 dark:text-slate-700"
-                              }`}
-                            />
-                          ))}
-                        </span>
-                      </div>
+                  <ul className="cv-skill-list">
+                    {catSkills.map(skill => (
+                      <li key={skill.id}>
+                        {language === "en" && skill.nameEn ? skill.nameEn : skill.name}
+                      </li>
                     ))}
-                  </div>
+                  </ul>
                 ) : (
                   <div className="space-y-4">
                     {destaques.map((skill) => (

@@ -134,9 +134,9 @@ export default function FormacaoCard({
       {/* SEÇÃO 1: FORMAÇÃO ACADÊMICA (Education Section) */}
       <section
         id="formacao"
-        className={SECTION_CARD_CLASS}
+        className={`cv-section ${SECTION_CARD_CLASS}`}
       >
-        <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800/80 pb-5 mb-6">
+        <div className="cv-section-heading flex flex-wrap gap-4 items-center justify-between border-b border-slate-100 dark:border-slate-800/80 pb-5 mb-6">
           <div className="flex items-center gap-3">
             <div className="rounded-xl bg-indigo-50 dark:bg-indigo-950/50 p-2.5 text-indigo-600 dark:text-indigo-400 print-border">
               <GraduationCap className="h-6 w-6" />
@@ -179,7 +179,7 @@ export default function FormacaoCard({
             onReorder={onUpdateEducations}
             getKey={(edu) => edu.id}
             className="space-y-6"
-            itemClassName="group relative rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-900/80 p-5 sm:p-6 transition-all"
+            itemClassName="cv-timeline-entry group relative rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-900/80 p-5 sm:p-6 transition-all"
           >
             {(edu, dragHandle) => {
               const degreeText = language === "en" && edu.degreeEn ? edu.degreeEn : edu.degree;
@@ -233,7 +233,7 @@ export default function FormacaoCard({
 
                     {descText && (
                       <div className="mt-3 text-xs leading-relaxed text-slate-600 dark:text-slate-400 font-sans">
-                        <MarkdownRenderer content={descText} className="text-xs text-slate-600 dark:text-slate-400 font-sans space-y-1" />
+                        <MarkdownRenderer content={descText} className="cv-description text-base text-slate-600 dark:text-slate-300 font-sans space-y-2" />
                       </div>
                     )}
                   </div>

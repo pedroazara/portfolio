@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, lazy, Suspense } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { ResumeData, Profile, Project, ProjectCategory, Experience, AcademicActivity, Education, Skill, SkillCategory, Course, BlogPost } from "./types";
 import { initialResumeData } from "./data/initialData";
 import { parseResumeData } from "./lib/contentSchema";
@@ -8,6 +8,7 @@ import ConnectionStatus from "./components/ConnectionStatus";
 import { trackPage, reportError } from "./lib/observability";
 import ResumeHeader from "./components/ResumeHeader";
 import CurriculoResumo from "./components/CurriculoResumo";
+import CurriculoLayout from "./components/CurriculoLayout";
 import HomePage from "./pages/HomePage";
 const ProjectSection = lazy(() => import("./components/ProjectSection"));
 const ExperienceEducationSection = lazy(() => import("./components/ExperienceEducationSection"));
@@ -678,6 +679,8 @@ export default function App() {
       {/* Main Content Area */}
       <main id="conteudo-principal" className="mx-auto max-w-[1600px] px-4 py-8 sm:px-8 lg:px-12 print:p-0 print:max-w-none focus:outline-hidden">
         <Suspense fallback={<AppSkeleton />}>
+        {/* Só a rota reinicia a transição; buscas, filtros e âncoras mantêm o conteúdo estável. */}
+        <div key={location.pathname} className="page-transition">
         {isEditorRoute ? (
           /* Editores em página dedicada. Exigem sessão ativa: sem ela, mostramos
              o aviso em vez do formulário — as políticas RLS recusariam a gravação
@@ -746,10 +749,8 @@ export default function App() {
             language={language}
           />
         ) : activePage === "cv" ? (
-          /* Currículo completo. A apresentação grande já aconteceu na home —
-             aqui só a tira de identidade, para quem chega direto por busca
-             ou link salvo sem passar por ela. */
-          <div className="space-y-8 print:space-y-6">
+          /* Currículo: identidade e trajetória em uma superfície contínua. */
+          <CurriculoLayout header={
 
             <CurriculoResumo
               profile={resumeData.profile}
@@ -758,6 +759,7 @@ export default function App() {
               onOpenElevatorPitchEditor={abrirElevatorPitchEditor}
               language={language}
             />
+            }>
 
             {/* Academic Background & Research Experience Sections */}
             <ExperienceEducationSection
@@ -772,29 +774,18 @@ export default function App() {
               language={language}
             />
 
-            {/* Project Showcase Section grouped by Different Areas */}
-            <ProjectSection
-              projects={resumeData.projects}
-              categories={resumeData.categories}
-              isEditMode={isEditMode}
-              onUpdateProjects={handleUpdateProjects}
-              onUpdateCategories={handleUpdateCategories}
-              posts={resumeData.posts || []}
-              onNavigateToBlogPost={handleNavigateToBlogPost}
-              language={language}
-              selectedProjectId={selectedProjectId}
-              onSelectProject={handleSelectProject}
-              searchQuery={searchQuery}
-              onSearchChange={setSearchQuery}
-            />
-
-            {/* Courses & Certifications Section */}
-            <CoursesSection
-              courses={resumeData.courses || []}
-              isEditMode={isEditMode}
-              onUpdateCourses={handleUpdateCourses}
-              language={language}
-            />
+            <section id="projetos" className="cv-section" aria-labelledby="cv-projects-title">
+              <div className="cv-projects-callout">
+                <div>
+                  <h2 id="cv-projects-title">{language === "en" ? "Explore my projects" : "Conheça meus projetos"}</h2>
+                  <p>{language === "en" ? "See how I apply these skills in research, experiments and software." : "Veja como aplico esses conhecimentos em pesquisas, experimentos e software."}</p>
+                </div>
+                <Link to={localePath("/projetos", language)} className="cv-button cv-button-primary cv-projects-link">
+                  {language === "en" ? "View projects" : "Ver projetos"}
+                  <span aria-hidden="true">→</span>
+                </Link>
+              </div>
+            </section>
 
             {/* Skillset Matrix Section */}
             <SkillsSection
@@ -805,7 +796,17 @@ export default function App() {
               onUpdateSkillCategories={handleUpdateSkillCategories}
               language={language}
             />
-          </div>
+
+            {/* Courses & Certifications Section */}
+            <CoursesSection
+              courses={resumeData.courses || []}
+              isEditMode={isEditMode}
+              onUpdateCourses={handleUpdateCourses}
+              language={language}
+            />
+
+
+          </CurriculoLayout>
         ) : activePage === "projetos" ? (
           /* Com um projeto na URL, os detalhes ocupam a página inteira; sem ele,
              a grade. Antes os detalhes abriam num modal sobre a grade. */
@@ -869,6 +870,7 @@ export default function App() {
             />
           )
         )}
+        </div>
         </Suspense>
       </main>
 

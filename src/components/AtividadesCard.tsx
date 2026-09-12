@@ -136,9 +136,9 @@ export default function AtividadesCard({
       {(academicActivities.length > 0 || isEditMode) && (
         <section
           id="atividades-academicas"
-          className={SECTION_CARD_CLASS}
+          className={`cv-section ${SECTION_CARD_CLASS}`}
         >
-          <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800/80 pb-5 mb-6">
+          <div className="cv-section-heading flex flex-wrap gap-4 items-center justify-between border-b border-slate-100 dark:border-slate-800/80 pb-5 mb-6">
             <div className="flex items-center gap-3">
               <div className="rounded-xl bg-indigo-50 dark:bg-indigo-950/50 p-2.5 text-indigo-600 dark:text-indigo-400 print-border">
                 <Users className="h-6 w-6" />
@@ -181,7 +181,7 @@ export default function AtividadesCard({
               onReorder={(newOrder) => onUpdateAcademicActivities?.(newOrder)}
               getKey={(act) => act.id}
               className="space-y-4"
-              itemClassName="group relative rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-900/80 p-5 sm:p-6 transition-colors hover:border-slate-300 dark:hover:border-slate-700"
+              itemClassName="cv-timeline-entry group relative rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-900/80 p-5 sm:p-6 transition-colors hover:border-slate-300 dark:hover:border-slate-700"
             >
               {(act, dragHandle) => {
                 const actName = language === "en" && act.nameEn ? act.nameEn : act.name;
@@ -199,11 +199,11 @@ export default function AtividadesCard({
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
                         <div className="space-y-1">
-                          <h3 className="text-[15px] font-medium text-slate-900 dark:text-white font-sans leading-snug">
+                          <h3 className="text-lg font-semibold text-slate-900 dark:text-white font-sans leading-snug">
                             {actName}
                           </h3>
                           {actDesc && (
-                            <p className="text-xs text-slate-500 dark:text-slate-400 font-sans">
+                            <p className="text-base leading-relaxed text-slate-600 dark:text-slate-300 font-sans">
                               {actDesc}
                             </p>
                           )}
@@ -236,7 +236,7 @@ export default function AtividadesCard({
                       </div>
 
                       {hasExtra && (
-                        <div className="mt-3.5 pt-3 border-t border-slate-200/70 dark:border-slate-800 text-xs leading-relaxed text-slate-600 dark:text-slate-300 font-sans space-y-2">
+                        <div className="mt-3.5 pt-3 border-t border-slate-200/70 dark:border-slate-800 text-base leading-relaxed text-slate-600 dark:text-slate-300 font-sans space-y-2">
                           {actExtra && <p>{actExtra}</p>}
                           {act.links && act.links.length > 0 && (
                             <div className="flex flex-wrap gap-3 pt-1">
