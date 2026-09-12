@@ -7,6 +7,9 @@ import sanitizeHtml from "sanitize-html";
 import sharp from "sharp";
 import { slugOf } from "../src/utils/slug";
 import { localePath } from "../src/lib/routes";
+import { createElement } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
+import AppSkeleton from "../src/components/AppSkeleton";
 
 dotenv.config();
 
@@ -46,6 +49,35 @@ if (!fs.existsSync(DIST_DIR)) {
 
 const templatePath = path.join(DIST_DIR, "index.html");
 const templateHtml = fs.readFileSync(templatePath, "utf-8");
+
+// O HTML editorial não tem o layout do React. Antes de o bundle chegar,
+// mostramos o mesmo esqueleto que o app usa enquanto busca os dados.
+// Sem JS (ou se o bundle falhar), o conteúdo estático continua legível.
+const loadingShell = renderToStaticMarkup(createElement(AppSkeleton));
+const bootHead = `
+    <style>
+      body { margin: 0; background: #f8fafc; }
+      html.dark body { background: #020617; }
+      #boot-skeleton { display: none; }
+      html.app-booting #boot-skeleton { display: block; }
+      html.app-booting #prerender-content { display: none; }
+      #prerender-content { max-width: 72rem; margin: auto; padding: 2rem; font: 1rem/1.65 system-ui, sans-serif; color: #0f172a; }
+      html.dark #prerender-content { color: #f1f5f9; }
+      #prerender-content h1 { font-size: 2rem; font-weight: 800; }
+      #prerender-content h2 { font-size: 1.5rem; font-weight: 700; margin-top: 2rem; }
+      #prerender-content h3 { font-size: 1.125rem; font-weight: 600; margin-top: 1.5rem; }
+      #prerender-content p { margin: .75rem 0; }
+    </style>
+    <script>
+      (function () {
+        var html = document.documentElement;
+        try { html.classList.toggle('dark', localStorage.getItem('portfolio_dark_mode_v1') === 'true'); } catch (_) {}
+        html.classList.add('app-booting');
+        // React substitui os dois blocos no primeiro commit. Se isso não
+        // acontecer, liberamos o texto em vez de deixar um loader eterno.
+        setTimeout(function () { html.classList.remove('app-booting'); }, 15000);
+      })();
+    </script>`;
 
 type Lang = "pt" | "en";
 
@@ -339,10 +371,10 @@ allRoutes.forEach(route => {
   let pageHtml = templateHtml.replace(/<title>.*?<\/title>/i, "");
   pageHtml = pageHtml.replace(/<meta name="description"[^>]*>/i, "");
   pageHtml = pageHtml.replace(/<html([^>]*)lang="[^"]*"/i, `<html$1lang="${route.lang === "en" ? "en" : "pt-BR"}"`);
-  pageHtml = pageHtml.replace(/<head>/i, `<head>\n${headTags}`);
+  pageHtml = pageHtml.replace(/<head>/i, `<head>\n${bootHead}\n${headTags}`);
   pageHtml = pageHtml.replace(
     `<div id="root"></div>`,
-    `<div id="root">${sanitizeHtml(route.prerenderContent)}</div>`
+    `<div id="root"><div id="boot-skeleton" role="status" aria-label="${route.lang === "en" ? "Loading" : "Carregando"}">${loadingShell}</div><div id="prerender-content">${sanitizeHtml(route.prerenderContent)}</div></div>`
   );
 
   let targetFilePath: string;

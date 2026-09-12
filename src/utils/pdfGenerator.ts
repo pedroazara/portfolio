@@ -55,6 +55,12 @@ export async function createResumePDFDoc(data?: ResumeData): Promise<jsPDF | nul
   const CONTENT_WIDTH = PAGE_WIDTH - MARGIN_LEFT - MARGIN_RIGHT; // 180mm
   const BOTTOM_LIMIT = 280;
 
+  // Origem do site: só cai no domínio fixo fora do navegador (build/SSR), já
+  // que `window.location.origin` está sempre certo em quem realmente baixa o
+  // PDF. Um único ponto evita o QR code e os links de projeto apontarem para
+  // domínios diferentes se o site algum dia mudar de endereço.
+  const SITE_ORIGIN = (typeof window !== "undefined" && window.location.origin) || "https://pedroazara.vercel.app";
+
   let y = 15; // Running Y position in mm
 
   // Helper: Safely add page and reset Y if drawing would overflow the page limit
@@ -131,7 +137,7 @@ export async function createResumePDFDoc(data?: ResumeData): Promise<jsPDF | nul
   const qrX = PAGE_WIDTH - MARGIN_RIGHT - QR_SIZE;
   if (MARGIN_LEFT + nameWidth < qrX - 4) {
     try {
-      const siteUrlRaw = (profile.website && profile.website.trim()) || "https://pedroazara.vercel.app";
+      const siteUrlRaw = (profile.website && profile.website.trim()) || SITE_ORIGIN;
       const qrTarget = /^https?:\/\//i.test(siteUrlRaw) ? siteUrlRaw : `https://${siteUrlRaw}`;
       const QRCode = await loadQRCode();
       const qrDataUrl = await QRCode.toDataURL(qrTarget, {
@@ -140,43 +146,79 @@ export async function createResumePDFDoc(data?: ResumeData): Promise<jsPDF | nul
         color: { dark: "#0f172a", light: "#ffffff" },
       });
       doc.addImage(qrDataUrl, "PNG", qrX, QR_Y, QR_SIZE, QR_SIZE);
-
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(6.5);
-      doc.setTextColor(INK_META[0], INK_META[1], INK_META[2]);
-      const qrLabel = qrTarget.replace(/^https?:\/\//i, "").replace(/\/$/, "");
-      doc.text(qrLabel, qrX + QR_SIZE / 2, QR_Y + QR_SIZE + 3, { align: "center" });
     } catch (err) {
       // Um QR a menos não impede o resto do currículo de sair.
       console.error("Não foi possível gerar o QR code do currículo.", err);
     }
   }
 
-  // Contact Grid - Simple, compact contact metadata string without trailing pipes
+  // Contact Grid - cada item clicável quando tem para onde levar (e-mail,
+  // telefone, site, redes), lado a lado com um separador neutro entre eles.
+  // Um PDF só de texto plano faz quem está lendo copiar e colar o e-mail à
+  // mão; aqui o link já vai embutido, como no cabeçalho do site.
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8.5);
-  doc.setTextColor(INK_META[0], INK_META[1], INK_META[2]);
 
-  const rawContacts: (string | undefined)[] = [
-    profile.location,
-    profile.phone,
-    profile.email,
-    profile.website,
-    profile.linkedin ? profile.linkedin.replace(/^https?:\/\/(www\.)?/, "") : undefined,
-    profile.github ? profile.github.replace(/^https?:\/\/(www\.)?/, "") : undefined,
+  const websiteHref = profile.website
+    ? /^https?:\/\//i.test(profile.website)
+      ? profile.website
+      : `https://${profile.website}`
+    : undefined;
+  const githubHref = profile.github
+    ? profile.github.startsWith("http")
+      ? profile.github
+      : `https://github.com/${profile.github}`
+    : undefined;
+  const linkedinHref = profile.linkedin
+    ? profile.linkedin.startsWith("http")
+      ? profile.linkedin
+      : `https://linkedin.com/in/${profile.linkedin}`
+    : undefined;
+
+  type ContactItem = { text: string; url: string | undefined };
+  const rawContacts: (ContactItem | null)[] = [
+    profile.location ? { text: profile.location, url: undefined } : null,
+    profile.phone ? { text: profile.phone, url: `tel:${profile.phone.replace(/[^\d+]/g, "")}` } : null,
+    profile.email ? { text: profile.email, url: `mailto:${profile.email}` } : null,
+    profile.website ? { text: profile.website.replace(/^https?:\/\/(www\.)?/, "").replace(/\/$/, ""), url: websiteHref } : null,
+    profile.linkedin ? { text: profile.linkedin.replace(/^https?:\/\/(www\.)?/, ""), url: linkedinHref } : null,
+    profile.github ? { text: profile.github.replace(/^https?:\/\/(www\.)?/, ""), url: githubHref } : null,
   ];
-  const contacts = rawContacts.filter((item): item is string => Boolean(item && item.trim().length > 0));
+  const contacts = rawContacts.filter(
+    (item): item is ContactItem => item !== null && item.text.trim().length > 0
+  );
 
-  // Draw contact strings joined cleanly
-  const contactText = contacts.join("  |  ");
-  const contactLines = doc.splitTextToSize(contactText, CONTENT_WIDTH);
-  
-  for (const line of contactLines) {
-    ensureSpace(4.5);
-    doc.text(line, MARGIN_LEFT, y);
-    y += 4.5;
-  }
-  y += 2.5; // space under contact header
+  const CONTACT_SEPARATOR = "   |   ";
+  const separatorWidth = doc.getTextWidth(CONTACT_SEPARATOR);
+  let contactX = MARGIN_LEFT;
+  ensureSpace(4.5);
+
+  contacts.forEach((item, idx) => {
+    const itemWidth = doc.getTextWidth(item.text);
+    const needsSeparator = idx > 0;
+    const widthNeeded = itemWidth + (needsSeparator ? separatorWidth : 0);
+
+    if (contactX + widthNeeded > MARGIN_LEFT + CONTENT_WIDTH) {
+      y += 4.5;
+      ensureSpace(4.5);
+      contactX = MARGIN_LEFT;
+    } else if (needsSeparator) {
+      doc.setTextColor(INK_META[0], INK_META[1], INK_META[2]);
+      doc.text(CONTACT_SEPARATOR, contactX, y);
+      contactX += separatorWidth;
+    }
+
+    if (item.url) {
+      doc.setTextColor(INDIGO_ACCENT[0], INDIGO_ACCENT[1], INDIGO_ACCENT[2]);
+      doc.textWithLink(item.text, contactX, y, { url: item.url });
+    } else {
+      doc.setTextColor(INK_META[0], INK_META[1], INK_META[2]);
+      doc.text(item.text, contactX, y);
+    }
+    contactX += itemWidth;
+  });
+
+  y += 4.5 + 2.5; // fecha a última linha de contato e abre espaço para a seção seguinte
 
   // ==========================================
   // 2. PROFILE / BIO SECTION
@@ -215,7 +257,7 @@ export async function createResumePDFDoc(data?: ResumeData): Promise<jsPDF | nul
       const dateStr = formatarPeriodo(edu.startDate, edu.endDate, edu.current, "pt");
       doc.setFont("helvetica", "normal");
       doc.setFontSize(8.5);
-      doc.setTextColor(100, 116, 139);
+      doc.setTextColor(INK_META[0], INK_META[1], INK_META[2]);
       const dateWidth = doc.getTextWidth(dateStr);
 
       const fieldStudy = edu.fieldOfStudy ? ` em ${edu.fieldOfStudy}` : "";
@@ -223,7 +265,7 @@ export async function createResumePDFDoc(data?: ResumeData): Promise<jsPDF | nul
 
       doc.setFont("helvetica", "bold");
       doc.setFontSize(10.5);
-      doc.setTextColor(15, 23, 42);
+      doc.setTextColor(INK_TITLE[0], INK_TITLE[1], INK_TITLE[2]);
 
       const maxTitleWidthLine1 = CONTENT_WIDTH - dateWidth - 4;
       const titleLines = doc.splitTextToSize(degreeField, maxTitleWidthLine1);
@@ -232,13 +274,13 @@ export async function createResumePDFDoc(data?: ResumeData): Promise<jsPDF | nul
 
       doc.setFont("helvetica", "normal");
       doc.setFontSize(8.5);
-      doc.setTextColor(100, 116, 139);
+      doc.setTextColor(INK_META[0], INK_META[1], INK_META[2]);
       doc.text(dateStr, PAGE_WIDTH - MARGIN_RIGHT - dateWidth, y);
 
       if (titleLines.length > 1) {
         doc.setFont("helvetica", "bold");
         doc.setFontSize(10.5);
-        doc.setTextColor(15, 23, 42);
+        doc.setTextColor(INK_TITLE[0], INK_TITLE[1], INK_TITLE[2]);
         for (let i = 1; i < titleLines.length; i++) {
           y += 4.5;
           ensureSpace(4.5);
@@ -251,7 +293,7 @@ export async function createResumePDFDoc(data?: ResumeData): Promise<jsPDF | nul
       // Institution
       doc.setFont("helvetica", "bold");
       doc.setFontSize(9.5);
-      doc.setTextColor(79, 70, 229); // Indigo
+      doc.setTextColor(INDIGO_ACCENT[0], INDIGO_ACCENT[1], INDIGO_ACCENT[2]); // Indigo
       const instLines = doc.splitTextToSize(edu.institution, CONTENT_WIDTH);
       for (const line of instLines) {
         ensureSpace(4.5);
@@ -263,7 +305,7 @@ export async function createResumePDFDoc(data?: ResumeData): Promise<jsPDF | nul
       if (edu.description && edu.description.trim().length > 0) {
         doc.setFont("helvetica", "normal");
         doc.setFontSize(9);
-        doc.setTextColor(51, 65, 85);
+        doc.setTextColor(INK_BODY[0], INK_BODY[1], INK_BODY[2]);
         
         const descLines = doc.splitTextToSize(edu.description.trim(), CONTENT_WIDTH);
         for (const line of descLines) {
@@ -299,13 +341,13 @@ export async function createResumePDFDoc(data?: ResumeData): Promise<jsPDF | nul
 
       doc.setFont("helvetica", "normal");
       doc.setFontSize(8.5);
-      doc.setTextColor(100, 116, 139); // slate-500
+      doc.setTextColor(INK_META[0], INK_META[1], INK_META[2]); // slate-500
       const metaWidth = doc.getTextWidth(metaStr);
 
       const titleText = `${exp.role} - ${exp.company}`;
       doc.setFont("helvetica", "bold");
       doc.setFontSize(10.5);
-      doc.setTextColor(15, 23, 42); // slate-900
+      doc.setTextColor(INK_TITLE[0], INK_TITLE[1], INK_TITLE[2]); // slate-900
 
       // Calculate max width for first line to prevent overlap with right-aligned meta
       const maxTitleWidthLine1 = CONTENT_WIDTH - metaWidth - 4;
@@ -316,14 +358,14 @@ export async function createResumePDFDoc(data?: ResumeData): Promise<jsPDF | nul
 
       doc.setFont("helvetica", "normal");
       doc.setFontSize(8.5);
-      doc.setTextColor(100, 116, 139);
+      doc.setTextColor(INK_META[0], INK_META[1], INK_META[2]);
       doc.text(metaStr, PAGE_WIDTH - MARGIN_RIGHT - metaWidth, y);
 
       // Draw remaining lines of title if wrapped
       if (titleLines.length > 1) {
         doc.setFont("helvetica", "bold");
         doc.setFontSize(10.5);
-        doc.setTextColor(15, 23, 42);
+        doc.setTextColor(INK_TITLE[0], INK_TITLE[1], INK_TITLE[2]);
         for (let i = 1; i < titleLines.length; i++) {
           y += 4.5;
           ensureSpace(4.5);
@@ -337,7 +379,7 @@ export async function createResumePDFDoc(data?: ResumeData): Promise<jsPDF | nul
       if (exp.description && exp.description.trim().length > 0) {
         doc.setFont("helvetica", "normal");
         doc.setFontSize(9);
-        doc.setTextColor(51, 65, 85); // slate-700
+        doc.setTextColor(INK_BODY[0], INK_BODY[1], INK_BODY[2]); // slate-700
 
         const descLines = doc.splitTextToSize(exp.description.trim(), CONTENT_WIDTH);
         for (const line of descLines) {
@@ -369,12 +411,12 @@ export async function createResumePDFDoc(data?: ResumeData): Promise<jsPDF | nul
       const dateStr = formatarPeriodo(act.startDate, act.endDate, act.current, "pt");
       doc.setFont("helvetica", "normal");
       doc.setFontSize(8.5);
-      doc.setTextColor(100, 116, 139);
+      doc.setTextColor(INK_META[0], INK_META[1], INK_META[2]);
       const dateWidth = doc.getTextWidth(dateStr);
 
       doc.setFont("helvetica", "bold");
       doc.setFontSize(10.5);
-      doc.setTextColor(15, 23, 42);
+      doc.setTextColor(INK_TITLE[0], INK_TITLE[1], INK_TITLE[2]);
 
       const maxTitleWidthLine1 = CONTENT_WIDTH - dateWidth - 4;
       const titleLines = doc.splitTextToSize(act.name, maxTitleWidthLine1);
@@ -383,13 +425,13 @@ export async function createResumePDFDoc(data?: ResumeData): Promise<jsPDF | nul
 
       doc.setFont("helvetica", "normal");
       doc.setFontSize(8.5);
-      doc.setTextColor(100, 116, 139);
+      doc.setTextColor(INK_META[0], INK_META[1], INK_META[2]);
       doc.text(dateStr, PAGE_WIDTH - MARGIN_RIGHT - dateWidth, y);
 
       if (titleLines.length > 1) {
         doc.setFont("helvetica", "bold");
         doc.setFontSize(10.5);
-        doc.setTextColor(15, 23, 42);
+        doc.setTextColor(INK_TITLE[0], INK_TITLE[1], INK_TITLE[2]);
         for (let i = 1; i < titleLines.length; i++) {
           y += 4.5;
           ensureSpace(4.5);
@@ -403,7 +445,7 @@ export async function createResumePDFDoc(data?: ResumeData): Promise<jsPDF | nul
       if (act.description && act.description.trim().length > 0) {
         doc.setFont("helvetica", "bold");
         doc.setFontSize(9.5);
-        doc.setTextColor(79, 70, 229); // Indigo
+        doc.setTextColor(INDIGO_ACCENT[0], INDIGO_ACCENT[1], INDIGO_ACCENT[2]); // Indigo
         const descLines = doc.splitTextToSize(act.description.trim(), CONTENT_WIDTH);
         for (const line of descLines) {
           ensureSpace(4.5);
@@ -416,7 +458,7 @@ export async function createResumePDFDoc(data?: ResumeData): Promise<jsPDF | nul
       if (act.extraContent && act.extraContent.trim().length > 0) {
         doc.setFont("helvetica", "normal");
         doc.setFontSize(9);
-        doc.setTextColor(51, 65, 85);
+        doc.setTextColor(INK_BODY[0], INK_BODY[1], INK_BODY[2]);
 
         const extraLines = doc.splitTextToSize(act.extraContent.trim(), CONTENT_WIDTH);
         for (const line of extraLines) {
@@ -442,8 +484,6 @@ export async function createResumePDFDoc(data?: ResumeData): Promise<jsPDF | nul
     if (projectsToRender.length > 0) {
       renderSectionHeader("Projetos Relevantes");
 
-      const origin = typeof window !== "undefined" ? window.location.origin : "https://pedroazara.dev";
-
       projectsToRender.forEach((proj, idx) => {
         ensureSpace(18);
 
@@ -451,13 +491,13 @@ export async function createResumePDFDoc(data?: ResumeData): Promise<jsPDF | nul
         // páginas — antes ia direto de `proj.id`, que ignora o código de URL
         // editável no formulário do projeto: renomear o link não mudava o que
         // ia para o PDF, e o link impresso apontava para um endereço vencido.
-        const projectLinkUrl = `${origin}/project/${encodeURIComponent(slugOf(proj))}`;
+        const projectLinkUrl = `${SITE_ORIGIN}/project/${encodeURIComponent(slugOf(proj))}`;
         const rightLabel = "Ver no Site";
         const projectTitle = proj.title;
 
         doc.setFont("helvetica", "normal");
         doc.setFontSize(8);
-        doc.setTextColor(79, 70, 229);
+        doc.setTextColor(INDIGO_ACCENT[0], INDIGO_ACCENT[1], INDIGO_ACCENT[2]);
         const metaWidth = rightLabel ? doc.getTextWidth(rightLabel) : 0;
 
         doc.setFont("helvetica", "bold");
@@ -478,7 +518,7 @@ export async function createResumePDFDoc(data?: ResumeData): Promise<jsPDF | nul
         if (projectLinkUrl && rightLabel) {
           doc.setFont("helvetica", "normal");
           doc.setFontSize(8);
-          doc.setTextColor(79, 70, 229);
+          doc.setTextColor(INDIGO_ACCENT[0], INDIGO_ACCENT[1], INDIGO_ACCENT[2]);
           doc.textWithLink(rightLabel, PAGE_WIDTH - MARGIN_RIGHT - metaWidth, y, { url: projectLinkUrl });
         }
 
@@ -504,7 +544,7 @@ export async function createResumePDFDoc(data?: ResumeData): Promise<jsPDF | nul
         if (proj.tags && proj.tags.length > 0) {
           doc.setFont("helvetica", "normal");
           doc.setFontSize(8);
-          doc.setTextColor(100, 116, 139); // Slate-500
+          doc.setTextColor(INK_META[0], INK_META[1], INK_META[2]); // Slate-500
           const techText = `Tecnologias: ${proj.tags.join(", ")}`;
           const techLines = doc.splitTextToSize(techText, CONTENT_WIDTH);
           for (const line of techLines) {
@@ -517,7 +557,7 @@ export async function createResumePDFDoc(data?: ResumeData): Promise<jsPDF | nul
         // Resumo Apenas (Usando proj.description curto, nunca texto completo)
         doc.setFont("helvetica", "normal");
         doc.setFontSize(9);
-        doc.setTextColor(51, 65, 85);
+        doc.setTextColor(INK_BODY[0], INK_BODY[1], INK_BODY[2]);
 
         const summaryText = proj.description || "";
         if (summaryText.trim().length > 0) {
@@ -620,12 +660,12 @@ export async function createResumePDFDoc(data?: ResumeData): Promise<jsPDF | nul
       const dateStr = formatarData(course.issueDate, "pt");
       doc.setFont("helvetica", "normal");
       doc.setFontSize(8.5);
-      doc.setTextColor(100, 116, 139);
+      doc.setTextColor(INK_META[0], INK_META[1], INK_META[2]);
       const dateWidth = dateStr ? doc.getTextWidth(dateStr) : 0;
 
       doc.setFont("helvetica", "bold");
       doc.setFontSize(10);
-      doc.setTextColor(15, 23, 42);
+      doc.setTextColor(INK_TITLE[0], INK_TITLE[1], INK_TITLE[2]);
 
       const maxTitleWidthLine1 = dateWidth > 0 ? (CONTENT_WIDTH - dateWidth - 4) : CONTENT_WIDTH;
       const titleLines = doc.splitTextToSize(course.name, maxTitleWidthLine1);
@@ -635,14 +675,14 @@ export async function createResumePDFDoc(data?: ResumeData): Promise<jsPDF | nul
       if (dateStr && dateWidth > 0) {
         doc.setFont("helvetica", "normal");
         doc.setFontSize(8.5);
-        doc.setTextColor(100, 116, 139);
+        doc.setTextColor(INK_META[0], INK_META[1], INK_META[2]);
         doc.text(dateStr, PAGE_WIDTH - MARGIN_RIGHT - dateWidth, y);
       }
 
       if (titleLines.length > 1) {
         doc.setFont("helvetica", "bold");
         doc.setFontSize(10);
-        doc.setTextColor(15, 23, 42);
+        doc.setTextColor(INK_TITLE[0], INK_TITLE[1], INK_TITLE[2]);
         for (let i = 1; i < titleLines.length; i++) {
           y += 4.5;
           ensureSpace(4.5);
@@ -655,7 +695,7 @@ export async function createResumePDFDoc(data?: ResumeData): Promise<jsPDF | nul
       // Organization
       doc.setFont("helvetica", "normal");
       doc.setFontSize(9);
-      doc.setTextColor(79, 70, 229); // Indigo
+      doc.setTextColor(INDIGO_ACCENT[0], INDIGO_ACCENT[1], INDIGO_ACCENT[2]); // Indigo
       doc.text(course.organization, MARGIN_LEFT, y);
       y += 4.5;
 
@@ -663,7 +703,7 @@ export async function createResumePDFDoc(data?: ResumeData): Promise<jsPDF | nul
       if (course.description && course.description.trim().length > 0) {
         doc.setFont("helvetica", "normal");
         doc.setFontSize(8.5);
-        doc.setTextColor(100, 116, 139);
+        doc.setTextColor(INK_META[0], INK_META[1], INK_META[2]);
         const descLines = doc.splitTextToSize(course.description.trim(), CONTENT_WIDTH);
         for (const line of descLines) {
           ensureSpace(4);
@@ -674,6 +714,22 @@ export async function createResumePDFDoc(data?: ResumeData): Promise<jsPDF | nul
 
       y += (idx < data.courses!.length - 1) ? 4 : 3;
     });
+  }
+
+  // Rodapé com nome + número da página, só quando o currículo passa de uma
+  // página — se as folhas se separarem ao imprimir, a segunda ainda se
+  // identifica sozinha em vez de virar um bloco de texto solto.
+  const pageCount = doc.getNumberOfPages();
+  if (pageCount > 1) {
+    for (let page = 1; page <= pageCount; page++) {
+      doc.setPage(page);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(7.5);
+      doc.setTextColor(INK_META[0], INK_META[1], INK_META[2]);
+      const footerText = `${profile.name}   •   Página ${page} de ${pageCount}`;
+      const footerWidth = doc.getTextWidth(footerText);
+      doc.text(footerText, (PAGE_WIDTH - footerWidth) / 2, PAGE_HEIGHT - 8);
+    }
   }
 
   return doc;
