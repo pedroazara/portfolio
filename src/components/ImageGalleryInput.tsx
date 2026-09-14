@@ -82,10 +82,14 @@ export default function ImageGalleryInput({
       for (const file of acceptedFiles) {
         const isVector = file.type === "image/svg+xml" || /\.svg$/i.test(file.name);
         const isPdf = file.type === "application/pdf" || /\.pdf$/i.test(file.name);
+        // Um GIF redesenhado no Canvas perde a animação — fica parado no
+        // primeiro quadro. Precisa sair intacto, como o vetor e o PDF.
+        const isAnimated = file.type === "image/gif" || /\.gif$/i.test(file.name);
 
-        // SVG e PDF passam intactos — recomprimir um vetor no Canvas o
-        // rasterizaria, e um PDF nem carrega como `<img>`.
-        const { dataUrl, extension, size } = isVector || isPdf
+        // SVG, GIF e PDF passam intactos — recomprimir um vetor ou um GIF no
+        // Canvas rasterizaria um e congelaria o outro, e um PDF nem carrega
+        // como `<img>`.
+        const { dataUrl, extension, size } = isVector || isPdf || isAnimated
           ? await processImagePreservingFormat(file, 1600)
           : { ...(await optimizeImage(file, 1600, 0.8)), extension: "webp" };
 

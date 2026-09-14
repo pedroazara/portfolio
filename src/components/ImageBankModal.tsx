@@ -3,7 +3,7 @@ import { useEscapeKey } from "../hooks/useEscapeKey";
 import { X, Upload, Trash2, Copy, Check, Image as ImageIcon, Sparkles, FileText, Search } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { StoredImage, listImages, saveImage, deleteImage, fileNameOf } from "../utils/imageDb";
-import { optimizeImage } from "../utils/imageOptimizer";
+import { optimizeImage, processImagePreservingFormat } from "../utils/imageOptimizer";
 import ConfirmModal from "./ConfirmModal";
 
 interface ImageBankModalProps {
@@ -132,9 +132,15 @@ export default function ImageBankModal({ isOpen, onClose }: ImageBankModalProps)
     e.preventDefault();
     if (!selectedFile || !customName.trim()) return;
 
+    // Um GIF redesenhado no Canvas perde a animação — fica parado no primeiro
+    // quadro. Por isso sai intacto, com a própria extensão, em vez de forçado
+    // para WebP como os demais formatos.
+    const isAnimated = selectedFile.type === "image/gif" || /\.gif$/i.test(selectedFile.name);
+    const targetExtension = isAnimated ? ".gif" : ".webp";
+
     let finalName = customName.trim();
-    if (!finalName.endsWith(".webp")) {
-      finalName = finalName.replace(/\.[^/.]+$/, "") + ".webp";
+    if (!finalName.toLowerCase().endsWith(targetExtension)) {
+      finalName = finalName.replace(/\.[^/.]+$/, "") + targetExtension;
     }
 
     // Check duplicate
@@ -145,7 +151,9 @@ export default function ImageBankModal({ isOpen, onClose }: ImageBankModalProps)
 
     setIsSaving(true);
     try {
-      const optimized = await optimizeImage(selectedFile, 1600, 0.8);
+      const optimized = isAnimated
+        ? await processImagePreservingFormat(selectedFile, 1600)
+        : await optimizeImage(selectedFile, 1600, 0.8);
       await saveImage(finalName, optimized.dataUrl, optimized.size);
       await loadImages();
       
@@ -196,14 +204,19 @@ export default function ImageBankModal({ isOpen, onClose }: ImageBankModalProps)
     img.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  if (!isOpen) return null;
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/50 backdrop-blur-xs no-print">
+    <AnimatePresence>
+    {isOpen && <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.2 }}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/50 backdrop-blur-xs no-print">
       <motion.div
         initial={{ opacity: 0, scale: 0.98, y: 15 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.98, y: 15 }}
+        transition={{ duration: 0.2, ease: "easeOut" }}
         className="relative w-full max-w-5xl bg-white rounded-2xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden border border-slate-200"
       >
         {/* Header */}
@@ -457,6 +470,7 @@ export default function ImageBankModal({ isOpen, onClose }: ImageBankModalProps)
         cancelText="Cancelar"
         type="danger"
       />
-    </div>
+    </motion.div>}
+    </AnimatePresence>
   );
 }

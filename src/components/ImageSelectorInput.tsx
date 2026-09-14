@@ -11,6 +11,11 @@ const ImageCropModal = React.lazy(() => import("./ImageCropModal"));
 import LocalImage from "./LocalImage";
 import { isDevPreview } from "../lib/devPreview";
 
+/** Indica se a referência de imagem (db:, URL comum ou data URL) é um GIF. */
+function isGifRef(ref: string): boolean {
+  return ref.startsWith("data:image/gif") || /\.gif(?:[?#].*)?$/i.test(ref);
+}
+
 interface ImageSelectorInputProps {
   label: string;
   value: string;
@@ -81,6 +86,9 @@ export default function ImageSelectorInput({
     // O vetor sai intacto do otimizador; qualquer outra coisa que não seja
     // imagem (exceto PDF, aceito à parte) é rejeitada como antes.
     const isVector = file.type === "image/svg+xml" || /\.svg$/i.test(file.name);
+    // Um GIF redesenhado no Canvas perde a animação — fica parado no primeiro
+    // quadro. Precisa sair intacto do otimizador, como o vetor e o PDF.
+    const isAnimated = file.type === "image/gif" || /\.gif$/i.test(file.name);
 
     if (!file.type.startsWith("image/") && !isPdf) {
       setError("Selecione uma imagem ou um PDF.");
@@ -91,16 +99,18 @@ export default function ImageSelectorInput({
     setError("");
 
     try {
-      // SVG e PDF passam intactos — recomprimir um vetor no Canvas o
-      // rasterizaria, e um PDF nem carrega como `<img>` para começo de conversa.
-      // Formatos comuns (JPG, PNG…) continuam indo para WebP como sempre.
-      const { dataUrl, extension, size } = isVector || isPdf
+      // SVG, GIF e PDF passam intactos — recomprimir um vetor ou um GIF no
+      // Canvas rasterizaria um e congelaria o outro no primeiro quadro; um PDF
+      // nem carrega como `<img>` para começo de conversa. Formatos comuns
+      // (JPG, PNG…) continuam indo para WebP como sempre.
+      const { dataUrl, extension, size } = isVector || isPdf || isAnimated
         ? await processImagePreservingFormat(file, 1600)
         : { ...(await optimizeImage(file, 1600, 0.8)), extension: "webp" };
 
       // Só faz sentido forçar o enquadramento 16:9 numa foto — um vetor já se
-      // adapta a qualquer proporção e um PDF nem entra no Canvas de recorte.
-      const skipCrop = isVector || isPdf;
+      // adapta a qualquer proporção, um GIF perderia a animação no recorte, e
+      // um PDF nem entra no Canvas de recorte.
+      const skipCrop = isVector || isPdf || isAnimated;
 
       // Modo de teste: sem sessão o Storage recusaria o envio, então a imagem
       // fica embutida e visível só neste navegador.
@@ -185,9 +195,10 @@ export default function ImageSelectorInput({
               <ImagePlus className="h-3.5 w-3.5" />
               Trocar
             </button>
-            {/* Um PDF nem carrega no Canvas de recorte — a ação some em vez de
-                oferecer algo que só terminaria em erro. */}
-            {!isPdfRef(value) && (
+            {/* Um PDF nem carrega no Canvas de recorte, e um GIF perderia a
+                animação nele — a ação some em vez de oferecer algo que só
+                terminaria em erro (ou em uma imagem parada). */}
+            {!isPdfRef(value) && !isGifRef(value) && (
               <button type="button" onClick={() => setIsCropping(true)} disabled={isUploading} className={acaoClass}>
                 <Crop className="h-3.5 w-3.5" />
                 Enquadrar
@@ -316,6 +327,7 @@ export default function ImageSelectorInput({
               {images.map((img) => {
                 const isPdf = isPdfRef(img.name);
                 const isVector = /\.svg$/i.test(img.name);
+                const isAnimated = isGifRef(img.name);
                 return (
                   <button
                     key={img.name}
@@ -324,7 +336,7 @@ export default function ImageSelectorInput({
                       originalRef.current = `db:${img.name}`;
                       onChange(`db:${img.name}`);
                       setIsPicking(false);
-                      if (!isPdf && !isVector) setIsCropping(true);
+                      if (!isPdf && !isVector && !isAnimated) setIsCropping(true);
                     }}
                     className={`overflow-hidden rounded-xl border-2 text-left transition-all hover:border-indigo-400 ${
                       value === `db:${img.name}` ? "border-indigo-600" : "border-transparent"
