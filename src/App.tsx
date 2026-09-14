@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, lazy, Suspense } from "react";
+import React, { useState, useEffect, useLayoutEffect, useRef, lazy, Suspense } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { ResumeData, Profile, Project, ProjectCategory, Experience, AcademicActivity, Education, Skill, SkillCategory, Course, BlogPost } from "./types";
 import { initialResumeData } from "./data/initialData";
@@ -351,21 +351,13 @@ export default function App() {
 
   const handleNavigateToBlogPost = (postId: string) => {
     go(`/blog/${encodeURIComponent(postId)}`);
-    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  // Route scroll sync
-  useEffect(() => {
-    if (routePath === "/projetos") {
-      const projElem = document.getElementById("projetos");
-      if (projElem) {
-        projElem.scrollIntoView({ behavior: "smooth" });
-      }
-    } else if (routePath === "/curriculo" || routePath === "/") {
-      if (!location.hash) {
-        window.scrollTo({ top: 0, behavior: "smooth" });
-      }
-    }
+  // Reset before painting the new route. "auto" would inherit CSS smooth scrolling.
+  // Hash destinations are positioned once their lazy-loaded content is available.
+  useLayoutEffect(() => {
+    setIsGlobalCollapsed(false);
+    if (!location.hash) window.scrollTo({ top: 0, left: 0, behavior: "instant" });
   }, [location.pathname]);
 
   // Dynamic client-side document title, canonical link, and meta description synchronization

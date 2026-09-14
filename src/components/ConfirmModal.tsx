@@ -66,7 +66,7 @@ export default function ConfirmModal({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 bg-slate-950/60 backdrop-blur-xs transition-opacity"
+            className="fixed inset-0 bg-slate-950/60 backdrop-blur-xs"
           />
 
           {/* Modal Container */}

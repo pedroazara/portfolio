@@ -78,18 +78,16 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }: LoginMod
   // Fecha com Escape enquanto o modal estiver aberto.
   useEscapeKey(isOpen, handleClose);
 
-  if (!isOpen) return null;
-
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+      {isOpen && <div className="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
         {/* Backdrop overlay */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           onClick={isLoading ? undefined : handleClose}
-          className="fixed inset-0 bg-slate-950/40 backdrop-blur-md transition-opacity"
+          className="fixed inset-0 bg-slate-950/40 backdrop-blur-md"
         />
 
         {/* Modal body container */}
@@ -237,7 +235,7 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }: LoginMod
             </form>
           </motion.div>
         </div>
-      </div>
+      </div>}
     </AnimatePresence>
   );
 }

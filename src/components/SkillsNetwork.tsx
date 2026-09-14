@@ -62,14 +62,26 @@ function CategoryNode({ category, index, catSkills, language, isOpen, isDimmed, 
       return { x: Math.cos(angle) * radius, y: Math.sin(angle) * radius };
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [n, radius]);
+  }, [catSkills, index, n, radius]);
 
   return (
     <div
       className="flex flex-col items-center cursor-pointer select-none"
       style={{ position: "relative", zIndex: isOpen ? 40 : 1 }}
-      onMouseEnter={onOpen}
-      onMouseLeave={onClose}
+      role="button"
+      tabIndex={0}
+      aria-expanded={isOpen}
+      aria-label={name}
+      onPointerEnter={(e) => { if (e.pointerType === "mouse") onOpen(); }}
+      onPointerLeave={(e) => { if (e.pointerType === "mouse") onClose(); }}
+      onBlur={onClose}
+      onKeyDown={(e) => {
+        if (e.key === "Escape") onClose();
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          if (isOpen) onClose(); else onOpen();
+        }
+      }}
       onClick={onToggle}
     >
       <div className="relative h-16 w-16 sm:h-20 sm:w-20">
@@ -117,7 +129,7 @@ function CategoryNode({ category, index, catSkills, language, isOpen, isDimmed, 
                   style={{ translate: "-50% -50%" }}
                   initial={{ x: 0, y: 0, opacity: 0, scale: 0.3 }}
                   animate={{ x: p.x, y: p.y, opacity: 1, scale: 1 }}
-                  exit={{ x: 0, y: 0, opacity: 0, scale: 0.3 }}
+                  exit={{ x: 0, y: 0, opacity: 0, scale: 0.3, transition: { duration: 0.15, delay: 0 } }}
                   transition={{ type: "spring", stiffness: 260, damping: 20, delay: i * 0.035 }}
                 >
                   <div
@@ -191,7 +203,9 @@ export default function SkillsNetwork({ categories, skills, language }: SkillsNe
             onClose={() => setOpenId((cur) => (cur === cat.id ? null : cur))}
             onToggle={(e) => {
               e.stopPropagation();
-              setOpenId((cur) => (cur === cat.id ? null : cat.id));
+              // Mouse hover already opened the node; its click must not immediately close it.
+              const pointerType = (e.nativeEvent as PointerEvent).pointerType;
+              setOpenId((cur) => pointerType === "mouse" ? cat.id : (cur === cat.id ? null : cat.id));
             }}
           />
         );

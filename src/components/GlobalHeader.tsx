@@ -1,10 +1,12 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useLayoutEffect, useRef } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Download, Sun, Moon, Menu, X, Lock, ChevronDown, ArrowRight, LayoutDashboard } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { OrbitaIcon } from "./OrbitaIcon";
 import { stripLocale, localePath } from "../lib/routes";
 import { ResumeData } from "../types";
+import LanguageSwitcher from "./LanguageSwitcher";
+import { usePrefersReducedMotion } from "../hooks/usePrefersReducedMotion";
 
 interface GlobalHeaderProps {
   darkMode?: boolean;
@@ -89,6 +91,26 @@ export default function GlobalHeader({
   ];
 
   const { path: routePath } = stripLocale(location.pathname);
+  const navigationRef = useRef<HTMLElement>(null);
+  const [indicator, setIndicator] = useState({ left: 12, width: 0 });
+  const reducedMotion = usePrefersReducedMotion();
+
+  useLayoutEffect(() => {
+    const nav = navigationRef.current;
+    if (!nav) return;
+    const measure = () => {
+      const active = nav.querySelector<HTMLElement>('a[aria-current="page"]');
+      // Local offsets keep scroll position out of the underline animation.
+      setIndicator(routePath === "/"
+        ? { left: 12, width: Math.max(0, nav.clientWidth - 24) }
+        : active ? { left: active.offsetLeft + 12, width: Math.max(0, active.offsetWidth - 24) }
+        : { left: 12, width: 0 });
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(nav);
+    return () => observer.disconnect();
+  }, [routePath, language]);
 
   // Helper to test active route
   const isRouteActive = (path: string) => {
@@ -150,9 +172,18 @@ export default function GlobalHeader({
 
             {/* Zone 2: Navigation Links (Desktop >= 860px) */}
             <nav
+              ref={navigationRef}
               className="hidden min-[860px]:flex items-center gap-[8px] relative"
               aria-label="Navegação principal"
             >
+                <motion.span
+                  data-testid="nav-indicator"
+                  aria-hidden="true"
+                  initial={false}
+                  animate={indicator}
+                  className="pointer-events-none absolute bottom-0 z-10 h-[2px] rounded-full bg-acento shadow-[0_2px_8px_-2px_var(--acento)]"
+                  transition={reducedMotion ? { duration: 0 } : { type: "spring", stiffness: 360, damping: 32, mass: 0.8 }}
+                />
               {navItems.map((item) => {
                 const active = isRouteActive(item.path);
 
@@ -161,21 +192,17 @@ export default function GlobalHeader({
                     key={item.path}
                     to={localePath(item.path, language)}
                     aria-current={active ? "page" : undefined}
-                    className={`relative px-3 py-2 text-[14.5px] rounded-[7px] transition-colors duration-160 font-sans cursor-pointer ${
+                    className={`group/nav-item relative px-3 py-2 text-[14.5px] rounded-[7px] transition-colors duration-160 font-sans cursor-pointer ${
                       active
                         ? "text-tinta font-[550]"
-                        : "text-tinta-fraca hover:text-tinta hover:bg-superficie-alta"
+                        : "text-tinta-fraca hover:text-tinta"
                     }`}
                   >
                     {item.label}
-                    {/* Active 2px bottom accent indicator — desliza entre os itens ao trocar de rota */}
-                    {active && (
-                      <motion.span
-                        layoutId="nav-active-indicator"
-                        className="absolute bottom-0 left-[12px] right-[12px] h-[2px] bg-acento rounded-full"
-                        transition={{ type: "spring", stiffness: 500, damping: 35 }}
-                      />
-                    )}
+                    <span
+                      aria-hidden="true"
+                      className="pointer-events-none absolute bottom-0 left-3 right-3 z-20 h-[2px] origin-center scale-x-50 rounded-full bg-indigo-300 opacity-0 shadow-[0_0_8px_1px_rgba(129,140,248,0.45)] transition-[opacity,scale] duration-200 ease-out group-hover/nav-item:scale-x-100 group-hover/nav-item:opacity-100 group-focus-visible/nav-item:scale-x-100 group-focus-visible/nav-item:opacity-100 motion-reduce:transition-none"
+                    />
                   </Link>
                 );
               })}
@@ -184,42 +211,7 @@ export default function GlobalHeader({
             {/* Zone 3: Utilities & Primary CTA */}
             <div className="flex items-center gap-[8px]">
               {/* Segmented Language Selector PT | EN */}
-              <div className="hidden min-[860px]:flex items-center rounded-lg bg-superficie-alta p-0.5 border border-borda-forte">
-                <button
-                  type="button"
-                  onClick={() => changeLanguage("pt")}
-                  className={`relative rounded-md px-2 py-1 text-[12px] font-bold transition-colors cursor-pointer ${
-                    language === "pt" ? "text-acento" : "text-tinta-fraca hover:text-tinta"
-                  }`}
-                  aria-label="Mudar idioma para Português"
-                >
-                  {language === "pt" && (
-                    <motion.span
-                      layoutId="lang-pill-desktop"
-                      className="absolute inset-0 rounded-md bg-superficie shadow-xs"
-                      transition={{ type: "spring", stiffness: 500, damping: 35 }}
-                    />
-                  )}
-                  <span className="relative">PT</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => changeLanguage("en")}
-                  className={`relative rounded-md px-2 py-1 text-[12px] font-bold transition-colors cursor-pointer ${
-                    language === "en" ? "text-acento" : "text-tinta-fraca hover:text-tinta"
-                  }`}
-                  aria-label="Change language to English"
-                >
-                  {language === "en" && (
-                    <motion.span
-                      layoutId="lang-pill-desktop"
-                      className="absolute inset-0 rounded-md bg-superficie shadow-xs"
-                      transition={{ type: "spring", stiffness: 500, damping: 35 }}
-                    />
-                  )}
-                  <span className="relative">EN</span>
-                </button>
-              </div>
+              <LanguageSwitcher language={language} onChange={changeLanguage} />
 
               {/* Theme Toggle Button (Icon-only 32px) */}
               <button
@@ -354,40 +346,7 @@ export default function GlobalHeader({
                 <span className="text-sm font-semibold text-tinta-fraca">
                   {language === "en" ? "Language" : "Idioma"}
                 </span>
-                <div className="relative flex rounded-lg bg-superficie-alta p-1 border border-borda-forte">
-                  <button
-                    type="button"
-                    onClick={() => changeLanguage("pt")}
-                    className={`relative rounded-md px-3 py-1.5 text-xs font-bold ${
-                      language === "pt" ? "text-acento" : "text-tinta-fraca"
-                    }`}
-                  >
-                    {language === "pt" && (
-                      <motion.span
-                        layoutId="lang-pill-mobile"
-                        className="absolute inset-0 rounded-md bg-superficie shadow-xs"
-                        transition={{ type: "spring", stiffness: 500, damping: 35 }}
-                      />
-                    )}
-                    <span className="relative">Português (PT)</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => changeLanguage("en")}
-                    className={`relative rounded-md px-3 py-1.5 text-xs font-bold ${
-                      language === "en" ? "text-acento" : "text-tinta-fraca"
-                    }`}
-                  >
-                    {language === "en" && (
-                      <motion.span
-                        layoutId="lang-pill-mobile"
-                        className="absolute inset-0 rounded-md bg-superficie shadow-xs"
-                        transition={{ type: "spring", stiffness: 500, damping: 35 }}
-                      />
-                    )}
-                    <span className="relative">English (EN)</span>
-                  </button>
-                </div>
+                <LanguageSwitcher language={language} onChange={changeLanguage} mobile />
               </div>
 
               <div className="flex items-center justify-between">

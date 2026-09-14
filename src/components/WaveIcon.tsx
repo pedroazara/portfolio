@@ -1,4 +1,5 @@
 import React from "react";
+import { usePrefersReducedMotion } from "../hooks/usePrefersReducedMotion";
 
 interface WaveIconProps {
   size?: number;
@@ -6,6 +7,7 @@ interface WaveIconProps {
 }
 
 export function Orbita({ size = 32, color = "#ffffff" }: WaveIconProps) {
+  const reducedMotion = usePrefersReducedMotion();
   return (
     <svg
       width={size}
@@ -16,15 +18,15 @@ export function Orbita({ size = 32, color = "#ffffff" }: WaveIconProps) {
       strokeWidth={2.8}
       strokeLinecap="round"
     >
-      <style>{`@keyframes nucleoPulsar{0%,100%{r:4px}50%{r:2.8px}}`}</style>
+      <style>{`@keyframes wave-orbita-pulse{0%,100%{r:4px}50%{r:2.8px}}`}</style>
       <g transform="rotate(-30 24 24)">
         <ellipse cx={24} cy={24} rx={20} ry={9} />
-        <circle r={2.5} fill={color} stroke="none">
-          <animateMotion
+        <circle r={2.5} fill={color} stroke="none" transform={reducedMotion ? "translate(4 24)" : undefined}>
+          {!reducedMotion && <animateMotion
             dur="3.5s"
             repeatCount="indefinite"
             path="M4 24 a20 9 0 1 0 40 0 a20 9 0 1 0 -40 0"
-          />
+          />}
         </circle>
       </g>
       <circle
@@ -33,7 +35,7 @@ export function Orbita({ size = 32, color = "#ffffff" }: WaveIconProps) {
         r={4}
         fill={color}
         stroke="none"
-        style={{ animation: "nucleoPulsar 3.5s ease-in-out infinite" }}
+        style={{ animation: "wave-orbita-pulse 3.5s ease-in-out infinite" }}
       />
     </svg>
   );

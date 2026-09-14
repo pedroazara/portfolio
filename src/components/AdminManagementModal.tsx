@@ -101,7 +101,7 @@ export default function AdminManagementModal({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 bg-slate-950/60 backdrop-blur-xs transition-opacity"
+            className="fixed inset-0 bg-slate-950/60 backdrop-blur-xs"
           />
 
           <div className="flex min-h-screen items-center justify-center p-4">
