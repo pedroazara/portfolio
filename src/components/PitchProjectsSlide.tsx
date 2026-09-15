@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Project, ProjectCategory } from "../types";
 import { Language } from "../lib/translations";
 import { slugOf } from "../utils/slug";
@@ -29,8 +29,17 @@ export default function PitchProjectsSlide({ projects, categories, selectedIds, 
   const selecionados = new Set(selectedIds);
   const visiveis = projects.filter((p) => selecionados.has(p.id));
   const [hover, setHover] = useState<Project | null>(visiveis[0] || null);
+  const [carrosselIndex, setCarrosselIndex] = useState(0);
 
   const grupos = agruparPorCategoria(visiveis, categories);
+
+  const imagensDoHover = hover
+    ? Array.from(new Set((hover.galleryImages || hover.images || []).filter(Boolean))) as string[]
+    : [];
+
+  useEffect(() => {
+    setCarrosselIndex(0);
+  }, [hover?.id]);
 
   const abrirProjeto = (p: Project) => {
     window.open(lp(`/project/${slugOf(p)}`), "_blank", "noopener,noreferrer");
@@ -100,9 +109,47 @@ export default function PitchProjectsSlide({ projects, categories, selectedIds, 
       <div className="hidden overflow-y-auto rounded-2xl border border-slate-200 p-4 dark:border-slate-800 lg:block">
         {hover ? (
           <>
-            {hover.imageUrl && (
-              <div className="mb-3 aspect-video overflow-hidden rounded-lg bg-slate-100 dark:bg-slate-900">
-                <LocalImage src={hover.imageUrl} alt={hover.title} className="h-full w-full object-cover" />
+            {imagensDoHover.length > 0 && (
+              <div className="relative mb-3 aspect-video overflow-hidden rounded-lg bg-slate-100 dark:bg-slate-900">
+                <LocalImage
+                  key={imagensDoHover[carrosselIndex]}
+                  src={imagensDoHover[carrosselIndex]}
+                  alt={hover.title}
+                  className="h-full w-full object-cover"
+                />
+                {imagensDoHover.length > 1 && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => setCarrosselIndex((i) => (i - 1 + imagensDoHover.length) % imagensDoHover.length)}
+                      aria-label={isEn ? "Previous image" : "Imagem anterior"}
+                      className="absolute left-1.5 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full bg-black/50 text-sm text-white transition hover:bg-black/70"
+                    >
+                      ‹
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setCarrosselIndex((i) => (i + 1) % imagensDoHover.length)}
+                      aria-label={isEn ? "Next image" : "Próxima imagem"}
+                      className="absolute right-1.5 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full bg-black/50 text-sm text-white transition hover:bg-black/70"
+                    >
+                      ›
+                    </button>
+                    <div className="absolute bottom-1.5 left-1/2 flex -translate-x-1/2 gap-1">
+                      {imagensDoHover.map((_, i) => (
+                        <button
+                          key={i}
+                          type="button"
+                          onClick={() => setCarrosselIndex(i)}
+                          aria-label={`${isEn ? "Image" : "Imagem"} ${i + 1}`}
+                          className={`h-1.5 w-1.5 rounded-full transition ${
+                            i === carrosselIndex ? "bg-white" : "bg-white/50 hover:bg-white/75"
+                          }`}
+                        />
+                      ))}
+                    </div>
+                  </>
+                )}
               </div>
             )}
             <h4 className="font-display text-lg font-bold text-slate-900 dark:text-white">

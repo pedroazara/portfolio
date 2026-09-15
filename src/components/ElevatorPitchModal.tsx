@@ -9,6 +9,7 @@ import PitchProjectsSlide from "./PitchProjectsSlide";
 import PitchProjectPicker from "./PitchProjectPicker";
 import PitchSlideCanvas, { PitchAccent, ACCENT_SOLIDO } from "./PitchSlideCanvas";
 import PitchIdentitySlide from "./PitchIdentitySlide";
+import PitchMotivacaoSlide from "./PitchMotivacaoSlide";
 import SkillsNetwork, { NetworkCategory } from "./SkillsNetwork";
 import { Skill } from "../types";
 
@@ -40,9 +41,6 @@ function linhasDoTexto(texto: string): string[] {
     .map((linha) => linha.trim())
     .filter(Boolean);
 }
-
-/** Curta o bastante para virar um selo em vez de uma frase inteira. */
-const LIMITE_SELO = 42;
 
 interface ElevatorPitchModalProps {
   isOpen: boolean;
@@ -187,6 +185,12 @@ export default function ElevatorPitchModal({
 
   const chaveAtual = chaveDoSlide(indice);
   const accentAtual = ACCENTS[indice];
+
+  // Mesma origem usada no QR code do PDF do currículo — um único ponto evita
+  // que o QR desta apresentação aponte para um domínio diferente.
+  const SITE_ORIGIN = (typeof window !== "undefined" && window.location.origin) || "https://pedroazara.vercel.app";
+  const siteUrlRaw = (data.profile.website && data.profile.website.trim()) || SITE_ORIGIN;
+  const siteUrl = /^https?:\/\//i.test(siteUrlRaw) ? siteUrlRaw : `https://${siteUrlRaw}`;
 
   return (
     <div className="fixed inset-0 z-100 flex flex-col bg-white no-print dark:bg-slate-950">
@@ -356,27 +360,16 @@ export default function ElevatorPitchModal({
                         />
                       </div>
                     </PitchSlideCanvas>
-                  ) : chaveAtual ? (
-                    <PitchSlideCanvas title={draft[chaveAtual].title} accent={accentAtual} numero={indice + 1}>
-                      <div className="flex h-full flex-wrap content-center items-center justify-center gap-4 px-2">
-                        {linhasDoTexto(draft[chaveAtual].body).map((linha, i) =>
-                          linha.length <= LIMITE_SELO ? (
-                            <span
-                              key={i}
-                              className="rounded-full bg-white/95 px-6 py-3 text-lg font-bold text-slate-800 shadow-lg sm:text-2xl dark:bg-slate-900/95 dark:text-slate-100"
-                            >
-                              {linha}
-                            </span>
-                          ) : (
-                            <p
-                              key={i}
-                              className="w-full max-w-3xl rounded-2xl bg-white/95 px-6 py-4 text-center text-base leading-relaxed text-slate-800 shadow-lg sm:text-lg dark:bg-slate-900/95 dark:text-slate-100"
-                            >
-                              {linha}
-                            </p>
-                          )
-                        )}
-                      </div>
+                  ) : indice === TOTAL_SLIDES - 1 ? (
+                    // Último slide: rola em vez de listar tudo de uma vez —
+                    // cada linha do rascunho é uma tela, e o QR do site só
+                    // aparece ao fim, como fechamento da apresentação.
+                    <PitchSlideCanvas title={draft[chaveAtual!].title} accent={accentAtual} numero={indice + 1} fill>
+                      <PitchMotivacaoSlide
+                        linhas={linhasDoTexto(draft[chaveAtual!].body)}
+                        siteUrl={siteUrl}
+                        language={language}
+                      />
                     </PitchSlideCanvas>
                   ) : (
                     <PitchSlideCanvas

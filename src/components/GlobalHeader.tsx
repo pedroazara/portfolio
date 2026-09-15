@@ -173,7 +173,7 @@ export default function GlobalHeader({
             {/* Zone 2: Navigation Links (Desktop >= 860px) */}
             <nav
               ref={navigationRef}
-              className="hidden min-[860px]:flex items-center gap-[8px] relative"
+              className="hidden min-[860px]:grid grid-cols-3 items-center relative"
               aria-label="Navegação principal"
             >
                 <motion.span
@@ -181,7 +181,7 @@ export default function GlobalHeader({
                   aria-hidden="true"
                   initial={false}
                   animate={indicator}
-                  className="pointer-events-none absolute bottom-0 z-10 h-[2px] rounded-full bg-acento shadow-[0_2px_8px_-2px_var(--acento)]"
+                  className="pointer-events-none absolute bottom-0 z-10 h-[2px] rounded-full bg-acento"
                   transition={reducedMotion ? { duration: 0 } : { type: "spring", stiffness: 360, damping: 32, mass: 0.8 }}
                 />
               {navItems.map((item) => {
@@ -192,7 +192,7 @@ export default function GlobalHeader({
                     key={item.path}
                     to={localePath(item.path, language)}
                     aria-current={active ? "page" : undefined}
-                    className={`group/nav-item relative px-3 py-2 text-[14.5px] rounded-[7px] transition-colors duration-160 font-sans cursor-pointer ${
+                    className={`group/nav-item relative flex items-center justify-center px-3 py-2 text-[14.5px] rounded-[7px] transition-colors duration-160 font-sans cursor-pointer ${
                       active
                         ? "text-tinta font-[550]"
                         : "text-tinta-fraca hover:text-tinta"
@@ -201,7 +201,7 @@ export default function GlobalHeader({
                     {item.label}
                     <span
                       aria-hidden="true"
-                      className="pointer-events-none absolute bottom-0 left-3 right-3 z-20 h-[2px] origin-center scale-x-50 rounded-full bg-indigo-300 opacity-0 shadow-[0_0_8px_1px_rgba(129,140,248,0.45)] transition-[opacity,scale] duration-200 ease-out group-hover/nav-item:scale-x-100 group-hover/nav-item:opacity-100 group-focus-visible/nav-item:scale-x-100 group-focus-visible/nav-item:opacity-100 motion-reduce:transition-none"
+                      className="pointer-events-none absolute bottom-0 left-3 right-3 z-20 h-[2px] origin-center scale-x-50 rounded-full bg-indigo-300 opacity-0 transition-[opacity,scale] duration-200 ease-out group-hover/nav-item:scale-x-100 group-hover/nav-item:opacity-100 group-focus-visible/nav-item:scale-x-100 group-focus-visible/nav-item:opacity-100 motion-reduce:transition-none"
                     />
                   </Link>
                 );

@@ -477,9 +477,10 @@ export async function createResumePDFDoc(data?: ResumeData): Promise<jsPDF | nul
   // ==========================================
   if (data.projects && data.projects.length > 0) {
     const featuredProjects = data.projects.filter(p => p.featured);
-    const candidateProjects = featuredProjects.length > 0 ? featuredProjects : data.projects;
-    // Limit to top 3 or 4 main projects
-    const projectsToRender = candidateProjects.slice(0, 4);
+    // Todos os projetos em destaque entram — sem limite arbitrário de
+    // quantidade, já que a curadoria de quais aparecem já foi feita ao
+    // marcar cada um como destaque.
+    const projectsToRender = featuredProjects.length > 0 ? featuredProjects : data.projects;
 
     if (projectsToRender.length > 0) {
       renderSectionHeader("Projetos Relevantes");
@@ -575,19 +576,19 @@ export async function createResumePDFDoc(data?: ResumeData): Promise<jsPDF | nul
   }
 
   // ==========================================
-  // 7. HABILIDADES TÉCNICAS (Com Latin-1 Seguro sem caracteres inválidos)
+  // 7. HABILIDADES TÉCNICAS (lista simples, sem nota de nível)
   // ==========================================
   if (data.skills && data.skills.length > 0) {
     renderSectionHeader("Habilidades Técnicas");
 
-    // Group skills by category
+    // Group skills by category — só o nome; a nota "x/5" não diz nada a
+    // quem lê o PDF de fora do site e só poluía a lista.
     const groupedSkills: { [category: string]: string[] } = {};
     data.skills.forEach((skill) => {
       if (!groupedSkills[skill.category]) {
         groupedSkills[skill.category] = [];
       }
-      // Formatting skill name with clean ASCII level representation to prevent encoding issues
-      groupedSkills[skill.category].push(`${skill.name} (${skill.level}/5)`);
+      groupedSkills[skill.category].push(skill.name);
     });
 
     /**
@@ -606,7 +607,7 @@ export async function createResumePDFDoc(data?: ResumeData): Promise<jsPDF | nul
     const COL_X = [MARGIN_LEFT, MARGIN_LEFT + COL_WIDTH + GUTTER];
     let colY: [number, number] = [y, y];
 
-    const renderSkillCategory = (col: 0 | 1, category: string, skillsList: string[]) => {
+    const renderSkillCategory = (col: 0 | 1, category: string, skillNames: string[]) => {
       const x = COL_X[col];
       if (colY[col] + 15 > BOTTOM_LIMIT) {
         // Uma categoria não cabe nem começando: nova página, as duas
@@ -626,7 +627,7 @@ export async function createResumePDFDoc(data?: ResumeData): Promise<jsPDF | nul
       doc.setFontSize(8);
       doc.setTextColor(INK_BODY[0], INK_BODY[1], INK_BODY[2]);
 
-      const skillLines = doc.splitTextToSize(skillsList.join("  |  "), COL_WIDTH);
+      const skillLines = doc.splitTextToSize(skillNames.join("  •  "), COL_WIDTH);
       for (const line of skillLines) {
         if (colY[col] + 4 > BOTTOM_LIMIT) {
           doc.addPage();
@@ -639,9 +640,9 @@ export async function createResumePDFDoc(data?: ResumeData): Promise<jsPDF | nul
       colY[col] += 3; // espaço entre categorias, na mesma coluna
     };
 
-    Object.entries(groupedSkills).forEach(([category, skillsList]) => {
+    Object.entries(groupedSkills).forEach(([category, skillNames]) => {
       const col: 0 | 1 = colY[0] <= colY[1] ? 0 : 1;
-      renderSkillCategory(col, category, skillsList);
+      renderSkillCategory(col, category, skillNames);
     });
 
     y = Math.max(colY[0], colY[1]);
