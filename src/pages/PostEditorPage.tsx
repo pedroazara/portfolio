@@ -173,7 +173,7 @@ export default function PostEditorPage({ slug, posts, onUpdatePosts, language }:
       date: form.date || new Date().toISOString().split("T")[0],
       tags,
       imageUrl: form.imageUrl || undefined,
-      readTime: form.readTime?.trim() || estimateReadTime(content, "pt"),
+      readTime: form.readTime?.trim() || "",
       category: form.category || "Instrumentação",
       categoryEn: form.categoryEn || "Instrumentation",
       references: (form.references || []).filter((r) => r.title.trim() || r.url.trim()),

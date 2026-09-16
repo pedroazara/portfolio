@@ -102,10 +102,9 @@ export default function CoursesSection({
   const formatDate = (dateStr: string) => {
     if (!dateStr) return "";
     const [year, month] = dateStr.split("-");
-    const months = [
-      "Jan", "Fev", "Mar", "Abr", "Mai", "Jun",
-      "Jul", "Ago", "Set", "Out", "Nov", "Dez"
-    ];
+    const months = language === "en"
+      ? ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+      : ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
     if (month && parseInt(month, 10) >= 1 && parseInt(month, 10) <= 12) {
       return `${months[parseInt(month, 10) - 1]} ${year}`;
     }

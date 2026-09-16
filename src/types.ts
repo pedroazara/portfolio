@@ -123,6 +123,7 @@ export interface Experience {
   descriptionEn?: string;
   type?: "research" | "academic";
   skills?: string[];
+  skillsEn?: string[];
   subperiods?: Subperiod[];
   links?: ExperienceLink[];
   projetos?: string[]; // Array of project codes referenced

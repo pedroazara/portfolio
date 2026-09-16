@@ -40,7 +40,7 @@ export default function PdfPreviewModal({
     let url: string | null = null;
     let cancelled = false;
 
-    getResumePDFBlobUrl(resumeData)
+    getResumePDFBlobUrl(resumeData, language)
       .then((generated) => {
         if (cancelled) {
           if (generated) URL.revokeObjectURL(generated);
@@ -62,12 +62,12 @@ export default function PdfPreviewModal({
         URL.revokeObjectURL(url);
       }
     };
-  }, [isOpen, resumeData]);
+  }, [isOpen, resumeData, language]);
 
   if (!isOpen) return null;
 
   const handleDownload = () => {
-    generateResumePDF(resumeData).catch((err) => {
+    generateResumePDF(resumeData, language).catch((err) => {
       console.error("Erro ao baixar o PDF:", err);
     });
   };

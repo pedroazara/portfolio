@@ -131,7 +131,7 @@ export default function GlobalHeader({
     if (onOpenPdfPreview) {
       onOpenPdfPreview();
     } else {
-      import("../utils/pdfGenerator").then(({ generateResumePDF }) => generateResumePDF(resumeData)).catch((err) => console.error("Erro ao gerar PDF:", err));
+      import("../utils/pdfGenerator").then(({ generateResumePDF }) => generateResumePDF(resumeData, language)).catch((err) => console.error("Erro ao gerar PDF:", err));
     }
   };
 

@@ -4,6 +4,7 @@ import { ArrowLeft, Search, Copy, Check, Tag } from "lucide-react";
 import { ResumeData, BlogPost, Project } from "../types";
 import { Orbita } from "./WaveIcon";
 import { localePath, stripLocale } from "../lib/routes";
+import { estimateReadTime } from "../utils/readTime";
 
 interface SectionHeaderProps {
   resumeData?: ResumeData;
@@ -316,9 +317,9 @@ export default function SectionHeader({
 
             {/* Right side: Estimated reading time + Copy Link */}
             <div className="flex items-center gap-3 shrink-0">
-              {blogPost?.readTime && (
+              {blogPost && (
                 <span className="hidden sm:inline-block font-mono text-[11px] text-tinta-fraca">
-                  {blogPost.readTime}
+                  {blogPost.readTime || estimateReadTime(blogPost.content, language)}
                 </span>
               )}
 

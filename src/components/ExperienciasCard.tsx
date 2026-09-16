@@ -8,7 +8,7 @@ import ProjetosRelacionados from "./ProjetosRelacionados";
 import { ReorderableList } from "./Reorderable";
 import { SECTION_CARD_CLASS } from "../lib/cardStyle";
 import { Language } from "../lib/translations";
-import { autoTranslateFields } from "../lib/translator";
+import { autoTranslateFields, translateFields } from "../lib/translator";
 import { formatarPeriodo } from "../lib/periodo";
 
 interface ExperienciasCardProps {
@@ -52,9 +52,11 @@ export default function ExperienciasCard({
     description: "",
     descriptionEn: "",
     skills: [],
+    skillsEn: [],
     subperiods: [],
   });
   const [skillInput, setSkillInput] = useState("");
+  const [skillInputEn, setSkillInputEn] = useState("");
 
   // Subperiod input in modal
   const [newSubTitle, setNewSubTitle] = useState("");
@@ -78,10 +80,12 @@ export default function ExperienciasCard({
       description: "",
       descriptionEn: "",
       skills: [],
+      skillsEn: [],
       subperiods: [],
       projetos: [],
     });
     setSkillInput("");
+    setSkillInputEn("");
     setEditingLanguage(language);
     setIsExpModalOpen(true);
   };
@@ -91,6 +95,7 @@ export default function ExperienciasCard({
     setExpError(null);
     setExpForm({ ...exp, subperiods: exp.subperiods ? [...exp.subperiods] : [], projetos: exp.projetos || [] });
     setSkillInput(exp.skills ? exp.skills.join(", ") : "");
+    setSkillInputEn(exp.skillsEn ? exp.skillsEn.join(", ") : "");
     setEditingLanguage(language);
     setIsExpModalOpen(true);
   };
@@ -144,6 +149,13 @@ export default function ExperienciasCard({
       },
       setExpForm
     );
+    const parsedSkills = skillInput ? skillInput.split(",").map((s) => s.trim()).filter(Boolean) : [];
+    if (parsedSkills.length > 0) {
+      const { skillsEnJoined } = await translateFields({ skillsEnJoined: parsedSkills.join(" | ") });
+      if (skillsEnJoined) {
+        setSkillInputEn(skillsEnJoined.split(" | ").map((s) => s.trim()).filter(Boolean).join(", "));
+      }
+    }
     setEditingLanguage("en");
   };
 
@@ -168,6 +180,9 @@ export default function ExperienciasCard({
     const parsedSkills = skillInput
       ? skillInput.split(",").map((s) => s.trim()).filter(Boolean)
       : expForm.skills || [];
+    const parsedSkillsEn = skillInputEn
+      ? skillInputEn.split(",").map((s) => s.trim()).filter(Boolean)
+      : expForm.skillsEn || [];
 
     const complete: Experience = {
       id: editingExp?.id || `exp-${Date.now()}`,
@@ -183,6 +198,7 @@ export default function ExperienciasCard({
       descriptionEn: expForm.descriptionEn || "",
       type: "research",
       skills: parsedSkills,
+      skillsEn: parsedSkillsEn,
       subperiods: expForm.subperiods || [],
       links: expForm.links || [],
       projetos: expForm.projetos || [],
@@ -260,6 +276,7 @@ export default function ExperienciasCard({
               const roleText = language === "en" && exp.roleEn ? exp.roleEn : exp.role;
               const locationText = language === "en" && exp.locationEn ? exp.locationEn : exp.location;
               const descText = language === "en" && exp.descriptionEn ? exp.descriptionEn : exp.description;
+              const skillsText = language === "en" && exp.skillsEn && exp.skillsEn.length > 0 ? exp.skillsEn : exp.skills;
               const hasDescription = descText && descText.trim().length > 0;
               const anchorId = "research-" + exp.id;
 
@@ -400,9 +417,9 @@ export default function ExperienciasCard({
                     )}
 
                     {/* Competências como chips (chips separados por linha divisória de 0.5px) */}
-                    {exp.skills && exp.skills.length > 0 && (
+                    {skillsText && skillsText.length > 0 && (
                       <div className="mt-4 border-t border-slate-200/80 dark:border-slate-800 pt-3.5 flex flex-wrap gap-2">
-                        {exp.skills.map((skill, i) => (
+                        {skillsText.map((skill, i) => (
                           <span
                             key={i}
                             className="bg-indigo-50 dark:bg-indigo-950/70 text-indigo-700 dark:text-indigo-300 border border-indigo-200/60 dark:border-indigo-900/60 rounded-full px-3 py-1 text-xs font-mono font-medium select-none"
@@ -672,13 +689,13 @@ export default function ExperienciasCard({
           {/* Competências / Chips */}
           <div>
             <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
-              Competências / Chips (separadas por vírgula)
+              Competências / Chips (separadas por vírgula) {editingLanguage === "en" && "(English)"}
             </label>
             <input
               type="text"
-              value={skillInput}
-              onChange={(e) => setSkillInput(e.target.value)}
-              placeholder="Python, PyVISA, Óptica ultrarrápida, Automação"
+              value={editingLanguage === "en" ? skillInputEn : skillInput}
+              onChange={(e) => (editingLanguage === "en" ? setSkillInputEn(e.target.value) : setSkillInput(e.target.value))}
+              placeholder={editingLanguage === "en" ? "Python, PyVISA, Ultrafast Optics, Automation" : "Python, PyVISA, Óptica ultrarrápida, Automação"}
               className="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-slate-900 dark:text-white"
             />
           </div>

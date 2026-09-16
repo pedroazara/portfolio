@@ -213,6 +213,7 @@ export async function translateAllContent(
       if (exp.role) fields[`${i}__role`] = exp.role;
       if (exp.location) fields[`${i}__location`] = exp.location;
       if (exp.description) fields[`${i}__description`] = exp.description;
+      if (exp.skills && exp.skills.length > 0) fields[`${i}__skills`] = exp.skills.join(" | ");
       (exp.subperiods || []).forEach((sub, j) => {
         if (sub.title) fields[`${i}__sub${j}__title`] = sub.title;
         if (sub.description) fields[`${i}__sub${j}__description`] = sub.description;
@@ -225,6 +226,9 @@ export async function translateAllContent(
       roleEn: t[`${i}__role`] ?? exp.roleEn,
       locationEn: t[`${i}__location`] ?? exp.locationEn,
       descriptionEn: t[`${i}__description`] ?? exp.descriptionEn,
+      skillsEn: t[`${i}__skills`]
+        ? t[`${i}__skills`].split(" | ").map((s) => s.trim()).filter(Boolean)
+        : exp.skillsEn,
       subperiods: (exp.subperiods || []).map((sub, j) => ({
         ...sub,
         titleEn: t[`${i}__sub${j}__title`] ?? sub.titleEn,
