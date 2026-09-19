@@ -20,9 +20,9 @@ export default function PitchMotivacaoSlide({ linhas, siteUrl, language = "pt" }
 
   return (
     <div className="relative h-full">
-      <div aria-hidden="true" data-motivation-background className="pointer-events-none absolute inset-y-0 right-0 w-[62%] overflow-hidden">
-        <img src="/pitch/sirius-aerial.png" alt="" className="h-full w-full object-cover opacity-[0.18] grayscale" />
-        <div className="absolute inset-0 bg-gradient-to-r from-[#102536] via-[#102536]/65 to-[#102536]/10" />
+      <div aria-hidden="true" data-motivation-background className="pointer-events-none absolute inset-y-0 right-0 w-[86%] overflow-hidden">
+        <img src="/pitch/sirius-aerial.png" alt="" className="h-full w-full object-cover object-center opacity-[0.24] grayscale" />
+        <div className="absolute inset-0 bg-gradient-to-r from-[#102536] via-[#102536]/55 to-[#102536]/5" />
       </div>
 
       <div
