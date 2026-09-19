@@ -127,6 +127,8 @@ export interface Experience {
   subperiods?: Subperiod[];
   links?: ExperienceLink[];
   projetos?: string[]; // Array of project codes referenced
+  /** Fotos exibidas na galeria em hover do slide de habilidades do elevator pitch. */
+  galleryImages?: string[];
 }
 
 export interface AcademicActivity {
@@ -142,6 +144,8 @@ export interface AcademicActivity {
   extraContentEn?: string;
   links?: ExperienceLink[];
   projetos?: string[]; // Array of project codes referenced
+  /** Fotos exibidas na galeria em hover do slide de habilidades do elevator pitch. */
+  galleryImages?: string[];
 }
 
 export interface Education {

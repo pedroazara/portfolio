@@ -5,6 +5,7 @@ import EditModal from "./EditModal";
 import MarkdownRenderer from "./MarkdownRenderer";
 import TranslateButton from "./TranslateButton";
 import ProjetosRelacionados from "./ProjetosRelacionados";
+import ImageGalleryInput from "./ImageGalleryInput";
 import { ReorderableList } from "./Reorderable";
 import { SECTION_CARD_CLASS } from "../lib/cardStyle";
 import { Language } from "../lib/translations";
@@ -54,6 +55,7 @@ export default function ExperienciasCard({
     skills: [],
     skillsEn: [],
     subperiods: [],
+    galleryImages: [],
   });
   const [skillInput, setSkillInput] = useState("");
   const [skillInputEn, setSkillInputEn] = useState("");
@@ -83,6 +85,7 @@ export default function ExperienciasCard({
       skillsEn: [],
       subperiods: [],
       projetos: [],
+      galleryImages: [],
     });
     setSkillInput("");
     setSkillInputEn("");
@@ -93,7 +96,12 @@ export default function ExperienciasCard({
   const handleOpenExpEdit = (exp: Experience) => {
     setEditingExp(exp);
     setExpError(null);
-    setExpForm({ ...exp, subperiods: exp.subperiods ? [...exp.subperiods] : [], projetos: exp.projetos || [] });
+    setExpForm({
+      ...exp,
+      subperiods: exp.subperiods ? [...exp.subperiods] : [],
+      projetos: exp.projetos || [],
+      galleryImages: exp.galleryImages || [],
+    });
     setSkillInput(exp.skills ? exp.skills.join(", ") : "");
     setSkillInputEn(exp.skillsEn ? exp.skillsEn.join(", ") : "");
     setEditingLanguage(language);
@@ -202,6 +210,7 @@ export default function ExperienciasCard({
       subperiods: expForm.subperiods || [],
       links: expForm.links || [],
       projetos: expForm.projetos || [],
+      galleryImages: expForm.galleryImages || [],
     };
 
     if (editingExp) {
@@ -700,12 +709,25 @@ export default function ExperienciasCard({
             />
           </div>
 
+          {/* Galeria de fotos (hover no elevator pitch) */}
+          <div className="border-t border-slate-200 dark:border-slate-800 pt-3">
+            <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+              {language === "en" ? "Photo gallery (elevator pitch hover)" : "Galeria de fotos (aparece no hover do elevator pitch)"}
+            </label>
+            <ImageGalleryInput
+              value={expForm.galleryImages || []}
+              onChange={(images) => setExpForm((prev) => ({ ...prev, galleryImages: images }))}
+              folder={`experiencias/${editingExp?.id || "nova"}`}
+              language={language}
+            />
+          </div>
+
           {/* Linkar Projetos Relacionados */}
           <div className="border-t border-slate-200 dark:border-slate-800 pt-3">
             <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
               {language === "en" ? "Link Related Projects" : "Linkar Projetos Relacionados"}
             </label>
-            
+
             {projects.length > 0 && (
               <div className="mb-2 flex flex-wrap gap-1.5 p-2 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800">
                 {projects.map((p) => {

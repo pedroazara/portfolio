@@ -10,30 +10,7 @@ import PitchProjectPicker from "./PitchProjectPicker";
 import PitchSlideCanvas, { PitchAccent, ACCENT_SOLIDO } from "./PitchSlideCanvas";
 import PitchIdentitySlide from "./PitchIdentitySlide";
 import PitchMotivacaoSlide from "./PitchMotivacaoSlide";
-import SkillsNetwork, { NetworkCategory } from "./SkillsNetwork";
-import { Skill } from "../types";
-
-/**
- * Placeholder para o slide de bolhas de habilidades — ainda não editável.
- * Deliberadamente não vem do currículo: as habilidades desse slide serão
- * escolhidas à parte (com ícone próprio), específicas para a apresentação.
- * Troque por dados reais quando a edição desse slide existir.
- */
-const HABILIDADES_MOCK_CATEGORIAS: NetworkCategory[] = [
-  { id: "mock-cat-1", name: "Instrumentação", nameEn: "Instrumentation", icon: "Cpu" },
-  { id: "mock-cat-2", name: "Software", nameEn: "Software", icon: "Code2" },
-  { id: "mock-cat-3", name: "Física", nameEn: "Physics", icon: "Atom" },
-];
-
-const HABILIDADES_MOCK_SKILLS: Skill[] = [
-  { id: "mock-skill-1", name: "Aquisição de dados e sensores", nameEn: "Sensors & data acquisition", category: "Instrumentação", level: 5 },
-  { id: "mock-skill-2", name: "Sistemas embarcados", nameEn: "Embedded systems", category: "Instrumentação", level: 4 },
-  { id: "mock-skill-3", name: "Python", nameEn: "Python", category: "Software", level: 5 },
-  { id: "mock-skill-4", name: "Visão computacional", nameEn: "Computer vision", category: "Software", level: 4 },
-  { id: "mock-skill-5", name: "Mecânica Quântica", nameEn: "Quantum Mechanics", category: "Física", level: 4 },
-  { id: "mock-skill-6", name: "Termodinâmica", nameEn: "Thermodynamics", category: "Física", level: 4 },
-];
-
+import PitchExperienceSlide from "./PitchExperienceSlide";
 /** Cada linha do rascunho vira um elemento visual próprio no slide. */
 function linhasDoTexto(texto: string): string[] {
   return texto
@@ -65,18 +42,18 @@ const SLIDE_VARIANTS = {
 
 type Chave = "quemSouEu" | "habilidades" | "motivacao";
 
-/** slide 0 → quemSouEu · slide 1 → projetos (sem texto solto) · slide 2 → habilidades · slide 3 → motivação */
+/** slide 0 → quemSouEu · slide 1 → habilidades · slide 2 → projetos (sem texto solto) · slide 3 → motivação */
 function chaveDoSlide(indice: number): Chave | null {
   if (indice === 0) return "quemSouEu";
-  if (indice === 2) return "habilidades";
+  if (indice === 1) return "habilidades";
   if (indice === 3) return "motivacao";
   return null;
 }
 
 /**
  * Elevator pitch de até 4 slides, para entrevistas como a do Programa
- * Unificado de Estágios do CNPEM: quem sou eu, projetos, habilidades e a
- * relação com o programa.
+ * Unificado de Estágios do CNPEM: quem sou eu, habilidades e experiência,
+ * projetos e a relação com o programa.
  *
  * Duas telas: um painel de preparo (título, corpo de texto e curadoria de
  * projetos, tudo editável) e a apresentação em tela cheia. O rascunho nasce
@@ -128,6 +105,11 @@ export default function ElevatorPitchModal({
   useEffect(() => {
     if (!isOpen || vista !== "apresentar") return;
     const handler = (e: KeyboardEvent) => {
+      // Espaço ativa o botão focado; as setas continuam navegando pelos slides.
+      if (e.target instanceof HTMLElement && (
+        e.target.closest("input, textarea, select") ||
+        (e.key === " " && e.target.closest(".pitch-slide") && e.target.closest("button, [role='button']"))
+      )) return;
       if (e.key === "ArrowRight" || e.key === " ") {
         e.preventDefault();
         irPara(indice + 1);
@@ -193,7 +175,7 @@ export default function ElevatorPitchModal({
   const siteUrl = /^https?:\/\//i.test(siteUrlRaw) ? siteUrlRaw : `https://${siteUrlRaw}`;
 
   return (
-    <div className="fixed inset-0 z-100 flex flex-col bg-white no-print dark:bg-slate-950">
+    <div className="fixed inset-0 z-100 flex flex-col bg-slate-100 no-print dark:bg-slate-950">
       {/* Cabeçalho: só no preparo. Na apresentação não sobra nenhum botão —
           Esc é a única saída, como pedido. */}
       {vista === "editar" && (
@@ -271,8 +253,8 @@ export default function ElevatorPitchModal({
                   {chave === "habilidades" ? (
                     <p className="rounded-xl border border-dashed border-slate-200 bg-slate-50 p-3 text-[11px] text-slate-500 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400">
                       {isEn
-                        ? "This slide shows animated skill bubbles — hover (or tap) a category to reveal its skills. It's still placeholder content; picking your own categories, skills and icons here is coming soon."
-                        : "Este slide mostra bolhas de habilidades animadas — passe o mouse (ou toque) numa categoria para revelar as habilidades. Ainda é conteúdo de exemplo; escolher aqui suas próprias categorias, habilidades e ícones vem em breve."}
+                        ? "Research and activities come from your résumé, with instrumentation activities first. Up to two registered skills are shown: instrumentation and programming."
+                        : "A pesquisa e as atividades vêm do currículo, com instrumentação em destaque. O slide mostra até duas competências cadastradas: instrumentação e programação."}
                     </p>
                   ) : (
                     <>
@@ -285,8 +267,8 @@ export default function ElevatorPitchModal({
                       <p className="text-[11px] text-slate-400 dark:text-slate-600">
                         {chave === "quemSouEu"
                           ? isEn
-                            ? "The title above is what shows huge on the slide — your name works well there. Short lines below become badges."
-                            : "O título acima é o que aparece grande no slide — seu nome funciona bem aí. As linhas abaixo viram selos."
+                            ? "The title above is what shows huge on the slide — your name works well there. Each line below becomes a numbered topic to speak from."
+                            : "O título acima é o que aparece grande no slide — seu nome funciona bem aí. Cada linha abaixo vira um tópico numerado para você falar em cima."
                           : isEn
                             ? "One short line per idea — the slide is a cue to speak from, not a script to read."
                             : "Uma frase curta por linha — o slide é uma deixa para falar, não um texto para ler."}
@@ -295,9 +277,9 @@ export default function ElevatorPitchModal({
                   )}
                 </section>
 
-                {/* Slide de projetos entra entre "quem sou eu" e "habilidades" —
+                {/* Slide de projetos entra entre "habilidades" e "motivação" —
                     mesma posição em que aparece na apresentação. */}
-                {posicao === 0 && (
+                {posicao === 1 && (
                   <section className="space-y-3 border-t border-slate-100 pt-8 dark:border-slate-800">
                     <div className="flex items-center justify-between">
                       <h3 className="font-display text-xl font-black text-slate-900 dark:text-white">
@@ -343,7 +325,7 @@ export default function ElevatorPitchModal({
                   className="absolute inset-0"
                 >
                   {indice === 0 ? (
-                    <PitchSlideCanvas title="" accent={accentAtual} numero={indice + 1}>
+                    <PitchSlideCanvas title="" accent={accentAtual} numero={indice + 1} language={language}>
                       <PitchIdentitySlide
                         nome={draft.quemSouEu.title || data.profile.name}
                         avatarUrl={data.profile.avatarUrl}
@@ -351,20 +333,18 @@ export default function ElevatorPitchModal({
                       />
                     </PitchSlideCanvas>
                   ) : chaveAtual === "habilidades" ? (
-                    <PitchSlideCanvas title={draft.habilidades.title} accent={accentAtual} numero={indice + 1} fill>
-                      <div className="h-full overflow-y-auto rounded-2xl bg-white/95 p-2 shadow-lg sm:p-4 dark:bg-slate-900/95">
-                        <SkillsNetwork
-                          categories={HABILIDADES_MOCK_CATEGORIAS}
-                          skills={HABILIDADES_MOCK_SKILLS}
+                    <PitchSlideCanvas title={draft.habilidades.title} accent={accentAtual} numero={indice + 1} language={language} fill>
+                      <div className="h-full overflow-hidden">
+                        <PitchExperienceSlide
+                          experiencias={data.experiences}
+                          atividades={data.academicActivities || []}
                           language={language}
                         />
                       </div>
                     </PitchSlideCanvas>
                   ) : indice === TOTAL_SLIDES - 1 ? (
-                    // Último slide: rola em vez de listar tudo de uma vez —
-                    // cada linha do rascunho é uma tela, e o QR do site só
-                    // aparece ao fim, como fechamento da apresentação.
-                    <PitchSlideCanvas title={draft[chaveAtual!].title} accent={accentAtual} numero={indice + 1} fill>
+                    // Os tópicos de motivação aparecem juntos; abaixo fica o QR.
+                    <PitchSlideCanvas title={draft[chaveAtual!].title} accent={accentAtual} numero={indice + 1} language={language} fill>
                       <PitchMotivacaoSlide
                         linhas={linhasDoTexto(draft[chaveAtual!].body)}
                         siteUrl={siteUrl}
@@ -375,10 +355,10 @@ export default function ElevatorPitchModal({
                     <PitchSlideCanvas
                       title={isEn ? "Projects & achievements" : "Projetos e realizações"}
                       accent={accentAtual}
-                      numero={indice + 1}
+                      numero={indice + 1} language={language}
                       fill
                     >
-                      <div className="h-full overflow-hidden rounded-2xl bg-white/95 p-4 shadow-lg sm:p-6 dark:bg-slate-900/95">
+                      <div className="h-full overflow-hidden bg-white p-4 sm:p-6">
                         <PitchProjectsSlide
                           projects={data.projects}
                           categories={data.categories}

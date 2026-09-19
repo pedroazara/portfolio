@@ -5,6 +5,7 @@ import EditModal from "./EditModal";
 import MarkdownRenderer from "./MarkdownRenderer";
 import TranslateButton from "./TranslateButton";
 import ProjetosRelacionados from "./ProjetosRelacionados";
+import ImageGalleryInput from "./ImageGalleryInput";
 import { ReorderableList } from "./Reorderable";
 import { SECTION_CARD_CLASS } from "../lib/cardStyle";
 import { Language } from "../lib/translations";
@@ -49,6 +50,7 @@ export default function AtividadesCard({
     descriptionEn: "",
     extraContent: "",
     extraContentEn: "",
+    galleryImages: [],
   });
 
   const handleAutoTranslateAct = async () => {
@@ -76,6 +78,7 @@ export default function AtividadesCard({
       extraContent: "",
       extraContentEn: "",
       projetos: [],
+      galleryImages: [],
     });
     setEditingLanguage(language);
     setIsActModalOpen(true);
@@ -83,7 +86,7 @@ export default function AtividadesCard({
 
   const handleOpenActEdit = (act: AcademicActivity) => {
     setEditingAct(act);
-    setActForm({ ...act, projetos: act.projetos || [] });
+    setActForm({ ...act, projetos: act.projetos || [], galleryImages: act.galleryImages || [] });
     setEditingLanguage(language);
     setIsActModalOpen(true);
   };
@@ -116,6 +119,7 @@ export default function AtividadesCard({
       extraContent: actForm.extraContent || "",
       extraContentEn: actForm.extraContentEn || "",
       projetos: actForm.projetos || [],
+      galleryImages: actForm.galleryImages || [],
     };
 
     if (onUpdateAcademicActivities) {
@@ -361,12 +365,25 @@ export default function AtividadesCard({
             />
           </div>
 
+          {/* Galeria de fotos (hover no elevator pitch) */}
+          <div className="border-t border-slate-200 dark:border-slate-800 pt-3">
+            <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+              {language === "en" ? "Photo gallery (elevator pitch hover)" : "Galeria de fotos (aparece no hover do elevator pitch)"}
+            </label>
+            <ImageGalleryInput
+              value={actForm.galleryImages || []}
+              onChange={(images) => setActForm((prev) => ({ ...prev, galleryImages: images }))}
+              folder={`atividades/${editingAct?.id || "nova"}`}
+              language={language}
+            />
+          </div>
+
           {/* Linkar Projetos Relacionados */}
           <div className="border-t border-slate-200 dark:border-slate-800 pt-3">
             <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
               {language === "en" ? "Link Related Projects" : "Linkar Projetos Relacionados"}
             </label>
-            
+
             {projects.length > 0 && (
               <div className="mb-2 flex flex-wrap gap-1.5 p-2 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800">
                 {projects.map((p) => {

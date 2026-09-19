@@ -1,0 +1,978 @@
+﻿{
+    "Assembly":  "G:\\Meu Drive\\ufla\\2026-2\\instrumentacao-em-optica\\Montagem1.iam",
+    "Joints":  [
+                   {
+                       "Type":  102402,
+                       "One":  "braco:1",
+                       "Name":  "Rotativa:1",
+                       "Health":  11778,
+                       "Two":  "NEMA17 42x23 Stepper Motor:1"
+                   },
+                   {
+                       "Type":  102402,
+                       "One":  "disco:1",
+                       "Name":  "Rotativa:2",
+                       "Health":  11778,
+                       "Two":  "NEMA17 42x23 Stepper Motor:2"
+                   }
+               ],
+    "Constraints":  [
+                        {
+                            "Suppressed":  false,
+                            "Two":  "base:1",
+                            "Name":  "Coincidente:1",
+                            "Offset":  "0,000 mm",
+                            "Type":  100665856,
+                            "One":  "NEMA17 42x23 Stepper Motor:1",
+                            "Health":  11778,
+                            "Ratio":  null
+                        },
+                        {
+                            "Suppressed":  false,
+                            "Two":  "base:1",
+                            "Name":  "Coincidente:2",
+                            "Offset":  "0,000 mm",
+                            "Type":  100665856,
+                            "One":  "NEMA17 42x23 Stepper Motor:2",
+                            "Health":  11778,
+                            "Ratio":  null
+                        },
+                        {
+                            "Suppressed":  false,
+                            "Two":  "NEMA17 42x23 Stepper Motor:1",
+                            "Name":  "Coincidente:5",
+                            "Offset":  "0 mm",
+                            "Type":  100665856,
+                            "One":  "braco:1",
+                            "Health":  11778,
+                            "Ratio":  null
+                        },
+                        {
+                            "Suppressed":  false,
+                            "Two":  "NEMA17 42x23 Stepper Motor:2",
+                            "Name":  "Coincidente:6",
+                            "Offset":  "0 mm",
+                            "Type":  100665856,
+                            "One":  "disco:1",
+                            "Health":  11778,
+                            "Ratio":  null
+                        },
+                        {
+                            "Suppressed":  false,
+                            "Two":  "NEMA17 42x23 Stepper Motor:1",
+                            "Name":  "Coincidente:7",
+                            "Offset":  "0 mm",
+                            "Type":  100665856,
+                            "One":  "NEMA17 42x23 Stepper Motor:2",
+                            "Health":  11778,
+                            "Ratio":  null
+                        },
+                        {
+                            "Suppressed":  false,
+                            "Two":  "braco:1",
+                            "Name":  "Rotação:1",
+                            "Offset":  null,
+                            "Type":  100666624,
+                            "One":  "disco:1",
+                            "Health":  11778,
+                            "Ratio":  "2 s_m"
+                        }
+                    ],
+    "Parts":  [
+                  {
+                      "Parameters":  [
+
+                                     ],
+                      "Matrix":  [
+                                     0.99150030669977207,
+                                     0.13010434971291127,
+                                     -8.2537798937497326E-16,
+                                     -70.077139540805618,
+                                     5.9118086666744807E-15,
+                                     5.5784852795940888E-16,
+                                     0.99999999999999267,
+                                     -134.50157666941936,
+                                     0.13010434971290957,
+                                     -0.99150030669976319,
+                                     -1.1285873627211524E-15,
+                                     87.094659625246535,
+                                     0,
+                                     0,
+                                     0,
+                                     1
+                                 ],
+                      "Features":  [
+                                       {
+                                           "Name":  "NEMA17 42x23 Stepper Motor_1:1",
+                                           "Type":  83920896
+                                       },
+                                       {
+                                           "Name":  "pan cross head_am_B18.6.7M - M3 x 0.5 x 4 Type I Cross Recessed PHMS --4N_2:1",
+                                           "Type":  83920896
+                                       },
+                                       {
+                                           "Name":  "pan cross head_am_B18.6.7M - M3 x 0.5 x 4 Type I Cross Recessed PHMS --4N_3:1",
+                                           "Type":  83920896
+                                       },
+                                       {
+                                           "Name":  "pan cross head_am_B18.6.7M - M3 x 0.5 x 4 Type I Cross Recessed PHMS --4N_4:1",
+                                           "Type":  83920896
+                                       },
+                                       {
+                                           "Name":  "pan cross head_am_B18.6.7M - M3 x 0.5 x 4 Type I Cross Recessed PHMS --4N_5:1",
+                                           "Type":  83920896
+                                       }
+                                   ],
+                      "Grounded":  true,
+                      "Faces":  [
+
+                                ],
+                      "Name":  "NEMA17 42x23 Stepper Motor:1",
+                      "Min":  [
+                                  64.14385,
+                                  86.94596,
+                                  127.78953
+                              ],
+                      "Max":  [
+                                  68.34385,
+                                  91.69596,
+                                  132.28956
+                              ],
+                      "File":  "G:\\Meu Drive\\ufla\\2026-2\\instrumentacao-em-optica\\nema-17-stepper-motor-42x23mm-1.snapshot.16\\NEMA17 42x23 Stepper Motor\\NEMA17 42x23 Stepper Motor\\NEMA17 42x23 Stepper Motor.ipt"
+                  },
+                  {
+                      "Parameters":  [
+                                         {
+                                             "Name":  "d0",
+                                             "Value":  4.25,
+                                             "Expression":  "42,50 mm"
+                                         },
+                                         {
+                                             "Name":  "d1",
+                                             "Value":  0,
+                                             "Expression":  "0,00 grau"
+                                         },
+                                         {
+                                             "Name":  "d2",
+                                             "Value":  10,
+                                             "Expression":  "100 mm"
+                                         },
+                                         {
+                                             "Name":  "d3",
+                                             "Value":  6,
+                                             "Expression":  "60 mm"
+                                         },
+                                         {
+                                             "Name":  "d4",
+                                             "Value":  5,
+                                             "Expression":  "50 mm"
+                                         },
+                                         {
+                                             "Name":  "d5",
+                                             "Value":  4.2,
+                                             "Expression":  "42 mm"
+                                         }
+                                     ],
+                      "Matrix":  [
+                                     0.99150030669978118,
+                                     1.3275234603805485E-14,
+                                     -0.13010434971293888,
+                                     4.52903512590675,
+                                     -1.0695960802645454E-14,
+                                     1.0000000000000024,
+                                     1.5901998043354363E-15,
+                                     -7.4822376762397358,
+                                     0.13010434971294035,
+                                     -1.1881788716779174E-14,
+                                     0.991500306699783,
+                                     4.8948150017839422,
+                                     0,
+                                     0,
+                                     0,
+                                     1
+                                 ],
+                      "Features":  [
+                                       {
+                                           "Name":  "Extrusão1",
+                                           "Type":  83910656
+                                       }
+                                   ],
+                      "Grounded":  true,
+                      "Faces":  [
+                                    {
+                                        "Base":  {
+
+                                                 },
+                                        "Radius":  null,
+                                        "Point":  [
+                                                      5,
+                                                      8.70808,
+                                                      2.125
+                                                  ],
+                                        "Axis":  {
+
+                                                 },
+                                        "Type":  5890,
+                                        "Normal":  [
+                                                       1,
+                                                       0,
+                                                       0
+                                                   ]
+                                    },
+                                    {
+                                        "Base":  {
+
+                                                 },
+                                        "Radius":  null,
+                                        "Point":  [
+                                                      3.32,
+                                                      6.77019,
+                                                      2.125
+                                                  ],
+                                        "Axis":  {
+
+                                                 },
+                                        "Type":  5890,
+                                        "Normal":  [
+                                                       0,
+                                                       -1,
+                                                       0
+                                                   ]
+                                    },
+                                    {
+                                        "Base":  {
+
+                                                 },
+                                        "Radius":  null,
+                                        "Point":  [
+                                                      0.8,
+                                                      4.37019,
+                                                      2.125
+                                                  ],
+                                        "Axis":  {
+
+                                                 },
+                                        "Type":  5890,
+                                        "Normal":  [
+                                                       1,
+                                                       0,
+                                                       0
+                                                   ]
+                                    },
+                                    {
+                                        "Base":  {
+
+                                                 },
+                                        "Radius":  null,
+                                        "Point":  [
+                                                      2.48,
+                                                      0.77019,
+                                                      2.125
+                                                  ],
+                                        "Axis":  {
+
+                                                 },
+                                        "Type":  5890,
+                                        "Normal":  [
+                                                       0,
+                                                       1,
+                                                       0
+                                                   ]
+                                    },
+                                    {
+                                        "Base":  {
+
+                                                 },
+                                        "Radius":  null,
+                                        "Point":  [
+                                                      5,
+                                                      0.46211,
+                                                      2.125
+                                                  ],
+                                        "Axis":  {
+
+                                                 },
+                                        "Type":  5890,
+                                        "Normal":  [
+                                                       1,
+                                                       0,
+                                                       0
+                                                   ]
+                                    },
+                                    {
+                                        "Base":  {
+
+                                                 },
+                                        "Radius":  null,
+                                        "Point":  [
+                                                      3,
+                                                      0,
+                                                      2.125
+                                                  ],
+                                        "Axis":  {
+
+                                                 },
+                                        "Type":  5890,
+                                        "Normal":  [
+                                                       0,
+                                                       -1,
+                                                       0
+                                                   ]
+                                    },
+                                    {
+                                        "Base":  {
+
+                                                 },
+                                        "Radius":  null,
+                                        "Point":  [
+                                                      0,
+                                                      4,
+                                                      2.125
+                                                  ],
+                                        "Axis":  {
+
+                                                 },
+                                        "Type":  5890,
+                                        "Normal":  [
+                                                       -1,
+                                                       0,
+                                                       0
+                                                   ]
+                                    },
+                                    {
+                                        "Base":  {
+
+                                                 },
+                                        "Radius":  null,
+                                        "Point":  [
+                                                      2,
+                                                      10,
+                                                      2.125
+                                                  ],
+                                        "Axis":  {
+
+                                                 },
+                                        "Type":  5890,
+                                        "Normal":  [
+                                                       0,
+                                                       1,
+                                                       0
+                                                   ]
+                                    },
+                                    {
+                                        "Base":  {
+
+                                                 },
+                                        "Radius":  null,
+                                        "Point":  [
+                                                      2,
+                                                      8.38509,
+                                                      4.25
+                                                  ],
+                                        "Axis":  {
+
+                                                 },
+                                        "Type":  5890,
+                                        "Normal":  [
+                                                       0,
+                                                       0,
+                                                       1
+                                                   ]
+                                    },
+                                    {
+                                        "Base":  {
+
+                                                 },
+                                        "Radius":  null,
+                                        "Point":  [
+                                                      3,
+                                                      0.38509,
+                                                      0
+                                                  ],
+                                        "Axis":  {
+
+                                                 },
+                                        "Type":  5890,
+                                        "Normal":  [
+                                                       0,
+                                                       0,
+                                                       1
+                                                   ]
+                                    }
+                                ],
+                      "Name":  "base:1",
+                      "Min":  [
+                                  0,
+                                  0,
+                                  0
+                              ],
+                      "Max":  [
+                                  5,
+                                  10,
+                                  4.25
+                              ],
+                      "File":  "G:\\Meu Drive\\ufla\\2026-2\\instrumentacao-em-optica\\base.ipt"
+                  },
+                  {
+                      "Parameters":  [
+
+                                     ],
+                      "Matrix":  [
+                                     0.99150030669979272,
+                                     0.13010434971294174,
+                                     1.2366224008025445E-14,
+                                     -70.077139540809725,
+                                     -9.6150394300056966E-15,
+                                     -1.4483616512579109E-15,
+                                     1.0000000000000138,
+                                     -125.27176466203049,
+                                     0.13010434971294341,
+                                     -0.99150030669979827,
+                                     -3.4964036538449865E-15,
+                                     87.094659625247388,
+                                     0,
+                                     0,
+                                     0,
+                                     1
+                                 ],
+                      "Features":  [
+                                       {
+                                           "Name":  "NEMA17 42x23 Stepper Motor_1:1",
+                                           "Type":  83920896
+                                       },
+                                       {
+                                           "Name":  "pan cross head_am_B18.6.7M - M3 x 0.5 x 4 Type I Cross Recessed PHMS --4N_2:1",
+                                           "Type":  83920896
+                                       },
+                                       {
+                                           "Name":  "pan cross head_am_B18.6.7M - M3 x 0.5 x 4 Type I Cross Recessed PHMS --4N_3:1",
+                                           "Type":  83920896
+                                       },
+                                       {
+                                           "Name":  "pan cross head_am_B18.6.7M - M3 x 0.5 x 4 Type I Cross Recessed PHMS --4N_4:1",
+                                           "Type":  83920896
+                                       },
+                                       {
+                                           "Name":  "pan cross head_am_B18.6.7M - M3 x 0.5 x 4 Type I Cross Recessed PHMS --4N_5:1",
+                                           "Type":  83920896
+                                       }
+                                   ],
+                      "Grounded":  true,
+                      "Faces":  [
+
+                                ],
+                      "Name":  "NEMA17 42x23 Stepper Motor:2",
+                      "Min":  [
+                                  64.14385,
+                                  86.94596,
+                                  127.78953
+                              ],
+                      "Max":  [
+                                  68.34385,
+                                  91.69596,
+                                  132.28956
+                              ],
+                      "File":  "G:\\Meu Drive\\ufla\\2026-2\\instrumentacao-em-optica\\nema-17-stepper-motor-42x23mm-1.snapshot.16\\NEMA17 42x23 Stepper Motor\\NEMA17 42x23 Stepper Motor\\NEMA17 42x23 Stepper Motor.ipt"
+                  },
+                  {
+                      "Parameters":  [
+                                         {
+                                             "Name":  "d0",
+                                             "Value":  1.3250000000000002,
+                                             "Expression":  "13,250 mm"
+                                         },
+                                         {
+                                             "Name":  "d1",
+                                             "Value":  0,
+                                             "Expression":  "0,00 grau"
+                                         },
+                                         {
+                                             "Name":  "d2",
+                                             "Value":  0.5,
+                                             "Expression":  "5 mm"
+                                         },
+                                         {
+                                             "Name":  "d4",
+                                             "Value":  0,
+                                             "Expression":  "0,00 grau"
+                                         },
+                                         {
+                                             "Name":  "d5",
+                                             "Value":  10,
+                                             "Expression":  "100 mm"
+                                         },
+                                         {
+                                             "Name":  "d6",
+                                             "Value":  8,
+                                             "Expression":  "80 mm"
+                                         },
+                                         {
+                                             "Name":  "d7",
+                                             "Value":  0,
+                                             "Expression":  "0,00 grau"
+                                         },
+                                         {
+                                             "Name":  "d8",
+                                             "Value":  4,
+                                             "Expression":  "40 mm"
+                                         },
+                                         {
+                                             "Name":  "d9",
+                                             "Value":  0.5,
+                                             "Expression":  "5,000 mm"
+                                         },
+                                         {
+                                             "Name":  "d10",
+                                             "Value":  0,
+                                             "Expression":  "0,00 grau"
+                                         }
+                                     ],
+                      "Matrix":  [
+                                     -0.15430337298385052,
+                                     -8.25377989374492E-16,
+                                     -0.98802351646394282,
+                                     5.64588706031261,
+                                     -5.8174573065453457E-16,
+                                     0.99999999999999267,
+                                     -5.9362497123934815E-15,
+                                     -3.5370496836300096,
+                                     0.98802351646393116,
+                                     -1.1285873627211524E-15,
+                                     -0.15430337298384927,
+                                     17.304412438198057,
+                                     0,
+                                     0,
+                                     0,
+                                     1
+                                 ],
+                      "Features":  [
+                                       {
+                                           "Name":  "Extrusão1",
+                                           "Type":  83910656
+                                       },
+                                       {
+                                           "Name":  "Extrusão2",
+                                           "Type":  83910656
+                                       },
+                                       {
+                                           "Name":  "Extrusão3",
+                                           "Type":  83910656
+                                       },
+                                       {
+                                           "Name":  "Extrusão4",
+                                           "Type":  83910656
+                                       }
+                                   ],
+                      "Grounded":  false,
+                      "Faces":  [
+                                    {
+                                        "Base":  {
+
+                                                 },
+                                        "Radius":  null,
+                                        "Point":  [
+                                                      0.93867,
+                                                      9.325,
+                                                      0.68199
+                                                  ],
+                                        "Axis":  {
+
+                                                 },
+                                        "Type":  5890,
+                                        "Normal":  [
+                                                       0,
+                                                       1,
+                                                       0
+                                                   ]
+                                    },
+                                    {
+                                        "Base":  [
+                                                     0,
+                                                     9.325,
+                                                     0
+                                                 ],
+                                        "Radius":  1.9999999999999998,
+                                        "Point":  [
+                                                      -1.61803,
+                                                      9.575,
+                                                      -1.17557
+                                                  ],
+                                        "Axis":  [
+                                                     0,
+                                                     1,
+                                                     0
+                                                 ],
+                                        "Type":  5891,
+                                        "Normal":  {
+
+                                                   }
+                                    },
+                                    {
+                                        "Base":  {
+
+                                                 },
+                                        "Radius":  null,
+                                        "Point":  [
+                                                      0,
+                                                      9.825,
+                                                      0
+                                                  ],
+                                        "Axis":  {
+
+                                                 },
+                                        "Type":  5890,
+                                        "Normal":  [
+                                                       0,
+                                                       1,
+                                                       0
+                                                   ]
+                                    },
+                                    {
+                                        "Base":  {
+
+                                                 },
+                                        "Radius":  null,
+                                        "Point":  [
+                                                      -0.64566,
+                                                      1.325,
+                                                      -0.20979
+                                                  ],
+                                        "Axis":  {
+
+                                                 },
+                                        "Type":  5890,
+                                        "Normal":  [
+                                                       0,
+                                                       1,
+                                                       0
+                                                   ]
+                                    },
+                                    {
+                                        "Base":  [
+                                                     -10,
+                                                     0,
+                                                     0
+                                                 ],
+                                        "Radius":  0.25,
+                                        "Point":  [
+                                                      -10.20225,
+                                                      0.6625,
+                                                      0.14695
+                                                  ],
+                                        "Axis":  [
+                                                     0,
+                                                     1,
+                                                     0
+                                                 ],
+                                        "Type":  5891,
+                                        "Normal":  {
+
+                                                   }
+                                    },
+                                    {
+                                        "Base":  {
+
+                                                 },
+                                        "Radius":  null,
+                                        "Point":  [
+                                                      -6,
+                                                      0.6625,
+                                                      -0.32053
+                                                  ],
+                                        "Axis":  {
+
+                                                 },
+                                        "Type":  5890,
+                                        "Normal":  [
+                                                       0,
+                                                       0,
+                                                       -1
+                                                   ]
+                                    },
+                                    {
+                                        "Base":  [
+                                                     0,
+                                                     0,
+                                                     0
+                                                 ],
+                                        "Radius":  0.32052857253922196,
+                                        "Point":  [
+                                                      0.25931,
+                                                      4.6625,
+                                                      0.1884
+                                                  ],
+                                        "Axis":  [
+                                                     0,
+                                                     1,
+                                                     0
+                                                 ],
+                                        "Type":  5891,
+                                        "Normal":  {
+
+                                                   }
+                                    },
+                                    {
+                                        "Base":  {
+
+                                                 },
+                                        "Radius":  null,
+                                        "Point":  [
+                                                      -4,
+                                                      0.6625,
+                                                      0.32053
+                                                  ],
+                                        "Axis":  {
+
+                                                 },
+                                        "Type":  5890,
+                                        "Normal":  [
+                                                       0,
+                                                       0,
+                                                       1
+                                                   ]
+                                    },
+                                    {
+                                        "Base":  [
+                                                     -10,
+                                                     0,
+                                                     0
+                                                 ],
+                                        "Radius":  0.32052857253922196,
+                                        "Point":  [
+                                                      -10.30484,
+                                                      0.6625,
+                                                      0.09905
+                                                  ],
+                                        "Axis":  [
+                                                     0,
+                                                     1,
+                                                     0
+                                                 ],
+                                        "Type":  5891,
+                                        "Normal":  {
+
+                                                   }
+                                    },
+                                    {
+                                        "Base":  {
+
+                                                 },
+                                        "Radius":  null,
+                                        "Point":  [
+                                                      -9.67829,
+                                                      0,
+                                                      -0.23374
+                                                  ],
+                                        "Axis":  {
+
+                                                 },
+                                        "Type":  5890,
+                                        "Normal":  [
+                                                       0,
+                                                       1,
+                                                       0
+                                                   ]
+                                    }
+                                ],
+                      "Name":  "braco:1",
+                      "Min":  [
+                                  -10.32053,
+                                  0,
+                                  -2
+                              ],
+                      "Max":  [
+                                  2,
+                                  9.825,
+                                  2
+                              ],
+                      "File":  "G:\\Meu Drive\\ufla\\2026-2\\instrumentacao-em-optica\\braco.ipt"
+                  },
+                  {
+                      "Parameters":  [
+                                         {
+                                             "Name":  "d0",
+                                             "Value":  10,
+                                             "Expression":  "100 mm"
+                                         },
+                                         {
+                                             "Name":  "d1",
+                                             "Value":  0.35000000000000003,
+                                             "Expression":  "3,500 mm"
+                                         },
+                                         {
+                                             "Name":  "d2",
+                                             "Value":  0,
+                                             "Expression":  "0,00 grau"
+                                         },
+                                         {
+                                             "Name":  "d3",
+                                             "Value":  0.5,
+                                             "Expression":  "5 mm"
+                                         },
+                                         {
+                                             "Name":  "d5",
+                                             "Value":  0,
+                                             "Expression":  "0,00 grau"
+                                         },
+                                         {
+                                             "Name":  "d6",
+                                             "Value":  0.5,
+                                             "Expression":  "5 mm"
+                                         }
+                                     ],
+                      "Matrix":  [
+                                     0.18061985327072,
+                                     1.2366224008025631E-14,
+                                     0.98355298210337572,
+                                     7.1889207901528351,
+                                     -4.6570466246642766E-15,
+                                     1.0000000000000138,
+                                     -7.4170855566263519E-15,
+                                     6.642762323760306,
+                                     -0.98355298210338138,
+                                     -3.4964036538449857E-15,
+                                     0.18061985327071162,
+                                     7.4241772735584481,
+                                     0,
+                                     0,
+                                     0,
+                                     1
+                                 ],
+                      "Features":  [
+                                       {
+                                           "Name":  "Extrusão1",
+                                           "Type":  83910656
+                                       },
+                                       {
+                                           "Name":  "Extrusão2",
+                                           "Type":  83910656
+                                       },
+                                       {
+                                           "Name":  "Furo1",
+                                           "Type":  83912192
+                                       }
+                                   ],
+                      "Grounded":  false,
+                      "Faces":  [
+                                    {
+                                        "Base":  [
+                                                     -3.73716,
+                                                     -13.79647,
+                                                     0.52774
+                                                 ],
+                                        "Radius":  0.25,
+                                        "Point":  [
+                                                      -3.93941,
+                                                      0.175,
+                                                      0.38079
+                                                  ],
+                                        "Axis":  [
+                                                     0,
+                                                     1,
+                                                     0
+                                                 ],
+                                        "Type":  5891,
+                                        "Normal":  {
+
+                                                   }
+                                    },
+                                    {
+                                        "Base":  [
+                                                     0,
+                                                     0.35,
+                                                     0
+                                                 ],
+                                        "Radius":  0.25,
+                                        "Point":  [
+                                                      0.20225,
+                                                      0.175,
+                                                      0.14695
+                                                  ],
+                                        "Axis":  [
+                                                     0,
+                                                     -1,
+                                                     0
+                                                 ],
+                                        "Type":  5891,
+                                        "Normal":  {
+
+                                                   }
+                                    },
+                                    {
+                                        "Base":  [
+                                                     0,
+                                                     0,
+                                                     0
+                                                 ],
+                                        "Radius":  5.0000000000000009,
+                                        "Point":  [
+                                                      4.04508,
+                                                      0.175,
+                                                      2.93893
+                                                  ],
+                                        "Axis":  [
+                                                     0,
+                                                     1,
+                                                     0
+                                                 ],
+                                        "Type":  5891,
+                                        "Normal":  {
+
+                                                   }
+                                    },
+                                    {
+                                        "Base":  {
+
+                                                 },
+                                        "Radius":  null,
+                                        "Point":  [
+                                                      -0.81677,
+                                                      0.35,
+                                                      2.64953
+                                                  ],
+                                        "Axis":  {
+
+                                                 },
+                                        "Type":  5890,
+                                        "Normal":  [
+                                                       0,
+                                                       1,
+                                                       0
+                                                   ]
+                                    },
+                                    {
+                                        "Base":  {
+
+                                                 },
+                                        "Radius":  null,
+                                        "Point":  [
+                                                      -0.39593,
+                                                      0,
+                                                      -1.8998
+                                                  ],
+                                        "Axis":  {
+
+                                                 },
+                                        "Type":  5890,
+                                        "Normal":  [
+                                                       0,
+                                                       1,
+                                                       0
+                                                   ]
+                                    }
+                                ],
+                      "Name":  "disco:1",
+                      "Min":  [
+                                  -5,
+                                  0,
+                                  -5
+                              ],
+                      "Max":  [
+                                  5,
+                                  0.35,
+                                  5
+                              ],
+                      "File":  "G:\\Meu Drive\\ufla\\2026-2\\instrumentacao-em-optica\\disco.ipt"
+                  }
+              ]
+}

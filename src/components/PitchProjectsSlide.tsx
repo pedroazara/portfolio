@@ -34,7 +34,10 @@ export default function PitchProjectsSlide({ projects, categories, selectedIds, 
   const grupos = agruparPorCategoria(visiveis, categories);
 
   const imagensDoHover = hover
-    ? Array.from(new Set((hover.galleryImages || hover.images || []).filter(Boolean))) as string[]
+    ? (() => {
+        const galeria = Array.from(new Set((hover.galleryImages || hover.images || []).filter(Boolean))) as string[];
+        return galeria.length > 0 ? galeria : hover.imageUrl ? [hover.imageUrl] : [];
+      })()
     : [];
 
   useEffect(() => {
@@ -74,8 +77,6 @@ export default function PitchProjectsSlide({ projects, categories, selectedIds, 
     </button>
   );
 
-  const stackDoHover = hover ? (hover.stack || hover.technologies || hover.tags || []) : [];
-
   if (visiveis.length === 0) {
     return (
       <div className="flex h-full items-center justify-center text-sm text-slate-400 dark:text-slate-600">
@@ -87,7 +88,7 @@ export default function PitchProjectsSlide({ projects, categories, selectedIds, 
   }
 
   return (
-    <div className="grid h-full min-h-0 grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
+    <div className="grid h-full min-h-0 grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_23rem]">
       <div className="min-h-0 space-y-6 overflow-y-auto pr-1">
         {grupos.map(({ categoria, itens }) => (
           <div key={categoria?.id || "sem-categoria"}>
@@ -106,16 +107,16 @@ export default function PitchProjectsSlide({ projects, categories, selectedIds, 
       </div>
 
       {/* Painel de prévia: mostra o último projeto apontado. */}
-      <div className="hidden overflow-y-auto rounded-2xl border border-slate-200 p-4 dark:border-slate-800 lg:block">
+      <div className="hidden min-h-0 overflow-y-auto rounded-2xl border border-slate-200 p-4 dark:border-slate-800 lg:block">
         {hover ? (
           <>
             {imagensDoHover.length > 0 && (
-              <div className="relative mb-3 aspect-video overflow-hidden rounded-lg bg-slate-100 dark:bg-slate-900">
+              <div className="relative mb-4 h-56 overflow-hidden rounded-lg bg-slate-100 xl:h-60 dark:bg-slate-900">
                 <LocalImage
                   key={imagensDoHover[carrosselIndex]}
                   src={imagensDoHover[carrosselIndex]}
                   alt={hover.title}
-                  className="h-full w-full object-cover"
+                  className="h-full w-full object-contain"
                 />
                 {imagensDoHover.length > 1 && (
                   <>
@@ -157,21 +158,6 @@ export default function PitchProjectsSlide({ projects, categories, selectedIds, 
             </h4>
             <p className="mt-1.5 text-sm leading-relaxed text-slate-600 dark:text-slate-400">
               {(isEn && hover.descriptionEn) || hover.description}
-            </p>
-            {stackDoHover.length > 0 && (
-              <div className="mt-3 flex flex-wrap gap-1.5">
-                {stackDoHover.slice(0, 6).map((t) => (
-                  <span
-                    key={t}
-                    className="rounded bg-slate-100 px-1.5 py-0.5 font-mono text-[10px] text-slate-600 dark:bg-slate-800 dark:text-slate-300"
-                  >
-                    {t}
-                  </span>
-                ))}
-              </div>
-            )}
-            <p className="mt-4 text-[11px] text-slate-400 dark:text-slate-600">
-              {isEn ? "Click the card to open it in a new tab." : "Clique no cartão para abrir em nova aba."}
             </p>
           </>
         ) : (

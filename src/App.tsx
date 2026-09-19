@@ -99,6 +99,13 @@ const sanitizeResumeData = (data: any): ResumeData => {
 
 export default function App() {
   const [devPreview] = useState(() => isDevPreview());
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { language, path: routePath } = stripLocale(location.pathname);
+  useEffect(() => trackPage(location.pathname), [location.pathname]);
+  const setLanguage = (lang: Language) => {
+    navigate(switchLanguagePath(location.pathname, lang) + location.search + location.hash);
+  };
   const [hasConflict, setHasConflict] = useState(false);
   const [darkMode, setDarkMode] = useState<boolean>(() => {
     const saved = localStorage.getItem("portfolio_dark_mode_v1");
@@ -207,26 +214,15 @@ export default function App() {
   const [isAdminManagementOpen, setIsAdminManagementOpen] = useState(false);
 
   const [isPdfPreviewOpen, setIsPdfPreviewOpen] = useState(false);
-  const [isElevatorPitchOpen, setIsElevatorPitchOpen] = useState(false);
-  // Duas portas de entrada, um modal só: o botão ao lado de "Baixar CV" leva
-  // direto à apresentação, o de "Editar perfil" leva ao preparo — a tela
-  // inicial guarda qual delas foi usada.
-  const [vistaInicialElevatorPitch, setVistaInicialElevatorPitch] = useState<"editar" | "apresentar">("editar");
-  const abrirElevatorPitchEditor = () => {
-    setVistaInicialElevatorPitch("editar");
-    setIsElevatorPitchOpen(true);
-  };
-  const abrirElevatorPitchApresentacao = () => {
-    setVistaInicialElevatorPitch("apresentar");
-    setIsElevatorPitchOpen(true);
-  };
+  // Os dois acessos ao pitch compartilham a mesma URL pública e abrem
+  // diretamente no modo de apresentação.
+  const abrirElevatorPitch = () => navigate(localePath("/elevator-pitch", language));
   // Cada modal do painel entra no DOM na primeira vez que abre e fica montado
   // depois disso — o pedaço já foi baixado, e a animação de saída sobrevive.
   const precisaLogin = useMountedOnce(isLoginModalOpen);
   const precisaBancoDeImagens = useMountedOnce(isImageBankOpen);
   const precisaPainel = useMountedOnce(isAdminManagementOpen);
   const precisaPdf = useMountedOnce(isPdfPreviewOpen);
-  const precisaElevatorPitch = useMountedOnce(isElevatorPitchOpen);
   const [showAutoSaveBanner, setShowAutoSaveBanner] = useState(false);
   const [isGlobalCollapsed, setIsGlobalCollapsed] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -244,20 +240,6 @@ export default function App() {
   // a data de hoje.
   const [lastUpdatedAt, setLastUpdatedAt] = useState<string | null>(null);
   const bannerTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  // Router hooks for URL deep linking and SPA routes
-  const location = useLocation();
-  useEffect(() => trackPage(location.pathname), [location.pathname]);
-  const navigate = useNavigate();
-
-  // O idioma vem da URL (`/en/...` = inglês), não de uma preferência salva:
-  // assim cada página é compartilhável e indexável no idioma do link. Todo o
-  // roteamento abaixo continua raciocinando em caminhos em português, que é o
-  // que `routePath` guarda.
-  const { language, path: routePath } = stripLocale(location.pathname);
-  const setLanguage = (lang: Language) => {
-    navigate(switchLanguagePath(location.pathname, lang) + location.search + location.hash);
-  };
 
   // Scroll direction detection for global bar collapse (> 120px)
   useEffect(() => {
@@ -297,6 +279,7 @@ export default function App() {
     ? (adminHubMatch![1] as AdminHubTab)
     : "tarefas";
   const isEditorRoute = Boolean(postEditorMatch || projectEditorMatch || adminHubMatch);
+  const isElevatorPitchRoute = !isEditorRoute && routePath === "/elevator-pitch";
 
   // Chave de prévia apresentada na URL, que revela um rascunho específico.
   const chavePrevia = chaveDaUrl(location.search);
@@ -368,7 +351,12 @@ export default function App() {
     let description = (isEn ? resumeData?.profile?.bioEn : resumeData?.profile?.bio) || resumeData?.profile?.bio || "";
     let image: string | undefined;
 
-    if (routePath === "/curriculo") {
+    if (isElevatorPitchRoute) {
+      title = isEn ? `Elevator Pitch | ${name}` : `Elevator Pitch | ${name}`;
+      description = isEn
+        ? `${name}'s concise presentation for a scientific instrumentation internship.`
+        : `Apresentação concisa de ${name} para estágio em instrumentação científica.`;
+    } else if (routePath === "/curriculo") {
       title = isEn ? `Resume | ${name}` : `Currículo | ${name}`;
       description = isEn
         ? `Academic and professional resume of ${name} — Engineering Physics at UFLA, Optics and Scientific Instrumentation.`
@@ -625,6 +613,20 @@ export default function App() {
     return <AppSkeleton />;
   }
 
+  if (isElevatorPitchRoute) {
+    return (
+      <Suspense fallback={<AppSkeleton />}>
+        <ElevatorPitchModal
+          isOpen
+          onClose={() => go("/")}
+          data={resumeData}
+          vistaInicial="apresentar"
+          language={language}
+        />
+      </Suspense>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-slate-50/50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 antialiased selection:bg-indigo-500 selection:text-white print:bg-white print:p-0 transition-colors duration-300">
       <ConnectionStatus />
@@ -737,7 +739,7 @@ export default function App() {
             onUpdateProfile={handleUpdateProfile}
             isAuthenticated={isAuthenticated}
             onOpenPdfPreview={() => setIsPdfPreviewOpen(true)}
-            onOpenElevatorPitchPresent={abrirElevatorPitchApresentacao}
+            onOpenElevatorPitchPresent={abrirElevatorPitch}
             language={language}
           />
         ) : activePage === "cv" ? (
@@ -748,7 +750,7 @@ export default function App() {
               profile={resumeData.profile}
               isEditMode={isEditMode}
               onOpenPdfPreview={() => setIsPdfPreviewOpen(true)}
-              onOpenElevatorPitchEditor={abrirElevatorPitchEditor}
+              onOpenElevatorPitchEditor={abrirElevatorPitch}
               language={language}
             />
             }>
@@ -946,15 +948,6 @@ export default function App() {
           />
         )}
 
-        {precisaElevatorPitch && (
-          <ElevatorPitchModal
-            isOpen={isElevatorPitchOpen}
-            onClose={() => setIsElevatorPitchOpen(false)}
-            data={resumeData}
-            vistaInicial={vistaInicialElevatorPitch}
-            language={language}
-          />
-        )}
       </Suspense>
     </div>
   );

@@ -73,17 +73,18 @@ export function gerarRascunhoPadrao(data: ResumeData, language: Language): Pitch
   const isEn = language === "en";
   const p = data.profile;
 
-  const titulo = (isEn && p.titleEn) || p.title || "";
   const topSkills = [...(data.skills || [])]
     .sort((a, b) => (b.level || 0) - (a.level || 0))
     .slice(0, 6)
     .map((s) => (isEn && s.nameEn) || s.name)
     .filter(Boolean);
 
-  // O nome já é o slide — cargo e local viram só dois selos de apoio.
-  // Competências ficam de fora daqui: são o assunto do próximo slide de
-  // texto, repeti-las aqui era a mesma informação duas vezes.
-  const quemSouEuBody = [titulo, p.location || ""].filter(Boolean).join("\n");
+  // Roteiro numerado do "sobre mim", nessa ordem fixa — cada linha é só o
+  // rótulo do tópico; o conteúdo de cada um é falado, não escrito no slide.
+  // Competências e motivação ficam de fora: já têm slide próprio depois.
+  const quemSouEuBody = (
+    isEn ? ["Background", "Education", "Profile & interests"] : ["Origem", "Formação", "Perfil e interesses"]
+  ).join("\n");
 
   const experiencias = data.experiences || [];
   const experienciaPrincipal = experiencias.find((e) => e.current) || experiencias[0];
@@ -96,15 +97,15 @@ export function gerarRascunhoPadrao(data: ResumeData, language: Language): Pitch
     .join("\n");
 
   const motivacaoBody = isEn
-    ? "Why this program interests me\nHow my projects connect to it"
-    : "Por que este programa me interessa\nComo meus projetos se conectam a isso";
+    ? "An interest since childhood\nA choice that took shape during my degree\nWhy scientific instrumentation?"
+    : "Um interesse desde a infância\nUma escolha que ganhou sentido na graduação\nPor que instrumentação científica?";
 
   return {
     // O nome vira o título grande do slide de abertura — "Quem sou eu" seria
     // uma legenda óbvia repetindo o que a foto e o próprio ato de falar já dizem.
     quemSouEu: { title: p.name || (isEn ? "Who I am" : "Quem sou eu"), body: quemSouEuBody },
     habilidades: { title: isEn ? "Skills & experience" : "Habilidades & experiência", body: habilidadesBody },
-    motivacao: { title: isEn ? "Why this program" : "Por que este programa", body: motivacaoBody },
+    motivacao: { title: isEn ? "Motivation" : "Motivação", body: motivacaoBody },
     projetosSelecionados: selecaoPadraoDeProjetos(data.projects),
   };
 }
@@ -124,6 +125,26 @@ export function carregarRascunho(data: ResumeData, language: Language): PitchDra
       // seleção — sem isso, a chave viria `undefined` e o slide nasceria vazio.
       if (!salvo.projetosSelecionados) {
         salvo.projetosSelecionados = selecaoPadraoDeProjetos(data.projects);
+      }
+      // Atualiza apenas os textos padrão antigos, preservando edições pessoais.
+      const antigos = [
+        "Por que este programa me interessa\nComo meus projetos se conectam a isso",
+        "Why this program interests me\nHow my projects connect to it",
+        "Um interesse desde a infância\nUma escolha que ganhou sentido na graduação\nPor que instrumentação",
+        "An interest since childhood\nA choice that took shape during my degree\nWhy instrumentation",
+      ];
+      if (salvo.motivacao) {
+        const padrao = gerarRascunhoPadrao(data, language).motivacao;
+        let atualizado = false;
+        if (antigos.includes(salvo.motivacao.body.replace(/\r\n/g, "\n").trim())) {
+          salvo.motivacao.body = padrao.body;
+          atualizado = true;
+        }
+        if (["Por que este programa", "Why this program"].includes(salvo.motivacao.title)) {
+          salvo.motivacao.title = padrao.title;
+          atualizado = true;
+        }
+        if (atualizado) salvarRascunho(salvo as PitchDraft);
       }
       return salvo as PitchDraft;
     }

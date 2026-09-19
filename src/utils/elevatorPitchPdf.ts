@@ -1,5 +1,6 @@
 import { ResumeData } from "../types";
 import { Language } from "../lib/translations";
+import { conteudoExperienciaPitch, periodoPitch, resumoPitch } from "./pitchExperienceContent";
 import { PitchDraft, agruparPorCategoria } from "./elevatorPitch";
 import { INK_BODY, INK_META, INK_TITLE, INDIGO_ACCENT, INDIGO_HEADING, loadJsPDF } from "./pdfGenerator";
 
@@ -22,6 +23,15 @@ export async function gerarElevatorPitchPDF(
   const JsPDF = await loadJsPDF();
   const doc = new JsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
 
+  const [cnpemResponse, uflaResponse] = await Promise.all([
+    fetch("/brand/cnpem-white.png"),
+    fetch("/brand/ufla-logo-white.png"),
+  ]);
+  if (!cnpemResponse.ok || !uflaResponse.ok) throw new Error("Não foi possível carregar as marcas institucionais.");
+  const [cnpemLogo, uflaLogo] = await Promise.all([
+    cnpemResponse.arrayBuffer().then(buffer => new Uint8Array(buffer)),
+    uflaResponse.arrayBuffer().then(buffer => new Uint8Array(buffer)),
+  ]);
   const PAGE_WIDTH = 297;
   const PAGE_HEIGHT = 210;
   const MARGIN = 18;
@@ -37,8 +47,10 @@ export async function gerarElevatorPitchPDF(
 
   const abrirPagina = (indice: number) => {
     if (indice > 0) doc.addPage();
-    doc.setFillColor(...INDIGO_ACCENT);
-    doc.rect(0, 0, 4, PAGE_HEIGHT, "F");
+    doc.setFillColor(16, 37, 54);
+    doc.rect(0, 0, PAGE_WIDTH, 17, "F");
+    doc.addImage(uflaLogo, "PNG", MARGIN, 3.1, 22, 22 * 198 / 400);
+    doc.addImage(cnpemLogo, "PNG", PAGE_WIDTH - MARGIN - 22, 2.8, 22, 22 * 103 / 199);
   };
 
   const tituloDoSlide = (texto: string) => {
@@ -66,8 +78,42 @@ export async function gerarElevatorPitchPDF(
   }
   rodape(1, TOTAL_PAGINAS);
 
-  // 2. Projetos e realizações
+  // 2. Experiência, com o mesmo conteúdo conciso da apresentação.
   abrirPagina(1);
+  tituloDoSlide(draft.habilidades.title);
+  const { principal, atividades, competencias } = conteudoExperienciaPitch(data.experiences, data.academicActivities || [], language);
+  const writeBlock = (text: string, x: number, top: number, width: number, size = 12, bold = false) => {
+    doc.setFont("helvetica", bold ? "bold" : "normal");
+    doc.setFontSize(size);
+    doc.setTextColor(...INK_BODY);
+    const lines = doc.splitTextToSize(text, width);
+    doc.text(lines, x, top);
+    return top + lines.length * size * 0.43;
+  };
+  const columnWidth = (CONTENT_WIDTH - 16) / 2;
+  y = writeBlock(isEn ? "RESEARCH EXPERIENCE" : "EXPERIÊNCIA EM PESQUISA", MARGIN, 54, columnWidth, 10, true) + 7;
+  if (principal) {
+    y = writeBlock(periodoPitch(principal, language), MARGIN, y, columnWidth, 10) + 4;
+    y = writeBlock((isEn && principal.roleEn) || principal.role, MARGIN, y, columnWidth, 16, true) + 5;
+    y = writeBlock((isEn && principal.companyEn) || principal.company, MARGIN, y, columnWidth) + 5;
+    writeBlock(resumoPitch((isEn && principal.descriptionEn) || principal.description), MARGIN, y, columnWidth);
+  }
+  const rightX = MARGIN + columnWidth + 16;
+  y = writeBlock(isEn ? "EXTRACURRICULAR EXPERIENCE" : "EXPERIÊNCIAS EXTRACURRICULARES", rightX, 54, columnWidth, 10, true) + 7;
+  for (const activity of atividades) {
+    const name = ((isEn && activity.nameEn) || activity.name).split(/\s[—–-]\s/)[0];
+    y = writeBlock(name, rightX, y, columnWidth, 14, true) + 2;
+    y = writeBlock(periodoPitch(activity, language), rightX, y, columnWidth, 9) + 3;
+    y = writeBlock(resumoPitch((isEn && activity.descriptionEn) || activity.description, 110), rightX, y, columnWidth, 11) + 8;
+  }
+  if (competencias.length) {
+    writeBlock(isEn ? "TECHNICAL SKILLS" : "COMPETÊNCIAS TÉCNICAS", MARGIN, 177, CONTENT_WIDTH, 10, true);
+    writeBlock(competencias.join(" / "), MARGIN, 186, CONTENT_WIDTH, 12);
+  }
+  rodape(2, TOTAL_PAGINAS);
+
+  // 3. Projetos e realizações
+  abrirPagina(2);
   tituloDoSlide(isEn ? "Projects & achievements" : "Projetos e realizações");
   const selecionados = new Set(draft.projetosSelecionados);
   const projetosSelecionados = data.projects.filter((p) => selecionados.has(p.id));
@@ -112,19 +158,6 @@ export async function gerarElevatorPitchPDF(
       y += 2.5;
     }
     y += 2;
-  }
-  rodape(2, TOTAL_PAGINAS);
-
-  // 3. Habilidades & experiência
-  abrirPagina(2);
-  tituloDoSlide(draft.habilidades.title);
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(13);
-  doc.setTextColor(...INK_BODY);
-  y = 55;
-  for (const linha of doc.splitTextToSize(draft.habilidades.body, CONTENT_WIDTH)) {
-    doc.text(linha, MARGIN, y);
-    y += 7;
   }
   rodape(3, TOTAL_PAGINAS);
 

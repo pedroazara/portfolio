@@ -211,6 +211,25 @@ function buildRoutes(lang: Lang): RouteMeta[] {
   `
   });
 
+  routes.push({
+    canonicalPath: "/elevator-pitch",
+    lang,
+    title: `Elevator Pitch | ${authorName}`,
+    description: t(
+      lang,
+      `Apresentação concisa de ${authorName} para estágio em instrumentação científica.`,
+      `${authorName}'s concise presentation for a scientific instrumentation internship.`
+    ),
+    type: "website",
+    ogImage: `${BASE_URL}/og-home.svg`,
+    prerenderContent: `
+    <main>
+      <h1>Elevator Pitch — ${authorName}</h1>
+      <p>${t(lang, "Apresentação para estágio em instrumentação científica.", "Presentation for a scientific instrumentation internship.")}</p>
+    </main>
+  `
+  });
+
   // 2. Blog Listing Route
   routes.push({
     canonicalPath: "/blog",
