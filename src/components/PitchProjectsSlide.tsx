@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { Project, ProjectCategory } from "../types";
 import { Language } from "../lib/translations";
 import { slugOf } from "../utils/slug";
@@ -14,48 +14,24 @@ interface PitchProjectsSlideProps {
   language?: Language;
 }
 
-/**
- * Slide de projetos do elevator pitch: cartões agrupados por área, com um
- * painel de prévia que segue o mouse e abre o projeto de verdade num clique.
- *
- * Uma lista de texto não mostra o trabalho — uma grade de cartões que se pode
- * apontar durante a fala, sim. O clique abre em nova aba para não perder o
- * lugar na apresentação.
- */
-export default function PitchProjectsSlide({ projects, categories, selectedIds, language = "pt" }: PitchProjectsSlideProps) {
-  const lp = useLocalePath();
-  const isEn = language === "en";
-
-  const selecionados = new Set(selectedIds);
-  const visiveis = projects.filter((p) => selecionados.has(p.id));
-  const [hover, setHover] = useState<Project | null>(visiveis[0] || null);
-  const [carrosselIndex, setCarrosselIndex] = useState(0);
-
-  const grupos = agruparPorCategoria(visiveis, categories);
-
-  const imagensDoHover = hover
-    ? (() => {
-        const galeria = Array.from(new Set((hover.galleryImages || hover.images || []).filter(Boolean))) as string[];
-        return galeria.length > 0 ? galeria : hover.imageUrl ? [hover.imageUrl] : [];
-      })()
-    : [];
-
-  useEffect(() => {
-    setCarrosselIndex(0);
-  }, [hover?.id]);
-
-  const abrirProjeto = (p: Project) => {
-    window.open(lp(`/project/${slugOf(p)}`), "_blank", "noopener,noreferrer");
-  };
-
-  const Cartao = ({ p }: { p: Project }) => (
+// O tipo do componente precisa permanecer estável para preservar as imagens
+// carregadas e o foco quando muda apenas o projeto da prévia.
+function Cartao({ p, ativo, isEn, onPreview, onOpen }: {
+  p: Project;
+  ativo: boolean;
+  isEn: boolean;
+  onPreview: (p: Project) => void;
+  onOpen: (p: Project) => void;
+}) {
+  return (
     <button
       type="button"
-      onMouseEnter={() => setHover(p)}
-      onFocus={() => setHover(p)}
-      onClick={() => abrirProjeto(p)}
+      aria-label={(isEn && p.titleEn) || p.title}
+      onMouseEnter={() => onPreview(p)}
+      onFocus={() => onPreview(p)}
+      onClick={() => onOpen(p)}
       className={`group overflow-hidden rounded-xl border text-left transition-all ${
-        hover?.id === p.id
+        ativo
           ? "border-indigo-500 shadow-md"
           : "border-slate-200 hover:border-indigo-400 dark:border-slate-800"
       }`}
@@ -76,6 +52,45 @@ export default function PitchProjectsSlide({ projects, categories, selectedIds, 
       </div>
     </button>
   );
+}
+
+/**
+ * Slide de projetos do elevator pitch: cartões agrupados por área, com um
+ * painel de prévia que segue o mouse e abre o projeto de verdade num clique.
+ *
+ * Uma lista de texto não mostra o trabalho — uma grade de cartões que se pode
+ * apontar durante a fala, sim. O clique abre em nova aba para não perder o
+ * lugar na apresentação.
+ */
+export default function PitchProjectsSlide({ projects, categories, selectedIds, language = "pt" }: PitchProjectsSlideProps) {
+  const lp = useLocalePath();
+  const isEn = language === "en";
+
+  const selecionados = new Set(selectedIds);
+  const visiveis = projects.filter((p) => !p.draft && selecionados.has(p.id));
+  const [hoverId, setHoverId] = useState<string | null>(null);
+  const hover = visiveis.find((p) => p.id === hoverId) || visiveis[0] || null;
+  const [carrosselIndex, setCarrosselIndex] = useState(0);
+
+  const grupos = agruparPorCategoria(visiveis, categories);
+
+  const imagensDoHover = hover
+    ? (() => {
+        const galeria = Array.from(new Set((hover.galleryImages || hover.images || []).filter(Boolean))) as string[];
+        return galeria.length > 0 ? galeria : hover.imageUrl ? [hover.imageUrl] : [];
+      })()
+    : [];
+
+  const mostrarPrevia = (p: Project) => {
+    if (p.id === hover?.id) return;
+    setHoverId(p.id);
+    setCarrosselIndex(0);
+  };
+  const imagemAtual = imagensDoHover[carrosselIndex] || imagensDoHover[0];
+
+  const abrirProjeto = (p: Project) => {
+    window.open(lp(`/project/${slugOf(p)}`), "_blank", "noopener,noreferrer");
+  };
 
   if (visiveis.length === 0) {
     return (
@@ -99,7 +114,7 @@ export default function PitchProjectsSlide({ projects, categories, selectedIds, 
             </h3>
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
               {itens.map((p) => (
-                <Cartao key={p.id} p={p} />
+                <Cartao key={p.id} p={p} ativo={hover?.id === p.id} isEn={isEn} onPreview={mostrarPrevia} onOpen={abrirProjeto} />
               ))}
             </div>
           </div>
@@ -113,8 +128,7 @@ export default function PitchProjectsSlide({ projects, categories, selectedIds, 
             {imagensDoHover.length > 0 && (
               <div className="relative mb-4 h-56 overflow-hidden rounded-lg bg-slate-100 xl:h-60 dark:bg-slate-900">
                 <LocalImage
-                  key={imagensDoHover[carrosselIndex]}
-                  src={imagensDoHover[carrosselIndex]}
+                  src={imagemAtual}
                   alt={hover.title}
                   className="h-full w-full object-contain"
                 />

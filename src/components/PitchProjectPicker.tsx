@@ -58,6 +58,8 @@ export default function PitchProjectPicker({
                 <button
                   key={p.id}
                   type="button"
+                  aria-label={(isEn && p.titleEn) || p.title}
+                  aria-pressed={marcado}
                   onClick={() => alternar(p.id)}
                   className={`flex items-center gap-2.5 rounded-xl border p-2 text-left transition-colors ${
                     marcado

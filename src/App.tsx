@@ -279,7 +279,7 @@ export default function App() {
     ? (adminHubMatch![1] as AdminHubTab)
     : "tarefas";
   const isEditorRoute = Boolean(postEditorMatch || projectEditorMatch || adminHubMatch);
-  const isElevatorPitchRoute = !isEditorRoute && routePath === "/elevator-pitch";
+  const isElevatorPitchRoute = !isEditorRoute && /^\/elevator-pitch\/?$/.test(routePath);
 
   // Chave de prévia apresentada na URL, que revela um rascunho específico.
   const chavePrevia = chaveDaUrl(location.search);
@@ -621,6 +621,7 @@ export default function App() {
           onClose={() => go("/")}
           data={resumeData}
           vistaInicial="apresentar"
+          podeEditar={isAuthenticated || devPreview}
           language={language}
         />
       </Suspense>

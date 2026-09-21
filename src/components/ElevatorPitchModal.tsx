@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { X, RefreshCw, Presentation, Download, Loader2 } from "lucide-react";
+import { X, RefreshCw, Presentation, Download, Loader2, Pencil } from "lucide-react";
 import { useEscapeKey } from "../hooks/useEscapeKey";
 import { ResumeData } from "../types";
 import { Language } from "../lib/translations";
@@ -25,6 +25,7 @@ interface ElevatorPitchModalProps {
   data: ResumeData;
   /** Qual tela abre primeiro: o preparo, ou já a apresentação. */
   vistaInicial?: "editar" | "apresentar";
+  podeEditar?: boolean;
   language?: Language;
 }
 
@@ -66,6 +67,7 @@ export default function ElevatorPitchModal({
   onClose,
   data,
   vistaInicial = "editar",
+  podeEditar = false,
   language = "pt",
 }: ElevatorPitchModalProps) {
   const isEn = language === "en";
@@ -100,15 +102,14 @@ export default function ElevatorPitchModal({
     setIndice(Math.max(0, Math.min(novoIndice, TOTAL_SLIDES - 1)));
   };
 
-  // Setas e espaço navegam; Esc (tratado por `useEscapeKey`) é o único jeito
-  // de sair — nada de botão sobrando em cima do slide.
+  // Setas e espaço navegam; Esc (tratado por `useEscapeKey`) sai.
   useEffect(() => {
     if (!isOpen || vista !== "apresentar") return;
     const handler = (e: KeyboardEvent) => {
       // Espaço ativa o botão focado; as setas continuam navegando pelos slides.
       if (e.target instanceof HTMLElement && (
         e.target.closest("input, textarea, select") ||
-        (e.key === " " && e.target.closest(".pitch-slide") && e.target.closest("button, [role='button']"))
+        (e.key === " " && e.target.closest("button, [role='button']"))
       )) return;
       if (e.key === "ArrowRight" || e.key === " ") {
         e.preventDefault();
@@ -176,8 +177,19 @@ export default function ElevatorPitchModal({
 
   return (
     <div className="fixed inset-0 z-100 flex flex-col bg-slate-100 no-print dark:bg-slate-950">
-      {/* Cabeçalho: só no preparo. Na apresentação não sobra nenhum botão —
-          Esc é a única saída, como pedido. */}
+      {/* Visitantes veem só a apresentação; o administrador pode voltar ao preparo. */}
+      {vista === "apresentar" && podeEditar && (
+        <div className="flex justify-end px-4 pt-2 sm:px-8">
+          <button
+            type="button"
+            onClick={() => setVista("editar")}
+            className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold text-slate-500 transition-colors hover:bg-slate-200 dark:text-slate-400 dark:hover:bg-slate-800"
+          >
+            <Pencil className="h-3.5 w-3.5" />
+            {isEn ? "Edit pitch" : "Editar pitch"}
+          </button>
+        </div>
+      )}
       {vista === "editar" && (
         <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4 dark:border-slate-800">
           <span className="flex items-center gap-2 font-mono text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-600">
@@ -231,6 +243,11 @@ export default function ElevatorPitchModal({
         // ==================== PAINEL DE PREPARO ====================
         <div className="flex-1 overflow-y-auto px-6 py-8 sm:px-10">
           <div className="mx-auto max-w-3xl space-y-10">
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              {isEn
+                ? "Changes are saved automatically in this browser."
+                : "As alterações são salvas automaticamente neste navegador."}
+            </p>
             {(["quemSouEu", "habilidades", "motivacao"] as Chave[]).map((chave, posicao) => (
               <React.Fragment key={chave}>
                 <section className="space-y-2">
