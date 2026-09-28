@@ -1,13 +1,10 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, Calendar, Clock, FileText } from "lucide-react";
 import { BlogPost } from "../types";
 import { Language } from "../lib/translations";
 import { localePath } from "../lib/routes";
 import { slugOf } from "../utils/slug";
 import { estimateReadTime } from "../utils/readTime";
-import { COVER_ASPECT_CLASS } from "../lib/coverAspect";
-import LocalImage from "./LocalImage";
 
 interface UltimosArtigosProps {
   posts: BlogPost[];
@@ -15,6 +12,18 @@ interface UltimosArtigosProps {
 }
 
 const MAXIMO = 3;
+
+/** "2026-09-08" vira "8 de set. de 2026"; qualquer outro formato passa como veio. */
+function formatarData(data: string, language: Language) {
+  const instante = new Date(`${data}T00:00:00Z`);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(data) || Number.isNaN(instante.getTime())) return data;
+  return new Intl.DateTimeFormat(language === "en" ? "en-US" : "pt-BR", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    timeZone: "UTC",
+  }).format(instante);
+}
 
 /**
  * Os artigos mais recentes, na home — e nada quando não há nenhum.
@@ -36,72 +45,52 @@ export default function UltimosArtigos({ posts, language = "pt" }: UltimosArtigo
 
   return (
     <section aria-labelledby="titulo-artigos">
-      <div className="mb-5 flex items-end justify-between gap-3">
-        <h2 id="titulo-artigos" className="font-display text-2xl font-black tracking-tight text-tinta">
+      <div className="mb-6 flex items-end justify-between gap-3">
+        <h2 id="titulo-artigos" className="font-display text-2xl font-extrabold tracking-tight text-tinta sm:text-3xl">
           {isEn ? "Latest articles" : "Últimos artigos"}
         </h2>
         <Link
           to={localePath("/blog", language)}
-          className="group hidden shrink-0 items-center gap-1 font-mono text-xs font-bold uppercase tracking-wider text-acento sm:inline-flex"
+          className="hidden shrink-0 text-sm font-semibold text-acento-tinta underline-offset-4 hover:underline sm:inline"
         >
           {isEn ? "All articles" : "Todos os artigos"}
-          <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
         </Link>
       </div>
 
-      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+      {/* Lista, e não grade de capas: artigo se escolhe pelo título, e um
+          post só não deixa dois terços da largura vazios. */}
+      <ol className="border-t border-borda">
         {publicados.map((post) => {
           const titulo = (isEn && post.titleEn) || post.title;
           const resumo = (isEn && post.summaryEn) || post.summary;
 
           return (
-            <Link
-              key={post.id}
-              to={localePath(`/blog/${slugOf(post)}`, language)}
-              className="group flex flex-col overflow-hidden rounded-2xl border border-borda-suave bg-superficie shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md"
-            >
-              <div className={`relative w-full overflow-hidden bg-superficie-alta ${COVER_ASPECT_CLASS}`}>
-                {post.imageUrl ? (
-                  <LocalImage
-                    src={post.imageUrl}
-                    alt={titulo}
-                    referrerPolicy="no-referrer"
-                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                  />
-                ) : (
-                  <div className="flex h-full w-full items-center justify-center text-tinta-fraca">
-                    <FileText className="h-8 w-8" />
-                  </div>
-                )}
-              </div>
-
-              <div className="flex flex-1 flex-col gap-1.5 p-4">
-                <span className="flex items-center gap-3 font-mono text-[10px] font-bold uppercase tracking-widest text-acento">
-                  <span className="flex items-center gap-1">
-                    <Calendar className="h-3 w-3" />
-                    {post.date}
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <Clock className="h-3 w-3" />
-                    {post.readTime || estimateReadTime(post.content, language)}
-                  </span>
-                </span>
-                <h3 className="font-display text-base font-bold leading-snug text-tinta transition-colors group-hover:text-acento">
-                  {titulo}
-                </h3>
-                <p className="line-clamp-2 text-sm text-tinta-suave">{resumo}</p>
-              </div>
-            </Link>
+            <li key={post.id} className="border-b border-borda">
+              <Link
+                to={localePath(`/blog/${slugOf(post)}`, language)}
+                className="group grid gap-2 py-5 sm:grid-cols-[11rem_minmax(0,1fr)] sm:gap-8"
+              >
+                <div className="flex flex-wrap gap-x-4 text-sm text-tinta-fraca sm:flex-col">
+                  {post.date && <time dateTime={post.date}>{formatarData(post.date, language)}</time>}
+                  <span>{post.readTime || estimateReadTime(post.content, language)}</span>
+                </div>
+                <div className="max-w-[70ch]">
+                  <h3 className="font-display text-lg font-bold leading-snug text-tinta transition-colors group-hover:text-acento-tinta">
+                    {titulo}
+                  </h3>
+                  {resumo && <p className="mt-1.5 line-clamp-2 text-sm leading-relaxed text-tinta-suave">{resumo}</p>}
+                </div>
+              </Link>
+            </li>
           );
         })}
-      </div>
+      </ol>
 
       <Link
         to={localePath("/blog", language)}
-        className="mt-5 flex items-center justify-center gap-1 font-mono text-xs font-bold uppercase tracking-wider text-acento sm:hidden"
+        className="mt-5 block text-center text-sm font-semibold text-acento-tinta underline-offset-4 hover:underline sm:hidden"
       >
         {isEn ? "All articles" : "Todos os artigos"}
-        <ArrowRight className="h-3.5 w-3.5" />
       </Link>
     </section>
   );

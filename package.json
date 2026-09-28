@@ -16,6 +16,7 @@
     "clean": "rm -rf dist server.cjs",
     "lint": "tsc --noEmit",
     "migrate": "tsx scripts/migrate-to-supabase.ts",
+    "og": "tsx scripts/og-image.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",

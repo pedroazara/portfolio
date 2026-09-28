@@ -47,6 +47,7 @@ import { isDevPreview } from "./lib/devPreview";
 import { chaveDaUrl } from "./lib/previewLink";
 import { useMountedOnce } from "./hooks/useMountedOnce";
 import { stripLocale, localePath, switchLanguagePath } from "./lib/routes";
+import { SITE_DESCRIPTION } from "./lib/siteMeta";
 const PostEditorPage = lazy(() => import("./pages/PostEditorPage"));
 const ProjectEditorPage = lazy(() => import("./pages/ProjectEditorPage"));
 const AdminHubPage = lazy(() => import("./pages/AdminHubPage"));
@@ -348,7 +349,7 @@ export default function App() {
     const isEn = language === "en";
     const name = resumeData?.profile?.name || "Pedro Henrique Almeida";
     let title = isEn ? `${name} | Resume, Portfolio & Blog` : `${name} | Currículo, Portfólio & Blog`;
-    let description = (isEn ? resumeData?.profile?.bioEn : resumeData?.profile?.bio) || resumeData?.profile?.bio || "";
+    let description: string = SITE_DESCRIPTION[isEn ? "en" : "pt"];
     let image: string | undefined;
 
     if (isElevatorPitchRoute) {
@@ -638,9 +639,6 @@ export default function App() {
       >
         {language === "en" ? "Skip to main content" : "Ir para o conteúdo principal"}
       </a>
-
-      {/* Top Decoration Line */}
-      <div className="h-1 w-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 no-print print:hidden" />
 
       {/* Admin Strip (Visible ONLY when authenticated) */}
       {isAuthenticated && (

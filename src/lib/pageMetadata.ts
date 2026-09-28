@@ -1,14 +1,15 @@
+import { SHARE_IMAGE_PATH } from "./siteMeta";
 export const siteOrigin = (import.meta.env.VITE_SITE_URL || "https://pedroazara.vercel.app").replace(/\/$/, "");
 
 export function syncPageMetadata(options: { title: string; description: string; path: string; language: string; image?: string; privatePage: boolean }) {
   const { title, description, path, language, privatePage } = options;
   const canonicalUrl = `${siteOrigin}${path}`;
-  let image = options.image || `${siteOrigin}/og-home.png`;
+  let image = options.image || `${siteOrigin}${SHARE_IMAGE_PATH}`;
   if (image.startsWith("db:")) {
     const storage = import.meta.env.VITE_SUPABASE_URL?.replace(/\/(rest|auth|storage|realtime)\/v1\/?$/, "").replace(/\/$/, "");
-    image = storage ? `${storage}/storage/v1/object/public/images/${image.slice(3)}` : `${siteOrigin}/og-home.png`;
+    image = storage ? `${storage}/storage/v1/object/public/images/${image.slice(3)}` : `${siteOrigin}${SHARE_IMAGE_PATH}`;
   }
-  try { const url = new URL(image, siteOrigin); image = /^https?:$/.test(url.protocol) ? url.href : `${siteOrigin}/og-home.png`; } catch { image = `${siteOrigin}/og-home.png`; }
+  try { const url = new URL(image, siteOrigin); image = /^https?:$/.test(url.protocol) ? url.href : `${siteOrigin}${SHARE_IMAGE_PATH}`; } catch { image = `${siteOrigin}${SHARE_IMAGE_PATH}`; }
   const meta = (attribute: "name" | "property", key: string, value: string) => {
     let element = document.head.querySelector<HTMLMetaElement>(`meta[${attribute}="${key}"]`);
     if (!element) { element = document.createElement("meta"); element.setAttribute(attribute, key); document.head.append(element); }

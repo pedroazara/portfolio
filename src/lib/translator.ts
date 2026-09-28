@@ -19,6 +19,11 @@ async function translationHeaders() {
   return { "Content-Type": "application/json", Authorization: `Bearer ${data.session.access_token}` };
 }
 
+// Sem JSON na resposta, a função nem chegou a responder (caiu ao carregar,
+// estourou o tempo, ou a rota não existe) — o status é a única pista útil.
+const unavailableMessage = (status: number) =>
+  `Serviço de tradução indisponível (HTTP ${status}). Veja os logs da função /api/translate na Vercel.`;
+
 export interface TranslationResponse {
   translations?: Record<string, string>;
   translation?: string;
@@ -39,9 +44,8 @@ export async function translateText(text: string): Promise<string> {
 
   const contentType = res.headers.get("content-type") || "";
   if (!res.ok || !contentType.includes("application/json")) {
-    throw new Error(
-      "Serviço de tradução indisponível. Verifique se a variável GEMINI_API_KEY está configurada no servidor (Vercel -> Settings -> Environment Variables)."
-    );
+    const errData = contentType.includes("application/json") ? await res.json().catch(() => ({})) : {};
+    throw new Error(errData.error || unavailableMessage(res.status));
   }
 
   const data: TranslationResponse = await res.json();
@@ -83,7 +87,7 @@ export async function translateFields<T extends Record<string, string>>(
     const errData = contentType.includes("application/json") ? await res.json().catch(() => ({})) : {};
     throw new Error(
       errData.error ||
-        "Serviço de tradução indisponível. Verifique se a variável GEMINI_API_KEY está configurada no servidor (Vercel -> Settings -> Environment Variables)."
+        unavailableMessage(res.status)
     );
   }
 

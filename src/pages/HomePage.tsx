@@ -43,7 +43,7 @@ export default function HomePage({
   language,
 }: HomePageProps) {
   return (
-    <div className="space-y-10 print:space-y-6">
+    <div className="space-y-16 lg:space-y-24 print:space-y-6">
       <ResumeHeader
         profile={profile}
         isEditMode={isEditMode}

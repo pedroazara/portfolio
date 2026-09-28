@@ -22,8 +22,6 @@ function Bar({ className = "" }: { className?: string }) {
 export default function AppSkeleton() {
   return (
     <div className="min-h-screen bg-papel transition-colors duration-300">
-      <div className="h-1 w-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500" />
-
       <header
         className="w-full border-b border-borda bg-superficie"
         style={{ height: 64 }}

@@ -76,8 +76,8 @@ export default function TranslateButton({
       </button>
 
       {errorMsg && (
-        <span className="inline-flex items-center gap-1 text-[11px] font-medium text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-800 px-2 py-0.5 rounded-md mt-1">
-          <AlertCircle className="h-3 w-3 shrink-0" />
+        <span className="inline-flex max-w-xs items-start gap-1 text-[11px] font-medium text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-800 px-2 py-0.5 rounded-md mt-1">
+          <AlertCircle className="mt-px h-3 w-3 shrink-0" />
           <span>{errorMsg}</span>
         </span>
       )}

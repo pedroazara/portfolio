@@ -1,6 +1,5 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, Layers } from "lucide-react";
 import { Project, ProjectCategory } from "../types";
 import { Language } from "../lib/translations";
 import { localePath } from "../lib/routes";
@@ -15,6 +14,13 @@ interface ProjetosEmDestaqueProps {
 }
 
 const MAXIMO = 3;
+
+/** Colunas pela quantidade: um ou dois projetos não ficam perdidos numa grade de três. */
+const GRADE: Record<number, string> = {
+  1: "max-w-xl",
+  2: "sm:grid-cols-2",
+  3: "sm:grid-cols-2 lg:grid-cols-3",
+};
 
 /**
  * A vitrine de trabalho na home: até três projetos, sem grade nem filtro.
@@ -39,9 +45,9 @@ export default function ProjetosEmDestaque({ projects, categories, language = "p
 
   return (
     <section aria-labelledby="titulo-destaques">
-      <div className="mb-5 flex items-end justify-between gap-3">
+      <div className="mb-6 flex items-end justify-between gap-3">
         <div>
-          <h2 id="titulo-destaques" className="font-display text-2xl font-black tracking-tight text-tinta">
+          <h2 id="titulo-destaques" className="font-display text-2xl font-extrabold tracking-tight text-tinta sm:text-3xl">
             {isEn ? "Featured work" : "Trabalho em destaque"}
           </h2>
           <p className="mt-1 text-sm text-tinta-fraca">
@@ -50,14 +56,13 @@ export default function ProjetosEmDestaque({ projects, categories, language = "p
         </div>
         <Link
           to={localePath("/projetos", language)}
-          className="group hidden shrink-0 items-center gap-1 font-mono text-xs font-bold uppercase tracking-wider text-acento sm:inline-flex"
+          className="hidden shrink-0 text-sm font-semibold text-acento-tinta underline-offset-4 hover:underline sm:inline"
         >
           {isEn ? "All projects" : "Todos os projetos"}
-          <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
         </Link>
       </div>
 
-      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+      <div className={`grid grid-cols-1 gap-5 ${GRADE[escolhidos.length] ?? GRADE[3]}`}>
         {escolhidos.map((proj) => {
           const catIds = proj.categoryIds?.length ? proj.categoryIds : proj.categoryId ? [proj.categoryId] : [];
           const categoria = categories.find((c) => catIds.includes(c.id));
@@ -68,30 +73,27 @@ export default function ProjetosEmDestaque({ projects, categories, language = "p
             <Link
               key={proj.id}
               to={localePath(`/projetos/${slugOf(proj)}`, language)}
-              className="group flex flex-col overflow-hidden rounded-2xl border border-borda-suave bg-superficie shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md"
+              className="group flex flex-col overflow-hidden rounded-2xl border border-borda bg-superficie transition-colors hover:border-borda-forte"
             >
-              <div className={`relative w-full overflow-hidden bg-superficie-alta ${COVER_ASPECT_CLASS}`}>
-                {proj.imageUrl ? (
+              {/* Sem capa, o cartão fica só com o texto — melhor que uma caixa vazia. */}
+              {proj.imageUrl && (
+                <div className={`relative w-full overflow-hidden border-b border-borda-suave bg-superficie-alta ${COVER_ASPECT_CLASS}`}>
                   <LocalImage
                     src={proj.imageUrl}
                     alt={titulo}
                     referrerPolicy="no-referrer"
-                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
                   />
-                ) : (
-                  <div className="flex h-full w-full items-center justify-center text-tinta-fraca">
-                    <Layers className="h-8 w-8" />
-                  </div>
-                )}
-              </div>
+                </div>
+              )}
 
-              <div className="flex flex-1 flex-col gap-1.5 p-4">
+              <div className="flex flex-1 flex-col gap-1.5 p-5">
                 {categoria && (
-                  <span className="font-mono text-[10px] font-bold uppercase tracking-widest text-acento">
+                  <span className="text-xs font-medium text-tinta-fraca">
                     {(isEn && categoria.nameEn) || categoria.name}
                   </span>
                 )}
-                <h3 className="font-display text-base font-bold leading-snug text-tinta transition-colors group-hover:text-acento">
+                <h3 className="font-display text-lg font-bold leading-snug text-tinta transition-colors group-hover:text-acento-tinta">
                   {titulo}
                 </h3>
                 <p className="line-clamp-2 text-sm text-tinta-suave">{resumo}</p>
@@ -103,10 +105,9 @@ export default function ProjetosEmDestaque({ projects, categories, language = "p
 
       <Link
         to={localePath("/projetos", language)}
-        className="mt-5 flex items-center justify-center gap-1 font-mono text-xs font-bold uppercase tracking-wider text-acento sm:hidden"
+        className="mt-5 block text-center text-sm font-semibold text-acento-tinta underline-offset-4 hover:underline sm:hidden"
       >
         {isEn ? "All projects" : "Todos os projetos"}
-        <ArrowRight className="h-3.5 w-3.5" />
       </Link>
     </section>
   );

@@ -33,6 +33,21 @@
   50% { background-position: 100% 50%; }
 }
 
+/* Traço da abertura (SinalPulso): a varredura acontece uma vez, quando a home
+   monta, como a aquisição de um osciloscópio; o envelope aparece depois. */
+.sinal-varredura {
+  stroke-dasharray: 1000;
+  animation: sinal-varredura 1400ms cubic-bezier(0.65, 0, 0.35, 1) 150ms both;
+}
+.sinal-envelope { animation: sinal-envelope 500ms ease-out 1100ms both; }
+@keyframes sinal-varredura {
+  from { stroke-dashoffset: 1000; }
+  to { stroke-dashoffset: 0; }
+}
+@keyframes sinal-envelope {
+  from { opacity: 0; }
+}
+
 .pitch-research-image { height: clamp(180px, 29vh, 280px); }
 
 /* Mantém o slide de experiências inteiro em notebooks e projeções 720p. */

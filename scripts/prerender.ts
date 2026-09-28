@@ -4,9 +4,10 @@ import dotenv from "dotenv";
 import { initialResumeData as templateData } from "../src/data/initialData";
 import { fetchPublishedContent } from "./fetchPublishedContent";
 import sanitizeHtml from "sanitize-html";
-import sharp from "sharp";
 import { slugOf } from "../src/utils/slug";
+import { paragrafos } from "../src/utils/paragrafos";
 import { localePath } from "../src/lib/routes";
+import { SHARE_IMAGE_PATH, SHARE_IMAGE_SIZE, SITE_DESCRIPTION } from "../src/lib/siteMeta";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import AppSkeleton from "../src/components/AppSkeleton";
@@ -14,6 +15,7 @@ import AppSkeleton from "../src/components/AppSkeleton";
 dotenv.config();
 
 const BASE_URL = (process.env.VITE_SITE_URL || "https://pedroazara.vercel.app").replace(/\/$/, "");
+const DEFAULT_OG_IMAGE = `${BASE_URL}${SHARE_IMAGE_PATH}`;
 let initialResumeData = templateData;
 if (process.env.PRERENDER_SOURCE !== "template" && process.env.VITE_SUPABASE_URL && process.env.VITE_SUPABASE_ANON_KEY) {
   const origin = process.env.VITE_SUPABASE_URL.replace(/\/(rest|auth|storage)\/v1\/?$/, "").replace(/\/$/, "");
@@ -136,15 +138,15 @@ function buildRoutes(lang: Lang): RouteMeta[] {
     canonicalPath: "/",
     lang,
     title: `${authorName} | ${t(lang, "Currículo, Portfólio & Blog", "Resume, Portfolio & Blog")}`,
-    description: bi(lang, initialResumeData.profile.bio, initialResumeData.profile.bioEn),
+    description: SITE_DESCRIPTION[lang],
     type: "website",
-    ogImage: `${BASE_URL}/og-home.svg`,
+    ogImage: DEFAULT_OG_IMAGE,
     jsonLd: personJsonLd,
     prerenderContent: `
     <header>
       <h1>${authorName}</h1>
       <p>${bi(lang, initialResumeData.profile.title, initialResumeData.profile.titleEn)}</p>
-      <p>${bi(lang, initialResumeData.profile.bio, initialResumeData.profile.bioEn)}</p>
+      ${paragrafos(bi(lang, initialResumeData.profile.bio, initialResumeData.profile.bioEn)).map(p => `<p>${p}</p>`).join("")}
     </header>
     <main>
       <section id="curriculo">
@@ -180,7 +182,7 @@ function buildRoutes(lang: Lang): RouteMeta[] {
       `Academic and professional resume of ${authorName} — Engineering Physics at UFLA, Optics and Scientific Instrumentation.`
     ),
     type: "website",
-    ogImage: `${BASE_URL}/og-home.svg`,
+    ogImage: DEFAULT_OG_IMAGE,
     jsonLd: personJsonLd,
     prerenderContent: `
     <main>
@@ -221,7 +223,7 @@ function buildRoutes(lang: Lang): RouteMeta[] {
       `${authorName}'s concise presentation for a scientific instrumentation internship.`
     ),
     type: "website",
-    ogImage: `${BASE_URL}/og-home.svg`,
+    ogImage: DEFAULT_OG_IMAGE,
     prerenderContent: `
     <main>
       <h1>Elevator Pitch — ${authorName}</h1>
@@ -241,7 +243,7 @@ function buildRoutes(lang: Lang): RouteMeta[] {
       "Articles and technical notes on computational physics, ultrafast optics, instrumentation and experimental automation."
     ),
     type: "website",
-    ogImage: `${BASE_URL}/og-home.svg`,
+    ogImage: DEFAULT_OG_IMAGE,
     prerenderContent: `
     <main>
       <h1>${t(lang, "Blog & Artigos de Física & Instrumentação", "Physics & Instrumentation Blog & Articles")}</h1>
@@ -283,7 +285,7 @@ function buildRoutes(lang: Lang): RouteMeta[] {
       title: `${postTitle} | ${t(lang, `Blog de ${authorName}`, `${authorName}'s Blog`)}`,
       description: postSummary,
       type: "article",
-      ogImage: resolveOgImage(post.imageUrl, `${BASE_URL}/og-home.svg`),
+      ogImage: resolveOgImage(post.imageUrl, DEFAULT_OG_IMAGE),
       jsonLd: blogJsonLd,
       prerenderContent: `
       <article>
@@ -322,7 +324,7 @@ function buildRoutes(lang: Lang): RouteMeta[] {
       title: `${projTitle} | ${t(lang, `Projetos de ${authorName}`, `${authorName}'s Projects`)}`,
       description: projDescription,
       type: "website",
-      ogImage: resolveOgImage(project.imageUrl, `${BASE_URL}/og-home.svg`),
+      ogImage: resolveOgImage(project.imageUrl, DEFAULT_OG_IMAGE),
       jsonLd: { "@context": "https://schema.org", "@type": "CreativeWork", name: projTitle, description: projDescription, author: { "@type": "Person", name: authorName }, url: `${BASE_URL}${localePath(`/projetos/${slugOf(project)}`, lang)}` },
       prerenderContent: content
     });
@@ -334,7 +336,7 @@ function buildRoutes(lang: Lang): RouteMeta[] {
       title: `${projTitle} | ${t(lang, `Projetos de ${authorName}`, `${authorName}'s Projects`)}`,
       description: projDescription,
       type: "website",
-      ogImage: resolveOgImage(project.imageUrl, `${BASE_URL}/og-home.svg`),
+      ogImage: resolveOgImage(project.imageUrl, DEFAULT_OG_IMAGE),
       prerenderContent: `
       <article>
         <h1>${projTitle}</h1>
@@ -369,14 +371,17 @@ allRoutes.forEach(route => {
     <link rel="alternate" hreflang="x-default" href="${ptUrl}" />
     <meta property="og:title" content="${escapeXml(route.title || "")}" />
     <meta property="og:description" content="${escapeXml(route.description || "")}" />
-    <meta property="og:image" content="${escapeXml(route.ogImage.replace('/og-home.svg', '/og-home.png'))}" />
+    <meta property="og:image" content="${escapeXml(route.ogImage)}" />${route.ogImage === DEFAULT_OG_IMAGE ? `
+    <meta property="og:image:width" content="${SHARE_IMAGE_SIZE.width}" />
+    <meta property="og:image:height" content="${SHARE_IMAGE_SIZE.height}" />
+    <meta property="og:image:alt" content="${escapeXml(authorName)}" />` : ""}
     <meta property="og:url" content="${canonicalUrl}" />
     <meta property="og:type" content="${route.type}" />
     <meta property="og:locale" content="${route.lang === "en" ? "en_US" : "pt_BR"}" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="${escapeXml(route.title || "")}" />
     <meta name="twitter:description" content="${escapeXml(route.description || "")}" />
-    <meta name="twitter:image" content="${escapeXml(route.ogImage.replace('/og-home.svg', '/og-home.png'))}" />
+    <meta name="twitter:image" content="${escapeXml(route.ogImage)}" />
   `;
 
   if (route.jsonLd) {
@@ -446,20 +451,8 @@ ${sitemapUrls}
 
 fs.writeFileSync(path.join(DIST_DIR, "sitemap.xml"), sitemapXml, "utf-8");
 
-// Generate static OG SVG banner for home
-const ogSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
-  <rect width="1200" height="630" fill="#0f172a" />
-  <circle cx="1100" cy="100" r="300" fill="#4f46e5" opacity="0.15" />
-  <circle cx="100" cy="530" r="250" fill="#06b6d4" opacity="0.1" />
-  <text x="80" y="220" font-family="sans-serif" font-size="52" font-weight="900" fill="#ffffff">${escapeXml(authorName)}</text>
-  <text x="80" y="290" font-family="sans-serif" font-size="28" font-weight="600" fill="#818cf8">Engenharia Física - UFLA | Pesquisador CNPq</text>
-  <text x="80" y="360" font-family="sans-serif" font-size="22" fill="#94a3b8">Óptica Ultrarrápida • Instrumentação Científica • Física Computacional</text>
-  <rect x="80" y="440" width="340" height="60" rx="12" fill="#4f46e5" />
-  <text x="250" y="478" font-family="sans-serif" font-size="20" font-weight="bold" fill="#ffffff" text-anchor="middle">${BASE_URL.replace("https://", "")}</text>
-</svg>`;
-
-fs.writeFileSync(path.join(DIST_DIR, "og-home.svg"), ogSvg, "utf-8");
-await sharp(Buffer.from(ogSvg)).png().toFile(path.join(DIST_DIR, 'og-home.png'));
+// A imagem de compartilhamento é versionada em public/ e gerada por `npm run og`
+// (scripts/og-image.ts): precisa de navegador e fontes que o build não tem.
 
 // Generate RSS feed for the blog (Portuguese — the canonical language)
 const feedItems = [...publishedPosts]

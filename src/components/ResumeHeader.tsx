@@ -1,7 +1,7 @@
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { Profile } from "../types";
-import { Mail, Phone, MapPin, Globe, Github, Linkedin, Twitter, Edit3, Camera, Download, FileText, ArrowRight, Presentation } from "lucide-react";
+import { Mail, Phone, MapPin, Globe, Github, Linkedin, Twitter, Edit3, Download, FileText, Presentation } from "lucide-react";
 import EditModal from "./EditModal";
 import { motion, AnimatePresence } from "motion/react";
 import LocalImage from "./LocalImage";
@@ -9,8 +9,9 @@ import ImageSelectorInput from "./ImageSelectorInput";
 import { Language, translations } from "../lib/translations";
 import TranslateButton from "./TranslateButton";
 import { autoTranslateFields } from "../lib/translator";
-import { SECTION_CARD_CLASS } from "../lib/cardStyle";
 import { localePath } from "../lib/routes";
+import { paragrafos } from "../utils/paragrafos";
+import SinalPulso from "./SinalPulso";
 
 interface ResumeHeaderProps {
   profile: Profile;
@@ -36,6 +37,7 @@ export default function ResumeHeader({
   const [formData, setFormData] = useState<Profile>({ ...profile });
   const [copiedEmail, setCopiedEmail] = useState(false);
   const [editingLanguage, setEditingLanguage] = useState<Language>("pt");
+  const secaoRef = useRef<HTMLElement>(null);
 
   // Update form data if profile prop changes
   React.useEffect(() => {
@@ -78,20 +80,25 @@ export default function ResumeHeader({
     setIsModalOpen(false);
   };
 
+  const bioParagrafos = paragrafos(
+    (language === "en" ? profile.bioEn : profile.bio) || profile.bio || (language === "en" ? "Write a short bio..." : "Escreva uma breve apresentação...")
+  );
+  // O título vem como "Formação | Área"; cada parte ganha a própria linha.
+  const tituloPartes = ((language === "en" ? profile.titleEn : profile.title) || profile.title || "")
+    .split("|")
+    .map((parte) => parte.trim())
+    .filter(Boolean);
+
+  const linkClass =
+    "inline-flex items-center gap-2 text-sm font-medium text-tinta underline-offset-4 transition-colors hover:text-acento-tinta hover:underline";
+
   return (
-    <section id="perfil" className={`mb-8 lg:p-12 ${SECTION_CARD_CLASS}`}>
-      {/* Luz de fundo. Só decoração: fica fora da leitura de tela e do papel.
-          A abertura recebe mais do que as outras seções — é a primeira coisa
-          que se vê, e o halo do canto sozinho não sustentaria a página. */}
-      <div aria-hidden="true" className="pointer-events-none absolute inset-0 no-print print:hidden">
-        <div className="absolute -right-32 -top-40 h-96 w-96 rounded-full bg-indigo-500/10 blur-3xl dark:bg-indigo-500/20" />
-        <div className="absolute -bottom-44 -left-28 h-80 w-80 rounded-full bg-blue-500/10 blur-3xl dark:bg-blue-500/15" />
-      </div>
+    <section id="perfil" ref={secaoRef} className="relative scroll-mt-32 pt-2 sm:pt-6 lg:pt-10">
       {/* Edit Trigger (Only visible in edit mode, hidden in prints) */}
       {isEditMode && (
         <button
           onClick={handleOpenEdit}
-          className="absolute top-4 right-4 z-10 flex items-center gap-1.5 rounded-full bg-indigo-50 dark:bg-indigo-950/60 px-4 py-2 text-sm font-semibold text-indigo-600 dark:text-indigo-400 shadow-xs transition-all hover:bg-indigo-100 dark:hover:bg-indigo-900/60 active:scale-95 no-print print:hidden cursor-pointer"
+          className="absolute top-0 right-0 z-10 flex items-center gap-1.5 rounded-full bg-indigo-50 dark:bg-indigo-950/60 px-4 py-2 text-sm font-semibold text-indigo-600 dark:text-indigo-400 shadow-xs transition-all hover:bg-indigo-100 dark:hover:bg-indigo-900/60 active:scale-95 no-print print:hidden cursor-pointer"
           id="edit-profile-btn"
         >
           <Edit3 className="h-4 w-4" />
@@ -100,97 +107,110 @@ export default function ResumeHeader({
         </button>
       )}
 
-      <div className="relative grid gap-8 md:grid-cols-[minmax(0,1fr)_auto] md:items-center md:gap-12">
+      {/* Abertura sem cartão: o nome assenta direto no papel, e o traço de
+          sinal logo abaixo faz a divisa entre quem é e o que faz. */}
+      <div className="grid gap-6 md:grid-cols-[minmax(0,1fr)_auto] md:items-end md:gap-12">
         {/* Retrato. Vem primeiro no HTML para abrir a página no celular, e vai
-            para a direita no desktop, onde o texto merece a margem de leitura. */}
-        <div className="relative md:order-2">
-          <div className="absolute -inset-4 rounded-[2.5rem] bg-gradient-to-br from-indigo-500/25 via-blue-500/20 to-transparent blur-2xl no-print print:hidden" />
-          <div className="relative h-36 w-36 overflow-hidden rounded-[1.75rem] bg-slate-50 dark:bg-slate-950 border-4 border-white dark:border-slate-800 shadow-xl ring-1 ring-slate-200/70 dark:ring-slate-700/60 sm:h-44 sm:w-44 md:h-52 md:w-52 lg:h-60 lg:w-60 print-border">
+            para a direita no desktop, apoiado sobre o traço. */}
+        <div className="md:order-2">
+          <div className="h-24 w-24 overflow-hidden rounded-2xl bg-superficie-alta ring-1 ring-borda sm:h-28 sm:w-28 md:h-40 md:w-40 lg:h-48 lg:w-48 print-border">
             {profile.avatarUrl ? (
               <LocalImage
                 src={profile.avatarUrl}
                 alt={profile.name}
                 loading="eager"
                 fetchPriority="high"
-                sizes="(max-width: 768px) 176px, 240px"
+                sizes="(max-width: 768px) 112px, 192px"
                 referrerPolicy="no-referrer"
                 className="h-full w-full object-cover"
                 fallback={`https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(profile.name)}`}
               />
             ) : (
-              <div className="flex h-full w-full items-center justify-center bg-indigo-50 dark:bg-indigo-950/40 text-5xl font-black text-indigo-600 dark:text-indigo-400 font-display sm:text-6xl">
+              <div className="flex h-full w-full items-center justify-center bg-acento-suave text-5xl font-black text-acento-tinta font-display">
                 {profile.name.charAt(0)}
               </div>
             )}
           </div>
         </div>
 
-        {/* Info Section */}
         <div className="min-w-0 md:order-1">
-          <h1 className="font-display text-4xl font-black leading-[0.95] tracking-tighter text-balance text-slate-900 dark:text-white sm:text-5xl lg:text-6xl">
+          <h1 className="font-display text-[clamp(2.6rem,7vw,5.75rem)] font-extrabold leading-[0.92] tracking-[-0.035em] text-balance text-tinta">
             {profile.name || "Seu Nome Completo"}
           </h1>
+          {tituloPartes.length > 0 && (
+            <p className="mt-5 text-lg leading-snug text-tinta-suave sm:text-xl">
+              {tituloPartes.map((parte) => (
+                <span key={parte} className="block">
+                  {parte}
+                </span>
+              ))}
+            </p>
+          )}
+        </div>
+      </div>
 
-          {/* Barra de acento: fecha o nome e ancora a coluna no desktop. */}
-          <div className="mt-5 h-1 w-16 rounded-full bg-gradient-to-r from-indigo-600 to-blue-500 dark:from-indigo-500 dark:to-blue-400" />
+      {/* O traço vai de borda a borda do conteúdo: desfaz o recuo do <main>. */}
+      <SinalPulso areaRef={secaoRef} className="-mx-4 mt-6 sm:-mx-8 sm:mt-8 lg:-mx-12" />
 
-          <p className="mt-5 max-w-2xl text-base leading-relaxed text-slate-600 dark:text-slate-300 print-break-inside-avoid">
-            {(language === "en" ? profile.bioEn : profile.bio) || profile.bio || (language === "en" ? "Write a short bio..." : "Escreva uma breve apresentação...")}
-          </p>
+      <div className="mt-6 grid gap-10 sm:mt-8 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] lg:gap-16">
+        <Apresentacao paragrafos={bioParagrafos} />
 
-          {/* Contact Details Grid */}
-          <div className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-2 font-mono text-sm text-slate-500 dark:text-slate-400">
-            {profile.email && (
-              <div className="relative flex items-center gap-2.5">
-                <Mail className="h-4 w-4 text-slate-500 dark:text-slate-500 shrink-0" />
-                <button
-                  type="button"
-                  onClick={handleCopyEmail}
-                  className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors truncate cursor-pointer text-left focus:outline-2 focus:outline-indigo-600 dark:focus:outline-indigo-400 focus:outline-offset-2 rounded-xs"
-                  aria-label={language === "en" ? "Copy email" : "Copiar e-mail de contato"}
-                  title="Clique para copiar e-mail"
-                >
-                  {profile.email}
-                </button>
-                <AnimatePresence>
-                  {copiedEmail && (
-                    <motion.span
-                      initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      exit={{ opacity: 0, y: -10, scale: 0.95 }}
-                      className="absolute -top-9 left-1/2 -translate-x-1/2 md:left-6 md:translate-x-0 z-50 whitespace-nowrap rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-bold text-white shadow-lg shadow-emerald-200 dark:shadow-none"
-                    >
-                      {translations[language].copiedEmail}
-                    </motion.span>
-                  )}
-                </AnimatePresence>
-              </div>
-            )}
-            {profile.phone && (
-              <div className="flex items-center gap-2.5">
-                <Phone className="h-4 w-4 text-slate-500 shrink-0" />
-                <span className="truncate">{profile.phone}</span>
-              </div>
-            )}
-            {profile.location && (
-              <div className="flex items-center gap-2.5">
-                <MapPin className="h-4 w-4 text-slate-500 shrink-0" />
-                <span className="truncate">{profile.location}</span>
-              </div>
-            )}
-          </div>
+        {/* Ficha: contato, perfis e ações — os fatos, separados da história. */}
+        <div className="space-y-6 lg:border-l lg:border-borda lg:pl-10">
+          {(profile.email || profile.phone || profile.location) && (
+            <ul className="space-y-2.5 text-sm text-tinta-suave">
+              {profile.email && (
+                <li className="relative flex items-center gap-2.5">
+                  <Mail className="h-4 w-4 shrink-0 text-tinta-fraca" />
+                  <button
+                    type="button"
+                    onClick={handleCopyEmail}
+                    className="truncate text-left transition-colors hover:text-acento-tinta cursor-pointer rounded-xs"
+                    aria-label={language === "en" ? "Copy email" : "Copiar e-mail de contato"}
+                    title={language === "en" ? "Click to copy" : "Clique para copiar e-mail"}
+                  >
+                    {profile.email}
+                  </button>
+                  <AnimatePresence>
+                    {copiedEmail && (
+                      <motion.span
+                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                        className="absolute -top-9 left-6 z-50 whitespace-nowrap rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-bold text-white shadow-lg shadow-emerald-200 dark:shadow-none"
+                      >
+                        {translations[language].copiedEmail}
+                      </motion.span>
+                    )}
+                  </AnimatePresence>
+                </li>
+              )}
+              {profile.phone && (
+                <li className="flex items-center gap-2.5">
+                  <Phone className="h-4 w-4 shrink-0 text-tinta-fraca" />
+                  <span className="truncate">{profile.phone}</span>
+                </li>
+              )}
+              {profile.location && (
+                <li className="flex items-center gap-2.5">
+                  <MapPin className="h-4 w-4 shrink-0 text-tinta-fraca" />
+                  <span className="truncate">{profile.location}</span>
+                </li>
+              )}
+            </ul>
+          )}
 
           {/* Social / Academic Links Bar */}
           {(profile.github || profile.linkedin || profile.lattesUrl || profile.orcidUrl || profile.twitter) && (
-            <div className="mt-5 flex flex-wrap gap-3 no-print print:hidden">
+            <div className="flex flex-wrap gap-x-5 gap-y-2 no-print print:hidden">
               {profile.github && (
                 <a
                   href={profile.github.startsWith("http") ? profile.github : `https://github.com/${profile.github}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-1.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 px-3 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-300 transition-all hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-indigo-600 dark:hover:text-indigo-400"
+                  className={linkClass}
                 >
-                  <Github className="h-3.5 w-3.5" />
+                  <Github className="h-4 w-4 text-tinta-fraca" />
                   GitHub
                 </a>
               )}
@@ -199,9 +219,9 @@ export default function ResumeHeader({
                   href={profile.linkedin.startsWith("http") ? profile.linkedin : `https://linkedin.com/in/${profile.linkedin}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-1.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 px-3 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-300 transition-all hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-indigo-600 dark:hover:text-indigo-400"
+                  className={linkClass}
                 >
-                  <Linkedin className="h-3.5 w-3.5 text-sky-600" />
+                  <Linkedin className="h-4 w-4 text-tinta-fraca" />
                   LinkedIn
                 </a>
               )}
@@ -210,9 +230,9 @@ export default function ResumeHeader({
                   href={profile.lattesUrl.startsWith("http") ? profile.lattesUrl : `https://${profile.lattesUrl}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-1.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 px-3 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-300 transition-all hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-indigo-600 dark:hover:text-indigo-400"
+                  className={linkClass}
                 >
-                  <FileText className="h-3.5 w-3.5 text-emerald-600" />
+                  <FileText className="h-4 w-4 text-tinta-fraca" />
                   {language === "en" ? "Lattes Curriculum" : "Currículo Lattes"}
                 </a>
               )}
@@ -221,9 +241,9 @@ export default function ResumeHeader({
                   href={profile.orcidUrl.startsWith("http") ? profile.orcidUrl : `https://${profile.orcidUrl}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-1.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 px-3 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-300 transition-all hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-indigo-600 dark:hover:text-indigo-400"
+                  className={linkClass}
                 >
-                  <Globe className="h-3.5 w-3.5 text-lime-600" />
+                  <Globe className="h-4 w-4 text-tinta-fraca" />
                   ORCID
                 </a>
               )}
@@ -232,9 +252,9 @@ export default function ResumeHeader({
                   href={profile.twitter.startsWith("http") ? profile.twitter : `https://twitter.com/${profile.twitter}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-1.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 px-3 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-300 transition-all hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-indigo-600 dark:hover:text-indigo-400"
+                  className={linkClass}
                 >
-                  <Twitter className="h-3.5 w-3.5" />
+                  <Twitter className="h-4 w-4 text-tinta-fraca" />
                   Twitter
                 </a>
               )}
@@ -247,7 +267,7 @@ export default function ResumeHeader({
               atrás de `isAuthenticated` — que o App nem passava, então ele nunca
               aparecia para ninguém. Agora é público, e ao lado dele o caminho
               para o trabalho em si. */}
-          <div className="mt-6 flex flex-wrap items-center gap-3 no-print print:hidden">
+          <div className="flex flex-wrap items-center gap-3 no-print print:hidden">
             <button
               type="button"
               onClick={() => {
@@ -264,31 +284,30 @@ export default function ResumeHeader({
                   document.title = originalTitle;
                 }, 1000);
               }}
-              className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-bold text-white shadow-md transition-all hover:bg-indigo-700 active:scale-95 cursor-pointer"
+              className="inline-flex items-center gap-2 rounded-xl bg-acento px-5 py-2.5 text-sm font-bold text-white transition-colors hover:bg-acento-forte active:scale-95 cursor-pointer"
               id="hero-download-cv-btn"
             >
               <Download className="h-4 w-4 shrink-0" />
               <span>{language === "en" ? "Download CV (PDF)" : "Baixar currículo (PDF)"}</span>
             </button>
 
+            <Link
+              to={localePath("/projetos", language)}
+              className="inline-flex items-center rounded-xl border border-borda-forte px-5 py-2.5 text-sm font-bold text-tinta transition-colors hover:border-acento hover:text-acento-tinta"
+            >
+              {language === "en" ? "See the projects" : "Ver os projetos"}
+            </Link>
+
             {isEditMode && onOpenElevatorPitchPresent && (
               <button
                 type="button"
                 onClick={onOpenElevatorPitchPresent}
-                className="inline-flex items-center gap-2 rounded-xl border border-slate-200 px-5 py-2.5 text-sm font-bold text-slate-700 transition-all hover:border-indigo-500 hover:text-indigo-600 dark:border-slate-700 dark:text-slate-200 dark:hover:border-indigo-500 dark:hover:text-indigo-400"
+                className="inline-flex items-center gap-2 rounded-xl border border-borda-forte px-5 py-2.5 text-sm font-bold text-tinta transition-colors hover:border-acento hover:text-acento-tinta"
               >
                 <Presentation className="h-4 w-4 shrink-0" />
                 <span>Elevator Pitch</span>
               </button>
             )}
-
-            <Link
-              to={localePath("/projetos", language)}
-              className="group inline-flex items-center gap-2 rounded-xl border border-slate-200 px-5 py-2.5 text-sm font-bold text-slate-700 transition-all hover:border-indigo-500 hover:text-indigo-600 dark:border-slate-700 dark:text-slate-200 dark:hover:border-indigo-500 dark:hover:text-indigo-400"
-            >
-              <span>{language === "en" ? "See the projects" : "Ver os projetos"}</span>
-              <ArrowRight className="h-4 w-4 shrink-0 transition-transform group-hover:translate-x-0.5" />
-            </Link>
           </div>
 
           {/* Social Icons for Print (Shown as text in standard print) */}
@@ -590,5 +609,44 @@ export default function ResumeHeader({
         </form>
       </EditModal>
     </section>
+  );
+}
+
+/**
+ * A apresentação: um parágrafo por bloco separado por linha vazia no editor.
+ *
+ * Um parágrafo por vez fica em destaque — maior e em tinta cheia. Em repouso
+ * é o primeiro, como entrada do texto; com o mouse, o destaque vai para o
+ * parágrafo sob o cursor, e volta ao primeiro quando o cursor sai.
+ *
+ * O destaque amplia o parágrafo com `scale`, e não com `font-size`: trocar o
+ * corpo da letra refaz as quebras de linha e empurra o resto da página a cada
+ * movimento do mouse. Com `scale`, cada linha continua com as mesmas palavras,
+ * só maiores, e nada ao redor se move. Para o parágrafo ampliado não passar
+ * da coluna, todos são diagramados em `100% / ESCALA` da largura — ampliado a
+ * partir da borda esquerda, ele ocupa exatamente a coluna inteira.
+ *
+ * Componente à parte para o hover não renderizar a abertura inteira. Só mouse:
+ * no toque não há hover, e o primeiro segue como entrada.
+ */
+function Apresentacao({ paragrafos }: { paragrafos: string[] }) {
+  const [ativo, setAtivo] = useState(0);
+
+  return (
+    <div className="flex max-w-[64ch] flex-col gap-6 print-break-inside-avoid" onPointerLeave={() => setAtivo(0)}>
+      {paragrafos.map((paragrafo, i) => (
+        <p
+          key={i}
+          onPointerEnter={(e) => {
+            if (e.pointerType === "mouse") setAtivo(i);
+          }}
+          className={`w-[calc(100%/1.12)] origin-left text-base leading-relaxed transition-[color,scale] duration-300 ease-out sm:text-[1.0625rem] print:w-full print:scale-100 ${
+            i === ativo ? "scale-[1.12] text-tinta" : "text-tinta-suave"
+          }`}
+        >
+          {paragrafo}
+        </p>
+      ))}
+    </div>
   );
 }
