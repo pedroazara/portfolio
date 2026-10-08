@@ -79,7 +79,7 @@ export default function PostPage({
         </p>
         <Link
           to={lp("/blog")}
-          className="mt-5 inline-block rounded-xl bg-acento px-5 py-2.5 text-xs font-bold text-white transition-colors hover:bg-acento-forte"
+          className="mt-5 inline-block rounded-xl bg-acento-solido px-5 py-2.5 text-xs font-bold text-white transition-colors hover:bg-acento-solido-hover"
         >
           {language === "en" ? "Back to blog" : "Voltar ao blog"}
         </Link>
@@ -98,7 +98,7 @@ export default function PostPage({
         </h1>
         <Link
           to={lp("/blog")}
-          className="mt-5 inline-block rounded-xl bg-acento px-5 py-2.5 text-xs font-bold text-white transition-colors hover:bg-acento-forte"
+          className="mt-5 inline-block rounded-xl bg-acento-solido px-5 py-2.5 text-xs font-bold text-white transition-colors hover:bg-acento-solido-hover"
         >
           {language === "en" ? "Back to blog" : "Voltar ao blog"}
         </Link>
@@ -176,7 +176,7 @@ export default function PostPage({
                   state: { editTarget: editTargetFromViewport() },
                 })
               }
-              className="flex items-center gap-1.5 rounded-xl bg-acento px-4 py-2 text-xs font-bold text-white transition-colors hover:bg-acento-forte"
+              className="flex items-center gap-1.5 rounded-xl bg-acento-solido px-4 py-2 text-xs font-bold text-white transition-colors hover:bg-acento-solido-hover"
             >
               <Edit2 className="h-3.5 w-3.5" />
               {language === "en" ? "Edit" : "Editar"}

@@ -33,6 +33,7 @@ interface ProjectPageProps {
   posts: BlogPost[];
   authorName: string;
   isEditMode: boolean;
+  canManage?: boolean;
   language: Language;
   /** Se os dados já chegaram, e se a leitura da nuvem falhou. */
   isDataLoaded?: boolean;
@@ -56,6 +57,7 @@ export default function ProjectPage({
   posts,
   authorName,
   isEditMode,
+  canManage = false,
   language,
   isDataLoaded = true,
   loadFailed = false,
@@ -127,7 +129,7 @@ export default function ProjectPage({
         </p>
         <Link
           to={lp("/projetos") + listSearch}
-          className="mt-5 inline-block rounded-xl bg-acento px-5 py-2.5 text-xs font-bold text-white transition-colors hover:bg-acento-forte"
+          className="mt-5 inline-block rounded-xl bg-acento-solido px-5 py-2.5 text-xs font-bold text-white transition-colors hover:bg-acento-solido-hover"
         >
           {language === "en" ? "Back to projects" : "Voltar aos projetos"}
         </Link>
@@ -235,8 +237,18 @@ export default function ProjectPage({
             {language === "en" ? "All projects" : "Todos os projetos"}
           </Link>
 
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <CitarBotao source={citationSource} shareUrl={citationSource.url} language={language} />
+
+            {canManage && (
+              <Link
+                to={`${lp("/admin/painel/projetos")}?portfolio=${encodeURIComponent(project.id)}`}
+                className="flex items-center gap-1.5 rounded-xl border border-borda px-3 py-2 text-xs font-semibold text-acento-tinta transition-colors hover:bg-acento-suave"
+              >
+                <FolderKanban className="h-3.5 w-3.5" />
+                {language === "en" ? "Track project" : "Acompanhar projeto"}
+              </Link>
+            )}
 
             {isEditMode && (
               <button
@@ -247,7 +259,7 @@ export default function ProjectPage({
                     state: { editTarget: editTargetFromViewport() },
                   })
                 }
-                className="flex items-center gap-1.5 rounded-xl bg-acento px-4 py-2 text-xs font-bold text-white transition-colors hover:bg-acento-forte"
+                className="flex items-center gap-1.5 rounded-xl bg-acento-solido px-4 py-2 text-xs font-bold text-white transition-colors hover:bg-acento-solido-hover"
               >
                 <Edit2 className="h-3.5 w-3.5" />
                 {language === "en" ? "Edit" : "Editar"}

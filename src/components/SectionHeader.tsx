@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { ArrowLeft, Search, Copy, Check, Tag } from "lucide-react";
 import { ResumeData, BlogPost, Project } from "../types";
-import { Orbita } from "./WaveIcon";
+import { OrbitaIcon } from "./OrbitaIcon";
 import { localePath, stripLocale } from "../lib/routes";
 import { estimateReadTime } from "../utils/readTime";
 
@@ -200,10 +200,10 @@ export default function SectionHeader({
         {isGlobalCollapsed && (
           <Link
             to={localePath("/", language)}
-            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-acento text-white mr-3 shadow-xs"
+            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-acento-solido text-white mr-3 shadow-xs"
             title="Voltar ao topo"
           >
-            <Orbita size={22} color="#ffffff" />
+            <OrbitaIcon size={22} color="#ffffff" />
           </Link>
         )}
 
@@ -264,7 +264,7 @@ export default function SectionHeader({
                     onClick={() => handleSelectCategory(catName)}
                     className={`snap-start whitespace-nowrap rounded-full px-3 py-1 font-semibold transition-colors cursor-pointer ${
                       isActive
-                        ? "bg-acento text-white shadow-xs"
+                        ? "bg-acento-solido text-white shadow-xs"
                         : "bg-superficie text-tinta-fraca hover:text-tinta border border-borda"
                     }`}
                   >
@@ -360,7 +360,7 @@ export default function SectionHeader({
                     onClick={() => handleSelectAreaCategory(cat)}
                     className={`snap-start whitespace-nowrap rounded-full px-3 py-1 font-semibold transition-colors cursor-pointer ${
                       isActive
-                        ? "bg-acento text-white shadow-xs"
+                        ? "bg-acento-solido text-white shadow-xs"
                         : "bg-superficie text-tinta-fraca hover:text-tinta border border-borda"
                     }`}
                   >

@@ -6,8 +6,8 @@
 .cv-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .cv-button { display: inline-flex; align-items: center; justify-content: center; gap: 9px; min-height: 44px; padding: 10px 16px; border: 1px solid var(--borda); border-radius: 9px; font-size: .875rem; font-weight: 600; color: var(--tinta-suave); cursor: pointer; transition: background .15s; }
 .cv-button:hover { background: var(--superficie-alta); }
-.cv-button-primary { color: white; background: var(--acento); border-color: transparent; }
-.cv-button-primary:hover { background: var(--acento-forte); }
+.cv-button-primary { color: white; background: var(--acento-solido); border-color: transparent; }
+.cv-button-primary:hover { background: var(--acento-solido-hover); }
 .cv-pdf-label { padding-left: 10px; margin-left: 2px; border-left: 1px solid #ffffff50; font-size: .75rem; font-weight: 500; }
 .cv-identity-main { display: flex; align-items: flex-start; justify-content: space-between; gap: 40px; }
 .cv-intro { min-width: 0; max-width: 890px; }

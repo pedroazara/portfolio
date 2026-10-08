@@ -22,7 +22,7 @@ export default function PitchMotivacaoSlide({ linhas, siteUrl, language = "pt" }
     <div className="relative h-full">
       <div aria-hidden="true" data-motivation-background className="pointer-events-none absolute inset-y-0 right-0 w-[86%] overflow-hidden">
         <img src="/pitch/sirius-aerial.png" alt="" className="h-full w-full object-cover object-center opacity-[0.24] grayscale" />
-        <div className="absolute inset-0 bg-gradient-to-r from-[#102536] via-[#102536]/55 to-[#102536]/5" />
+        <div className="absolute inset-0 bg-gradient-to-r from-slate-900 via-slate-900/55 to-slate-900/5" />
       </div>
 
       <div
@@ -85,7 +85,7 @@ export default function PitchMotivacaoSlide({ linhas, siteUrl, language = "pt" }
                   >
                     <motion.span
                       aria-hidden="true"
-                      animate={{ color: index === etapa ? "#ffffff" : "#94a3b8" }}
+                      animate={{ color: index === etapa ? "#ffffff" : "#9c9bb0" }}
                       transition={{ duration: reduzirMovimento ? 0 : 0.4 }}
                       className="shrink-0 font-mono text-xs tabular-nums sm:text-sm"
                     >

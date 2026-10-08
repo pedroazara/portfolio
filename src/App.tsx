@@ -278,7 +278,8 @@ export default function App() {
   const adminHubMatch = routePath.match(/^\/admin\/painel(?:\/([^/]+))?\/?$/);
   const adminHubTab: AdminHubTab = ADMIN_HUB_TABS.includes(adminHubMatch?.[1] as AdminHubTab)
     ? (adminHubMatch![1] as AdminHubTab)
-    : "tarefas";
+    : "visao-geral";
+  const hasPersonalWorkspace = Boolean(adminHubMatch && (isAuthenticated || devPreview));
   const isEditorRoute = Boolean(postEditorMatch || projectEditorMatch || adminHubMatch);
   const isElevatorPitchRoute = !isEditorRoute && /^\/elevator-pitch\/?$/.test(routePath);
 
@@ -352,7 +353,10 @@ export default function App() {
     let description: string = SITE_DESCRIPTION[isEn ? "en" : "pt"];
     let image: string | undefined;
 
-    if (isElevatorPitchRoute) {
+    if (adminHubMatch) {
+      title = `Painel pessoal | ${name}`;
+      description = "Seu espaço privado para organizar tarefas, hábitos, ideias e referências.";
+    } else if (isElevatorPitchRoute) {
       title = isEn ? `Elevator Pitch | ${name}` : `Elevator Pitch | ${name}`;
       description = isEn
         ? `${name}'s concise presentation for a scientific instrumentation internship.`
@@ -630,18 +634,18 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50/50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 antialiased selection:bg-indigo-500 selection:text-white print:bg-white print:p-0 transition-colors duration-300">
+    <div className="min-h-screen bg-papel text-tinta antialiased selection:bg-acento-solido selection:text-white print:bg-white print:p-0 transition-colors duration-300">
       <ConnectionStatus />
       {/* Skip Link for Accessibility */}
       <a
         href="#conteudo-principal"
-        className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-50 focus:rounded-xl focus:bg-indigo-600 focus:px-4 focus:py-2 focus:text-sm focus:font-bold focus:text-white focus:shadow-xl focus:outline-hidden"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-50 focus:rounded-xl focus:bg-acento-solido focus:px-4 focus:py-2 focus:text-sm focus:font-bold focus:text-white focus:shadow-xl focus:outline-hidden"
       >
         {language === "en" ? "Skip to main content" : "Ir para o conteúdo principal"}
       </a>
 
       {/* Admin Strip (Visible ONLY when authenticated) */}
-      {isAuthenticated && (
+      {isAuthenticated && !hasPersonalWorkspace && (
         <AdminStrip
           isEditMode={isEditMode}
           onToggleEditMode={() => setIsEditMode(!isEditMode)}
@@ -654,7 +658,7 @@ export default function App() {
       )}
 
       {/* Global Navigation Header (64px, scroll-hiding) */}
-      <GlobalHeader
+      {!hasPersonalWorkspace && <GlobalHeader
         isCollapsed={isGlobalCollapsed}
         language={language}
         onLanguageChange={setLanguage}
@@ -667,13 +671,13 @@ export default function App() {
         badgeIconUrl={resumeData.profile.badgeIconUrl}
         authorName={resumeData.profile.name || "Pedro Henrique Almeida"}
         authorTitle={(language === "en" ? resumeData.profile.titleEn : resumeData.profile.title) || (language === "en" ? "Engineering Physics" : "Engenharia Física")}
-      />
+      />}
 
       {/* Main Content Area */}
-      <main id="conteudo-principal" className="mx-auto max-w-[1600px] px-4 py-8 sm:px-8 lg:px-12 print:p-0 print:max-w-none focus:outline-hidden">
+      <main id="conteudo-principal" className={hasPersonalWorkspace ? "focus:outline-hidden" : "mx-auto max-w-[1600px] px-4 py-8 sm:px-8 lg:px-12 print:p-0 print:max-w-none focus:outline-hidden"}>
         <Suspense fallback={<AppSkeleton />}>
         {/* Só a rota reinicia a transição; buscas, filtros e âncoras mantêm o conteúdo estável. */}
-        <div key={location.pathname} className="page-transition">
+        <div key={hasPersonalWorkspace ? "personal-workspace" : location.pathname} className={hasPersonalWorkspace ? "" : "page-transition"}>
         {isEditorRoute ? (
           /* Editores em página dedicada. Exigem sessão ativa: sem ela, mostramos
              o aviso em vez do formulário — as políticas RLS recusariam a gravação
@@ -706,7 +710,7 @@ export default function App() {
               }
             >
               {adminHubMatch ? (
-                <AdminHubPage tab={adminHubTab} />
+                <AdminHubPage tab={adminHubTab} portfolioProjects={isDataLoaded && !cloudReadFailed ? resumeData.projects : []} portfolioLoading={!isDataLoaded} portfolioError={cloudReadFailed} authorName={resumeData.profile.name} darkMode={darkMode} onToggleTheme={() => setDarkMode(!darkMode)} onOpenManagement={() => setIsAdminManagementOpen(true)} />
               ) : postEditorMatch ? (
                 <PostEditorPage
                   key={postEditorMatch[1]}
@@ -809,6 +813,7 @@ export default function App() {
               isDataLoaded={isDataLoaded}
               loadFailed={cloudReadFailed}
               slug={selectedProjectId}
+              canManage={isAuthenticated || devPreview}
               projects={resumeData.projects}
               categories={resumeData.categories}
               posts={resumeData.posts || []}
@@ -868,17 +873,17 @@ export default function App() {
       </main>
 
       {/* Footer Design */}
-      <Footer
+      {!hasPersonalWorkspace && <Footer
         profile={resumeData.profile}
         language={language}
         onOpenPdfPreview={() => setIsPdfPreviewOpen(true)}
         buildDate={lastUpdatedAt ?? undefined}
-      />
+      />}
 
       {/* Faixa do modo de teste. O `import.meta.env.DEV` vira `false` literal no
           build de produção, e o minificador elimina o bloco inteiro — sem ele,
           o JSX continuaria no bundle publicado, ainda que nunca renderizasse. */}
-      {import.meta.env.DEV && devPreview && (
+      {import.meta.env.DEV && devPreview && !hasPersonalWorkspace && (
         <div className="fixed bottom-4 left-4 z-100 flex items-center gap-2 rounded-2xl border border-amber-300 bg-amber-100 px-4 py-2.5 text-xs font-bold text-amber-900 shadow-lg dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200 no-print">
           <Atom className="h-4 w-4 shrink-0" />
           <span>

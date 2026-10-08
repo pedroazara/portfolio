@@ -6,6 +6,21 @@
  * dela traria junto quadro de tarefas, hábitos, notas, links e rascunhos para
  * o pacote inicial, desfazendo a separação.
  */
-export type AdminHubTab = "tarefas" | "habitos" | "notas" | "links" | "rascunhos";
+export type AdminHubTab =
+  | "visao-geral"
+  | "projetos"
+  | "tarefas"
+  | "habitos"
+  | "notas"
+  | "links"
+  | "rascunhos";
 
-export const ADMIN_HUB_TABS: AdminHubTab[] = ["tarefas", "habitos", "notas", "links", "rascunhos"];
+export const ADMIN_HUB_TABS: AdminHubTab[] = [
+  "visao-geral",
+  "projetos",
+  "tarefas",
+  "habitos",
+  "notas",
+  "links",
+  "rascunhos",
+];

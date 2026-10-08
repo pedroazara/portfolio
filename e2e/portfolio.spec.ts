@@ -41,16 +41,15 @@ test("gallery supports zoom, keyboard and restores focus", async ({ page }) => {
   await expect(trigger).toBeFocused();
 });
 
-test("mobile menu contains keyboard focus and article anchors survive loading", async ({ page, context }) => {
+test("mobile menu contains keyboard focus and article anchors survive loading", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  await context.grantPermissions(["clipboard-read", "clipboard-write"]);
   await page.goto("/blog/ux-article#resultados");
   const heading = page.getByRole("heading", { name: "Resultados", exact: true });
   await expect(heading).toBeInViewport();
   await expect(page).toHaveURL(/#resultados$/);
   await page.getByRole("button", { name: "Nesta página" }).click();
-  await page.getByRole("button", { name: "Copiar link da seção: Resultados" }).click();
-  expect(await page.evaluate(() => navigator.clipboard.readText())).toMatch(/\/blog\/ux-article#resultados$/);
+  const sumario = page.getByRole("navigation", { name: "Sumário" });
+  await expect(sumario.getByRole("link", { name: "Resultados", exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Abrir menu de navegação" }).click();
   const menu = page.getByRole("dialog", { name: "Menu de navegação" });
   await expect(menu).toBeVisible();

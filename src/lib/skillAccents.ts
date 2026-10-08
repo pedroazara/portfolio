@@ -1,6 +1,6 @@
 // Accent palette cycled per category so groups are visually easy to tell apart.
 export const CATEGORY_ACCENTS = [
-  { bg: "bg-indigo-50 dark:bg-indigo-950/40", text: "text-indigo-600 dark:text-indigo-400", bar: "bg-indigo-600 dark:bg-indigo-500", ring: "ring-indigo-400/60 dark:ring-indigo-500/50", line: "#6366f1" },
+  { bg: "bg-indigo-50 dark:bg-indigo-950/40", text: "text-indigo-600 dark:text-indigo-400", bar: "bg-indigo-600 dark:bg-indigo-500", ring: "ring-indigo-400/60 dark:ring-indigo-500/50", line: "var(--acento)" },
   { bg: "bg-sky-50 dark:bg-sky-950/40", text: "text-sky-600 dark:text-sky-400", bar: "bg-sky-600 dark:bg-sky-500", ring: "ring-sky-400/60 dark:ring-sky-500/50", line: "#0ea5e9" },
   { bg: "bg-emerald-50 dark:bg-emerald-950/40", text: "text-emerald-600 dark:text-emerald-400", bar: "bg-emerald-600 dark:bg-emerald-500", ring: "ring-emerald-400/60 dark:ring-emerald-500/50", line: "#10b981" },
   { bg: "bg-amber-50 dark:bg-amber-950/40", text: "text-amber-600 dark:text-amber-400", bar: "bg-amber-500 dark:bg-amber-500", ring: "ring-amber-400/60 dark:ring-amber-500/50", line: "#f59e0b" },

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useLayoutEffect, useRef } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Download, Sun, Moon, Menu, X, Lock, ChevronDown, ArrowRight, LayoutDashboard } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
-import { OrbitaIcon } from "./OrbitaIcon";
+import PortfolioBrand from "./PortfolioBrand";
 import { stripLocale, localePath } from "../lib/routes";
 import { ResumeData } from "../types";
 import LanguageSwitcher from "./LanguageSwitcher";
@@ -161,12 +161,7 @@ export default function GlobalHeader({
                 className="group orb-hover flex items-center gap-2.5 rounded-full focus-visible:outline-2 focus-visible:outline-acento focus-visible:outline-offset-2 hover:opacity-95 transition-opacity"
                 aria-label={language === "en" ? "Go to home page" : "Ir para a página inicial"}
               >
-                <div className="flex h-11 w-11 items-center justify-center rounded-full bg-acento text-white p-0.5 shrink-0 shadow-xs">
-                  <OrbitaIcon size={38} color="#ffffff" />
-                </div>
-                <span className="hidden sm:inline-block text-[16px] font-bold tracking-tight text-tinta font-display">
-                  Pedro Ázara
-                </span>
+                <PortfolioBrand hideNameOnMobile />
               </Link>
             </div>
 
@@ -181,7 +176,7 @@ export default function GlobalHeader({
                   aria-hidden="true"
                   initial={false}
                   animate={indicator}
-                  className="pointer-events-none absolute bottom-0 z-10 h-[2px] rounded-full bg-acento"
+                  className="pointer-events-none absolute bottom-0 z-10 h-[3px] rounded-[999px] bg-acento"
                   transition={reducedMotion ? { duration: 0 } : { type: "spring", stiffness: 360, damping: 32, mass: 0.8 }}
                 />
               {navItems.map((item) => {
@@ -257,7 +252,7 @@ export default function GlobalHeader({
                 <button
                   type="button"
                   onClick={handleDownloadCV}
-                  className="flex items-center gap-1.5 rounded-lg bg-acento hover:opacity-90 px-3.5 py-2 text-[13px] font-bold text-white shadow-xs transition-all active:scale-95 cursor-pointer"
+                  className="flex items-center gap-1.5 rounded-lg bg-acento-solido hover:opacity-90 px-3.5 py-2 text-[13px] font-bold text-white shadow-xs transition-all active:scale-95 cursor-pointer"
                   id="global-download-cv-cta"
                 >
                   <Download className="h-4 w-4 shrink-0" />
@@ -297,10 +292,7 @@ export default function GlobalHeader({
           >
           <div className="flex h-[56px] items-center justify-between border-b border-borda px-4">
             <div className="flex items-center gap-2">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-acento text-white p-0.5 shrink-0 shadow-xs">
-                <OrbitaIcon size={34} color="#ffffff" />
-              </div>
-              <span className="text-base font-bold font-display">Pedro Ázara</span>
+              <PortfolioBrand compact />
             </div>
             <button
               type="button"
@@ -404,7 +396,7 @@ export default function GlobalHeader({
                     setIsMobileMenuOpen(false);
                     handleDownloadCV();
                   }}
-                  className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-acento py-3 text-sm font-bold text-white shadow-md active:scale-95 transition-transform"
+                  className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-acento-solido py-3 text-sm font-bold text-white shadow-md active:scale-95 transition-transform"
                 >
                   <Download className="h-4 w-4" />
                   <span>{language === "en" ? "Download Curriculum PDF" : "Baixar Currículo em PDF"}</span>

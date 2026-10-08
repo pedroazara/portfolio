@@ -284,7 +284,7 @@ export default function ResumeHeader({
                   document.title = originalTitle;
                 }, 1000);
               }}
-              className="inline-flex items-center gap-2 rounded-xl bg-acento px-5 py-2.5 text-sm font-bold text-white transition-colors hover:bg-acento-forte active:scale-95 cursor-pointer"
+              className="inline-flex items-center gap-2 rounded-xl bg-acento-solido px-5 py-2.5 text-sm font-bold text-white transition-colors hover:bg-acento-solido-hover active:scale-95 cursor-pointer"
               id="hero-download-cv-btn"
             >
               <Download className="h-4 w-4 shrink-0" />

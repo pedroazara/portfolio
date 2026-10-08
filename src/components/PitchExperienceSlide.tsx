@@ -37,7 +37,7 @@ export default function PitchExperienceSlide({ experiencias, atividades, languag
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const principal = researches.find(item => item.id === selectedId) || researches[0];
   return (
-    <div className="pitch-experience flex h-full flex-col overflow-y-auto bg-[#f7f8fa] p-6 text-slate-800 sm:p-8">
+    <div className="pitch-experience flex h-full flex-col overflow-y-auto bg-slate-50 p-6 text-slate-800 sm:p-8">
       <div className="grid flex-1 grid-cols-1 gap-8 lg:grid-cols-[2.1fr_1fr] lg:gap-8">
         <section className="min-w-0">
           <div className="flex flex-wrap items-center justify-between gap-3">
@@ -80,7 +80,7 @@ export default function PitchExperienceSlide({ experiencias, atividades, languag
       </div>
       {competencias.length > 0 && <section className="mt-2 shrink-0 border-t border-slate-200 pt-3">
         <h3 className="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">{isEn ? "Technical skills" : "Competências técnicas"}</h3>
-        <ul className="grid grid-cols-2 gap-x-6 gap-y-1 text-sm font-medium leading-relaxed text-[#276879] sm:grid-cols-3 lg:grid-cols-5">
+        <ul className="grid grid-cols-2 gap-x-6 gap-y-1 text-sm font-medium leading-relaxed text-indigo-600 sm:grid-cols-3 lg:grid-cols-5">
           {competencias.map(s => <li key={s}>{s}</li>)}
         </ul>
       </section>}

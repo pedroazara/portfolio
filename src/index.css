@@ -18,6 +18,31 @@
 }
 
 @theme {
+  /* A paleta compartilhada também atende os componentes que usam escalas Tailwind. */
+  --color-indigo-50: #f0ecff;
+  --color-indigo-100: #e7dffc;
+  --color-indigo-200: #d5c8f6;
+  --color-indigo-300: #c5b3f4;
+  --color-indigo-400: #b6a2ff;
+  --color-indigo-500: #8060d4;
+  --color-indigo-600: #7555d5;
+  --color-indigo-700: #6545c5;
+  --color-indigo-800: #51399a;
+  --color-indigo-900: #3d2e6a;
+  --color-indigo-950: #26203e;
+
+  --color-slate-50: #f7f8fc;
+  --color-slate-100: #f0f0f7;
+  --color-slate-200: #e4e3ee;
+  --color-slate-300: #cfcedd;
+  --color-slate-400: #a0a6bf;
+  --color-slate-500: #6d7087;
+  --color-slate-600: #5e6178;
+  --color-slate-700: #40445e;
+  --color-slate-800: #2b3043;
+  --color-slate-900: #171b2a;
+  --color-slate-950: #0f121d;
+
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-display: "Plus Jakarta Sans", sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
@@ -67,43 +92,37 @@
 /**
  * Vocabulário de cor do site.
  *
- * As mesmas cores de sempre — índigo e slate —, agora com nome de função em vez
- * de posição na escala. `bg-superficie` diz o que a cor faz; `bg-white
- * dark:bg-slate-900` diz de que tom ela é feita, repetido em cada componente e
- * com o par de tema por conta de quem escreve.
- *
- * Dois ganhos: o tema escuro passa a ser responsabilidade do token (a variável
- * muda, o componente não sabe de tema), e trocar a paleta um dia vira editar
- * este bloco em vez de varrer centenas de classes.
- *
- * Os nomes vêm da metáfora impressa, que é o que o site é: papel de fundo,
- * tinta para texto, superfície para o cartão que se sobrepõe ao papel.
+ * Violeta e neutros levemente lavanda, compartilhados com o painel pessoal.
+ * Os tokens semânticos cuidam das duas aparências. O acento para texto fica
+ * mais claro no escuro; botões sólidos mantêm contraste com texto branco.
  */
 :root {
   --papel: var(--color-slate-50);
   --superficie: #ffffff;
-  --superficie-alta: var(--color-slate-50);
+  --superficie-alta: #f7f7fb;
 
-  --tinta: var(--color-slate-900);
+  --tinta: #252639;
   --tinta-suave: var(--color-slate-600);
   --tinta-fraca: var(--color-slate-500);
 
-  --borda-suave: var(--color-slate-100);
-  --borda: var(--color-slate-200);
+  --borda-suave: #eeedf5;
+  --borda: #e9eaf2;
   --borda-forte: var(--color-slate-300);
 
-  --acento: var(--color-indigo-600);
+  --acento: #7055d8;
   --acento-forte: var(--color-indigo-700);
   --acento-suave: var(--color-indigo-50);
   --acento-tinta: var(--color-indigo-700);
+  --acento-solido: var(--color-indigo-600);
+  --acento-solido-hover: var(--color-indigo-700);
 }
 
 .dark {
   --papel: var(--color-slate-950);
   --superficie: var(--color-slate-900);
-  --superficie-alta: var(--color-slate-800);
+  --superficie-alta: #1d2233;
 
-  --tinta: #ffffff;
+  --tinta: #edf0fb;
   --tinta-suave: var(--color-slate-300);
   --tinta-fraca: var(--color-slate-400);
 
@@ -111,10 +130,10 @@
   --borda: var(--color-slate-800);
   --borda-forte: var(--color-slate-700);
 
-  --acento: var(--color-indigo-500);
-  --acento-forte: var(--color-indigo-400);
-  --acento-suave: var(--color-indigo-950);
-  --acento-tinta: var(--color-indigo-300);
+  --acento: var(--color-indigo-400);
+  --acento-forte: #cbbaff;
+  --acento-suave: #2c2646;
+  --acento-tinta: var(--color-indigo-400);
 }
 
 /* `inline` para o utilitário apontar para a variável, e não copiar o valor:
@@ -136,6 +155,13 @@
   --color-acento-forte: var(--acento-forte);
   --color-acento-suave: var(--acento-suave);
   --color-acento-tinta: var(--acento-tinta);
+  --color-acento-solido: var(--acento-solido);
+  --color-acento-solido-hover: var(--acento-solido-hover);
+}
+
+body {
+  background: var(--papel);
+  color: var(--tinta);
 }
 
 /**
@@ -162,7 +188,7 @@
   position: absolute;
   top: -100px;
   left: 16px;
-  background: var(--acento);
+  background: var(--acento-solido);
   color: #ffffff;
   padding: 8px 16px;
   border-radius: 6px;
@@ -215,12 +241,12 @@ html {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
+  background: var(--color-slate-300);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+  background: var(--color-slate-400);
 }
 
 /* Tema escuro: fundo e texto do documento.
@@ -236,23 +262,24 @@ html {
    o fundo do documento e o padrão dos campos de formulário, que aparecem em
    dezenas de telas do painel sem classe própria. */
 .dark body {
-  @apply !bg-slate-950 !text-slate-100;
+  background: var(--papel);
+  color: var(--tinta);
 }
 
 /* Barra de rolagem no escuro */
 .dark ::-webkit-scrollbar-thumb {
-  background: #1e293b;
+  background: var(--color-slate-800);
 }
 
 .dark ::-webkit-scrollbar-thumb:hover {
-  background: #334155;
+  background: var(--color-slate-700);
 }
 
 /* Campos de formulário: o painel tem dezenas deles sem classe de tema. */
 .dark input,
 .dark textarea,
 .dark select {
-  @apply !bg-slate-800 !border-slate-700 !text-slate-100 !placeholder-slate-500;
+  @apply !bg-slate-800 !border-slate-700 !text-slate-100 !placeholder-slate-400;
 }
 
 .dark input:focus,
@@ -449,7 +476,7 @@ html {
 }
 /* Keyboard focus remains visible on public pages and administration alike. */
 :where(a, button, input, select, textarea, summary):focus-visible {
-  outline: 3px solid var(--color-acento, #6366f1);
+  outline: 3px solid var(--acento);
   outline-offset: 3px;
 }
 @media (max-width: 640px) {

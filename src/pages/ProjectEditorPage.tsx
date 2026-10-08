@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { FolderKanban } from "lucide-react";
 import { Project, ProjectCategory } from "../types";
 import { Language } from "../lib/translations";
@@ -159,6 +159,18 @@ export default function ProjectEditorPage({
       </div>
 
       <aside className="lg:order-2">
+        {existing && (
+          <Link
+            to={`${localePath("/admin/painel/projetos", language)}?portfolio=${encodeURIComponent(existing.id)}`}
+            onClick={(event) => {
+              if (isDirty && !window.confirm(language === "en" ? "You have unsaved changes. Leave this editor?" : "Você tem alterações não salvas. Sair do editor?")) event.preventDefault();
+            }}
+            className="mb-4 flex items-center justify-center gap-2 rounded-xl border border-borda bg-superficie px-4 py-3 text-sm font-semibold text-acento-tinta transition-colors hover:bg-acento-suave"
+          >
+            <FolderKanban className="h-4 w-4" />
+            {language === "en" ? "Track project" : "Acompanhar projeto"}
+          </Link>
+        )}
         <EditorActionRail
           title={
             isNew

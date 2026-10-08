@@ -17,7 +17,7 @@ interface PitchSlideCanvasProps {
 /** Moldura institucional consistente em todos os slides e temas do site. */
 export default function PitchSlideCanvas({ title, children, numero, fill = false }: PitchSlideCanvasProps) {
   return (
-    <div data-pitch-slide={numero} className="pitch-slide relative flex h-full flex-col overflow-hidden rounded-lg bg-[#102536] px-6 py-5 text-white sm:px-12 sm:py-7">
+    <div data-pitch-slide={numero} className="pitch-slide relative flex h-full flex-col overflow-hidden rounded-lg bg-slate-900 px-6 py-5 text-white sm:px-12 sm:py-7">
       <header className="relative mb-6 flex shrink-0 items-center justify-between border-b border-white/15 pb-4">
         <img src="/brand/ufla-logo-white.png" alt="UFLA" width={400} height={198} className="h-auto w-20 shrink-0 object-contain sm:w-24" />
         <img src="/brand/cnpem-white.png" alt="CNPEM" width={199} height={103} className="h-auto w-20 shrink-0 object-contain sm:w-24" />
