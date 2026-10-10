@@ -178,8 +178,8 @@ function buildRoutes(lang: Lang): RouteMeta[] {
     title: `${t(lang, "Currículo", "Resume")} | ${authorName}`,
     description: t(
       lang,
-      `Currículo acadêmico e profissional de ${authorName} - Engenharia Física UFLA, Óptica e Instrumentação Científica.`,
-      `Academic and professional resume of ${authorName} — Engineering Physics at UFLA, Optics and Scientific Instrumentation.`
+      `Currículo acadêmico e profissional de ${authorName} - Engenharia Física UFLA, física computacional, instrumentação e visão computacional.`,
+      `Academic and professional resume of ${authorName} — Engineering Physics at UFLA, computational physics, instrumentation and computer vision.`
     ),
     type: "website",
     ogImage: DEFAULT_OG_IMAGE,
@@ -239,8 +239,8 @@ function buildRoutes(lang: Lang): RouteMeta[] {
     title: `${t(lang, "Blog & Artigos", "Blog & Articles")} | ${authorName}`,
     description: t(
       lang,
-      "Artigos e notas técnicas sobre física computacional, óptica ultrarrápida, instrumentação e automação experimental.",
-      "Articles and technical notes on computational physics, ultrafast optics, instrumentation and experimental automation."
+      "Artigos e notas técnicas sobre física computacional, instrumentação, eletrônica, IA e visão computacional.",
+      "Articles and technical notes on computational physics, instrumentation, electronics, AI and computer vision."
     ),
     type: "website",
     ogImage: DEFAULT_OG_IMAGE,
