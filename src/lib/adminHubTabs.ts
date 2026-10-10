@@ -13,7 +13,8 @@ export type AdminHubTab =
   | "habitos"
   | "notas"
   | "links"
-  | "rascunhos";
+  | "rascunhos"
+  | "atividade";
 
 export const ADMIN_HUB_TABS: AdminHubTab[] = [
   "visao-geral",
@@ -23,4 +24,5 @@ export const ADMIN_HUB_TABS: AdminHubTab[] = [
   "notas",
   "links",
   "rascunhos",
+  "atividade",
 ];

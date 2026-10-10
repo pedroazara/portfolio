@@ -20,6 +20,7 @@ import {
   Check,
   X,
   ChevronRight,
+  History,
 } from "lucide-react";
 import TasksBoard from "../components/TasksBoard";
 import HabitTracker from "../components/HabitTracker";
@@ -32,6 +33,7 @@ import WorkspaceOverview from "../components/admin/WorkspaceOverview";
 import WorkspaceDialog from "../components/admin/WorkspaceDialog";
 import ProjectsPanel from "../components/admin/ProjectsPanel";
 import WorkspaceProjectsOverview from "../components/admin/WorkspaceProjectsOverview";
+import EditLogPanel from "../components/admin/EditLogPanel";
 import { AdminHubTab, ADMIN_HUB_TABS } from "../lib/adminHubTabs";
 import { createTask, createNote, createLink } from "../lib/adminToolsService";
 import { usePersonalWorkspace } from "../hooks/usePersonalWorkspace";
@@ -80,6 +82,11 @@ const TAB_META: Record<
     label: "Rascunhos",
     description: "Dê espaço para as ideias ganharem forma.",
     icon: PenLine,
+  },
+  atividade: {
+    label: "Atividade",
+    description: "Cada edição do portfólio, sua ou de um agente de IA.",
+    icon: History,
   },
 };
 type CaptureType = "task" | "note" | "link";
@@ -457,6 +464,7 @@ export default function AdminHubPage({
                 {tab === "tarefas" && <TasksBoard requestedId={requestedId} />}
                 {tab === "habitos" && <HabitTracker />}
                 {tab === "links" && <LinkVault requestedId={requestedId} />}
+                {tab === "atividade" && <EditLogPanel />}
               </div>
             </>
           )}
