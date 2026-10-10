@@ -364,13 +364,13 @@ export default function App() {
     } else if (routePath === "/curriculo") {
       title = isEn ? `Resume | ${name}` : `Currículo | ${name}`;
       description = isEn
-        ? `Academic and professional resume of ${name} — Engineering Physics at UFLA, Optics and Scientific Instrumentation.`
-        : `Currículo acadêmico e profissional de ${name} - Engenharia Física UFLA, Óptica e Instrumentação Científica.`;
+        ? `Academic and professional resume of ${name} — Engineering Physics at UFLA, computational physics, instrumentation and computer vision.`
+        : `Currículo acadêmico e profissional de ${name} - Engenharia Física UFLA, física computacional, instrumentação e visão computacional.`;
     } else if (routePath === "/blog") {
       title = isEn ? `Blog & Articles | ${name}` : `Blog & Artigos | ${name}`;
       description = isEn
-        ? "Articles and technical notes on computational physics, ultrafast optics, instrumentation and experimental automation."
-        : "Artigos e notas técnicas sobre física computacional, óptica ultrarrápida, instrumentação e automação experimental.";
+        ? "Articles and technical notes on computational physics, instrumentation, electronics, AI and computer vision."
+        : "Artigos e notas técnicas sobre física computacional, instrumentação, eletrônica, IA e visão computacional.";
     } else if (selectedBlogPostId) {
       // Rascunhos não emprestam título nem descrição para quem não está editando:
       // a página em si já os esconde, e o título da aba vazaria o mesmo conteúdo.

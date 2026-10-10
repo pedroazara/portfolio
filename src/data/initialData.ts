@@ -13,10 +13,10 @@ import { ResumeData } from "../types";
 export const initialResumeData: ResumeData = {
   profile: {
     name: "Pedro Henrique Almeida",
-    title: "Estudante de Engenharia Física | Instrumentação & Física Computacional",
-    titleEn: "Engineering Physics Student | Instrumentation & Computational Physics",
-    bio: "Graduando em Engenharia Física na UFLA, atuando na intersecção entre física experimental e computação científica. Trabalho com instrumentação de laboratório, automação de medidas e óptica ultrarrápida em iniciação científica.",
-    bioEn: "Engineering Physics undergraduate at UFLA, working at the intersection of experimental physics and scientific computing. My focus is laboratory instrumentation, measurement automation, and ultrafast optics through undergraduate research.",
+    title: "Estudante de Engenharia Física | Física Computacional, Instrumentação & IA",
+    titleEn: "Engineering Physics Student | Computational Physics, Instrumentation & AI",
+    bio: "Graduando em Engenharia Física na UFLA. Trabalho com física computacional, instrumentação e eletrônica, e escrevo bastante código no caminho: simulação numérica, sistemas embarcados, aprendizado de máquina e visão computacional. Também tenho experiência com automação de medidas e óptica em laboratório.",
+    bioEn: "Engineering Physics undergraduate at UFLA. I work on computational physics, instrumentation and electronics, and write a lot of code along the way: numerical simulation, embedded systems, machine learning and computer vision. I also have hands-on experience with measurement automation and optics in the lab.",
     email: "pedrohenriquealmeida2004@gmail.com",
     // Campos em branco: preencha pelo painel se quiser exibi-los.
     phone: "",
