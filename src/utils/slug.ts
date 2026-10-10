@@ -43,3 +43,14 @@ export function isOldSlug(item: Identifiable, slug: string | null | undefined): 
   if (!slug) return false;
   return slug !== slugOf(item) && (item.codigosAntigos || []).includes(slug);
 }
+
+/** Slug de URL a partir de um título: minúsculas, sem acentos, hífens. */
+export function slugify(text: string): string {
+  return text
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 60);
+}

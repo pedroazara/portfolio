@@ -16,6 +16,7 @@ import ReferenciasEditor from "./ReferenciasEditor";
 import ReferenciasSection from "./ReferenciasSection";
 import { autoTranslateFields } from "../lib/translator";
 import { projectFolder } from "../utils/imageDb";
+import { slugify } from "../utils/slug";
 import { EditTarget, scrollTextareaToLine } from "../utils/editTarget";
 import LocalImage from "./LocalImage";
 import { useEditorDraft } from "../hooks/useEditorDraft";
@@ -27,17 +28,6 @@ import DraftRecovery from "./DraftRecovery";
  */
 function comProtocolo(url: string): string {
   return /^https?:\/\//i.test(url) ? url : `https://${url}`;
-}
-
-/** Slug de URL a partir de um título: minúsculas, sem acentos, hífens. */
-function slugify(text: string): string {
-  return text
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 60);
 }
 
 /**
