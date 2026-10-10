@@ -3,6 +3,7 @@
  *
  *   node <caminho-do-portfolio>/mcp/run.mjs projects   (projetos)
  *   node <caminho-do-portfolio>/mcp/run.mjs media      (imagens)
+ *   node <caminho-do-portfolio>/mcp/run.mjs painel     (atualizações diárias)
  *
  * O cliente MCP (Claude Code, Claude Desktop...) inicia o servidor com o
  * diretório do projeto que está sendo editado como pasta atual — não o do
@@ -19,6 +20,7 @@ import { register } from "tsx/esm/api";
 const SERVERS = {
   projects: "./projects/server.ts",
   media: "./media/server.ts",
+  painel: "./painel/server.ts",
 };
 
 const name = process.argv[2];

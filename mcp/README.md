@@ -8,8 +8,9 @@ projeto, enviar prints, recortar capas, reorganizar o banco de imagens.
 | --- | --- | --- |
 | `portfolio-projects` | `node mcp/run.mjs projects` | Projetos: listar, ler, criar, alterar campos, editar trechos do Markdown, enviar imagens do projeto |
 | `portfolio-media` | `node mcp/run.mjs media` | Imagens do site inteiro: listar, ver, enviar, editar, recortar capa, mover, apagar, colocar em qualquer lugar do conteúdo |
+| `portfolio-painel` | `node mcp/run.mjs painel` | Atualizações diárias do painel pessoal (a dica de inglês e outras séries) |
 
-Planejados: `blog` (posts) e `painel` (dicas de inglês, notas etc.).
+Planejado: `blog` (posts).
 
 ## Como funciona
 
@@ -76,10 +77,12 @@ Use o caminho absoluto deste repositório:
 # Windows (PowerShell)
 claude mcp add portfolio-projects --scope user -- node "C:\caminho\para\portfolio\mcp\run.mjs" projects
 claude mcp add portfolio-media    --scope user -- node "C:\caminho\para\portfolio\mcp\run.mjs" media
+claude mcp add portfolio-painel   --scope user -- node "C:\caminho\para\portfolio\mcp\run.mjs" painel
 
 # macOS / Linux
 claude mcp add portfolio-projects --scope user -- node /caminho/para/portfolio/mcp/run.mjs projects
 claude mcp add portfolio-media    --scope user -- node /caminho/para/portfolio/mcp/run.mjs media
+claude mcp add portfolio-painel   --scope user -- node /caminho/para/portfolio/mcp/run.mjs painel
 ```
 
 Confira com `claude mcp list` ou, dentro do Claude Code, `/mcp`.
@@ -90,7 +93,8 @@ Confira com `claude mcp list` ou, dentro do Claude Code, `/mcp`.
 {
   "mcpServers": {
     "portfolio-projects": { "command": "node", "args": ["C:\\caminho\\para\\portfolio\\mcp\\run.mjs", "projects"] },
-    "portfolio-media": { "command": "node", "args": ["C:\\caminho\\para\\portfolio\\mcp\\run.mjs", "media"] }
+    "portfolio-media": { "command": "node", "args": ["C:\\caminho\\para\\portfolio\\mcp\\run.mjs", "media"] },
+    "portfolio-painel": { "command": "node", "args": ["C:\\caminho\\para\\portfolio\\mcp\\run.mjs", "painel"] }
   }
 }
 ```
@@ -136,7 +140,18 @@ Abre uma página onde dá para chamar cada ferramenta à mão.
 | `set_image` | Põe a imagem num lugar: avatar, ícone do perfil, capa de projeto/post, galeria de projeto/experiência/atividade |
 | `insert_image_in_text` | Insere `![legenda](db:...)` no Markdown de projeto ou post, ao fim ou depois de um trecho (ex.: `## Resultados`) |
 
-Toda ferramenta que grava aceita `note`: uma frase do agente dizendo o que fez
+### `portfolio-painel`
+
+| Ferramenta | Uso |
+| --- | --- |
+| `list_daily_updates` | Atualizações já publicadas, por série; serve para não repetir um tema recente |
+| `publish_daily_update` | Publica a atualização do dia de uma série (`ingles`, por exemplo). Uma por série e por dia: publicar de novo substitui |
+
+As atualizações aparecem na aba **Atualizações** do painel
+(`/admin/painel/atualizacoes`), com selo de nova até você abrir a aba. Rode
+**uma vez** `supabase/daily_updates.sql` no SQL Editor para criar a tabela.
+
+Toda ferramenta do `portfolio-projects` e do `portfolio-media` que grava aceita `note`: uma frase do agente dizendo o que fez
 e por quê, que aparece no registro de edições.
 
 ## Registro de edições ("quem mexeu")
@@ -196,6 +211,6 @@ fixo a um agente (ex.: "Claude no notebook"), defina `PORTFOLIO_MCP_AGENT` no
 A pasta `core/` concentra o que é comum: credenciais (`supabase.ts`), leitura
 e gravação segura do documento (`portfolioDocument.ts`), arquivos do bucket
 (`images.ts`) e referências `db:` (`references.ts`). Um servidor novo
-(`blog/`, `painel/`) só precisa das próprias regras e de uma linha em
+(`blog/`) só precisa das próprias regras e de uma linha em
 `run.mjs`. As regras de cada servidor ficam em funções puras
 (`projectOps.ts`, `mediaOps.ts`) testadas com `npm test`, sem rede.

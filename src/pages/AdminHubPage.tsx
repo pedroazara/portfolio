@@ -21,6 +21,7 @@ import {
   X,
   ChevronRight,
   History,
+  Sunrise,
 } from "lucide-react";
 import TasksBoard from "../components/TasksBoard";
 import HabitTracker from "../components/HabitTracker";
@@ -34,12 +35,14 @@ import WorkspaceDialog from "../components/admin/WorkspaceDialog";
 import ProjectsPanel from "../components/admin/ProjectsPanel";
 import WorkspaceProjectsOverview from "../components/admin/WorkspaceProjectsOverview";
 import EditLogPanel from "../components/admin/EditLogPanel";
+import DailyUpdatesPanel from "../components/admin/DailyUpdatesPanel";
 import { AdminHubTab, ADMIN_HUB_TABS } from "../lib/adminHubTabs";
 import { createTask, createNote, createLink } from "../lib/adminToolsService";
 import { usePersonalWorkspace } from "../hooks/usePersonalWorkspace";
 import { useWorkspaceProjects } from "../hooks/useWorkspaceProjects";
 import { isDevPreview } from "../lib/devPreview";
 import { useLocalePath } from "../lib/routes";
+import { useUnreadDailyUpdates } from "../hooks/useUnreadDailyUpdates";
 import type { Project } from "../types";
 import "./personal-workspace.css";
 
@@ -52,6 +55,11 @@ const TAB_META: Record<
     label: "Visão geral",
     description: "Um novo olhar para o seu dia.",
     icon: LayoutDashboard,
+  },
+  atualizacoes: {
+    label: "Atualizações",
+    description: "O que chega para você a cada manhã, começando pela dica de inglês.",
+    icon: Sunrise,
   },
   projetos: {
     label: "Projetos",
@@ -118,6 +126,7 @@ export default function AdminHubPage({
   const localePath = useLocalePath();
   const { data, loading, error, refresh } = usePersonalWorkspace();
   const projectState = useWorkspaceProjects();
+  const unreadUpdates = useUnreadDailyUpdates();
   const [captureType, setCaptureType] = useState<CaptureType | null>(null);
   const [commandsOpen, setCommandsOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -208,6 +217,7 @@ export default function AdminHubPage({
     return () => clearTimeout(id);
   }, [toast]);
   const counts: Partial<Record<AdminHubTab, number>> = {
+    atualizacoes: unreadUpdates,
     projetos: projectState.projects.filter(
       (project) => project.status !== "completed",
     ).length,
@@ -464,6 +474,7 @@ export default function AdminHubPage({
                 {tab === "tarefas" && <TasksBoard requestedId={requestedId} />}
                 {tab === "habitos" && <HabitTracker />}
                 {tab === "links" && <LinkVault requestedId={requestedId} />}
+                {tab === "atualizacoes" && <DailyUpdatesPanel />}
                 {tab === "atividade" && <EditLogPanel />}
               </div>
             </>

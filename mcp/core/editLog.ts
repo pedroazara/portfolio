@@ -56,7 +56,7 @@ export function trackClient(server: McpServer, serverName: string) {
   };
 }
 
-function agentLabel(): string {
+export function agentLabel(): string {
   return process.env.PORTFOLIO_MCP_AGENT?.trim() || `${identity.client} · ${identity.server}`;
 }
 
