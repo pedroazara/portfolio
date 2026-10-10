@@ -615,9 +615,9 @@ export default function ResumeHeader({
 /**
  * A apresentação: um parágrafo por bloco separado por linha vazia no editor.
  *
- * Um parágrafo por vez fica em destaque — maior e em tinta cheia. Em repouso
- * é o primeiro, como entrada do texto; com o mouse, o destaque vai para o
- * parágrafo sob o cursor, e volta ao primeiro quando o cursor sai.
+ * O parágrafo sob o cursor fica em destaque — maior e em tinta cheia. Em
+ * repouso nenhum fica: o destaque só aparece com o mouse em cima e some quando
+ * o cursor sai do texto.
  *
  * O destaque amplia o parágrafo com `scale`, e não com `font-size`: trocar o
  * corpo da letra refaz as quebras de linha e empurra o resto da página a cada
@@ -627,13 +627,13 @@ export default function ResumeHeader({
  * partir da borda esquerda, ele ocupa exatamente a coluna inteira.
  *
  * Componente à parte para o hover não renderizar a abertura inteira. Só mouse:
- * no toque não há hover, e o primeiro segue como entrada.
+ * no toque não há hover, e o texto fica todo em repouso.
  */
 function Apresentacao({ paragrafos }: { paragrafos: string[] }) {
-  const [ativo, setAtivo] = useState(0);
+  const [ativo, setAtivo] = useState<number | null>(null);
 
   return (
-    <div className="flex max-w-[64ch] flex-col gap-6 print-break-inside-avoid" onPointerLeave={() => setAtivo(0)}>
+    <div className="flex max-w-[64ch] flex-col gap-6 print-break-inside-avoid" onPointerLeave={() => setAtivo(null)}>
       {paragrafos.map((paragrafo, i) => (
         <p
           key={i}
