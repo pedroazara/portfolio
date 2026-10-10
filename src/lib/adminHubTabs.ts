@@ -8,6 +8,7 @@
  */
 export type AdminHubTab =
   | "visao-geral"
+  | "atualizacoes"
   | "projetos"
   | "tarefas"
   | "habitos"
@@ -18,6 +19,7 @@ export type AdminHubTab =
 
 export const ADMIN_HUB_TABS: AdminHubTab[] = [
   "visao-geral",
+  "atualizacoes",
   "projetos",
   "tarefas",
   "habitos",
