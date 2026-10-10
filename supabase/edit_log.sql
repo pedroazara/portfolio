@@ -1,8 +1,16 @@
 -- =====================================================================
 -- Registro de edições do portfólio: quem mudou o quê, e quando.
 --
--- Como usar: painel do Supabase > SQL Editor > New query > cole tudo
--- isto > Run. É seguro rodar mais de uma vez. Não altera o conteúdo.
+-- Como usar: painel do Supabase > SQL Editor > New query > cole o
+-- arquivo inteiro > Run, sem nenhum trecho selecionado (com seleção, o
+-- editor roda só a seleção). Deu certo quando o resultado for
+-- "Registro de edições instalado". É seguro rodar mais de uma vez e não
+-- altera o conteúdo do site.
+--
+-- Se colar tudo de uma vez for difícil (celular, por exemplo), rode as
+-- três PARTES abaixo em sequência, uma por vez; cada uma confirma no fim.
+-- O erro "unterminated dollar-quoted string" quer dizer que o texto
+-- chegou cortado — nada foi aplicado; cole de novo a parte inteira.
 --
 -- Um gatilho anota cada gravação na tabela `portfolio`, venha de onde
 -- vier, com a lista de itens alterados (projeto, post, perfil...) e os
@@ -24,6 +32,10 @@
 -- enviar ou apagar uma imagem sem mexer no conteúdo).
 -- =====================================================================
 
+
+-- =====================================================================
+-- PARTE 1 de 3 — tabela e permissões
+-- =====================================================================
 begin;
 
 create table if not exists public.portfolio_edit_log (
@@ -56,11 +68,15 @@ create policy "portfolio_edit_log_agent_insert"
   on public.portfolio_edit_log for insert to authenticated
   with check (source = 'agente');
 
+commit;
+select 'Parte 1 de 3 instalada.' as resultado;
 
--- ---------------------------------------------------------------------
--- O que mudou entre duas versões do documento: uma entrada por item.
+
+-- =====================================================================
+-- PARTE 2 de 3 — o que mudou entre duas versões do documento
+-- =====================================================================
+-- Uma entrada por item alterado.
 -- { collection, id, slug, label, action: criado|alterado|removido|reordenado, fields }
--- ---------------------------------------------------------------------
 create or replace function public.portfolio_document_changes(old_doc jsonb, new_doc jsonb)
 returns jsonb
 language plpgsql immutable set search_path = public, pg_temp as $$
@@ -119,10 +135,15 @@ begin
   return result;
 end $$;
 
+select 'Parte 2 de 3 instalada.' as resultado;
 
--- ---------------------------------------------------------------------
--- Gatilho: anota a gravação, juntando as do painel feitas em sequência.
--- ---------------------------------------------------------------------
+
+-- =====================================================================
+-- PARTE 3 de 3 — gatilho que anota cada gravação
+-- =====================================================================
+-- Junta as gravações do painel feitas em sequência.
+begin;
+
 create or replace function public.log_portfolio_edit()
 returns trigger
 language plpgsql security definer set search_path = public, pg_temp as $$
@@ -206,3 +227,4 @@ create trigger portfolio_edit_log
 notify pgrst, 'reload schema';
 
 commit;
+select 'Registro de edições instalado.' as resultado;
