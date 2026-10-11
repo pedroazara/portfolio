@@ -7,7 +7,9 @@
  *   node mcp/call.mjs painel publish_daily_update '{"kind":"ingles","title":"...","content":"..."}'
  *
  * O servidor herda o ambiente deste processo (credenciais do Supabase em
- * variáveis de ambiente ou no .env do portfólio).
+ * variáveis de ambiente ou no .env do portfólio). Atrás de um proxy (como nas
+ * sessões na nuvem), o `fetch` do Node só o usa com NODE_USE_ENV_PROXY=1,
+ * ligado aqui sempre que HTTPS_PROXY estiver definido.
  */
 import { fileURLToPath } from "node:url";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
@@ -22,7 +24,10 @@ if (!server || !tool) {
 const transport = new StdioClientTransport({
   command: process.execPath,
   args: [fileURLToPath(new URL("./run.mjs", import.meta.url)), server],
-  env: Object.fromEntries(Object.entries(process.env).filter(([, value]) => value !== undefined)),
+  env: {
+    ...Object.fromEntries(Object.entries(process.env).filter(([, value]) => value !== undefined)),
+    ...(process.env.HTTPS_PROXY || process.env.https_proxy ? { NODE_USE_ENV_PROXY: "1" } : {}),
+  },
   stderr: "inherit",
 });
 const client = new Client({ name: process.env.PORTFOLIO_MCP_AGENT?.trim() || "portfolio-call", version: "0.1.0" });
