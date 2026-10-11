@@ -43,6 +43,7 @@ Implementação interrompida a pedido do usuário para revisão local antes do c
 ## Configuração externa ainda necessária
 
 - Revisar e executar manualmente `supabase/technical-upgrade.sql` para histórico e validação no banco. A migração NÃO foi aplicada.
+- Google Agenda (Meu espaço → Agenda): configurar `GOOGLE_CLIENT_ID` e `GOOGLE_CLIENT_SECRET` no servidor; passo a passo em `docs/google-agenda.md`. Sem eles, o painel mostra que falta configurar e segue com o resumo da manhã.
 - Tradução: configurar `ADMIN_USER_IDS`, `GEMINI_API_KEY` e Supabase no servidor. Em produção também requer `UPSTASH_REDIS_REST_URL` e `UPSTASH_REDIS_REST_TOKEN`; sem configuração falha de forma fechada.
 - Monitoramento opcional: `VITE_SENTRY_DSN`.
 - Analytics opcional: `VITE_UMAMI_SCRIPT_URL` (HTTPS) e `VITE_UMAMI_WEBSITE_ID`.

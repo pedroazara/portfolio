@@ -4,6 +4,7 @@ import path from "node:path";
 import { createServer as createViteServer } from "vite";
 import translate from "./server/translate";
 import image from "./server/image";
+import googleAgenda, { googleAgendaCallback } from "./server/googleAgenda";
 import { securityHeaders } from "./server/securityHeaders";
 
 const app = express();
@@ -13,6 +14,8 @@ app.use((_req, res, next) => { res.set(securityHeaders); next(); });
 app.use(express.json({ limit: "128kb" }));
 app.all("/api/translate", translate);
 app.all("/api/image", image);
+app.all("/api/google-agenda", googleAgenda);
+app.get("/api/google-agenda-callback", googleAgendaCallback);
 app.get("/api/health", (_req, res) => res.json({ status: "ok" }));
 async function startServer() {
   if (process.env.NODE_ENV !== "production") {

@@ -12,10 +12,12 @@ import {
 } from "../../lib/dailyUpdatesService";
 import DailyUpdateCard, { dayLabel, kindStyle } from "./DailyUpdateCard";
 import DailyCalendar from "./DailyCalendar";
-import GoogleAgendaEmbed from "./GoogleAgendaEmbed";
+import LiveAgenda from "./LiveAgenda";
 import NewEventDialog from "./NewEventDialog";
 import AgendaHero from "./AgendaHero";
 import HabitTracker from "../HabitTracker";
+import { useGoogleAgenda } from "../../hooks/useGoogleAgenda";
+import { toAgendaEvent } from "../../lib/googleAgendaService";
 
 /**
  * Aba "Meu espaço" do painel: a caixa de entrada, a agenda e os hábitos do dia.
@@ -23,8 +25,8 @@ import HabitTracker from "../HabitTracker";
  * Tudo o que os agentes publicam de manhã (a dica de inglês, o resumo da
  * agenda...) chega na caixa de entrada. O OK guarda o item na área da série;
  * o calendário mostra o que teve em cada dia. A Agenda abre com o card de hoje
- * (compromissos e hábitos) e traz o Google Agenda ao vivo; Hábitos é o
- * acompanhamento completo.
+ * (compromissos e hábitos) e traz o Google Agenda ao vivo, conectado com a
+ * conta Google; Hábitos é o acompanhamento completo.
  *
  * A área aberta fica na URL (`?area=ingles`), para links e o botão voltar.
  */
@@ -106,6 +108,24 @@ export default function DailyUpdatesPanel() {
   }, [updates]);
   const requested = params.get("area") ?? INBOX;
   const area = requested === CALENDAR || requested === HABITS || kinds.includes(requested) ? requested : INBOX;
+  const google = useGoogleAgenda(area === AGENDA);
+
+  // Volta do consentimento do Google (`?google=conectado`): avisa e limpa a URL.
+  const googleResult = params.get("google");
+  useEffect(() => {
+    if (!googleResult) return;
+    setToast({
+      message:
+        googleResult === "conectado"
+          ? "Google Agenda conectado. Seus compromissos já aparecem aqui."
+          : googleResult === "cancelado"
+            ? "Conexão com o Google cancelada."
+            : "Não foi possível conectar o Google Agenda. Tente de novo.",
+    });
+    const next = new URLSearchParams(params);
+    next.delete("google");
+    setParams(next, { replace: true });
+  }, [googleResult]); // eslint-disable-line react-hooks/exhaustive-deps
   const openArea = (key: string) => {
     const next = new URLSearchParams(params);
     if (key === INBOX) next.delete("area");
@@ -188,6 +208,8 @@ export default function DailyUpdatesPanel() {
   const kindItems = updates.filter((update) => update.kind === area && update.day <= today);
   const tomorrow = shiftDay(today, 1);
   const agendaOf = (day: string) => updates.find((update) => update.kind === "agenda" && update.day === day);
+  const liveOf = (day: string) =>
+    google.state === "connected" ? google.events.filter((event) => event.day === day).map(toAgendaEvent) : undefined;
   const dayItems = updates.filter((update) => update.day === selectedDay);
 
   return (
@@ -323,10 +345,21 @@ export default function DailyUpdatesPanel() {
             tomorrow={tomorrow}
             todayUpdate={agendaOf(today)}
             tomorrowUpdate={agendaOf(tomorrow)}
+            liveToday={liveOf(today)}
+            liveTomorrow={liveOf(tomorrow)}
             onOpenHabits={() => openArea(HABITS)}
           />
           <h3 className={`${sectionTitle} !mb-0`}>Google Agenda ao vivo</h3>
-          <GoogleAgendaEmbed />
+          <LiveAgenda
+            state={google.state}
+            events={google.events}
+            error={google.error}
+            refreshing={google.refreshing}
+            today={today}
+            onConnect={google.connect}
+            onDisconnect={google.disconnect}
+            onRefresh={() => void google.refresh()}
+          />
         </>
       )}
 
@@ -361,9 +394,15 @@ export default function DailyUpdatesPanel() {
       {newEvent && (
         <NewEventDialog
           onClose={() => setNewEvent(false)}
+          onCreate={google.state === "connected" ? google.create : undefined}
           onOpened={() => {
             setNewEvent(false);
-            setToast({ message: "Abrimos o Google Agenda com o evento. Confirme lá em Salvar." });
+            setToast({
+              message:
+                google.state === "connected"
+                  ? "Compromisso salvo no seu Google Agenda."
+                  : "Abrimos o Google Agenda com o evento. Confirme lá em Salvar.",
+            });
           }}
         />
       )}
