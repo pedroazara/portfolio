@@ -21,7 +21,9 @@
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "test:production": "playwright test --config playwright.production.config.ts",
-    "check": "npm run lint && npm test && npm run build"
+    "check": "npm run lint && npm test && npm run build",
+    "skill:zip": "node mcp/skills/package.mjs zip",
+    "skill:install": "node mcp/skills/package.mjs install"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

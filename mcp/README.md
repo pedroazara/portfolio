@@ -139,6 +139,23 @@ Abre uma página onde dá para chamar cada ferramenta à mão.
 Toda ferramenta que grava aceita `note`: uma frase do agente dizendo o que fez
 e por quê, que aparece no registro de edições.
 
+## Skill `/portfolio`
+
+A pasta `skills/portfolio/` tem uma skill que usa estes servidores para criar
+e atualizar posts de projetos: `/portfolio` sincroniza o post com o
+repositório atual, `/portfolio novo` cria o post de um projeto novo e
+`/portfolio <pedido>` faz o que você pedir (imagem, capa, referência,
+situação, publicar, desfazer).
+
+- **Claude Code:** `npm run skill:install` copia a skill para
+  `~/.claude/skills/portfolio/`. Reinstale depois de editar a fonte.
+- **claude.ai / Claude Desktop:** `npm run skill:zip` gera
+  `mcp/skills/dist/portfolio.zip`; envie em **Customize > Skills** e ative.
+
+Os dois comandos validam o `SKILL.md` antes (campos aceitos, nome e tamanho da
+descrição). A skill só funciona onde os servidores MCP estão disponíveis: no
+Claude Code ou no Claude Desktop do computador onde eles foram registrados.
+
 ## Registro de edições ("quem mexeu")
 
 A aba **Atividade** do painel (`/admin/painel/atividade`) mostra cada edição

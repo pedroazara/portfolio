@@ -8,6 +8,12 @@ repositório de qualquer projeto que eu esteja desenvolvendo, eu digito
 Leia este documento inteiro antes de começar. Ele traz o contexto que você não
 tem como adivinhar.
 
+> **Atualização:** a skill já foi escrita e está em `mcp/skills/portfolio/`
+> no repositório do portfólio. Em vez de criá-la do zero: faça a verificação
+> do ambiente (seção 2), revise a skill contra este documento, instale com
+> `npm run skill:install` e rode os testes (seção 5). Se algo não funcionar,
+> corrija a fonte em `mcp/skills/portfolio/` e reinstale.
+
 ---
 
 ## 1. Contexto: o que já existe
