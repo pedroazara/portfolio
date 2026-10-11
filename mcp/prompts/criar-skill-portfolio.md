@@ -116,9 +116,9 @@ feito e por quê — aparece na aba "Atividade" do meu painel) e **`dryRun`**
 - Confirme na documentação da sua versão do Claude Code o formato atual de
   skills (frontmatter: `name`, `description`, `argument-hint`, `allowed-tools`
   etc.). Se a skill `skill-creator` estiver disponível, use-a.
-- `description` deve deixar claro quando usar: "atualizar/sincronizar o post
-  deste projeto no portfólio, adicionar imagens, referências, mudar situação,
-  publicar".
+- `description` deve deixar claro quando usar: "criar o post de um projeto
+  novo, atualizar/sincronizar o post deste projeto no portfólio, adicionar
+  imagens, referências, mudar situação, publicar".
 - `allowed-tools`: pré-aprove só o que é **leitura** (as ferramentas `list_*`
   e `get_*` dos dois servidores e comandos `git` somente leitura). As que
   gravam continuam pedindo permissão normalmente.
@@ -128,9 +128,10 @@ feito e por quê — aparece na aba "Atividade" do meu painel) e **`dryRun`**
 1. Se existir `.claude/portfolio.json` no repositório atual, use o `codigo` dele.
 2. Senão, pegue o remote (`git remote get-url origin`) e chame
    `get_project` com `repoUrl`.
-3. Não achou? Procure com `list_projects` (pelo nome do repositório) e me
-   mostre os candidatos. Se nenhum servir, ofereça criar um projeto novo
-   (`create_project`, **rascunho**) já com `githubUrl` preenchido.
+3. Não achou? Procure com `list_projects` (pelo nome do repositório e por
+   palavras do título) e me mostre os candidatos — às vezes o projeto já existe
+   sem o `githubUrl`; nesse caso, ofereça preenchê-lo. Se nenhum servir,
+   ofereça o **modo criar** (abaixo).
 4. Grave/atualize `.claude/portfolio.json` com
    `{ "codigo": "...", "ultimoCommitSincronizado": "<sha>", "sincronizadoEm": "<data ISO>" }`.
    Não faça commit desse arquivo por conta própria; avise que ele existe.
@@ -151,6 +152,37 @@ foi pedido, do jeito mais direto. Exemplos de mapeamento:
 | "publica" | `draft: false` — **só** quando eu pedir explicitamente |
 | "desfaz" | `list_backups` → `restore_project` (mostre antes o que vai voltar) |
 | "muda o link para X" | `codigo` (o endereço antigo continua funcionando) |
+
+**Modo criar** — `/portfolio novo` (ou "cria o post deste projeto"), ou
+quando o repositório não tem post e eu aceito criar. Monta o post completo a
+partir do repositório:
+
+1. **Evite duplicata:** confirme com `list_projects` que não existe um projeto
+   parecido (mesmo repositório, título semelhante).
+2. **Levante o repositório** como no modo sincronizar (abaixo), mas com o
+   histórico inteiro: primeiro commit, marcos, README, docs, resultados,
+   imagens, links e referências.
+3. **Imite o site:** leia 1–2 projetos publicados (`get_project`) para seguir a
+   mesma estrutura de seções e o mesmo tom, e use `list_categories` para
+   escolher as categorias.
+4. **Proponha o post inteiro antes de criar**, em português e inglês: título,
+   endereço do link (`codigo`), resumo, corpo da página com seções (por exemplo:
+   contexto e objetivo, o que foi feito, como funciona, resultados, próximos
+   passos — ajuste ao que os outros projetos usam), relevância técnica quando
+   fizer sentido, destaques, stack, tags, categorias, situação, período, links,
+   referências, e as imagens candidatas para capa e galeria (com legendas).
+5. **Depois da minha confirmação:** `create_project` com os textos (sempre
+   `draft: true`) → envie as imagens (`upload_project_image`) → capa com
+   `crop_cover` + `set_image` → galeria → imagens no corpo com
+   `insert_image_in_text` (PT e EN) → grave `.claude/portfolio.json`.
+6. Relate com o link do editor (`/admin/projetos/<codigo>`) para eu revisar. O
+   projeto fica em rascunho até eu pedir para publicar.
+
+Também deve funcionar **sem repositório** (uma ideia ou um projeto que ainda
+não tem código): `/portfolio novo "Título"` fora de um repositório git, ou
+quando eu disser que não há código. Aí o conteúdo vem só do que eu contar —
+faça as perguntas essenciais (objetivo, o que já existe, tecnologias previstas,
+links), use `situacao: "planejamento"` por padrão e não invente o resto.
 
 **Modo sincronizar** — `/portfolio` sem instruções (ou "sincroniza",
 "atualiza com o estado atual"). Compare o repositório com o post e proponha
@@ -230,7 +262,12 @@ em rascunho ou desfaça depois.
    agente chega ao Supabase; se aparecer como "Você" ou "Sistema", me avise.
 3. Modo pedido: adicionar uma imagem com legenda numa seção e uma referência.
 4. Desfazer com `restore_project` e confirmar que voltou ao estado anterior.
-5. Um repositório sem post: deve oferecer criar como rascunho (pode cancelar).
+5. Modo criar: num repositório sem post, `/portfolio novo` com `dryRun` mostra
+   o post completo proposto (PT e EN, com imagens candidatas) sem gravar. Se eu
+   autorizar, crie de verdade como rascunho e me passe o link do editor (posso
+   apagar depois pelo painel).
+6. Modo criar sem repositório: `/portfolio novo "Ideia de teste"` faz as
+   perguntas essenciais e para no plano (não precisa criar).
 
 ---
 
@@ -239,7 +276,7 @@ em rascunho ou desfaça depois.
 Me diga em poucas linhas:
 
 - os arquivos criados (fonte no portfólio + instalação em `~/.claude/skills/portfolio/`);
-- como usar (`/portfolio`, `/portfolio <pedido>`) com 3 exemplos;
+- como usar (`/portfolio`, `/portfolio novo`, `/portfolio <pedido>`) com exemplos;
 - o resultado de cada teste da seção 5, incluindo o que falhou ou ficou pendente;
 - o que você ajustou neste plano e por quê.
 
