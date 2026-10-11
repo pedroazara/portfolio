@@ -57,6 +57,17 @@ function previewList(): DailyUpdate[] {
         "- **14:30–15:30** · Revisão do projeto do telescópio · Lab 2",
       false,
     ),
+    sample(
+      "previa-agenda-0",
+      -1,
+      "agenda",
+      "Agenda do dia",
+      "- **08:00–09:40** · Aula de Cálculo III · Sala B-204\n" +
+        "- **11:00–12:00** · Orientação com a professora · Google Meet\n" +
+        "- **15:00–17:00** · Montagem do espelho do telescópio · Lab 2\n" +
+        "- **19:30** · Jantar com a família",
+      false,
+    ),
     sample("previa-agenda-2", 1, "agenda", "Agenda do dia", "- **10:00–11:00** · Aula de Física Moderna\n- **16:00** · Academia", true),
     sample(
       "previa-1",
@@ -119,12 +130,14 @@ export async function setDailyUpdatesDone(ids: string[], done: boolean): Promise
 
 /** Quantas estão na caixa de entrada — o número ao lado da aba. */
 export async function countInboxDailyUpdates(): Promise<number> {
-  if (isDevPreview()) return previewList().filter((update) => !update.read_at).length;
+  const today = todayKey();
+  if (isDevPreview()) return previewList().filter((update) => !update.read_at && update.day <= today).length;
   if (!isSupabaseConfigured) return 0;
   const { count, error } = await supabase
     .from("admin_daily_updates")
     .select("id", { count: "exact", head: true })
-    .is("read_at", null);
+    .is("read_at", null)
+    .lte("day", today);
   // Sem a tabela (SQL ainda não rodado) a aba só fica sem número.
   return error ? 0 : count ?? 0;
 }

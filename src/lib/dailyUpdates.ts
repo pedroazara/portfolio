@@ -70,3 +70,46 @@ export function monthGrid(year: number, month: number): { day: string; inMonth: 
   } while (Number(cursor.slice(5, 7)) === month && Number(cursor.slice(0, 4)) === year);
   return weeks;
 }
+
+/** Um compromisso lido do resumo da agenda. */
+export interface AgendaEvent {
+  /** Como veio escrito: "09:00–10:00", "16:00" ou "Dia inteiro". */
+  time: string;
+  allDay: boolean;
+  /** `HH:MM`, quando houver. */
+  start?: string;
+  end?: string;
+  title: string;
+  /** Local, sala ou link da chamada. */
+  place?: string;
+}
+
+/**
+ * Lê os compromissos do Markdown que o agente publica na série "agenda":
+ * uma linha por evento, `- **09:00–10:00** · Nome · Local`. Linhas fora
+ * desse formato ficam em `notes`, para não se perderem.
+ */
+export function parseAgenda(content: string): { events: AgendaEvent[]; notes: string } {
+  const events: AgendaEvent[] = [];
+  const notes: string[] = [];
+  for (const line of content.split("\n")) {
+    const match = /^\s*[-*]\s+\*\*(.+?)\*\*\s*(?:·|—|–|-|:)?\s*(.*)$/.exec(line);
+    if (!match) {
+      if (line.trim()) notes.push(line);
+      continue;
+    }
+    const time = match[1].trim();
+    const [title = "", ...place] = match[2].split(/\s+·\s+/);
+    const times = time.match(/\b\d{1,2}:\d{2}\b/g) ?? [];
+    const pad = (value: string) => value.padStart(5, "0");
+    events.push({
+      time,
+      allDay: times.length === 0,
+      start: times[0] && pad(times[0]),
+      end: times[1] && pad(times[1]),
+      title: title.trim() || time,
+      place: place.join(" · ").trim() || undefined,
+    });
+  }
+  return { events, notes: notes.join("\n").trim() };
+}

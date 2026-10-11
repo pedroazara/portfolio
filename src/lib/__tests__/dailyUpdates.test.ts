@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { monthGrid, shiftDay, todayKey } from "../dailyUpdates";
+import { monthGrid, parseAgenda, shiftDay, todayKey } from "../dailyUpdates";
 
 describe("shiftDay", () => {
   it("atravessa meses e anos", () => {
@@ -33,5 +33,25 @@ describe("monthGrid", () => {
   it("vira o ano em dezembro", () => {
     const weeks = monthGrid(2026, 12);
     expect(weeks.flat().filter((cell) => cell.inMonth)).toHaveLength(31);
+  });
+});
+
+describe("parseAgenda", () => {
+  it("lê horário, nome e local de cada linha", () => {
+    const { events, notes } = parseAgenda(
+      "- **Dia inteiro** · Entrega do relatório\n" +
+        "- **09:00–10:00** · Reunião do grupo · Google Meet\n" +
+        "- **9:30** · Café\n\n" +
+        "Lembrete: levar o notebook.",
+    );
+    expect(events).toEqual([
+      { time: "Dia inteiro", allDay: true, start: undefined, end: undefined, title: "Entrega do relatório", place: undefined },
+      { time: "09:00–10:00", allDay: false, start: "09:00", end: "10:00", title: "Reunião do grupo", place: "Google Meet" },
+      { time: "9:30", allDay: false, start: "09:30", end: undefined, title: "Café", place: undefined },
+    ]);
+    expect(notes).toBe("Lembrete: levar o notebook.");
+  });
+  it("devolve tudo como nota quando não há eventos", () => {
+    expect(parseAgenda("Nenhum compromisso hoje.")).toEqual({ events: [], notes: "Nenhum compromisso hoje." });
   });
 });

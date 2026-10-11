@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { CalendarRange, Check, CheckCheck, Inbox, Loader2, RefreshCw, X } from "lucide-react";
+import { CalendarPlus, CalendarRange, Check, CheckCheck, Inbox, Loader2, RefreshCw, X } from "lucide-react";
 import {
   DAILY_UPDATE_KINDS,
   DailyUpdate,
@@ -13,6 +13,8 @@ import {
 import DailyUpdateCard, { dayLabel, kindStyle } from "./DailyUpdateCard";
 import DailyCalendar from "./DailyCalendar";
 import GoogleAgendaEmbed from "./GoogleAgendaEmbed";
+import NewEventDialog from "./NewEventDialog";
+import AgendaHero from "./AgendaHero";
 
 /**
  * Aba "Atualizações" do painel: a caixa de entrada do dia.
@@ -61,6 +63,7 @@ export default function DailyUpdatesPanel() {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState<Set<string>>(() => new Set());
   const [toast, setToast] = useState<Toast | null>(null);
+  const [newEvent, setNewEvent] = useState(false);
   const today = todayKey();
   const [selectedDay, setSelectedDay] = useState(today);
   const [calendarMonth, setCalendarMonth] = useState(() => ({
@@ -106,7 +109,9 @@ export default function DailyUpdatesPanel() {
     setParams(next, { replace: true });
   };
 
-  const inbox = useMemo(() => updates.filter((update) => !update.read_at), [updates]);
+  // Itens com data futura (a prévia da agenda de amanhã) só entram na caixa
+  // de entrada quando o dia chega.
+  const inbox = useMemo(() => updates.filter((update) => !update.read_at && update.day <= today), [updates, today]);
   const kindsByDay = useMemo(() => {
     const map = new Map<string, string[]>();
     for (const update of updates) {
@@ -171,7 +176,9 @@ export default function DailyUpdatesPanel() {
   }
 
   const sectionTitle = "mb-2 text-[11px] font-semibold uppercase tracking-wider text-slate-400";
-  const kindItems = updates.filter((update) => update.kind === area);
+  const kindItems = updates.filter((update) => update.kind === area && update.day <= today);
+  const tomorrow = shiftDay(today, 1);
+  const agendaOf = (day: string) => updates.find((update) => update.kind === "agenda" && update.day === day);
   const dayItems = updates.filter((update) => update.day === selectedDay);
 
   return (
@@ -293,12 +300,23 @@ export default function DailyUpdatesPanel() {
 
       {area !== INBOX && area !== CALENDAR && !error && (
         <>
-          <div>
-            <h2 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">{kindLabel(area)}</h2>
-            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-              {DAILY_UPDATE_KINDS[area]?.description ?? "Tudo o que chegou desta série."}
-            </p>
+          <div className="flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <h2 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">{kindLabel(area)}</h2>
+              <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                {DAILY_UPDATE_KINDS[area]?.description ?? "Tudo o que chegou desta série."}
+              </p>
+            </div>
+            {area === "agenda" && (
+              <button type="button" className="ws-primary" onClick={() => setNewEvent(true)}>
+                <CalendarPlus size={16} /> Novo compromisso
+              </button>
+            )}
           </div>
+          {area === "agenda" && (
+            <AgendaHero today={today} tomorrow={tomorrow} todayUpdate={agendaOf(today)} tomorrowUpdate={agendaOf(tomorrow)} />
+          )}
+          {area === "agenda" && <h3 className={`${sectionTitle} !mb-0`}>Google Agenda ao vivo</h3>}
           {area === "agenda" && <GoogleAgendaEmbed />}
           {area === "agenda" && kindItems.length > 0 && <h3 className={`${sectionTitle} !mb-0`}>Resumos de cada manhã</h3>}
           {kindItems.length ? (
@@ -311,6 +329,16 @@ export default function DailyUpdatesPanel() {
             </EmptyState>
           )}
         </>
+      )}
+
+      {newEvent && (
+        <NewEventDialog
+          onClose={() => setNewEvent(false)}
+          onOpened={() => {
+            setNewEvent(false);
+            setToast({ message: "Abrimos o Google Agenda com o evento. Confirme lá em Salvar." });
+          }}
+        />
       )}
 
       {toast && (
