@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Política de privacidade | Pedro Henrique Almeida</title>
+  <meta name="description" content="Como o site de Pedro Henrique Almeida e o painel pessoal tratam dados, incluindo a conexão com o Google Agenda.">
+  <link rel="canonical" href="https://pedroazara.vercel.app/privacidade">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <script>try { document.documentElement.classList.toggle("dark", localStorage.getItem("portfolio_dark_mode_v1") === "true"); } catch (_) {}</script>
+  <style>
+    :root { --papel: #f8fafc; --cartao: #fff; --borda: #e2e8f0; --tinta: #252639; --suave: #475569; --acento: #4f46e5; }
+    html.dark { --papel: #020617; --cartao: #0f172a; --borda: #1e293b; --tinta: #edf0fb; --suave: #cbd5e1; --acento: #818cf8; }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--papel); color: var(--tinta); font: 1rem/1.7 Inter, ui-sans-serif, system-ui, sans-serif; }
+    main { max-width: 46rem; margin: 0 auto; padding: 3rem 1rem 4rem; }
+    .voltar { color: var(--acento); font-size: .875rem; font-weight: 600; text-decoration: none; }
+    article { margin-top: 1.5rem; padding: 2rem 1.5rem; background: var(--cartao); border: 1px solid var(--borda); border-radius: 1.75rem; }
+    h1 { margin: 0; font-size: 1.875rem; line-height: 1.2; }
+    h2 { margin: 2rem 0 .5rem; font-size: 1.125rem; }
+    p, li { color: var(--suave); }
+    ul { padding-left: 1.25rem; }
+    a { color: var(--acento); }
+    .data { margin: .5rem 0 0; font-size: .875rem; }
+    @media (min-width: 640px) { article { padding: 2.5rem; } }
+  </style>
+</head>
+<body>
+  <main>
+    <a class="voltar" href="/">← Voltar ao site</a>
+    <article>
+      <h1>Política de privacidade</h1>
+      <p class="data">Atualizada em 11 de outubro de 2026</p>
+
+      <p>Este site (<a href="https://pedroazara.vercel.app">pedroazara.vercel.app</a>) é o portfólio pessoal de Pedro Henrique
+        Almeida. Ele também tem um painel privado, o <strong>Painel</strong>, que só o dono do site usa para organizar a própria
+        rotina. Esta página explica quais dados passam pelo site e o que é feito com eles.</p>
+
+      <h2>Visitantes do site</h2>
+      <ul>
+        <li>Não há cadastro para visitantes e o site não usa cookies de publicidade.</li>
+        <li>Quando ativada, a contagem de visitas usa o Umami, que não usa cookies, não identifica pessoas e respeita o
+          "Não rastrear" do navegador.</li>
+        <li>Erros técnicos podem ser enviados ao Sentry sem nome, e-mail, endereço da página ou outros dados pessoais.</li>
+        <li>As preferências de idioma e de tema ficam guardadas só no seu navegador.</li>
+      </ul>
+
+      <h2>Conexão com o Google Agenda</h2>
+      <p>No Painel, o botão <strong>Conectar com Google</strong> pede permissão para ver e editar os eventos da agenda principal
+        da conta Google (escopo <code>calendar.events</code>). Com essa permissão, o Painel:</p>
+      <ul>
+        <li>lê os compromissos dos próximos 14 dias para mostrá-los na tela;</li>
+        <li>cria um compromisso novo na agenda quando o próprio usuário pede, pelo botão <strong>Novo compromisso</strong>.</li>
+      </ul>
+      <p>Os eventos lidos por essa conexão não são gravados em banco de dados: o servidor os busca no Google a cada consulta e os entrega direto ao
+        navegador. A autorização do Google fica cifrada num cookie do próprio navegador, que só o servidor do site consegue
+        abrir.</p>
+      <p>Os dados do Google não são vendidos, compartilhados com terceiros, usados para publicidade nem usados para treinar
+        modelos de inteligência artificial.</p>
+      <p>O uso e a transferência de informações recebidas das APIs do Google seguem a
+        <a href="https://developers.google.com/terms/api-services-user-data-policy" rel="noopener">Política de Dados do Usuário dos
+        Serviços de API do Google</a>, incluindo os requisitos de Uso Limitado.</p>
+
+      <h2>Como remover o acesso</h2>
+      <p>O botão <strong>Desconectar</strong> no Painel revoga a permissão no Google e apaga o cookie. Também é possível remover o
+        acesso a qualquer momento em <a href="https://myaccount.google.com/permissions" rel="noopener">myaccount.google.com/permissions</a>.</p>
+
+      <h2>Login no Painel</h2>
+      <p>O acesso ao Painel usa uma conta no Supabase, o serviço que guarda o conteúdo do site. Só o dono do site tem essa conta.</p>
+
+      <h2>Contato</h2>
+      <p>Dúvidas sobre esta política: <a href="mailto:pedrohenriquealmeida2004@gmail.com">pedrohenriquealmeida2004@gmail.com</a>.</p>
+    </article>
+  </main>
+</body>
+</html>

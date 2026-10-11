@@ -16,8 +16,9 @@ import HabitTracker from "../HabitTracker";
  * até o centro da tela com uma transição de layout. O hábito abre com o
  * cartão completo do acompanhamento de hábitos.
  *
- * Os compromissos vêm dos resumos que o agente publica de manhã (série
- * "agenda", um por dia). O Google Agenda ao vivo fica logo abaixo.
+ * Com o Google Agenda conectado, os compromissos vêm direto dele (ao vivo).
+ * Sem a conexão, vêm do resumo que o agente publica de manhã (série
+ * "agenda", um por dia).
  */
 
 const SPRING: Transition = { type: "spring", stiffness: 260, damping: 30, mass: 0.9 };
@@ -296,9 +297,25 @@ function TodayHabits({ onOpenHabits }: { onOpenHabits: () => void }) {
   );
 }
 
-function TodayCard({ day, update, onOpenHabits }: { day: string; update?: DailyUpdate; onOpenHabits: () => void }) {
+/** Compromissos do dia: os ao vivo, quando há, senão os do resumo da manhã. */
+function dayAgenda(update?: DailyUpdate, live?: AgendaEvent[]) {
+  const parsed = parseAgenda(update?.content ?? "");
+  return live ? { events: live, notes: "", known: true } : { ...parsed, known: Boolean(update) };
+}
+
+function TodayCard({
+  day,
+  update,
+  live,
+  onOpenHabits,
+}: {
+  day: string;
+  update?: DailyUpdate;
+  live?: AgendaEvent[];
+  onOpenHabits: () => void;
+}) {
   const now = useNow();
-  const { events, notes } = parseAgenda(update?.content ?? "");
+  const { events, notes, known } = dayAgenda(update, live);
 
   return (
     <section
@@ -315,7 +332,7 @@ function TodayCard({ day, update, onOpenHabits }: { day: string; update?: DailyU
           </div>
           <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1.5 text-xs font-semibold backdrop-blur">
             <CalendarCheck2 className="h-3.5 w-3.5" />
-            {update ? countLabel(events.length) : "Resumo a caminho"}
+            {known ? countLabel(events.length) : "Resumo a caminho"}
           </span>
         </div>
 
@@ -326,9 +343,9 @@ function TodayCard({ day, update, onOpenHabits }: { day: string; update?: DailyU
             <div className="flex items-center gap-3 rounded-2xl bg-white/10 p-5">
               <Sparkles className="h-6 w-6 shrink-0 text-white/80" />
               <p className="text-base leading-relaxed text-white/90">
-                {update
+                {known
                   ? "Nenhum compromisso na agenda. Dia livre para os seus projetos."
-                  : "Os compromissos de hoje chegam com o resumo da manhã. Enquanto isso, a agenda ao vivo está logo abaixo."}
+                  : "Os compromissos de hoje chegam com o resumo da manhã. Conecte o Google Agenda logo abaixo para vê-los na hora."}
               </p>
             </div>
           )}
@@ -343,8 +360,18 @@ function TodayCard({ day, update, onOpenHabits }: { day: string; update?: DailyU
   );
 }
 
-function TomorrowContent({ day, update, expanded }: { day: string; update?: DailyUpdate; expanded: boolean }) {
-  const { events, notes } = parseAgenda(update?.content ?? "");
+function TomorrowContent({
+  day,
+  update,
+  live,
+  expanded,
+}: {
+  day: string;
+  update?: DailyUpdate;
+  live?: AgendaEvent[];
+  expanded: boolean;
+}) {
+  const { events, notes, known } = dayAgenda(update, live);
   const shown = expanded ? events : events.slice(0, 4);
   return (
     <>
@@ -354,7 +381,7 @@ function TomorrowContent({ day, update, expanded }: { day: string; update?: Dail
       </h3>
       <span className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-indigo-50 px-2.5 py-1 text-xs font-semibold text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300">
         <CalendarCheck2 className="h-3.5 w-3.5" />
-        {update ? countLabel(events.length) : "Ainda sem resumo"}
+        {known ? countLabel(events.length) : "Ainda sem resumo"}
       </span>
       <div className="mt-4 w-full">
         {shown.length > 0 ? (
@@ -389,7 +416,7 @@ function TomorrowContent({ day, update, expanded }: { day: string; update?: Dail
           </ul>
         ) : (
           <p className="text-sm leading-relaxed text-slate-400">
-            {update ? "Nada marcado. Amanhã está livre." : "A prévia de amanhã chega junto com o resumo da manhã."}
+            {known ? "Nada marcado. Amanhã está livre." : "A prévia de amanhã chega junto com o resumo da manhã."}
           </p>
         )}
         {expanded && notes && <MarkdownRenderer content={notes} className="mt-4 space-y-2 text-sm text-slate-600 dark:text-slate-300" />}
@@ -403,12 +430,17 @@ export default function AgendaHero({
   tomorrow,
   todayUpdate,
   tomorrowUpdate,
+  liveToday,
+  liveTomorrow,
   onOpenHabits,
 }: {
   today: string;
   tomorrow: string;
   todayUpdate?: DailyUpdate;
   tomorrowUpdate?: DailyUpdate;
+  /** Compromissos ao vivo do Google Agenda, quando conectado. */
+  liveToday?: AgendaEvent[];
+  liveTomorrow?: AgendaEvent[];
   onOpenHabits: () => void;
 }) {
   const [open, setOpen] = useState(false);
@@ -417,7 +449,7 @@ export default function AgendaHero({
 
   return (
     <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
-      <TodayCard day={today} update={todayUpdate} onOpenHabits={onOpenHabits} />
+      <TodayCard day={today} update={todayUpdate} live={liveToday} onOpenHabits={onOpenHabits} />
 
       <motion.button
         type="button"
@@ -431,7 +463,7 @@ export default function AgendaHero({
         style={{ borderRadius: 28, visibility: open && layoutId ? "hidden" : "visible" }}
         className="group relative flex flex-col items-start overflow-hidden border border-slate-200 bg-white p-6 text-left shadow-sm transition-shadow hover:shadow-lg dark:border-slate-800 dark:bg-slate-900"
       >
-        <TomorrowContent day={tomorrow} update={tomorrowUpdate} expanded={false} />
+        <TomorrowContent day={tomorrow} update={tomorrowUpdate} live={liveTomorrow} expanded={false} />
         <span className="mt-6 flex w-full items-center justify-between text-xs font-semibold text-indigo-600 dark:text-indigo-300">
           Toque para ver o dia
           <Maximize2 className="h-4 w-4 transition group-hover:scale-110" />
@@ -442,7 +474,7 @@ export default function AgendaHero({
         <AnimatePresence>
           {open && (
             <Expanded layoutId={layoutId} label={`Amanhã, ${longDate(tomorrow)}`} onClose={() => setOpen(false)} className="max-w-2xl">
-              <TomorrowContent day={tomorrow} update={tomorrowUpdate} expanded />
+              <TomorrowContent day={tomorrow} update={tomorrowUpdate} live={liveTomorrow} expanded />
             </Expanded>
           )}
         </AnimatePresence>,
