@@ -22,10 +22,17 @@ O Google exige que o site tenha a própria "chave" de acesso. Ela é gratuita.
    clique em **Ativar**.
 3. Em **Google Auth Platform → Branding** (ou "Tela de consentimento OAuth"),
    clique em **Começar**: nome do app "Painel", seu e-mail de suporte,
-   público **Externo** e seu e-mail de contato.
+   público **Externo** e seu e-mail de contato. Depois, ainda em Branding,
+   preencha (não envie logo, que obriga a verificação do Google):
+   - **Página inicial do app**: `https://pedroazara.vercel.app`;
+   - **Política de Privacidade**: `https://pedroazara.vercel.app/privacidade`;
+   - **Termos de Serviço**: `https://pedroazara.vercel.app/termos`;
+   - **Domínios autorizados**: `pedroazara.vercel.app`.
 4. Em **Google Auth Platform → Público**, clique em **Publicar app** para ele
    ficar "Em produção". Em modo de teste, o Google derruba a conexão a cada 7
-   dias.
+   dias. Se ainda não der para publicar, adicione o seu e-mail em **Usuários
+   de teste**: funciona igual, só pede **Conectar com Google** de novo a cada
+   7 dias.
 5. Em **Google Auth Platform → Clientes**, clique em **Criar cliente**:
    - tipo: **Aplicativo da Web**;
    - **Origens JavaScript autorizadas**: `https://pedroazara.vercel.app`;
