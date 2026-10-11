@@ -67,6 +67,14 @@ export function Footer({ profile, language, buildDate }: FooterProps) {
           </div>
 
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1 justify-center md:justify-end">
+            {/* Páginas estáticas em public/, abertas fora do app (em português). */}
+            <a
+              href="/privacidade"
+              className="text-slate-600 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400 underline decoration-slate-300 dark:decoration-slate-700 transition-colors"
+            >
+              {isEn ? "Privacy" : "Privacidade"}
+            </a>
+            <span className="hidden sm:inline opacity-40">•</span>
             <a
               href="https://creativecommons.org/licenses/by/4.0/"
               target="_blank"
