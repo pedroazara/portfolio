@@ -22,6 +22,7 @@ import {
   ChevronRight,
   History,
   Sunrise,
+  Languages,
 } from "lucide-react";
 import TasksBoard from "../components/TasksBoard";
 import HabitTracker from "../components/HabitTracker";
@@ -36,6 +37,7 @@ import ProjectsPanel from "../components/admin/ProjectsPanel";
 import WorkspaceProjectsOverview from "../components/admin/WorkspaceProjectsOverview";
 import EditLogPanel from "../components/admin/EditLogPanel";
 import DailyUpdatesPanel from "../components/admin/DailyUpdatesPanel";
+import LanguagesPanel from "../components/admin/LanguagesPanel";
 import { AdminHubTab, ADMIN_HUB_TABS } from "../lib/adminHubTabs";
 import { createTask, createNote, createLink } from "../lib/adminToolsService";
 import { usePersonalWorkspace } from "../hooks/usePersonalWorkspace";
@@ -60,6 +62,11 @@ const TAB_META: Record<
     label: "Atualizações",
     description: "O que chega para você a cada manhã, começando pela dica de inglês.",
     icon: Sunrise,
+  },
+  idiomas: {
+    label: "Idiomas",
+    description: "Flashcards de alemão com revisão espaçada, novos toda manhã.",
+    icon: Languages,
   },
   projetos: {
     label: "Projetos",
@@ -475,6 +482,7 @@ export default function AdminHubPage({
                 {tab === "habitos" && <HabitTracker />}
                 {tab === "links" && <LinkVault requestedId={requestedId} />}
                 {tab === "atualizacoes" && <DailyUpdatesPanel />}
+                {tab === "idiomas" && <LanguagesPanel />}
                 {tab === "atividade" && <EditLogPanel />}
               </div>
             </>

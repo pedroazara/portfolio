@@ -1,8 +1,9 @@
 import { todayKey } from "../../src/lib/dailyUpdates";
+import { cardKey } from "../../src/lib/languageCards";
 
 /**
  * Regras do servidor "painel", sem rede: validação do que um agente publica
- * na aba Atualizações.
+ * nas abas Atualizações e Idiomas.
  */
 
 export const KIND_PATTERN = /^[a-z][a-z0-9-]{1,39}$/;
@@ -28,4 +29,37 @@ export function normalizeKind(kind: string): string {
     .replace(/^-+|-+$/g, "");
   if (!KIND_PATTERN.test(value)) throw new Error(`Série inválida: "${kind}". Use letras minúsculas, como "ingles".`);
   return value;
+}
+
+export interface NewLanguageCard {
+  front: string;
+  back: string;
+  example?: string;
+  notes?: string;
+}
+
+/**
+ * Limpa os cartões que um agente quer acrescentar ao baralho: tira espaços,
+ * descarta os sem frente e os repetidos entre si ou já presentes (`existing`,
+ * comparados sem diferenciar maiúsculas).
+ */
+export function prepareLanguageCards(
+  cards: NewLanguageCard[],
+  existing: Iterable<string>,
+): { fresh: { front: string; back: string; example: string | null; notes: string | null }[]; skipped: string[] } {
+  const seen = new Set([...existing].map(cardKey));
+  const fresh: { front: string; back: string; example: string | null; notes: string | null }[] = [];
+  const skipped: string[] = [];
+  for (const card of cards) {
+    const front = card.front.trim().replace(/\s+/g, " ");
+    if (!front) continue;
+    const key = cardKey(front);
+    if (seen.has(key)) {
+      skipped.push(front);
+      continue;
+    }
+    seen.add(key);
+    fresh.push({ front, back: card.back.trim(), example: card.example?.trim() || null, notes: card.notes?.trim() || null });
+  }
+  return { fresh, skipped };
 }

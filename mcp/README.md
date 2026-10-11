@@ -145,11 +145,17 @@ Abre uma página onde dá para chamar cada ferramenta à mão.
 | Ferramenta | Uso |
 | --- | --- |
 | `list_daily_updates` | Atualizações já publicadas, por série; serve para não repetir um tema recente |
-| `publish_daily_update` | Publica a atualização do dia de uma série (`ingles`, por exemplo). Uma por série e por dia: publicar de novo substitui |
+| `publish_daily_update` | Publica a atualização do dia de uma série (`ingles`, `alemao`...). Uma por série e por dia: publicar de novo substitui |
+| `list_language_cards` | Cartões do baralho da aba Idiomas, com repetições e erros; serve para não repetir e seguir uma progressão |
+| `add_language_cards` | Acrescenta cartões ao baralho (`lang: "de"` por padrão), para revisar a partir de hoje. Ignora os que já existem |
 
 As atualizações aparecem na aba **Atualizações** do painel
 (`/admin/painel/atualizacoes`), com selo de nova até você abrir a aba. Rode
 **uma vez** `supabase/daily_updates.sql` no SQL Editor para criar a tabela.
+
+Os cartões aparecem na aba **Idiomas** (`/admin/painel/idiomas`), com revisão
+espaçada, áudio pela voz do navegador e a marcação do Duolingo do dia. Rode
+**uma vez** `supabase/language_cards.sql` para criar as tabelas.
 
 Toda ferramenta do `portfolio-projects` e do `portfolio-media` que grava aceita `note`: uma frase do agente dizendo o que fez
 e por quê, que aparece no registro de edições.
