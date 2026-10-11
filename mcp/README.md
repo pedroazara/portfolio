@@ -145,10 +145,11 @@ Abre uma página onde dá para chamar cada ferramenta à mão.
 | Ferramenta | Uso |
 | --- | --- |
 | `list_daily_updates` | Atualizações já publicadas, por série; serve para não repetir um tema recente |
-| `publish_daily_update` | Publica a atualização do dia de uma série (`ingles`, por exemplo). Uma por série e por dia: publicar de novo substitui |
+| `publish_daily_update` | Publica a atualização do dia de uma série (`ingles` para a dica de inglês, `agenda` para o resumo do Google Agenda). Uma por série e por dia: publicar de novo substitui |
 
-As atualizações aparecem na aba **Atualizações** do painel
-(`/admin/painel/atualizacoes`), com selo de nova até você abrir a aba. Rode
+As atualizações chegam na **caixa de entrada** da aba Atualizações do painel
+(`/admin/painel/atualizacoes`). O OK guarda cada uma na área da série, e o
+calendário da aba mostra o que chegou em cada dia. Rode
 **uma vez** `supabase/daily_updates.sql` no SQL Editor para criar a tabela.
 
 Toda ferramenta do `portfolio-projects` e do `portfolio-media` que grava aceita `note`: uma frase do agente dizendo o que fez

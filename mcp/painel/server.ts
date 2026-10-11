@@ -28,7 +28,9 @@ Séries conhecidas: ${kinds}. Outras séries podem ser criadas com um nome curto
 Regras:
 - Antes de publicar, chame list_daily_updates da mesma série para não repetir um tema recente.
 - Uma atualização por série e por dia: publicar de novo no mesmo dia substitui a anterior.
-- O conteúdo é Markdown, em português, curto e direto. Na dica de inglês: título com a expressão em inglês, significado, dois ou três exemplos em itálico e uma observação de uso ou erro comum de brasileiros.`;
+- O conteúdo é Markdown, em português, curto e direto.
+- Dica de inglês (kind "ingles"): título com a expressão em inglês, significado, dois ou três exemplos em itálico e uma observação de uso ou erro comum de brasileiros.
+- Agenda (kind "agenda"): título "Agenda do dia" (ou "Dia livre" sem compromissos); no conteúdo, um item por evento com o horário em negrito (**09:00–10:00**), o nome e, se houver, o local ou o link da chamada. Eventos de dia inteiro primeiro. Horários no fuso de São Paulo.`;
 
 const server = new McpServer({ name: "portfolio-painel", version: "0.1.0" }, { instructions: INSTRUCTIONS });
 trackClient(server, "portfolio-painel");

@@ -1,82 +1,78 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Languages, Loader2, RefreshCw, Sparkles, Sunrise } from "lucide-react";
-import MarkdownRenderer from "../MarkdownRenderer";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
+import { CalendarRange, Check, CheckCheck, Inbox, Loader2, RefreshCw, X } from "lucide-react";
 import {
+  DAILY_UPDATE_KINDS,
   DailyUpdate,
   fetchDailyUpdates,
   kindLabel,
-  markDailyUpdatesRead,
+  setDailyUpdatesDone,
+  shiftDay,
   todayKey,
 } from "../../lib/dailyUpdatesService";
+import DailyUpdateCard, { dayLabel, kindStyle } from "./DailyUpdateCard";
+import DailyCalendar from "./DailyCalendar";
+import GoogleAgendaEmbed from "./GoogleAgendaEmbed";
 
 /**
- * Aba "Atualizações" do painel: tudo o que chega a cada manhã, numa linha do
- * tempo por dia. A primeira série é a dica de inglês, publicada por um agente
- * pelo servidor MCP `painel` (mcp/painel).
+ * Aba "Atualizações" do painel: a caixa de entrada do dia.
  *
- * Abrir a aba marca as novas como lidas; o selo "Nova" continua visível até
- * você sair, para não sumir no instante em que aparece.
+ * Tudo o que os agentes publicam de manhã (a dica de inglês, o resumo da
+ * agenda...) chega na caixa de entrada. O OK guarda o item na área da série;
+ * o calendário mostra o que teve em cada dia. A área Agenda também traz o
+ * Google Agenda ao vivo.
+ *
+ * A área aberta fica na URL (`?area=ingles`), para links e o botão voltar.
  */
 
-const KIND_ICON: Record<string, typeof Sparkles> = { ingles: Languages };
+const INBOX = "entrada";
+const CALENDAR = "calendario";
 
-function dayLabel(day: string): string {
-  // Meio-dia evita que o fuso puxe a data para o dia anterior.
-  return new Date(`${day}T12:00:00`).toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long" });
+interface Toast {
+  message: string;
+  undo?: string[];
 }
 
-function UpdateCard({ update, fresh, featured }: { update: DailyUpdate; fresh: boolean; featured?: boolean }) {
-  const Icon = KIND_ICON[update.kind] ?? Sparkles;
+function groupByDay(items: DailyUpdate[]): { day: string; items: DailyUpdate[] }[] {
+  const groups: { day: string; items: DailyUpdate[] }[] = [];
+  for (const item of items) {
+    if (groups[groups.length - 1]?.day !== item.day) groups.push({ day: item.day, items: [] });
+    groups[groups.length - 1].items.push(item);
+  }
+  return groups;
+}
+
+function EmptyState({ icon: Icon, title, children }: { icon: typeof Inbox; title: string; children: React.ReactNode }) {
   return (
-    <article
-      className={`rounded-2xl border bg-white shadow-sm dark:bg-slate-900 ${
-        featured ? "border-indigo-200 p-6 ring-4 ring-indigo-500/5 dark:border-indigo-900/70" : "border-slate-200 p-5 dark:border-slate-800"
-      }`}
-    >
-      <header className="flex items-start gap-3">
-        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 dark:bg-indigo-950/60 dark:text-indigo-300">
-          <Icon className="h-4 w-4" />
-        </span>
-        <div className="min-w-0 flex-1">
-          <span className="flex flex-wrap items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-            {kindLabel(update.kind)}
-            {fresh && (
-              <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold normal-case tracking-normal text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300">
-                Nova
-              </span>
-            )}
-          </span>
-          <h3 className={`mt-1 font-bold tracking-tight text-slate-900 dark:text-white ${featured ? "text-xl" : "text-base"}`}>{update.title}</h3>
-        </div>
-      </header>
-      {update.content.trim() && (
-        <MarkdownRenderer
-          content={update.content}
-          className={`mt-4 space-y-2 text-slate-600 dark:text-slate-300 ${featured ? "text-base" : "text-sm"}`}
-        />
-      )}
-    </article>
+    <div className="flex flex-col items-center rounded-2xl border border-dashed border-slate-200 bg-white/60 px-6 py-12 text-center dark:border-slate-800 dark:bg-slate-900/40">
+      <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-500 dark:bg-indigo-950/40">
+        <Icon className="h-6 w-6" strokeWidth={1.5} />
+      </div>
+      <h4 className="text-base font-bold text-slate-800 dark:text-white">{title}</h4>
+      <p className="mt-2 max-w-sm text-sm leading-relaxed text-slate-400">{children}</p>
+    </div>
   );
 }
 
 export default function DailyUpdatesPanel() {
+  const [params, setParams] = useSearchParams();
   const [updates, setUpdates] = useState<DailyUpdate[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [kind, setKind] = useState<string | null>(null);
-  // As que chegaram não lidas nesta visita: mantêm o selo "Nova" na tela.
-  const fresh = useRef(new Set<string>());
+  const [busy, setBusy] = useState<Set<string>>(() => new Set());
+  const [toast, setToast] = useState<Toast | null>(null);
+  const today = todayKey();
+  const [selectedDay, setSelectedDay] = useState(today);
+  const [calendarMonth, setCalendarMonth] = useState(() => ({
+    year: Number(today.slice(0, 4)),
+    month: Number(today.slice(5, 7)),
+  }));
 
   const load = useCallback(async () => {
     setLoading(true);
     setError("");
     try {
-      const list = await fetchDailyUpdates();
-      const unread = list.filter((update) => !update.read_at).map((update) => update.id);
-      unread.forEach((id) => fresh.current.add(id));
-      setUpdates(list);
-      // Falhar ao marcar como lida não deve esconder o conteúdo.
-      markDailyUpdatesRead(unread).catch(() => undefined);
+      setUpdates(await fetchDailyUpdates());
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     } finally {
@@ -88,21 +84,84 @@ export default function DailyUpdatesPanel() {
     void load();
   }, [load]);
 
-  const kinds = useMemo(() => [...new Set(updates.map((update) => update.kind))], [updates]);
-  const visible = useMemo(() => (kind ? updates.filter((update) => update.kind === kind) : updates), [updates, kind]);
-  const today = todayKey();
-  const todays = visible.filter((update) => update.day === today);
-  const earlier = useMemo(() => {
-    const groups: { day: string; items: DailyUpdate[] }[] = [];
-    for (const update of visible) {
-      if (update.day === today) continue;
-      if (groups[groups.length - 1]?.day !== update.day) groups.push({ day: update.day, items: [] });
-      groups[groups.length - 1].items.push(update);
-    }
-    return groups;
-  }, [visible, today]);
+  useEffect(() => {
+    if (!toast) return;
+    const id = setTimeout(() => setToast(null), 6000);
+    return () => clearTimeout(id);
+  }, [toast]);
 
-  if (loading && !updates.length) {
+  // Áreas: as séries conhecidas sempre (a Agenda tem o calendário ao vivo
+  // mesmo sem resumos) e qualquer outra que já tenha chegado.
+  const kinds = useMemo(() => {
+    const known = Object.keys(DAILY_UPDATE_KINDS);
+    const extra = [...new Set(updates.map((update) => update.kind))].filter((kind) => !known.includes(kind));
+    return [...known, ...extra];
+  }, [updates]);
+  const requested = params.get("area") ?? INBOX;
+  const area = requested === CALENDAR || kinds.includes(requested) ? requested : INBOX;
+  const openArea = (key: string) => {
+    const next = new URLSearchParams(params);
+    if (key === INBOX) next.delete("area");
+    else next.set("area", key);
+    setParams(next, { replace: true });
+  };
+
+  const inbox = useMemo(() => updates.filter((update) => !update.read_at), [updates]);
+  const kindsByDay = useMemo(() => {
+    const map = new Map<string, string[]>();
+    for (const update of updates) {
+      const list = map.get(update.day) ?? [];
+      if (!list.includes(update.kind)) list.push(update.kind);
+      map.set(update.day, list);
+    }
+    return map;
+  }, [updates]);
+
+  const setDone = async (ids: string[], done: boolean) => {
+    if (!ids.length) return;
+    const previous = updates;
+    const readAt = done ? new Date().toISOString() : null;
+    setBusy((current) => new Set([...current, ...ids]));
+    setUpdates((current) => current.map((update) => (ids.includes(update.id) ? { ...update, read_at: readAt } : update)));
+    try {
+      await setDailyUpdatesDone(ids, done);
+      if (!done) {
+        setToast({ message: ids.length === 1 ? "De volta à caixa de entrada." : `${ids.length} itens de volta à caixa de entrada.` });
+      } else if (ids.length === 1) {
+        const kind = previous.find((update) => update.id === ids[0])?.kind ?? "";
+        setToast({ message: `Guardada em ${kindLabel(kind)}.`, undo: ids });
+      } else {
+        setToast({ message: `${ids.length} itens guardados nas áreas.`, undo: ids });
+      }
+    } catch (err) {
+      setUpdates(previous);
+      setToast({ message: err instanceof Error ? err.message : String(err) });
+    } finally {
+      setBusy((current) => new Set([...current].filter((id) => !ids.includes(id))));
+    }
+  };
+
+  const card = (update: DailyUpdate, options: { featured?: boolean; showDay?: boolean } = {}) => (
+    <DailyUpdateCard
+      key={update.id}
+      update={update}
+      featured={options.featured}
+      showDay={options.showDay}
+      busy={busy.has(update.id)}
+      onDone={update.read_at ? undefined : () => void setDone([update.id], true)}
+    />
+  );
+
+  const relativeDay = (day: string) =>
+    day === today ? `Hoje · ${dayLabel(day)}` : day === shiftDay(today, -1) ? `Ontem · ${dayLabel(day)}` : dayLabel(day);
+
+  const tabs = [
+    { key: INBOX, label: "Caixa de entrada", icon: Inbox, count: inbox.length },
+    { key: CALENDAR, label: "Calendário", icon: CalendarRange, count: 0 },
+    ...kinds.map((kind) => ({ key: kind, label: kindLabel(kind), icon: kindStyle(kind).icon, count: 0 })),
+  ];
+
+  if (loading && !updates.length && !error) {
     return (
       <div className="flex items-center justify-center gap-2 py-24 text-sm text-slate-500">
         <Loader2 className="h-4 w-4 animate-spin" />
@@ -111,13 +170,39 @@ export default function DailyUpdatesPanel() {
     );
   }
 
+  const sectionTitle = "mb-2 text-[11px] font-semibold uppercase tracking-wider text-slate-400";
+  const kindItems = updates.filter((update) => update.kind === area);
+  const dayItems = updates.filter((update) => update.day === selectedDay);
+
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h2 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">Para começar o dia</h2>
-          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">O que chegou hoje e o histórico de cada série, do mais recente ao mais antigo.</p>
-        </div>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <nav className="flex flex-wrap gap-2" aria-label="Áreas das atualizações">
+          {tabs.map(({ key, label, icon: Icon, count }) => {
+            const active = area === key;
+            return (
+              <button
+                key={key}
+                type="button"
+                aria-current={active ? "page" : undefined}
+                onClick={() => openArea(key)}
+                className={`inline-flex items-center gap-2 rounded-full border px-3.5 py-2 text-sm font-semibold transition ${
+                  active
+                    ? "border-indigo-400 bg-indigo-50 text-indigo-700 dark:border-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300"
+                    : "border-slate-200 bg-white text-slate-500 hover:border-indigo-200 hover:text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400"
+                }`}
+              >
+                <Icon className="h-4 w-4" />
+                {label}
+                {count > 0 && (
+                  <span className="rounded-full bg-indigo-600 px-1.5 text-[11px] font-bold leading-5 text-white dark:bg-indigo-500">
+                    {count}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </nav>
         <button
           type="button"
           onClick={() => void load()}
@@ -135,59 +220,123 @@ export default function DailyUpdatesPanel() {
         </p>
       )}
 
-      {kinds.length > 1 && (
-        <div className="flex flex-wrap gap-2" role="group" aria-label="Filtrar por série">
-          {[null, ...kinds].map((key) => (
-            <button
-              key={key ?? "todas"}
-              type="button"
-              aria-pressed={kind === key}
-              onClick={() => setKind(key)}
-              className={`rounded-full border px-3.5 py-1.5 text-xs font-semibold transition ${
-                kind === key
-                  ? "border-indigo-400 bg-indigo-50 text-indigo-700 dark:border-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300"
-                  : "border-slate-200 bg-white text-slate-500 hover:border-indigo-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400"
-              }`}
-            >
-              {key ? kindLabel(key) : "Todas"}
-            </button>
-          ))}
+      {area === INBOX && !error && (
+        <>
+          <div className="flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <h2 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">Para começar o dia</h2>
+              <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                O que chegou para você. Dê OK e cada item vai para a área dele.
+              </p>
+            </div>
+            {inbox.length > 1 && (
+              <button
+                type="button"
+                onClick={() => void setDone(inbox.map((update) => update.id), true)}
+                className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-600 transition hover:border-indigo-300 hover:text-indigo-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"
+              >
+                <CheckCheck className="h-4 w-4" />
+                OK em tudo
+              </button>
+            )}
+          </div>
+          {inbox.length ? (
+            groupByDay(inbox).map((group) => (
+              <section key={group.day} aria-label={relativeDay(group.day)}>
+                <h3 className={sectionTitle}>{relativeDay(group.day)}</h3>
+                <div className="grid max-w-3xl gap-4">
+                  {group.items.map((update) => card(update, { featured: group.day === today }))}
+                </div>
+              </section>
+            ))
+          ) : (
+            <EmptyState icon={CheckCheck} title="Tudo em dia.">
+              Nada novo por aqui. O que você já deu OK está nas áreas de cada série e no calendário.
+            </EmptyState>
+          )}
+        </>
+      )}
+
+      {area === CALENDAR && !error && (
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,360px)_minmax(0,1fr)]">
+          <div>
+            <DailyCalendar
+              year={calendarMonth.year}
+              month={calendarMonth.month}
+              onMonthChange={(year, month) => setCalendarMonth({ year, month })}
+              selected={selectedDay}
+              onSelect={setSelectedDay}
+              today={today}
+              kindsByDay={kindsByDay}
+            />
+            <ul className="mt-3 flex flex-wrap gap-x-4 gap-y-1 px-1 text-xs text-slate-400">
+              {kinds.map((kind) => (
+                <li key={kind} className="flex items-center gap-1.5">
+                  <span className={`h-2 w-2 rounded-full ${kindStyle(kind).dot}`} />
+                  {kindLabel(kind)}
+                </li>
+              ))}
+            </ul>
+          </div>
+          <section aria-label={dayLabel(selectedDay)} className="min-w-0">
+            <h3 className={sectionTitle}>{relativeDay(selectedDay)}</h3>
+            {dayItems.length ? (
+              <div className="grid max-w-3xl gap-4">{dayItems.map((update) => card(update))}</div>
+            ) : (
+              <EmptyState icon={CalendarRange} title="Nada registrado neste dia.">
+                Os dias com pontos no calendário têm atualizações.
+              </EmptyState>
+            )}
+          </section>
         </div>
       )}
 
-      {!error && (
-        <section aria-label="Hoje">
-          <h3 className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-slate-400">Hoje · {dayLabel(today)}</h3>
-          {todays.length ? (
-            <div className="grid max-w-3xl gap-4">
-              {todays.map((update) => (
-                <UpdateCard key={update.id} update={update} fresh={fresh.current.has(update.id)} featured />
-              ))}
-            </div>
+      {area !== INBOX && area !== CALENDAR && !error && (
+        <>
+          <div>
+            <h2 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">{kindLabel(area)}</h2>
+            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+              {DAILY_UPDATE_KINDS[area]?.description ?? "Tudo o que chegou desta série."}
+            </p>
+          </div>
+          {area === "agenda" && <GoogleAgendaEmbed />}
+          {area === "agenda" && kindItems.length > 0 && <h3 className={`${sectionTitle} !mb-0`}>Resumos de cada manhã</h3>}
+          {kindItems.length ? (
+            <div className="grid max-w-3xl gap-4">{kindItems.map((update) => card(update, { showDay: true }))}</div>
           ) : (
-            <div className="flex flex-col items-center rounded-2xl border border-dashed border-slate-200 bg-white/60 px-6 py-12 text-center dark:border-slate-800 dark:bg-slate-900/40">
-              <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-500 dark:bg-indigo-950/40">
-                <Sunrise className="h-6 w-6" strokeWidth={1.5} />
-              </div>
-              <h4 className="text-base font-bold text-slate-800 dark:text-white">Nada chegou hoje ainda.</h4>
-              <p className="mt-2 max-w-sm text-sm leading-relaxed text-slate-400">
-                As atualizações da manhã aparecem aqui assim que forem publicadas.
-              </p>
-            </div>
+            <EmptyState icon={kindStyle(area).icon} title="Nada guardado ainda.">
+              {area === "agenda"
+                ? "O resumo da sua agenda chega na caixa de entrada toda manhã e, depois do OK, fica guardado aqui."
+                : "Quando chegar a primeira, ela aparece na caixa de entrada e, depois do OK, fica guardada aqui."}
+            </EmptyState>
           )}
-        </section>
+        </>
       )}
 
-      {earlier.map((group) => (
-        <section key={group.day} aria-label={dayLabel(group.day)}>
-          <h3 className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-slate-400">{dayLabel(group.day)}</h3>
-          <div className="grid max-w-3xl gap-3">
-            {group.items.map((update) => (
-              <UpdateCard key={update.id} update={update} fresh={fresh.current.has(update.id)} />
-            ))}
-          </div>
-        </section>
-      ))}
+      {toast && (
+        <div role="status" className="ws-toast">
+          <Check size={18} />
+          <span>{toast.message}</span>
+          {toast.undo && (
+            <span>
+              <button
+                type="button"
+                onClick={() => {
+                  const ids = toast.undo ?? [];
+                  setToast(null);
+                  void setDone(ids, false);
+                }}
+                className="rounded-lg px-2 py-1 text-sm font-semibold text-indigo-600 hover:bg-indigo-50 dark:text-indigo-300 dark:hover:bg-indigo-950/40"
+              >
+                Desfazer
+              </button>
+            </span>
+          )}
+          <button type="button" aria-label="Fechar aviso" onClick={() => setToast(null)}>
+            <X size={15} />
+          </button>
+        </div>
+      )}
     </div>
   );
 }

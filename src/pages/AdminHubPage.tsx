@@ -42,7 +42,7 @@ import { usePersonalWorkspace } from "../hooks/usePersonalWorkspace";
 import { useWorkspaceProjects } from "../hooks/useWorkspaceProjects";
 import { isDevPreview } from "../lib/devPreview";
 import { useLocalePath } from "../lib/routes";
-import { useUnreadDailyUpdates } from "../hooks/useUnreadDailyUpdates";
+import { useInboxDailyUpdates } from "../hooks/useInboxDailyUpdates";
 import type { Project } from "../types";
 import "./personal-workspace.css";
 
@@ -58,7 +58,7 @@ const TAB_META: Record<
   },
   atualizacoes: {
     label: "Atualizações",
-    description: "O que chega para você a cada manhã, começando pela dica de inglês.",
+    description: "Sua caixa de entrada do dia: a agenda, a dica de inglês e o que mais chegar.",
     icon: Sunrise,
   },
   projetos: {
@@ -126,7 +126,7 @@ export default function AdminHubPage({
   const localePath = useLocalePath();
   const { data, loading, error, refresh } = usePersonalWorkspace();
   const projectState = useWorkspaceProjects();
-  const unreadUpdates = useUnreadDailyUpdates();
+  const inboxUpdates = useInboxDailyUpdates();
   const [captureType, setCaptureType] = useState<CaptureType | null>(null);
   const [commandsOpen, setCommandsOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -217,7 +217,7 @@ export default function AdminHubPage({
     return () => clearTimeout(id);
   }, [toast]);
   const counts: Partial<Record<AdminHubTab, number>> = {
-    atualizacoes: unreadUpdates,
+    atualizacoes: inboxUpdates,
     projetos: projectState.projects.filter(
       (project) => project.status !== "completed",
     ).length,

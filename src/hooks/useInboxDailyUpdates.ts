@@ -1,14 +1,14 @@
 import { useEffect, useState } from "react";
-import { countUnreadDailyUpdates, DAILY_UPDATES_CHANGED_EVENT } from "../lib/dailyUpdatesService";
+import { countInboxDailyUpdates, DAILY_UPDATES_CHANGED_EVENT } from "../lib/dailyUpdatesService";
 
-/** Número de atualizações diárias não lidas, para o contador da aba. */
-export function useUnreadDailyUpdates(): number {
+/** Quantas atualizações estão na caixa de entrada, para o contador da aba. */
+export function useInboxDailyUpdates(): number {
   const [count, setCount] = useState(0);
 
   useEffect(() => {
     let active = true;
     const refresh = () => {
-      countUnreadDailyUpdates().then((value) => {
+      countInboxDailyUpdates().then((value) => {
         if (active) setCount(value);
       }, () => undefined);
     };
