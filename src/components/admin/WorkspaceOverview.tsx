@@ -7,7 +7,6 @@ import {
   Circle,
   CheckCheck,
   Flame,
-  StickyNote,
   Bookmark,
   PenLine,
   ListTodo,
@@ -25,8 +24,8 @@ interface Props {
   loading: boolean;
   error: string;
   name: string;
-  go: (tab: AdminHubTab, id?: string) => void;
-  capture: (type: "task" | "note" | "link") => void;
+  go: (tab: AdminHubTab, id?: string, area?: string) => void;
+  capture: (type: "task" | "link") => void;
   refresh: () => Promise<void>;
   projectsOverview?: React.ReactNode;
 }
@@ -74,17 +73,8 @@ export default function WorkspaceOverview({
       setBusy((current) => current.filter((key) => key !== id));
     }
   };
-  const recent = [
-    ...data.notes.map((item) => ({
-      id: item.id,
-      title: item.title || "Nota sem título",
-      content: item.content,
-      date: item.updated_at,
-      tab: "notas" as const,
-      label: "Nota",
-      icon: StickyNote,
-    })),
-    ...data.drafts.map((item) => ({
+  const recent = data.drafts
+    .map((item) => ({
       id: item.id,
       title: item.title || "Rascunho sem título",
       content: item.content,
@@ -92,8 +82,7 @@ export default function WorkspaceOverview({
       tab: "rascunhos" as const,
       label: "Rascunho",
       icon: PenLine,
-    })),
-  ]
+    }))
     .sort((a, b) => b.date.localeCompare(a.date))
     .slice(0, 3);
   const week = Array.from({ length: 7 }, (_, i) => {
@@ -174,15 +163,16 @@ export default function WorkspaceOverview({
                 ? "Tudo em dia. Bom trabalho!"
                 : "Consistência se constrói",
             icon: Flame,
-            tab: "habitos" as const,
+            tab: "meu-espaco" as const,
+            area: "habitos",
             tone: "orange",
           },
           {
-            label: "Ideias guardadas",
-            value: data.notes.length,
-            caption: `${data.drafts.length} rascunhos em construção`,
-            icon: StickyNote,
-            tab: "notas" as const,
+            label: "Rascunhos",
+            value: data.drafts.length,
+            caption: "Ideias ganhando forma",
+            icon: PenLine,
+            tab: "rascunhos" as const,
             tone: "blue",
           },
           {
@@ -193,11 +183,11 @@ export default function WorkspaceOverview({
             tab: "links" as const,
             tone: "green",
           },
-        ].map(({ label, value, caption, icon: Icon, tab, tone }) => (
+        ].map(({ label, value, caption, icon: Icon, tab, area, tone }) => (
           <button
             type="button"
             className="ws-stat"
-            onClick={() => go(tab)}
+            onClick={() => go(tab, undefined, area)}
             key={tab}
           >
             <span className={`ws-stat-icon ${tone}`}>
@@ -315,8 +305,8 @@ export default function WorkspaceOverview({
               <button
                 type="button"
                 className="ws-icon-button"
-                aria-label="Capturar ideia"
-                onClick={() => capture("note")}
+                aria-label="Novo rascunho"
+                onClick={() => go("rascunhos")}
               >
                 <Plus size={18} />
               </button>
@@ -354,7 +344,7 @@ export default function WorkspaceOverview({
               <button
                 type="button"
                 className="ws-capture-prompt"
-                onClick={() => capture("note")}
+                onClick={() => go("rascunhos")}
               >
                 <span className="ws-capture-icon">
                   <PenLine size={22} strokeWidth={1.5} />
@@ -370,10 +360,10 @@ export default function WorkspaceOverview({
             )}
           </section>
           <div className="ws-shortcuts">
-            <button type="button" onClick={() => capture("note")}>
-              <StickyNote size={17} />
-              <span>Capturar uma ideia</span>
-              <kbd>N</kbd>
+            <button type="button" onClick={() => go("rascunhos")}>
+              <PenLine size={17} />
+              <span>Escrever um rascunho</span>
+              <ArrowUpRight size={15} />
             </button>
             <button type="button" onClick={() => capture("link")}>
               <Bookmark size={17} />
@@ -456,7 +446,7 @@ export default function WorkspaceOverview({
             <button
               type="button"
               className="ws-habit-link"
-              onClick={() => go("habitos")}
+              onClick={() => go("meu-espaco", undefined, "habitos")}
             >
               {data.habits.length
                 ? "Acompanhar meus hábitos"

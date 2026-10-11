@@ -56,7 +56,12 @@ const dateLabel = new Intl.DateTimeFormat("pt-BR", {
   month: "long",
 });
 
-export default function HabitTracker() {
+/**
+ * Com `focusHabitId`, mostra só o cartão daquele hábito, com tudo o que ele
+ * tem aqui (dias, sequência, desempenho do mês), como quando é aberto a
+ * partir do card de hoje em Meu espaço.
+ */
+export default function HabitTracker({ focusHabitId }: { focusHabitId?: string } = {}) {
   const [habits, setHabits] = useState<AdminHabit[]>([]);
   const [logs, setLogs] = useState<AdminHabitLog[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -197,6 +202,7 @@ export default function HabitTracker() {
     }
   };
 
+  const shown = focusHabitId ? habits.filter((habit) => habit.id === focusHabitId) : habits;
   const todayDone = habits.filter((habit) =>
     markedByHabit.get(habit.id)?.has(today),
   ).length;
@@ -233,6 +239,8 @@ export default function HabitTracker() {
 
   return (
     <div className="space-y-6">
+      {!focusHabitId && (
+      <>
       <div className="grid gap-3 sm:grid-cols-3">
         <div className="relative overflow-hidden rounded-2xl border border-violet-200/60 bg-violet-50/70 p-5 dark:border-violet-500/20 dark:bg-violet-500/10">
           <div className="flex items-center justify-between text-xs font-medium text-violet-700 dark:text-violet-300">
@@ -322,6 +330,8 @@ export default function HabitTracker() {
           {isCreating ? "Criando..." : "Criar hábito"}
         </button>
       </form>
+      </>
+      )}
 
       {error && (
         <div
@@ -340,7 +350,9 @@ export default function HabitTracker() {
         </div>
       )}
 
-      {habits.length === 0 ? (
+      {focusHabitId && shown.length === 0 ? (
+        <p className="text-sm text-slate-500 dark:text-slate-400">Este hábito não existe mais.</p>
+      ) : habits.length === 0 ? (
         <div className="flex flex-col items-center rounded-2xl border border-dashed border-slate-200 bg-white px-6 py-16 text-center dark:border-slate-700 dark:bg-slate-900/60">
           <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-violet-50 text-violet-500 dark:bg-violet-500/10">
             <Sprout className="h-8 w-8" />
@@ -386,8 +398,8 @@ export default function HabitTracker() {
               ))}
             </div>
           </div>
-          <div className="grid gap-4 xl:grid-cols-2">
-            {habits.map((habit) => {
+          <div className={`grid gap-4 ${focusHabitId ? "" : "xl:grid-cols-2"}`}>
+            {shown.map((habit) => {
               const marked = markedByHabit.get(habit.id) ?? new Set<string>();
               const start = habitStart(habit);
               const streak = streakOf(marked, today);
@@ -528,7 +540,7 @@ export default function HabitTracker() {
               {dateLabel.format(new Date(`${today}T12:00:00`))}
             </span>
           </div>
-          {todayDone === habits.length && habits.length > 0 && (
+          {!focusHabitId && todayDone === habits.length && habits.length > 0 && (
             <p
               aria-live="polite"
               className="rounded-xl bg-emerald-50 px-4 py-3 text-center text-sm font-medium text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300"

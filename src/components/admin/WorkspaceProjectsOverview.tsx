@@ -82,7 +82,7 @@ export default function WorkspaceProjectsOverview({
                 : "O que você quer tirar do papel?"}
             </h3>
             <p>
-              Defina um objetivo e reúna as tarefas, notas e referências para
+              Defina um objetivo e reúna as tarefas e referências para
               chegar lá.
             </p>
           </div>

@@ -10,12 +10,12 @@ import { normalizeKind, resolveDay } from "./painelOps";
 
 /**
  * Servidor MCP "portfolio-painel": publica as atualizações diárias que
- * aparecem na aba Atualizações do painel pessoal (tabela admin_daily_updates,
+ * aparecem na aba Meu espaço do painel pessoal (tabela admin_daily_updates,
  * supabase/daily_updates.sql). Roda localmente, falando com o cliente por stdio.
  */
 
 const TABLE = "admin_daily_updates";
-const PANEL_URL = `${SITE_URL}/admin/painel/atualizacoes`;
+const PANEL_URL = `${SITE_URL}/admin/painel/meu-espaco`;
 const kinds = Object.entries(DAILY_UPDATE_KINDS)
   .map(([key, { label, description }]) => `"${key}" (${label}: ${description})`)
   .join("; ");
@@ -28,7 +28,10 @@ Séries conhecidas: ${kinds}. Outras séries podem ser criadas com um nome curto
 Regras:
 - Antes de publicar, chame list_daily_updates da mesma série para não repetir um tema recente.
 - Uma atualização por série e por dia: publicar de novo no mesmo dia substitui a anterior.
-- O conteúdo é Markdown, em português, curto e direto. Na dica de inglês: título com a expressão em inglês, significado, dois ou três exemplos em itálico e uma observação de uso ou erro comum de brasileiros.`;
+- O conteúdo é Markdown, em português, curto e direto.
+- Dica de inglês (kind "ingles"): título com a expressão em inglês, significado, dois ou três exemplos em itálico e uma observação de uso ou erro comum de brasileiros.
+- Agenda (kind "agenda"): título "Agenda do dia" (ou "Dia livre" sem compromissos); no conteúdo, uma linha por evento no formato \`- **09:00–10:00** · Nome · Local\` (local ou link da chamada só se houver; \`**Dia inteiro**\` para eventos sem horário, que vêm primeiro). Horários no fuso de São Paulo. O painel lê esse formato para montar os cards de hoje e de amanhã.
+- Publique a agenda de hoje normalmente e a de amanhã (day = amanhã) com quiet: true. Atualizações ao longo do dia também usam quiet: true, para não devolver o item à caixa de entrada.`;
 
 const server = new McpServer({ name: "portfolio-painel", version: "0.1.0" }, { instructions: INSTRUCTIONS });
 trackClient(server, "portfolio-painel");
@@ -71,24 +74,29 @@ server.registerTool(
   {
     title: "Publicar atualização diária",
     description:
-      "Publica (ou substitui) a atualização de uma série num dia. Aparece na aba Atualizações do painel, marcada como nova.",
+      "Publica (ou substitui) a atualização de uma série num dia. Aparece na caixa de entrada de Meu espaço, no painel, marcada como nova.",
     inputSchema: {
       kind: z.string().min(1).describe('Série, ex.: "ingles".'),
       title: z.string().min(1).max(200).describe("Título curto. Na dica de inglês, a própria expressão."),
       content: z.string().max(8000).describe("Corpo em Markdown."),
       day: z.string().optional().describe("Dia AAAA-MM-DD. Padrão: hoje no fuso de São Paulo."),
+      quiet: z
+        .boolean()
+        .optional()
+        .describe("true atualiza o conteúdo sem devolver o item à caixa de entrada (prévias de amanhã e atualizações ao longo do dia)."),
       dryRun: z.boolean().optional().describe("true mostra o que seria gravado, sem gravar."),
     },
     annotations: { idempotentHint: true },
   },
-  async ({ kind, title, content, day, dryRun = false }) => {
+  async ({ kind, title, content, day, quiet = false, dryRun = false }) => {
     const row = {
       kind: normalizeKind(kind),
       day: resolveDay(day),
       title: title.trim(),
       content: content.trim(),
       source: agentLabel(),
-      read_at: null,
+      // Sem read_at no upsert, um item que já existia mantém o OK que tinha.
+      ...(quiet ? {} : { read_at: null }),
       updated_at: new Date().toISOString(),
     };
     if (dryRun) return reply({ status: "simulação — nada foi gravado", update: row, panel: PANEL_URL });
