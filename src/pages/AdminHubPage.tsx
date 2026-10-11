@@ -4,7 +4,6 @@ import {
   LayoutDashboard,
   FolderKanban,
   KanbanSquare,
-  Flame,
   StickyNote,
   Bookmark,
   PenLine,
@@ -24,7 +23,6 @@ import {
   Sunrise,
 } from "lucide-react";
 import TasksBoard from "../components/TasksBoard";
-import HabitTracker from "../components/HabitTracker";
 import QuickNotes from "../components/QuickNotes";
 import LinkVault from "../components/LinkVault";
 import DraftsPanel from "../components/DraftsPanel";
@@ -51,15 +49,15 @@ const TAB_META: Record<
   AdminHubTab,
   { label: string; description: string; icon: typeof KanbanSquare }
 > = {
+  "meu-espaco": {
+    label: "Meu espaço",
+    description: "Sua caixa de entrada, agenda e hábitos do dia, num lugar só.",
+    icon: Sunrise,
+  },
   "visao-geral": {
     label: "Visão geral",
     description: "Um novo olhar para o seu dia.",
     icon: LayoutDashboard,
-  },
-  atualizacoes: {
-    label: "Atualizações",
-    description: "Sua caixa de entrada do dia: a agenda, a dica de inglês e o que mais chegar.",
-    icon: Sunrise,
   },
   projetos: {
     label: "Projetos",
@@ -70,11 +68,6 @@ const TAB_META: Record<
     label: "Tarefas",
     description: "Da primeira ideia à próxima conquista.",
     icon: KanbanSquare,
-  },
-  habitos: {
-    label: "Hábitos",
-    description: "Pequenas ações. Um caminho consistente.",
-    icon: Flame,
   },
   notas: {
     label: "Notas",
@@ -155,9 +148,12 @@ export default function AdminHubPage({
     localePath(
       key === "visao-geral" ? "/admin/painel" : `/admin/painel/${key}`,
     );
-  const go = (key: AdminHubTab, id?: string) => {
+  const go = (key: AdminHubTab, id?: string, area?: string) => {
     setCommandsOpen(false);
-    navigate(`${path(key)}${id ? `?item=${encodeURIComponent(id)}` : ""}`);
+    const query = new URLSearchParams();
+    if (area) query.set("area", area);
+    if (id) query.set("item", id);
+    navigate(`${path(key)}${query.size ? `?${query}` : ""}`);
   };
   const openCapture = (type: CaptureType) => {
     setCommandsOpen(false);
@@ -217,7 +213,7 @@ export default function AdminHubPage({
     return () => clearTimeout(id);
   }, [toast]);
   const counts: Partial<Record<AdminHubTab, number>> = {
-    atualizacoes: inboxUpdates,
+    "meu-espaco": inboxUpdates,
     projetos: projectState.projects.filter(
       (project) => project.status !== "completed",
     ).length,
@@ -292,7 +288,7 @@ export default function AdminHubPage({
         >
           <PortfolioBrand compact subtitle="Painel pessoal" />
         </Link>
-        <div className="ws-sidebar-label">MEU ESPAÇO</div>
+        <div className="ws-sidebar-label">ÁREAS</div>
         <nav className="ws-nav" aria-label="Navegação do painel">
           {ADMIN_HUB_TABS.map((key) => {
             const { label, icon: Icon } = TAB_META[key];
@@ -472,9 +468,8 @@ export default function AdminHubPage({
                   />
                 )}
                 {tab === "tarefas" && <TasksBoard requestedId={requestedId} />}
-                {tab === "habitos" && <HabitTracker />}
                 {tab === "links" && <LinkVault requestedId={requestedId} />}
-                {tab === "atualizacoes" && <DailyUpdatesPanel />}
+                {tab === "meu-espaco" && <DailyUpdatesPanel />}
                 {tab === "atividade" && <EditLogPanel />}
               </div>
             </>

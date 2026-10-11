@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { CalendarPlus, CalendarRange, Check, CheckCheck, Inbox, Loader2, RefreshCw, X } from "lucide-react";
+import { CalendarPlus, CalendarRange, Check, CheckCheck, Flame, Inbox, Loader2, RefreshCw, X } from "lucide-react";
 import {
   DAILY_UPDATE_KINDS,
   DailyUpdate,
@@ -15,19 +15,23 @@ import DailyCalendar from "./DailyCalendar";
 import GoogleAgendaEmbed from "./GoogleAgendaEmbed";
 import NewEventDialog from "./NewEventDialog";
 import AgendaHero from "./AgendaHero";
+import HabitTracker from "../HabitTracker";
 
 /**
- * Aba "Atualizações" do painel: a caixa de entrada do dia.
+ * Aba "Meu espaço" do painel: a caixa de entrada, a agenda e os hábitos do dia.
  *
  * Tudo o que os agentes publicam de manhã (a dica de inglês, o resumo da
  * agenda...) chega na caixa de entrada. O OK guarda o item na área da série;
- * o calendário mostra o que teve em cada dia. A área Agenda também traz o
- * Google Agenda ao vivo.
+ * o calendário mostra o que teve em cada dia. A Agenda abre com o card de hoje
+ * (compromissos e hábitos) e traz o Google Agenda ao vivo; Hábitos é o
+ * acompanhamento completo.
  *
  * A área aberta fica na URL (`?area=ingles`), para links e o botão voltar.
  */
 
 const INBOX = "entrada";
+const AGENDA = "agenda";
+const HABITS = "habitos";
 const CALENDAR = "calendario";
 
 interface Toast {
@@ -101,7 +105,7 @@ export default function DailyUpdatesPanel() {
     return [...known, ...extra];
   }, [updates]);
   const requested = params.get("area") ?? INBOX;
-  const area = requested === CALENDAR || kinds.includes(requested) ? requested : INBOX;
+  const area = requested === CALENDAR || requested === HABITS || kinds.includes(requested) ? requested : INBOX;
   const openArea = (key: string) => {
     const next = new URLSearchParams(params);
     if (key === INBOX) next.delete("area");
@@ -134,7 +138,8 @@ export default function DailyUpdatesPanel() {
         setToast({ message: ids.length === 1 ? "De volta à caixa de entrada." : `${ids.length} itens de volta à caixa de entrada.` });
       } else if (ids.length === 1) {
         const kind = previous.find((update) => update.id === ids[0])?.kind ?? "";
-        setToast({ message: `Guardada em ${kindLabel(kind)}.`, undo: ids });
+        // A agenda do dia já aparece no card de hoje; depois do OK ela fica no calendário.
+        setToast({ message: kind === AGENDA ? "Guardada no calendário." : `Guardada em ${kindLabel(kind)}.`, undo: ids });
       } else {
         setToast({ message: `${ids.length} itens guardados nas áreas.`, undo: ids });
       }
@@ -162,15 +167,19 @@ export default function DailyUpdatesPanel() {
 
   const tabs = [
     { key: INBOX, label: "Caixa de entrada", icon: Inbox, count: inbox.length },
+    { key: AGENDA, label: kindLabel(AGENDA), icon: kindStyle(AGENDA).icon, count: 0 },
+    { key: HABITS, label: "Hábitos", icon: Flame, count: 0 },
     { key: CALENDAR, label: "Calendário", icon: CalendarRange, count: 0 },
-    ...kinds.map((kind) => ({ key: kind, label: kindLabel(kind), icon: kindStyle(kind).icon, count: 0 })),
+    ...kinds
+      .filter((kind) => kind !== AGENDA)
+      .map((kind) => ({ key: kind, label: kindLabel(kind), icon: kindStyle(kind).icon, count: 0 })),
   ];
 
   if (loading && !updates.length && !error) {
     return (
       <div className="flex items-center justify-center gap-2 py-24 text-sm text-slate-500">
         <Loader2 className="h-4 w-4 animate-spin" />
-        Carregando as atualizações…
+        Carregando o seu espaço…
       </div>
     );
   }
@@ -184,7 +193,7 @@ export default function DailyUpdatesPanel() {
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <nav className="flex flex-wrap gap-2" aria-label="Áreas das atualizações">
+        <nav className="flex flex-wrap gap-2" aria-label="Áreas de Meu espaço">
           {tabs.map(({ key, label, icon: Icon, count }) => {
             const active = area === key;
             return (
@@ -298,34 +307,52 @@ export default function DailyUpdatesPanel() {
         </div>
       )}
 
-      {area !== INBOX && area !== CALENDAR && !error && (
+      {area === AGENDA && !error && (
         <>
           <div className="flex flex-wrap items-end justify-between gap-3">
             <div>
-              <h2 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">{kindLabel(area)}</h2>
-              <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                {DAILY_UPDATE_KINDS[area]?.description ?? "Tudo o que chegou desta série."}
-              </p>
+              <h2 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">{kindLabel(AGENDA)}</h2>
+              <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Seus compromissos e hábitos de hoje, e o que vem amanhã.</p>
             </div>
-            {area === "agenda" && (
-              <button type="button" className="ws-primary" onClick={() => setNewEvent(true)}>
-                <CalendarPlus size={16} /> Novo compromisso
-              </button>
-            )}
+            <button type="button" className="ws-primary" onClick={() => setNewEvent(true)}>
+              <CalendarPlus size={16} /> Novo compromisso
+            </button>
           </div>
-          {area === "agenda" && (
-            <AgendaHero today={today} tomorrow={tomorrow} todayUpdate={agendaOf(today)} tomorrowUpdate={agendaOf(tomorrow)} />
-          )}
-          {area === "agenda" && <h3 className={`${sectionTitle} !mb-0`}>Google Agenda ao vivo</h3>}
-          {area === "agenda" && <GoogleAgendaEmbed />}
-          {area === "agenda" && kindItems.length > 0 && <h3 className={`${sectionTitle} !mb-0`}>Resumos de cada manhã</h3>}
+          <AgendaHero
+            today={today}
+            tomorrow={tomorrow}
+            todayUpdate={agendaOf(today)}
+            tomorrowUpdate={agendaOf(tomorrow)}
+            onOpenHabits={() => openArea(HABITS)}
+          />
+          <h3 className={`${sectionTitle} !mb-0`}>Google Agenda ao vivo</h3>
+          <GoogleAgendaEmbed />
+        </>
+      )}
+
+      {area === HABITS && (
+        <>
+          <div>
+            <h2 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">Hábitos</h2>
+            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Pequenas ações. Um caminho consistente.</p>
+          </div>
+          <HabitTracker />
+        </>
+      )}
+
+      {area !== INBOX && area !== AGENDA && area !== HABITS && area !== CALENDAR && !error && (
+        <>
+          <div>
+            <h2 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">{kindLabel(area)}</h2>
+            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+              {DAILY_UPDATE_KINDS[area]?.description ?? "Tudo o que chegou desta série."}
+            </p>
+          </div>
           {kindItems.length ? (
             <div className="grid max-w-3xl gap-4">{kindItems.map((update) => card(update, { showDay: true }))}</div>
           ) : (
             <EmptyState icon={kindStyle(area).icon} title="Nada guardado ainda.">
-              {area === "agenda"
-                ? "O resumo da sua agenda chega na caixa de entrada toda manhã e, depois do OK, fica guardado aqui."
-                : "Quando chegar a primeira, ela aparece na caixa de entrada e, depois do OK, fica guardada aqui."}
+              Quando chegar a primeira, ela aparece na caixa de entrada e, depois do OK, fica guardada aqui.
             </EmptyState>
           )}
         </>

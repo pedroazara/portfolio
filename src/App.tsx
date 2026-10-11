@@ -51,7 +51,7 @@ import { SITE_DESCRIPTION } from "./lib/siteMeta";
 const PostEditorPage = lazy(() => import("./pages/PostEditorPage"));
 const ProjectEditorPage = lazy(() => import("./pages/ProjectEditorPage"));
 const AdminHubPage = lazy(() => import("./pages/AdminHubPage"));
-import { AdminHubTab, ADMIN_HUB_TABS } from "./lib/adminHubTabs";
+import { AdminHubTab, ADMIN_HUB_TABS, LEGACY_ADMIN_HUB_TABS } from "./lib/adminHubTabs";
 const PostPage = lazy(() => import("./pages/PostPage"));
 const ProjectPage = lazy(() => import("./pages/ProjectPage"));
 
@@ -276,9 +276,17 @@ export default function App() {
   const postEditorMatch = routePath.match(/^\/admin\/posts\/(.+)$/);
   const projectEditorMatch = routePath.match(/^\/admin\/projetos\/(.+)$/);
   const adminHubMatch = routePath.match(/^\/admin\/painel(?:\/([^/]+))?\/?$/);
+  const legacyHubTab = adminHubMatch?.[1] ? LEGACY_ADMIN_HUB_TABS[adminHubMatch[1]] : undefined;
   const adminHubTab: AdminHubTab = ADMIN_HUB_TABS.includes(adminHubMatch?.[1] as AdminHubTab)
     ? (adminHubMatch![1] as AdminHubTab)
-    : "visao-geral";
+    : legacyHubTab?.tab ?? "visao-geral";
+  // Endereços antigos do painel (/admin/painel/habitos...) vão para o novo.
+  useEffect(() => {
+    if (!legacyHubTab) return;
+    const query = new URLSearchParams(location.search);
+    if (legacyHubTab.area) query.set("area", legacyHubTab.area);
+    navigate(`${localePath(`/admin/painel/${legacyHubTab.tab}`, language)}${query.size ? `?${query}` : ""}`, { replace: true });
+  }, [legacyHubTab, location.search, language, navigate]);
   const hasPersonalWorkspace = Boolean(adminHubMatch && (isAuthenticated || devPreview));
   const isEditorRoute = Boolean(postEditorMatch || projectEditorMatch || adminHubMatch);
   const isElevatorPitchRoute = !isEditorRoute && /^\/elevator-pitch\/?$/.test(routePath);

@@ -10,12 +10,12 @@ import { normalizeKind, resolveDay } from "./painelOps";
 
 /**
  * Servidor MCP "portfolio-painel": publica as atualizações diárias que
- * aparecem na aba Atualizações do painel pessoal (tabela admin_daily_updates,
+ * aparecem na aba Meu espaço do painel pessoal (tabela admin_daily_updates,
  * supabase/daily_updates.sql). Roda localmente, falando com o cliente por stdio.
  */
 
 const TABLE = "admin_daily_updates";
-const PANEL_URL = `${SITE_URL}/admin/painel/atualizacoes`;
+const PANEL_URL = `${SITE_URL}/admin/painel/meu-espaco`;
 const kinds = Object.entries(DAILY_UPDATE_KINDS)
   .map(([key, { label, description }]) => `"${key}" (${label}: ${description})`)
   .join("; ");
@@ -74,7 +74,7 @@ server.registerTool(
   {
     title: "Publicar atualização diária",
     description:
-      "Publica (ou substitui) a atualização de uma série num dia. Aparece na aba Atualizações do painel, marcada como nova.",
+      "Publica (ou substitui) a atualização de uma série num dia. Aparece na caixa de entrada de Meu espaço, no painel, marcada como nova.",
     inputSchema: {
       kind: z.string().min(1).describe('Série, ex.: "ingles".'),
       title: z.string().min(1).max(200).describe("Título curto. Na dica de inglês, a própria expressão."),

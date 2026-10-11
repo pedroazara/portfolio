@@ -25,7 +25,7 @@ interface Props {
   loading: boolean;
   error: string;
   name: string;
-  go: (tab: AdminHubTab, id?: string) => void;
+  go: (tab: AdminHubTab, id?: string, area?: string) => void;
   capture: (type: "task" | "note" | "link") => void;
   refresh: () => Promise<void>;
   projectsOverview?: React.ReactNode;
@@ -174,7 +174,8 @@ export default function WorkspaceOverview({
                 ? "Tudo em dia. Bom trabalho!"
                 : "Consistência se constrói",
             icon: Flame,
-            tab: "habitos" as const,
+            tab: "meu-espaco" as const,
+            area: "habitos",
             tone: "orange",
           },
           {
@@ -193,11 +194,11 @@ export default function WorkspaceOverview({
             tab: "links" as const,
             tone: "green",
           },
-        ].map(({ label, value, caption, icon: Icon, tab, tone }) => (
+        ].map(({ label, value, caption, icon: Icon, tab, area, tone }) => (
           <button
             type="button"
             className="ws-stat"
-            onClick={() => go(tab)}
+            onClick={() => go(tab, undefined, area)}
             key={tab}
           >
             <span className={`ws-stat-icon ${tone}`}>
@@ -456,7 +457,7 @@ export default function WorkspaceOverview({
             <button
               type="button"
               className="ws-habit-link"
-              onClick={() => go("habitos")}
+              onClick={() => go("meu-espaco", undefined, "habitos")}
             >
               {data.habits.length
                 ? "Acompanhar meus hábitos"

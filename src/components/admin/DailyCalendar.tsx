@@ -4,7 +4,7 @@ import { monthGrid } from "../../lib/dailyUpdatesService";
 import { kindStyle } from "./DailyUpdateCard";
 
 /**
- * Calendário do mês na aba Atualizações: cada dia mostra um ponto por série
+ * Calendário do mês em Meu espaço: cada dia mostra um ponto por série
  * que chegou nele, e clicar abre o que teve naquele dia.
  */
 

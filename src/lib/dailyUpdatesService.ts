@@ -54,7 +54,8 @@ function previewList(): DailyUpdate[] {
       "Agenda do dia",
       "- **Dia inteiro** · Entrega do relatório de óptica\n" +
         "- **09:00–10:00** · Reunião do grupo de pesquisa · Google Meet\n" +
-        "- **14:30–15:30** · Revisão do projeto do telescópio · Lab 2",
+        "- **14:30–15:30** · Revisão do projeto do telescópio · Lab 2\n" +
+        "- **18:30** · Academia",
       false,
     ),
     sample(

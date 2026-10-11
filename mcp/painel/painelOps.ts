@@ -2,7 +2,7 @@ import { todayKey } from "../../src/lib/dailyUpdates";
 
 /**
  * Regras do servidor "painel", sem rede: validação do que um agente publica
- * na aba Atualizações.
+ * na aba Meu espaço.
  */
 
 export const KIND_PATTERN = /^[a-z][a-z0-9-]{1,39}$/;
