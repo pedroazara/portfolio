@@ -90,6 +90,17 @@ function previewList(): DailyUpdate[] {
         "- *I'm currently working on a telescope project.*",
       false,
     ),
+    sample(
+      "previa-alemao-1",
+      0,
+      "alemao",
+      "Guten Morgen!",
+      "**Significado:** bom dia!\n\n" +
+        "- *Guten Morgen, Anna!* (Bom dia, Anna!)\n" +
+        "- *Guten Tag* (boa tarde / olá, mais formal)\n\n" +
+        "> Em alemão, todo substantivo começa com letra maiúscula: *der Morgen*, *der Tag*.",
+      false,
+    ),
     sample("previa-3", 2, "ingles", "Look forward to", "**Significado:** aguardar com expectativa.\n\n- *I'm looking forward to the weekend.*", true),
     sample("previa-4", 4, "ingles", "Make vs. do", "*Make* para criar ou produzir; *do* para tarefas e atividades.\n\n- *make a decision*, *do homework*", true),
     sample("previa-5", 9, "ingles", "Pretend ≠ pretender", "*Pretend* é **fingir**. Para **pretender**, use *intend* ou *plan to*.", true),

@@ -1,5 +1,5 @@
 import React from "react";
-import { CalendarDays, Check, Inbox, Languages, Sparkles } from "lucide-react";
+import { BookA, CalendarDays, Check, Inbox, Languages, Sparkles } from "lucide-react";
 import MarkdownRenderer from "../MarkdownRenderer";
 import { DailyUpdate, kindLabel } from "../../lib/dailyUpdatesService";
 
@@ -14,6 +14,11 @@ export const KIND_STYLE: Record<string, { icon: typeof Sparkles; badge: string; 
     icon: Languages,
     badge: "bg-indigo-50 text-indigo-600 dark:bg-indigo-950/60 dark:text-indigo-300",
     dot: "bg-indigo-500",
+  },
+  alemao: {
+    icon: BookA,
+    badge: "bg-amber-50 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300",
+    dot: "bg-amber-500",
   },
 };
 const DEFAULT_STYLE = {

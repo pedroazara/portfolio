@@ -28,6 +28,7 @@ export interface DailyUpdate {
 export const DAILY_UPDATE_KINDS: Record<string, { label: string; description: string }> = {
   agenda: { label: "Agenda", description: "Seus compromissos do dia, tirados do Google Agenda." },
   ingles: { label: "Inglês", description: "Uma expressão, palavra ou ponto de gramática por dia." },
+  alemao: { label: "Alemão", description: "Uma dica bem básica de alemão (nível A1) por dia." },
 };
 
 export function kindLabel(kind: string): string {
