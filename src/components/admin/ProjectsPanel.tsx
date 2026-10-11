@@ -14,7 +14,6 @@ import {
   Pencil,
   Plus,
   Search,
-  StickyNote,
   Target,
   Trash2,
   Unlink,
@@ -54,21 +53,20 @@ interface Props {
   portfolioLoading?: boolean;
   portfolioError?: boolean;
   requestedPortfolioId?: string | null;
-  onOpenItem: (tab: "tarefas" | "notas" | "links", id: string) => void;
+  onOpenItem: (tab: "tarefas" | "links", id: string) => void;
   onSelectProject?: (id: string | null) => void;
 }
 type Status = AdminWorkspaceProject["status"];
-type ReferenceKind = "tasks" | "notes" | "links";
+type ReferenceKind = "tasks" | "links";
 const statuses: { value: Status; label: string }[] = [
   { value: "active", label: "Em andamento" },
   { value: "planned", label: "Planejado" },
   { value: "paused", label: "Em pausa" },
   { value: "completed", label: "Concluído" },
 ];
-const referenceLabels = { tasks: "tarefas", notes: "notas", links: "links" };
+const referenceLabels = { tasks: "tarefas", links: "links" };
 const referenceFields = {
   tasks: "task_ids",
-  notes: "note_ids",
   links: "link_ids",
 } as const;
 const initialForm = {
@@ -257,9 +255,6 @@ export default function ProjectsPanel({
   const tasks = selected ? projectTasks(selected, workspace.tasks) : [];
   const next = selected ? nextAction(selected, tasks) : undefined;
   const completed = tasks.filter((task) => task.status === "done").length;
-  const notes = selected
-    ? workspace.notes.filter((note) => selected.note_ids.includes(note.id))
-    : [];
   const links = selected
     ? workspace.links.filter((link) => selected.link_ids.includes(link.id))
     : [];
@@ -556,7 +551,7 @@ export default function ProjectsPanel({
         setDeleteTarget(null);
         closeDetail();
         setNotice(
-          "Projeto excluído. As tarefas, notas e links foram preservados.",
+          "Projeto excluído. As tarefas e os links foram preservados.",
         );
       },
       setDeleteError,
@@ -574,17 +569,11 @@ export default function ProjectsPanel({
                 ? "Em andamento"
                 : "A fazer",
         }))
-      : picker === "notes"
-        ? workspace.notes.map((item) => ({
-            id: item.id,
-            title: item.title || "Nota sem título",
-            description: item.content.slice(0, 100),
-          }))
-        : workspace.links.map((item) => ({
-            id: item.id,
-            title: item.title || item.url,
-            description: item.url,
-          }));
+      : workspace.links.map((item) => ({
+          id: item.id,
+          title: item.title || item.url,
+          description: item.url,
+        }));
   const visiblePickerItems = pickerItems.filter((item) =>
     `${item.title} ${item.description}`
       .toLocaleLowerCase("pt-BR")
@@ -903,60 +892,6 @@ export default function ProjectsPanel({
               </section>
             </div>
             <div className="wp-references-column">
-              <section className="wp-section" aria-label="Notas do projeto">
-                <div className="wp-section-heading">
-                  <h3>
-                    <StickyNote size={16} /> Notas{" "}
-                    <span>{!workspaceUnavailable && notes.length}</span>
-                  </h3>
-                  <button
-                    type="button"
-                    className="wp-text-button"
-                    disabled={Boolean(busy) || workspaceUnavailable}
-                    onClick={() => openPicker("notes")}
-                  >
-                    <Plus size={14} /> Vincular
-                  </button>
-                </div>
-                {workspaceUnavailable ? (
-                  <p className="wp-section-empty">
-                    {workspaceLoading ? "Carregando…" : "Notas indisponíveis."}
-                  </p>
-                ) : notes.length ? (
-                  <ul className="wp-reference-list">
-                    {notes.map((note) => (
-                      <li key={note.id}>
-                        <button
-                          type="button"
-                          className="wp-reference-open"
-                          onClick={() => onOpenItem("notas", note.id)}
-                        >
-                          <strong>{note.title || "Nota sem título"}</strong>
-                          <span>
-                            {note.content
-                              .replace(/[#*`>]/g, "")
-                              .slice(0, 100) || "Abrir nota"}
-                          </span>
-                        </button>
-                        <button
-                          type="button"
-                          className="ws-icon-button wp-unlink"
-                          title="Desvincular do projeto"
-                          aria-label={`Desvincular nota ${note.title || "sem título"}`}
-                          disabled={Boolean(busy)}
-                          onClick={() => void unlink("notes", note.id)}
-                        >
-                          <Unlink size={14} />
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p className="wp-section-empty">
-                    Reúna decisões e ideias que ajudam este projeto.
-                  </p>
-                )}
-              </section>
               <section className="wp-section" aria-label="Links do projeto">
                 <div className="wp-section-heading">
                   <h3>
@@ -1705,7 +1640,7 @@ export default function ProjectsPanel({
             <p className="wp-delete-description">
               O acompanhamento <strong>{deleteTarget.title}</strong>, seu
               checklist, suas etapas e seu diário serão excluídos. O projeto no
-              portfólio e as tarefas, notas e links originais continuarão
+              portfólio e as tarefas e os links originais continuarão
               salvos; apenas os vínculos com este acompanhamento serão
               removidos.
             </p>

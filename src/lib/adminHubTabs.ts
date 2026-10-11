@@ -3,7 +3,7 @@
  *
  * O App precisa da lista para ler a rota (`/admin/painel/tarefas`), mas a
  * página do painel é carregada sob demanda — importar a constante de dentro
- * dela traria junto quadro de tarefas, hábitos, notas, links e rascunhos para
+ * dela traria junto quadro de tarefas, hábitos, links e rascunhos para
  * o pacote inicial, desfazendo a separação.
  */
 export type AdminHubTab =
@@ -11,7 +11,6 @@ export type AdminHubTab =
   | "visao-geral"
   | "projetos"
   | "tarefas"
-  | "notas"
   | "links"
   | "rascunhos"
   | "atividade";
@@ -21,7 +20,6 @@ export const ADMIN_HUB_TABS: AdminHubTab[] = [
   "visao-geral",
   "projetos",
   "tarefas",
-  "notas",
   "links",
   "rascunhos",
   "atividade",

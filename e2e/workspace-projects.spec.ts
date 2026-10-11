@@ -231,29 +231,18 @@ test("linking, unlinking and deleting a project preserve the original notes, lin
 }) => {
   await seed(page);
   await openProject(page);
-  const notes = page.getByRole("region", {
-    name: "Notas do projeto",
-    exact: true,
-  });
-  await notes.getByRole("button", { name: "Vincular", exact: true }).click();
-  let picker = page.getByRole("dialog", {
-    name: "Vincular notas",
-    exact: true,
-  });
-  await picker
-    .getByRole("searchbox", { name: "Buscar notas para vincular", exact: true })
-    .fill("Hipótese");
-  await picker.getByRole("checkbox", { name: /Hipótese de trabalho/ }).check();
-  await picker
-    .getByRole("button", { name: "Salvar vínculos", exact: true })
-    .click();
-  await expect(notes).toContainText("Hipótese de trabalho");
+  await expect(
+    page.getByRole("region", { name: "Notas do projeto", exact: true }),
+  ).toHaveCount(0);
   const links = page.getByRole("region", {
     name: "Links do projeto",
     exact: true,
   });
   await links.getByRole("button", { name: "Vincular", exact: true }).click();
-  picker = page.getByRole("dialog", { name: "Vincular links", exact: true });
+  const picker = page.getByRole("dialog", { name: "Vincular links", exact: true });
+  await picker
+    .getByRole("searchbox", { name: "Buscar links para vincular", exact: true })
+    .fill("sensor");
   await picker.getByRole("checkbox", { name: /Manual do sensor/ }).check();
   await picker
     .getByRole("button", { name: "Salvar vínculos", exact: true })
@@ -265,20 +254,13 @@ test("linking, unlinking and deleting a project preserve the original notes, lin
       exact: true,
     }),
   ).toHaveAttribute("href", "https://example.com/sensor");
-  await notes.getByRole("button", { name: /^Hipótese de trabalho/ }).click();
-  await expect(
-    page.getByRole("textbox", { name: "Título da nota", exact: true }),
-  ).toHaveValue("Hipótese de trabalho");
-  await openProject(page);
   await page
     .getByRole("button", {
-      name: "Desvincular nota Hipótese de trabalho",
+      name: "Desvincular link Manual do sensor",
       exact: true,
     })
     .click();
-  await expect(
-    notes.getByRole("button", { name: /^Hipótese de trabalho/ }),
-  ).toHaveCount(0);
+  await expect(links).not.toContainText("Manual do sensor");
   await page
     .getByRole("button", {
       name: "Excluir projeto Bancada de espectroscopia",
@@ -457,26 +439,26 @@ for (const width of [320, 390]) {
         fullPage: true,
       });
       await page
-        .getByRole("region", { name: "Notas do projeto", exact: true })
+        .getByRole("region", { name: "Links do projeto", exact: true })
         .getByRole("button", { name: "Vincular", exact: true })
         .click();
       const dialog = page.getByRole("dialog", {
-        name: "Vincular notas",
+        name: "Vincular links",
         exact: true,
       });
       const box = await dialog.boundingBox();
       expect(box!.x).toBeGreaterThanOrEqual(0);
       expect(box!.x + box!.width).toBeLessThanOrEqual(width);
       await dialog
-        .getByRole("checkbox", { name: /Hipótese de trabalho/ })
+        .getByRole("checkbox", { name: /Manual do sensor/ })
         .check();
       await dialog
         .getByRole("button", { name: "Salvar vínculos", exact: true })
         .click();
       await expect(dialog).not.toBeVisible();
       await expect(
-        page.getByRole("region", { name: "Notas do projeto", exact: true }),
-      ).toContainText("Hipótese de trabalho");
+        page.getByRole("region", { name: "Links do projeto", exact: true }),
+      ).toContainText("Manual do sensor");
       expect(
         await page.evaluate(
           () => document.documentElement.scrollWidth <= innerWidth,

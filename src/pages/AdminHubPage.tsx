@@ -4,7 +4,6 @@ import {
   LayoutDashboard,
   FolderKanban,
   KanbanSquare,
-  StickyNote,
   Bookmark,
   PenLine,
   Search,
@@ -23,7 +22,6 @@ import {
   Sunrise,
 } from "lucide-react";
 import TasksBoard from "../components/TasksBoard";
-import QuickNotes from "../components/QuickNotes";
 import LinkVault from "../components/LinkVault";
 import DraftsPanel from "../components/DraftsPanel";
 import PortfolioBrand from "../components/PortfolioBrand";
@@ -35,7 +33,7 @@ import WorkspaceProjectsOverview from "../components/admin/WorkspaceProjectsOver
 import EditLogPanel from "../components/admin/EditLogPanel";
 import DailyUpdatesPanel from "../components/admin/DailyUpdatesPanel";
 import { AdminHubTab, ADMIN_HUB_TABS } from "../lib/adminHubTabs";
-import { createTask, createNote, createLink } from "../lib/adminToolsService";
+import { createTask, createLink } from "../lib/adminToolsService";
 import { usePersonalWorkspace } from "../hooks/usePersonalWorkspace";
 import { useWorkspaceProjects } from "../hooks/useWorkspaceProjects";
 import { isDevPreview } from "../lib/devPreview";
@@ -69,11 +67,6 @@ const TAB_META: Record<
     description: "Da primeira ideia à próxima conquista.",
     icon: KanbanSquare,
   },
-  notas: {
-    label: "Notas",
-    description: "Um lugar para pensar, conectar e lembrar.",
-    icon: StickyNote,
-  },
   links: {
     label: "Links",
     description: "Seu universo de referências, sempre por perto.",
@@ -90,7 +83,7 @@ const TAB_META: Record<
     icon: History,
   },
 };
-type CaptureType = "task" | "note" | "link";
+type CaptureType = "task" | "link";
 interface Props {
   tab: AdminHubTab;
   portfolioProjects: Project[];
@@ -187,21 +180,6 @@ export default function AdminHubPage({
         event.preventDefault();
         setCommandsOpen((current) => !current);
         setQuery("");
-        return;
-      }
-      const target = event.target as HTMLElement;
-      if (
-        target.closest(
-          'input, textarea, select, [contenteditable="true"], [role="dialog"]',
-        ) ||
-        event.ctrlKey ||
-        event.metaKey ||
-        event.altKey
-      )
-        return;
-      if (event.key.toLowerCase() === "n") {
-        event.preventDefault();
-        openCapture("note");
       }
     };
     document.addEventListener("keydown", key);
@@ -218,7 +196,6 @@ export default function AdminHubPage({
       (project) => project.status !== "completed",
     ).length,
     tarefas: data.tasks.filter((task) => task.status !== "done").length,
-    notas: data.notes.length,
     links: data.links.length,
     rascunhos: data.drafts.length,
   };
@@ -242,10 +219,10 @@ export default function AdminHubPage({
       action: () => openCapture("task"),
     },
     {
-      label: "Capturar uma ideia",
-      caption: "Salve uma nota rápida",
+      label: "Escrever um rascunho",
+      caption: "Dê forma a uma ideia nos rascunhos",
       icon: PenLine,
-      action: () => openCapture("note"),
+      action: () => go("rascunhos"),
     },
     {
       label: "Salvar uma referência",
@@ -318,9 +295,9 @@ export default function AdminHubPage({
             <span>
               <OrbitaIcon size={18} /> IDEIAS EM MOVIMENTO
             </span>
-            <p>Seu próximo grande projeto pode começar com uma pequena nota.</p>
-            <button type="button" onClick={() => openCapture("note")}>
-              Registrar uma ideia <ArrowUpRight size={15} />
+            <p>Seu próximo grande projeto pode começar com um rascunho.</p>
+            <button type="button" onClick={() => go("rascunhos")}>
+              Escrever um rascunho <ArrowUpRight size={15} />
             </button>
           </div>
           <div className="ws-profile">
@@ -436,7 +413,7 @@ export default function AdminHubPage({
               )}
               <div
                 className={
-                  tab === "notas" || tab === "rascunhos" || tab === "projetos"
+                  tab === "rascunhos" || tab === "projetos"
                     ? ""
                     : "ws-tool-panel"
                 }
@@ -474,11 +451,6 @@ export default function AdminHubPage({
               </div>
             </>
           )}
-          {(visitedEditors.has("notas") || tab === "notas") && (
-            <div hidden={tab !== "notas"} className="ws-tool-panel">
-              <QuickNotes requestedId={tab === "notas" ? requestedId : null} />
-            </div>
-          )}
           {(visitedEditors.has("rascunhos") || tab === "rascunhos") && (
             <div hidden={tab !== "rascunhos"} className="ws-tool-panel">
               <DraftsPanel
@@ -508,9 +480,7 @@ export default function AdminHubPage({
             setToast(
               type === "task"
                 ? "Tarefa salva. Seu próximo passo está no quadro."
-                : type === "note"
-                  ? "Ideia salva nas suas notas."
-                  : "Referência salva na biblioteca.",
+                : "Referência salva na biblioteca.",
             );
           }}
         />
@@ -543,7 +513,7 @@ export default function AdminHubPage({
             ))}
             {!commands.length && (
               <p className="ws-empty-description">
-                Nenhum atalho encontrado. Tente “nota” ou “tarefa”.
+                Nenhum atalho encontrado. Tente “tarefa” ou “link”.
               </p>
             )}
           </div>
@@ -623,13 +593,11 @@ function QuickCapture({
               title: title.trim(),
               notes: content.trim() || null,
             })
-          : type === "note"
-            ? await createNote({ title: title.trim(), content: content.trim() })
-            : await createLink({
-                title: title.trim(),
-                url: normalizedUrl,
-                notes: content.trim() || null,
-              });
+          : await createLink({
+              title: title.trim(),
+              url: normalizedUrl,
+              notes: content.trim() || null,
+            });
       window.dispatchEvent(
         new CustomEvent("admin-workspace-entry-created", {
           detail: { type, item },
@@ -658,7 +626,6 @@ function QuickCapture({
           {(
             [
               { value: "task", label: "Tarefa", icon: KanbanSquare },
-              { value: "note", label: "Nota", icon: StickyNote },
               { value: "link", label: "Link", icon: Bookmark },
             ] as const
           ).map((item) => (
@@ -689,9 +656,7 @@ function QuickCapture({
           placeholder={
             type === "task"
               ? "Qual é o próximo passo?"
-              : type === "note"
-                ? "Uma ideia que vale guardar…"
-                : "Como se chama essa referência?"
+              : "Como se chama essa referência?"
           }
         />
         {type === "link" && (
@@ -709,7 +674,7 @@ function QuickCapture({
           </>
         )}
         <label htmlFor="capture-content">
-          {type === "note" ? "Sua ideia" : "Detalhes"}
+          Detalhes
           <span>opcional</span>
         </label>
         <textarea
@@ -738,9 +703,7 @@ function QuickCapture({
               ? "Salvando…"
               : type === "task"
                 ? "Salvar tarefa"
-                : type === "note"
-                  ? "Salvar nota"
-                  : "Salvar referência"}
+                : "Salvar referência"}
             {!saving && <ArrowRight size={16} />}
           </button>
         </div>

@@ -47,7 +47,7 @@ test("unauthenticated visitors cannot access the private workspace and its pages
   await expect(page.getByRole("button", { name: "Nova entrada", exact: true })).toHaveCount(0);
   await expect(page.getByRole("region", { name: "Temporizador de foco", exact: true })).toHaveCount(0);
   expect(await page.evaluate(key => localStorage.getItem(key), workspaceKey)).toBeNull();
-  await page.goto("/admin/painel/notas");
+  await page.goto("/admin/painel/meu-espaco");
   await expect(page.getByRole("heading", { name: "Entre para editar", exact: true })).toBeVisible();
   await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", "noindex, nofollow");
 });
@@ -96,9 +96,9 @@ test("command palette filters actions, contains keyboard focus, and validates ca
   expect(await page.evaluate(key => JSON.parse(localStorage.getItem(key)!).links.length, workspaceKey)).toBe(1);
 });
 
-test("quick capture persists tasks and notes, and completing a task updates the overview", async ({ page }) => {
+test("quick capture persists tasks, and completing a task updates the overview", async ({ page }) => {
   await openWorkspace(page);
-  for (const name of ["Visão geral", "Tarefas", "Hábitos", "Notas", "Links", "Rascunhos"]) {
+  for (const name of ["Meu espaço", "Visão geral", "Tarefas", "Links", "Rascunhos"]) {
     await expect(page.getByRole("link", { name, exact: true })).toBeVisible();
   }
   await expect(page.getByText("Grandes ideias começam pequenas.", { exact: true })).toBeVisible();
@@ -115,13 +115,11 @@ test("quick capture persists tasks and notes, and completing a task updates the 
   await expect(capture).toBeFocused();
 
   await capture.click();
-  await dialog.getByRole("button", { name: "Nota", exact: true }).click();
-  await dialog.getByRole("textbox", { name: "Título", exact: true }).fill("Uma ideia para o portfólio");
-  await dialog.getByRole("button", { name: "Salvar nota", exact: true }).click();
+  await expect(dialog.getByRole("button", { name: "Link", exact: true })).toBeVisible();
+  await expect(dialog.getByRole("button", { name: "Nota", exact: true })).toHaveCount(0);
+  await page.keyboard.press("Escape");
   await expect(dialog).not.toBeVisible();
-  await expect(page.getByRole("heading", { name: "Uma ideia para o portfólio", exact: true })).toBeVisible();
   await page.reload();
-  await expect(page.getByRole("heading", { name: "Uma ideia para o portfólio", exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Concluir Planejar minha próxima entrega", exact: true }).click();
   await expect(page.getByText("Espaço livre para o próximo passo.", { exact: true })).toBeVisible();
   await expect.poll(() => page.evaluate(key => JSON.parse(localStorage.getItem(key)!).tasks[0].status, workspaceKey)).toBe("done");
@@ -199,17 +197,14 @@ test("populated desktop overview reflects saved records in both themes", async (
       { habit_id: "habit-1", log_date: "2026-10-05" }, { habit_id: "habit-1", log_date: "2026-10-06" },
       { habit_id: "habit-1", log_date: "2026-10-07" }, { habit_id: "habit-2", log_date: "2026-10-07" },
     ],
-    notes: [
-      { id: "note-1", title: "Ideias para o próximo projeto", content: "Conectar ciência, design e experiências que despertam curiosidade.", created_at: timestamp, updated_at: timestamp },
-      { id: "note-2", title: "O que aprendi esta semana", content: "Dar espaço para experimentar. Documentar também faz parte de criar.", created_at: timestamp, updated_at: timestamp },
-    ],
+    notes: [],
     links: [{ id: "link-1", title: "Referências de design", url: "https://example.com", notes: null, tags: ["design"], created_at: timestamp }],
     drafts: [{ id: "draft-1", title: "Contar histórias com dados", content: "Uma reflexão sobre transformar informação em descobertas.", tags: [], created_at: timestamp, updated_at: timestamp }],
   };
   await page.addInitScript(({ key, data }) => localStorage.setItem(key, JSON.stringify(data)), { key: workspaceKey, data: fixture });
   await openWorkspace(page);
   await expect(page.getByRole("button", { name: "Concluir Publicar o estudo de caso", exact: true })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Ideias para o próximo projeto", exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Contar histórias com dados", exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: /Hábitos de hoje/ })).toContainText("2/3");
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await page.screenshot({ path: "test-results/workspace-1440-populated-light.png", fullPage: true });
