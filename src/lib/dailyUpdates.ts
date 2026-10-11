@@ -23,6 +23,7 @@ export interface DailyUpdate {
 
 export const DAILY_UPDATE_KINDS: Record<string, { label: string; description: string }> = {
   ingles: { label: "Inglês", description: "Uma expressão, palavra ou ponto de gramática por dia." },
+  alemao: { label: "Alemão", description: "Mini-aula do dia; as palavras dela entram no baralho da aba Idiomas." },
 };
 
 export function kindLabel(kind: string): string {

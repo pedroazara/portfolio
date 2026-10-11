@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { normalizeKind, resolveDay } from "./painelOps";
+import { normalizeKind, prepareLanguageCards, resolveDay } from "./painelOps";
 
 describe("resolveDay", () => {
   it("usa hoje em São Paulo quando não há dia", () => {
@@ -22,5 +22,21 @@ describe("normalizeKind", () => {
   });
   it("recusa séries vazias", () => {
     expect(() => normalizeKind("!")).toThrow();
+  });
+});
+
+describe("prepareLanguageCards", () => {
+  it("descarta repetidos, no baralho ou na própria lista, sem diferenciar maiúsculas", () => {
+    const { fresh, skipped } = prepareLanguageCards(
+      [
+        { front: " der  Tisch ", back: "a mesa" },
+        { front: "die Arbeit", back: "o trabalho", example: "Ich gehe zur Arbeit." },
+        { front: "DIE ARBEIT", back: "o trabalho" },
+        { front: "  ", back: "nada" },
+      ],
+      ["Der Tisch"],
+    );
+    expect(fresh).toEqual([{ front: "die Arbeit", back: "o trabalho", example: "Ich gehe zur Arbeit.", notes: null }]);
+    expect(skipped).toEqual(["der Tisch", "DIE ARBEIT"]);
   });
 });
