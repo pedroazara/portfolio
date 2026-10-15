@@ -8,6 +8,7 @@ import { slugOf } from "../src/utils/slug";
 import { paragrafos } from "../src/utils/paragrafos";
 import { localePath } from "../src/lib/routes";
 import { SHARE_IMAGE_PATH, SHARE_IMAGE_SIZE, SITE_DESCRIPTION } from "../src/lib/siteMeta";
+import { isSvgRef, socialImageOf } from "../src/lib/coverPack";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import AppSkeleton from "../src/components/AppSkeleton";
@@ -31,7 +32,8 @@ const SUPABASE_URL = process.env.VITE_SUPABASE_URL
   .replace(/\/+$/, "");
 
 function resolveOgImage(src: string | undefined, fallback: string): string {
-  if (!src) return fallback;
+  // As redes sociais não leem SVG na prévia do link.
+  if (!src || isSvgRef(src)) return fallback;
   if (src.startsWith("db:")) {
     if (!SUPABASE_URL) return fallback;
     return `${SUPABASE_URL}/storage/v1/object/public/images/${src.slice(3)}`;
@@ -87,6 +89,8 @@ interface RouteMeta {
   description: string;
   type: "website" | "article";
   ogImage: string;
+  /** Presente quando a imagem tem as medidas da prévia (1200×630) garantidas. */
+  ogImageAlt?: string;
   jsonLd?: object;
   prerenderContent: string;
 }
@@ -305,6 +309,9 @@ function buildRoutes(lang: Lang): RouteMeta[] {
   // 4. Project Routes
   publishedProjects.forEach(project => {
     const projTitle = bi(lang, project.title, project.titleEn);
+    const projOgImage = resolveOgImage(socialImageOf(project), DEFAULT_OG_IMAGE);
+    // A imagem do pacote de capas sai sempre em 1200×630.
+    const projOgImageAlt = project.coverPack?.og && projOgImage !== DEFAULT_OG_IMAGE ? projTitle : undefined;
     const projDescription = bi(lang, project.description, project.descriptionEn);
     const projDetailed = bi(lang, project.detailedDescription, project.detailedDescriptionEn);
     const projRelevance = bi(lang, project.scientificRelevance, project.scientificRelevanceEn);
@@ -324,7 +331,8 @@ function buildRoutes(lang: Lang): RouteMeta[] {
       title: `${projTitle} | ${t(lang, `Projetos de ${authorName}`, `${authorName}'s Projects`)}`,
       description: projDescription,
       type: "website",
-      ogImage: resolveOgImage(project.imageUrl, DEFAULT_OG_IMAGE),
+      ogImage: projOgImage,
+      ogImageAlt: projOgImageAlt,
       jsonLd: { "@context": "https://schema.org", "@type": "CreativeWork", name: projTitle, description: projDescription, author: { "@type": "Person", name: authorName }, url: `${BASE_URL}${localePath(`/projetos/${slugOf(project)}`, lang)}` },
       prerenderContent: content
     });
@@ -336,7 +344,8 @@ function buildRoutes(lang: Lang): RouteMeta[] {
       title: `${projTitle} | ${t(lang, `Projetos de ${authorName}`, `${authorName}'s Projects`)}`,
       description: projDescription,
       type: "website",
-      ogImage: resolveOgImage(project.imageUrl, DEFAULT_OG_IMAGE),
+      ogImage: projOgImage,
+      ogImageAlt: projOgImageAlt,
       prerenderContent: `
       <article>
         <h1>${projTitle}</h1>
@@ -371,10 +380,10 @@ allRoutes.forEach(route => {
     <link rel="alternate" hreflang="x-default" href="${ptUrl}" />
     <meta property="og:title" content="${escapeXml(route.title || "")}" />
     <meta property="og:description" content="${escapeXml(route.description || "")}" />
-    <meta property="og:image" content="${escapeXml(route.ogImage)}" />${route.ogImage === DEFAULT_OG_IMAGE ? `
+    <meta property="og:image" content="${escapeXml(route.ogImage)}" />${route.ogImage === DEFAULT_OG_IMAGE || route.ogImageAlt ? `
     <meta property="og:image:width" content="${SHARE_IMAGE_SIZE.width}" />
     <meta property="og:image:height" content="${SHARE_IMAGE_SIZE.height}" />
-    <meta property="og:image:alt" content="${escapeXml(authorName)}" />` : ""}
+    <meta property="og:image:alt" content="${escapeXml(route.ogImageAlt || authorName)}" />` : ""}
     <meta property="og:url" content="${canonicalUrl}" />
     <meta property="og:type" content="${route.type}" />
     <meta property="og:locale" content="${route.lang === "en" ? "en_US" : "pt_BR"}" />

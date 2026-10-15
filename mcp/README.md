@@ -123,6 +123,7 @@ Abre uma página onde dá para chamar cada ferramenta à mão.
 | `update_project` | Altera só os campos enviados; `null` remove um campo; `situacao` = `planejamento` / `andamento` / `concluido` |
 | `edit_project_text` | Troca um trecho exato do Markdown, ou acrescenta ao fim — sem reenviar o texto inteiro |
 | `upload_project_image` | Envia imagem (arquivo ou URL) para `projects/<codigo>/` e, opcionalmente, já põe como capa ou na galeria |
+| `apply_cover_pack` | Aplica um **pacote de capas** (pasta ou `.zip` da skill `portfolio-capas`): confere nomes, proporções e SVGs, gera a prévia do link e grava `coverPack` |
 | `list_backups` | Cópias locais salvas antes de cada gravação |
 | `restore_project` | **Desfaz**: devolve um projeto ao estado de uma cópia, sem mexer no resto do site |
 
@@ -163,10 +164,26 @@ repositório atual, `/portfolio novo` cria o post de um projeto novo e
 `/portfolio <pedido>` faz o que você pedir (imagem, capa, referência,
 situação, publicar, desfazer).
 
-- **Claude Code:** `npm run skill:install` copia a skill para
-  `~/.claude/skills/portfolio/`. Reinstale depois de editar a fonte.
+- **Claude Code:** `npm run skill:install` copia as skills para
+  `~/.claude/skills/`. Reinstale depois de editar a fonte.
 - **claude.ai / Claude Desktop:** `npm run skill:zip` gera
-  `mcp/skills/dist/portfolio.zip`; envie em **Customize > Skills** e ative.
+  `mcp/skills/dist/portfolio.zip` (e `portfolio-capas.zip`); envie em
+  **Customize > Skills** e ative.
+
+## Skill `portfolio-capas` (pacote de capas)
+
+Desenha, no Claude Design ou no claude.ai, as capas de um projeto para cada
+lugar do site — cartão (16:9), cartão no celular (4:3), topo da página,
+quadrado e prévia do link — em tema claro e escuro, como SVG num `.zip`. Não
+usa os servidores MCP: envie `mcp/skills/dist/portfolio-capas.zip` em
+**Customize > Skills** e peça "faz o pacote de capas do projeto X".
+
+Para aplicar, no Claude Code desta máquina: `/portfolio aplica as capas de
+<caminho do .zip>`. A ferramenta `apply_cover_pack` confere o pacote (nomes,
+proporções, SVG sem script nem arquivo externo), converte a prévia do link
+em JPEG de até 300 kB (as redes não leem SVG) e grava o campo `coverPack`; o
+site mostra a arte de cada lugar e troca a versão clara pela escura com o
+tema. As medidas estão em `src/lib/coverPack.ts` e na especificação da skill.
 
 Os dois comandos validam o `SKILL.md` antes (campos aceitos, nome e tamanho da
 descrição). A skill só funciona onde os servidores MCP estão disponíveis: no

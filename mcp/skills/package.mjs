@@ -15,7 +15,7 @@ import { fileURLToPath } from "node:url";
 import JSZip from "jszip";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
-const SKILLS = ["portfolio"];
+const SKILLS = ["portfolio", "portfolio-capas"];
 /** Campos da especificação Agent Skills; o claude.ai recusa os demais. */
 const ALLOWED_FIELDS = new Set(["name", "description", "license", "compatibility", "metadata", "allowed-tools"]);
 /** Limite de descrição no claude.ai, menor que o da especificação. */

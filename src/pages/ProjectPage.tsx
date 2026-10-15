@@ -10,7 +10,7 @@ import { Language } from "../lib/translations";
 import { findBySlug, isOldSlug, slugOf } from "../utils/slug";
 import { extractToc } from "../utils/toc";
 import MarkdownRenderer from "../components/MarkdownRenderer";
-import LocalImage from "../components/LocalImage";
+import ProjectCover from "../components/ProjectCover";
 import { COVER_ASPECT_CLASS } from "../lib/coverAspect";
 import TableOfContents from "../components/TableOfContents";
 import ContentUnavailable from "../components/ContentUnavailable";
@@ -138,6 +138,7 @@ export default function ProjectPage({
   }
 
   const title = (language === "en" && project.titleEn) ? project.titleEn : project.title;
+  const hasCover = Boolean(project.imageUrl || project.coverPack?.card);
   const summary = (language === "en" && project.descriptionEn) ? project.descriptionEn : project.description;
   const relevance = (language === "en" && project.scientificRelevanceEn)
     ? project.scientificRelevanceEn
@@ -277,10 +278,11 @@ export default function ProjectPage({
             diagramas sobre fundo claro, e escrever o título por cima brigaria
             com o desenho. O painel sobe sobre a borda de baixo da imagem — o
             bastante para os dois lerem como uma peça, sem disputar espaço. */}
-        {project.imageUrl && (
+        {hasCover && (
           <div className={`relative w-full overflow-hidden rounded-3xl bg-superficie-alta ${COVER_ASPECT_CLASS}`}>
-            <LocalImage
-              src={project.imageUrl}
+            <ProjectCover
+              project={project}
+              slot="hero"
               alt={title}
               referrerPolicy="no-referrer"
               className="h-full w-full object-cover"
@@ -290,7 +292,7 @@ export default function ProjectPage({
 
         <div
           className={`relative rounded-3xl border border-borda-suave bg-superficie p-6 shadow-sm sm:p-8 print:mt-0 print:border-0 print:p-0 print:shadow-none ${
-            project.imageUrl ? "-mt-10 sm:-mt-14" : "mt-0"
+            hasCover ? "-mt-10 sm:-mt-14" : "mt-0"
           }`}
         >
           {(project.draft || projCategories.length > 0) && (

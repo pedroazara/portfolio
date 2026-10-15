@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Prancha de capas</title>
+<!--
+  Prancha de revisão do pacote de capas. Fica na mesma pasta dos SVGs e mostra
+  cada um no quadro em que o portfólio vai exibi-lo, nos dois temas, com as
+  mesmas substituições do site quando falta um arquivo (o rótulo embaixo de
+  cada quadro diz qual arquivo apareceu).
+-->
+<style>
+  :root { font-family: "Inter", system-ui, sans-serif; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #e4e3ee; color: #252639; }
+  header { padding: 24px 24px 8px; }
+  header h1 { margin: 0; font: 700 22px/1.3 "Plus Jakarta Sans", system-ui, sans-serif; }
+  header p { margin: 6px 0 0; max-width: 70ch; font-size: 14px; color: #5e6178; }
+  .temas { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 760px), 1fr)); gap: 16px; padding: 16px; }
+  .tema { border-radius: 20px; padding: 24px; }
+  .claro { --papel: #f7f8fc; --superficie: #fff; --alta: #f7f7fb; --tinta: #252639; --suave: #5e6178; --fraca: #6d7087; --borda: #e9eaf2; --acento: #7055d8; background: var(--papel); color: var(--tinta); }
+  .escuro { --papel: #0f121d; --superficie: #171b2a; --alta: #1d2233; --tinta: #edf0fb; --suave: #cfcedd; --fraca: #a0a6bf; --borda: #2b3043; --acento: #b6a2ff; background: var(--papel); color: var(--tinta); }
+  .tema > h2 { margin: 0 0 20px; font: 700 18px/1.3 "Plus Jakarta Sans", system-ui, sans-serif; }
+  section { margin-bottom: 32px; }
+  section h3 { margin: 0 0 4px; font-size: 14px; font-weight: 600; }
+  section > p { margin: 0 0 12px; font-size: 12px; color: var(--fraca); }
+  .linha { display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start; }
+  .quadro { position: relative; overflow: hidden; background: var(--alta); }
+  .quadro img { display: block; width: 100%; height: 100%; object-fit: cover; }
+  .usado { margin-top: 6px; font: 11px/1.4 "JetBrains Mono", ui-monospace, monospace; color: var(--fraca); }
+  .usado.falta { color: #d14d4d; }
+  .cartao { width: 380px; max-width: 100%; border: 1px solid var(--borda); border-radius: 16px; background: var(--superficie); overflow: hidden; }
+  .cartao .quadro { aspect-ratio: 16 / 9; border-bottom: 1px solid var(--borda); }
+  .corpo { padding: 18px; }
+  .meta { font-size: 11px; color: var(--suave); }
+  .titulo { margin: 8px 0; font: 700 18px/1.3 "Plus Jakarta Sans", system-ui, sans-serif; }
+  .texto { height: 8px; margin-top: 8px; border-radius: 4px; background: var(--borda); }
+  .texto.curto { width: 60%; }
+  .celular { width: 360px; max-width: 100%; padding: 12px; border: 1px solid var(--borda); border-radius: 28px; background: var(--papel); }
+  .celular .cartao { width: 100%; }
+  .celular .quadro { aspect-ratio: 4 / 3; }
+  .topo { width: 720px; max-width: 100%; }
+  .topo.estreito { width: 340px; }
+  .topo .quadro { aspect-ratio: 16 / 9; border-radius: 24px; }
+  .painel { position: relative; margin: -56px 0 0; padding: 22px; border: 1px solid var(--borda); border-radius: 24px; background: var(--superficie); box-shadow: 0 1px 2px #0000000f; }
+  .topo.estreito .painel { margin-top: -40px; padding: 16px; }
+  .painel .titulo { font-size: 24px; margin: 0; }
+  .topo.estreito .painel .titulo { font-size: 18px; }
+  .zona { position: absolute; left: 0; right: 0; bottom: 0; height: 20%; border-top: 1px dashed #d14d4d; background: repeating-linear-gradient(135deg, #d14d4d22 0 6px, transparent 6px 12px); pointer-events: none; }
+  .mostrar-zonas .zona { display: block; }
+  .zona { display: none; }
+  .mini { border-radius: 11px; }
+  .mini.p { width: 73px; height: 73px; }
+  .mini.m { width: 136px; height: 136px; border-radius: 8px; border: 1px solid var(--borda); }
+  .previa { width: 420px; max-width: 100%; border-radius: 10px; overflow: hidden; background: var(--superficie); border: 1px solid var(--borda); }
+  .previa .quadro { aspect-ratio: 1200 / 630; }
+  .previa .corpo { padding: 10px 12px; font-size: 12px; }
+  .recorte { width: 120px; height: 120px; border-radius: 8px; }
+  .recorte img { object-position: center; }
+  label.zonas { display: inline-flex; gap: 8px; align-items: center; margin: 12px 24px 0; font-size: 13px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Prancha de capas</h1>
+  <p>Cada arquivo do pacote no quadro em que o portfólio vai mostrá-lo. Quando falta um arquivo, aparece o substituto que o site usaria — o rótulo embaixo diz qual.</p>
+</header>
+<label class="zonas"><input type="checkbox" id="zonas"> Mostrar a faixa que fica sob o painel do título</label>
+
+<div class="temas">
+  <div class="tema claro" data-tema="light"><h2>Tema claro</h2></div>
+  <div class="tema escuro" data-tema="dark"><h2>Tema escuro</h2></div>
+</div>
+
+<template id="conteudo">
+  <section>
+    <h3>Cartão na lista de projetos</h3>
+    <p>De 320 a 560 px de largura. O título e o resumo ficam embaixo, fora da arte.</p>
+    <div class="cartao">
+      <div class="quadro"><img data-cadeia="card-{t} card-light" alt=""></div>
+      <div class="corpo"><div class="meta">Visão computacional</div><div class="titulo">Título do projeto</div><div class="texto"></div><div class="texto curto"></div></div>
+    </div>
+  </section>
+  <section>
+    <h3>Cartão no celular</h3>
+    <p>Telas com menos de 640 px. Sem a arte 4:3, o site usa o cartão 16:9.</p>
+    <div class="celular"><div class="cartao">
+      <div class="quadro"><img data-cadeia="card-mobile-{t} card-mobile-light card-{t} card-light" data-quatro-tercos alt=""></div>
+      <div class="corpo"><div class="meta">Visão computacional</div><div class="titulo">Título do projeto</div><div class="texto"></div></div>
+    </div></div>
+  </section>
+  <section>
+    <h3>Topo da página do projeto</h3>
+    <p>O painel do título sobe sobre a parte de baixo da arte: 56 px no computador, 40 px no celular.</p>
+    <div class="linha">
+      <div><div class="topo"><div class="quadro"><img data-cadeia="hero-{t} hero-light card-{t} card-light" alt=""><div class="zona"></div></div>
+        <div class="painel"><div class="titulo">Título do projeto</div><div class="texto"></div><div class="texto curto"></div></div></div></div>
+      <div><div class="topo estreito"><div class="quadro"><img data-cadeia="hero-{t} hero-light card-{t} card-light" alt=""><div class="zona"></div></div>
+        <div class="painel"><div class="titulo">Título do projeto</div><div class="texto"></div></div></div></div>
+    </div>
+  </section>
+  <section>
+    <h3>Miniaturas</h3>
+    <p>73 px no painel Meu espaço; 136 px como referência.</p>
+    <div class="linha">
+      <div><div class="quadro mini p"><img data-cadeia="square-{t} square-light card-{t} card-light" alt=""></div></div>
+      <div><div class="quadro mini m"><img data-cadeia="square-{t} square-light card-{t} card-light" alt=""></div></div>
+    </div>
+  </section>
+  <section>
+    <h3>Prévia do link</h3>
+    <p>Igual nos dois temas (as redes não trocam a imagem). À direita, o recorte quadrado que o WhatsApp às vezes usa.</p>
+    <div class="linha">
+      <div><div class="previa"><div class="quadro"><img data-cadeia="og card-light" alt=""></div>
+        <div class="corpo"><strong>Título do projeto | Projetos de Pedro</strong><br><span class="meta">pedroazara.vercel.app</span></div></div></div>
+      <div><div class="quadro recorte"><img data-cadeia="og card-light" alt=""></div></div>
+    </div>
+  </section>
+</template>
+
+<script>
+  // Cada quadro tenta os arquivos na ordem em que o site os usaria.
+  const formatos = ["svg", "png", "webp", "jpg"];
+  function tentar(img, nomes, rotulo) {
+    const candidatos = nomes.flatMap((nome) => formatos.map((ext) => `${nome}.${ext}`));
+    let i = 0;
+    const proximo = () => {
+      if (i >= candidatos.length) {
+        img.removeAttribute("src");
+        rotulo.textContent = `falta ${nomes[0]}`;
+        rotulo.classList.add("falta");
+        return;
+      }
+      img.src = candidatos[i++];
+    };
+    img.onerror = proximo;
+    img.onload = () => {
+      const usado = img.getAttribute("src");
+      rotulo.textContent = usado === `${nomes[0]}.svg` ? usado : `${usado} (no lugar de ${nomes[0]})`;
+      if (img.hasAttribute("data-quatro-tercos")) {
+        img.parentElement.style.aspectRatio = usado.startsWith("card-mobile") ? "4 / 3" : "16 / 9";
+      }
+    };
+    proximo();
+  }
+  const modelo = document.getElementById("conteudo");
+  for (const tema of document.querySelectorAll(".tema")) {
+    tema.append(modelo.content.cloneNode(true));
+    for (const img of tema.querySelectorAll("img[data-cadeia]")) {
+      const nomes = img.dataset.cadeia.replaceAll("{t}", tema.dataset.tema).split(" ");
+      const rotulo = document.createElement("div");
+      rotulo.className = "usado";
+      (img.closest(".cartao, .topo, .previa") || img.parentElement).after(rotulo);
+      tentar(img, [...new Set(nomes)], rotulo);
+    }
+  }
+  document.getElementById("zonas").addEventListener("change", (e) => document.body.classList.toggle("mostrar-zonas", e.target.checked));
+</script>
+</body>
+</html>

@@ -361,6 +361,24 @@ export default function ProjectForm({
                       placeholder="https://images.unsplash.com/photo-... ou db:nome.png"
                       id="project-editor-cover"
                     />
+                    {/* O pacote vem do MCP (apply_cover_pack) e não se edita aqui;
+                        sem este aviso, trocar a capa acima pareceria não ter efeito. */}
+                    {formData.coverPack && (
+                      <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-indigo-200 bg-indigo-50 px-3 py-2 text-xs text-indigo-900 dark:border-indigo-900/60 dark:bg-indigo-950/40 dark:text-indigo-200">
+                        <span>
+                          {language === "en"
+                            ? "This project uses a cover pack (light and dark art for each spot). Wherever it has art, it replaces the cover above."
+                            : "Este projeto usa um pacote de capas (arte clara e escura para cada lugar). Onde ele tem arte, vale no lugar da capa acima."}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setFormData({ ...formData, coverPack: undefined })}
+                          className="min-h-8 rounded-lg border border-indigo-300 bg-white px-2.5 font-semibold text-indigo-700 hover:bg-indigo-100 dark:border-indigo-800 dark:bg-slate-900 dark:text-indigo-300 dark:hover:bg-indigo-950"
+                        >
+                          {language === "en" ? "Remove pack" : "Remover pacote"}
+                        </button>
+                      </div>
+                    )}
                   </div>
 
                   {/* 2. METADATA STRIP (CATEGORY, FEATURED, TAGS, LINKS)

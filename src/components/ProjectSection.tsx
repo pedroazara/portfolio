@@ -6,7 +6,7 @@ import { FolderKanban, Plus, Edit2, Trash2, Settings, Info, Search, ArrowLeft, A
 import EditModal from "./EditModal";
 import ConfirmModal from "./ConfirmModal";
 import { ReorderableList, mergeReorderedSubset } from "./Reorderable";
-import LocalImage from "./LocalImage";
+import ProjectCover from "./ProjectCover";
 import MarkdownRenderer from "./MarkdownRenderer";
 import { SECTION_CARD_CLASS } from "../lib/cardStyle";
 import { Language, translations } from "../lib/translations";
@@ -14,7 +14,7 @@ import TranslateButton from "./TranslateButton";
 import { autoTranslateFields } from "../lib/translator";
 import { useLocalePath } from "../lib/routes";
 import { slugOf } from "../utils/slug";
-import { COVER_ASPECT_CLASS } from "../lib/coverAspect";
+import { cardFrameClass } from "../lib/coverPack";
 
 interface ProjectSectionProps {
   projects: Project[];
@@ -529,10 +529,12 @@ export default function ProjectSection({
                 )}
 
                 {/* Project Image */}
-                <div className={`project-preview-cover relative ${COVER_ASPECT_CLASS} w-full shrink-0 overflow-hidden rounded-t-2xl border-b border-borda bg-superficie-alta print:hidden`}>
-                  {proj.imageUrl ? (
-                    <LocalImage
-                      src={proj.imageUrl}
+                <div className={`project-preview-cover relative ${cardFrameClass(proj)} w-full shrink-0 overflow-hidden rounded-t-2xl border-b border-borda bg-superficie-alta print:hidden`}>
+                  {proj.imageUrl || proj.coverPack?.card ? (
+                    <ProjectCover
+                      project={proj}
+                      slot="card"
+                      mobile
                       alt={title}
                       referrerPolicy="no-referrer"
                       sizes="(min-width: 1600px) 450px, (min-width: 1200px) 30vw, (min-width: 720px) 45vw, 90vw"

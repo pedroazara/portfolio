@@ -4,8 +4,8 @@ import { Project, ProjectCategory } from "../types";
 import { Language } from "../lib/translations";
 import { localePath } from "../lib/routes";
 import { slugOf } from "../utils/slug";
-import { COVER_ASPECT_CLASS } from "../lib/coverAspect";
-import LocalImage from "./LocalImage";
+import { cardFrameClass } from "../lib/coverPack";
+import ProjectCover from "./ProjectCover";
 
 interface ProjetosEmDestaqueProps {
   projects: Project[];
@@ -76,10 +76,12 @@ export default function ProjetosEmDestaque({ projects, categories, language = "p
               className="group flex flex-col overflow-hidden rounded-2xl border border-borda bg-superficie transition-colors hover:border-borda-forte"
             >
               {/* Sem capa, o cartão fica só com o texto — melhor que uma caixa vazia. */}
-              {proj.imageUrl && (
-                <div className={`relative w-full overflow-hidden border-b border-borda-suave bg-superficie-alta ${COVER_ASPECT_CLASS}`}>
-                  <LocalImage
-                    src={proj.imageUrl}
+              {(proj.imageUrl || proj.coverPack?.card) && (
+                <div className={`relative w-full overflow-hidden border-b border-borda-suave bg-superficie-alta ${cardFrameClass(proj)}`}>
+                  <ProjectCover
+                    project={proj}
+                    slot="card"
+                    mobile
                     alt={titulo}
                     referrerPolicy="no-referrer"
                     className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"

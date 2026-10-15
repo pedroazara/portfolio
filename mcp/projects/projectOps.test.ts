@@ -94,6 +94,15 @@ describe("alteração de projetos", () => {
     expect(() => applyProjectChanges(yolo, { galleryImages: ["javascript:alert(1)"] }, [], categories)).toThrow(/Imagem inválida/);
   });
 
+  it("pacote de capas: exige o cartão, valida as referências e sai com null", () => {
+    const coverPack = { card: { light: "db:projects/yolocraft/capas/a/card-light.svg" }, og: "db:projects/yolocraft/capas/a/og.jpg" };
+    const { project } = applyProjectChanges(yolo, { coverPack }, [], categories);
+    expect(project.coverPack).toEqual(coverPack);
+    expect(applyProjectChanges(project, { coverPack: null }, [], categories).project).not.toHaveProperty("coverPack");
+    expect(() => applyProjectChanges(yolo, { coverPack: { hero: { light: "db:a.svg" } } }, [], categories)).toThrow(/precisa de `card`/);
+    expect(() => applyProjectChanges(yolo, { coverPack: { card: { light: "capa.svg" } } }, [], categories)).toThrow(/Imagem inválida/);
+  });
+
   it("recusa campos fora da lista", () => {
     expect(() => applyProjectChanges(yolo, { id: "outro" } as never, [], categories)).toThrow();
     expect(() => applyProjectChanges(yolo, { emAndamento: true } as never, [], categories)).toThrow();

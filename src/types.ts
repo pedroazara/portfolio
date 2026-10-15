@@ -26,6 +26,22 @@ export interface ProjectCategory {
   descriptionEn?: string;
 }
 
+/** Uma arte em versão clara e, se o desenho pedir, escura. Sem `dark`, a clara serve aos dois temas. */
+export interface CoverArt {
+  light: string;
+  dark?: string;
+}
+
+/** Pacote de capas de um projeto. Cada lugar tem a sua proporção; veja COVER_SLOTS. */
+export interface CoverPack {
+  card?: CoverArt;
+  cardMobile?: CoverArt;
+  hero?: CoverArt;
+  square?: CoverArt;
+  /** JPEG 1200×630 para a prévia do link nas redes (sem tema). */
+  og?: string;
+}
+
 export interface Project {
   id: string;
   codigo?: string; // Trecho do link, editável (ex.: "yolocraft")
@@ -51,6 +67,12 @@ export interface Project {
   githubUrl?: string; // Repository link
   repositoryUrl?: string;
   imageUrl?: string; // Main cover
+  /**
+   * Capas desenhadas para cada lugar do site, nos dois temas (gerado no
+   * Claude Design e aplicado pelo MCP). Onde existe, vale mais que `imageUrl`;
+   * veja src/lib/coverPack.ts.
+   */
+  coverPack?: CoverPack;
   galleryImages?: string[]; // Additional gallery images
   galleryCaptions?: Record<string, string>;
   galleryCaptionsEn?: Record<string, string>;

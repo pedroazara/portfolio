@@ -17,6 +17,7 @@ e, quase todas, `dryRun` (mostra o efeito sem gravar). Cada gravação devolve
 | `update_project` | `changes` com só os campos a mudar; `null` remove; listas substituem inteiras |
 | `edit_project_text` | `field` + `oldText` (trecho exato, único) + `newText`; sem `oldText`, acrescenta ao fim |
 | `upload_project_image` | `filePath` (absoluto) ou `url` https → `projects/<codigo>/`; `use: "cover" \| "gallery" \| "none"`, `caption`, `captionEn`, `keepFormat` |
+| `apply_cover_pack` | `slug` + `path` (pasta ou `.zip`, caminho absoluto) do pacote de capas; confere, envia para `projects/<codigo>/capas/<versão>/`, gera a prévia do link e grava `coverPack` + `imageUrl`. `dryRun: true` mostra plano e avisos |
 | `list_backups` / `restore_project` | Cópias locais / devolve um projeto ao estado de uma cópia |
 
 Campos aceitos por `edit_project_text`: `detailedDescription`,
@@ -57,6 +58,7 @@ SVG e PDF sobem intactos. Nome repetido ganha sufixo — nada é sobrescrito.
 | `periodo` | `{ inicio: "AAAA-MM", fim?: "AAAA-MM" }`; sem `fim` aparece "Presente" |
 | `githubUrl`, `projectUrl`, `documentationUrl`, `paperUrl` | Repositório, demo/site, documentação, artigo |
 | `imageUrl` | Capa (`db:...` ou URL https) |
+| `coverPack` | Pacote de capas: `{ card, cardMobile, hero, square }` com `{ light, dark? }` cada, e `og`. Vale no lugar de `imageUrl` onde tem arte. Aplique com `apply_cover_pack`; `null` remove |
 | `galleryImages`, `galleryCaptions`, `galleryCaptionsEn` | Galeria e legendas (chaveadas pela referência da imagem) |
 | `references` | Lista `{ title, url }` exibida como "Referências" |
 | `featured` | Aparece entre os destaques da home |
