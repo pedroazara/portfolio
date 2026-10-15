@@ -1,10 +1,12 @@
 import { SHARE_IMAGE_PATH } from "./siteMeta";
+import { isSvgRef } from "./coverPack";
 export const siteOrigin = (import.meta.env.VITE_SITE_URL || "https://pedroazara.vercel.app").replace(/\/$/, "");
 
 export function syncPageMetadata(options: { title: string; description: string; path: string; language: string; image?: string; privatePage: boolean }) {
   const { title, description, path, language, privatePage } = options;
   const canonicalUrl = `${siteOrigin}${path}`;
-  let image = options.image || `${siteOrigin}${SHARE_IMAGE_PATH}`;
+  // As redes sociais não leem SVG na prévia do link.
+  let image = options.image && !isSvgRef(options.image) ? options.image : `${siteOrigin}${SHARE_IMAGE_PATH}`;
   if (image.startsWith("db:")) {
     const storage = import.meta.env.VITE_SUPABASE_URL?.replace(/\/(rest|auth|storage|realtime)\/v1\/?$/, "").replace(/\/$/, "");
     image = storage ? `${storage}/storage/v1/object/public/images/${image.slice(3)}` : `${siteOrigin}${SHARE_IMAGE_PATH}`;

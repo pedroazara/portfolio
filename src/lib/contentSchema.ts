@@ -5,6 +5,10 @@ const text = z.string().max(250000);
 const strings = z.array(text).max(2000);
 const item = z.object({ id: z.string().min(1).max(200) }).passthrough();
 const link = z.object({ title: text, url: text }).passthrough();
+const coverArt = z.object({ light: text, dark: text.optional() }).passthrough();
+const coverPack = z.object({
+  card: coverArt.optional(), cardMobile: coverArt.optional(), hero: coverArt.optional(), square: coverArt.optional(), og: text.optional(),
+}).passthrough();
 export const projectSchema = item.extend({
   title: text, description: text.default(""), categoryId: text.default(""), tags: strings.default([]),
   codigo: text.optional(), categoryIds: strings.optional(), imageUrl: text.optional(),
@@ -12,7 +16,7 @@ export const projectSchema = item.extend({
   galleryCaptions: z.record(text, text).optional(), galleryCaptionsEn: z.record(text, text).optional(),
   detailedDescription: text.optional(), featured: z.boolean().optional(), draft: z.boolean().optional(),
   emAndamento: z.boolean().optional(), emPlanejamento: z.boolean().optional(),
-  references: z.array(link).optional(), stack: strings.optional(),
+  references: z.array(link).optional(), stack: strings.optional(), coverPack: coverPack.optional(),
 });
 export const postSchema = item.extend({ title: text, summary: text.default(""), content: text.default(""), date: text, tags: strings.default([]), draft: z.boolean().optional() });
 const schema = z.object({

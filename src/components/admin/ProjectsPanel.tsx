@@ -19,7 +19,7 @@ import {
   Unlink,
 } from "lucide-react";
 import { Link } from "react-router-dom";
-import LocalImage from "../LocalImage";
+import ProjectCover from "../ProjectCover";
 import WorkspaceDialog from "./WorkspaceDialog";
 import ProjectTracking from "./ProjectTracking";
 import type { Project } from "../../types";
@@ -672,9 +672,10 @@ export default function ProjectsPanel({
             className="wp-portfolio-link"
             aria-label="Vínculo com o portfólio"
           >
-            {selectedPublic?.imageUrl && !portfolioUnavailable ? (
-              <LocalImage
-                src={selectedPublic.imageUrl}
+            {(selectedPublic?.imageUrl || selectedPublic?.coverPack?.card) && !portfolioUnavailable ? (
+              <ProjectCover
+                project={selectedPublic}
+                slot="square"
                 alt=""
                 sizes="73px"
                 className="wp-linked-cover"
@@ -1074,9 +1075,10 @@ export default function ProjectsPanel({
                         onClick={() => openPortfolioProject(publicProject)}
                       >
                         <div className="wp-portfolio-cover">
-                          {publicProject.imageUrl ? (
-                            <LocalImage
-                              src={publicProject.imageUrl}
+                          {publicProject.imageUrl || publicProject.coverPack?.card ? (
+                            <ProjectCover
+                              project={publicProject}
+                              slot="card"
                               alt=""
                               className="wp-portfolio-cover-image"
                               sizes="(max-width: 640px) 100vw, 400px"

@@ -137,6 +137,7 @@ const FIELDS: Record<string, string> = {
   scientificRelevance: "relevância",
   scientificRelevanceEn: "relevância (EN)",
   imageUrl: "capa",
+  coverPack: "pacote de capas",
   galleryImages: "galeria",
   galleryCaptions: "legendas",
   galleryCaptionsEn: "legendas (EN)",

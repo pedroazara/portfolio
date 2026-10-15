@@ -5,6 +5,7 @@ import { slugOf } from "../utils/slug";
 import { useLocalePath } from "../lib/routes";
 import { agruparPorCategoria } from "../utils/elevatorPitch";
 import LocalImage from "./LocalImage";
+import ProjectCover from "./ProjectCover";
 
 interface PitchProjectsSlideProps {
   projects: Project[];
@@ -37,9 +38,10 @@ function Cartao({ p, ativo, isEn, onPreview, onOpen }: {
       }`}
     >
       <div className="aspect-video w-full overflow-hidden bg-slate-100 dark:bg-slate-900">
-        {p.imageUrl && (
-          <LocalImage
-            src={p.imageUrl}
+        {(p.imageUrl || p.coverPack?.card) && (
+          <ProjectCover
+            project={p}
+            slot="card"
             alt={p.title}
             className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
           />

@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { ResumeData, Profile, Project, ProjectCategory, Experience, AcademicActivity, Education, Skill, SkillCategory, Course, BlogPost } from "./types";
 import { initialResumeData } from "./data/initialData";
 import { parseResumeData } from "./lib/contentSchema";
+import { socialImageOf } from "./lib/coverPack";
 import { workspaceKey, readLocalData } from "./lib/localWorkspace";
 import ConnectionStatus from "./components/ConnectionStatus";
 import { trackPage, reportError } from "./lib/observability";
@@ -392,7 +393,7 @@ export default function App() {
     } else if (selectedProjectId) {
       const proj = findBySlug(resumeData.projects, selectedProjectId);
       if (proj && (!proj.draft || isEditMode)) {
-        image = proj.imageUrl;
+        image = socialImageOf(proj);
         const projTitle = isEn ? proj.titleEn || proj.title : proj.title;
         title = isEn ? `${projTitle} | ${name}'s Projects` : `${projTitle} | Projetos de ${name}`;
         description = (isEn ? proj.descriptionEn || proj.description : proj.description) || description;

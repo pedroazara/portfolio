@@ -37,6 +37,7 @@ Olhe o que veio junto com o pedido (o texto depois de `/portfolio`):
 | Entrada | Modo |
 | --- | --- |
 | `novo`, `novo "Título"`, "cria o post deste projeto" | **Criar** (seção 4) |
+| `capas <caminho>`, "aplica as capas de …", um `.zip` ou pasta de capas | **Pedido**: pacote de capas (seção 3) |
 | um pedido em texto livre ("adiciona esta imagem…", "publica") | **Pedido** (seção 3) |
 | nada, "sincroniza", "atualiza com o estado atual" | **Sincronizar** (seção 5) |
 
@@ -69,7 +70,8 @@ de alterar.
 | --- | --- |
 | Imagem numa seção do texto | `upload_project_image` → `insert_image_in_text` duas vezes: em `detailedDescription` (`after: "## Resultados"`, legenda PT) e em `detailedDescriptionEn` (`after: "## Results"`, legenda EN) |
 | Imagem na galeria | `upload_project_image` com `use: "gallery"`, `caption` e `captionEn` |
-| Nova capa | enviar → `get_image` (abra o `localPath` para ver) → `crop_cover` com o foco certo → `set_image` com `slot: "project.cover"` |
+| Pacote de capas (`.zip` ou pasta do Claude Design, skill `portfolio-capas`) | `apply_cover_pack` com `dryRun: true` → mostre o plano e **todos** os avisos → com meu ok, `apply_cover_pack` sem `dryRun` → passe o link da página para eu ver nos dois temas |
+| Nova capa | enviar → `get_image` (abra o `localPath` para ver) → `crop_cover` com o foco certo → `set_image` com `slot: "project.cover"`. Se o projeto tiver `coverPack`, avise que ele vale no lugar da capa e pergunte se devo removê-lo (`update_project` com `coverPack: null`) |
 | Referência | leia `references`, acrescente `{ title, url }` sem duplicar, `update_project` |
 | Mudar a situação | `situacao: "planejamento" \| "andamento" \| "concluido"`; ao concluir, proponha `periodo.fim` |
 | Publicar | `draft: false` — **só** com pedido explícito |
@@ -98,9 +100,10 @@ Monta o post completo de um projeto novo.
    situação, período, links, referências e imagens candidatas com legendas —
    tudo em PT e EN.
 5. **Com minha confirmação:** `create_project` com os textos (sempre
-   `draft: true`) → `upload_project_image` → capa (`crop_cover` + `set_image`)
-   → galeria → imagens no corpo com `insert_image_in_text` (PT e EN) → grave
-   `.claude/portfolio.json`.
+   `draft: true`) → `upload_project_image` → capa (`crop_cover` + `set_image`,
+   ou `apply_cover_pack` se eu tiver um pacote de capas) → galeria → imagens no
+   corpo com `insert_image_in_text` (PT e EN) → grave `.claude/portfolio.json`.
+   Sem pacote, lembre que dá para desenhar um com a skill `portfolio-capas`.
 6. Passe o link do editor (`/admin/projetos/<codigo>`) para eu revisar.
 
 ## 5. Modo sincronizar
@@ -138,6 +141,9 @@ Compara o repositório com o post e propõe atualizações.
 - **Rascunho por padrão:** nunca mude `draft` para `false` sem pedido.
 - **Nada sensível:** não leve para o post segredos, chaves, `.env`, URLs
   internas, dados pessoais de terceiros ou código proprietário.
+- **Pacote de capas:** os avisos do `apply_cover_pack` (temas trocados,
+  texto em SVG, arquivo pesado) vão para mim antes de aplicar. Versões
+  antigas do pacote ficam no Storage; apagar só com meu ok.
 - **Imagens:** mais de 3 novas de uma vez → mostre a lista e deixe eu escolher.
   Sempre com legenda PT e EN; `keepFormat: true` para diagramas com texto fino.
   Não apague imagens sem confirmação.

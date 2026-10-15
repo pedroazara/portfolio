@@ -27,6 +27,7 @@ export type TextField = (typeof TEXT_FIELDS)[number];
 const text = z.string().max(250000);
 const removable = <T extends z.ZodType>(schema: T) => schema.nullable().optional();
 const yearMonth = z.string().regex(/^\d{4}(-(0[1-9]|1[0-2]))?$/, "Use AAAA ou AAAA-MM.");
+const coverArt = z.object({ light: z.string(), dark: z.string().optional() }).strict();
 
 /**
  * O que pode ser alterado num projeto. `null` remove um campo opcional.
@@ -59,6 +60,11 @@ export const projectChangesShape = {
   documentationUrl: removable(z.string()).describe("Documentação."),
   paperUrl: removable(z.string()).describe("Artigo ou publicação."),
   imageUrl: removable(z.string()).describe("Capa: `db:caminho` (de upload_project_image) ou URL https."),
+  coverPack: removable(
+    z
+      .object({ card: coverArt.optional(), cardMobile: coverArt.optional(), hero: coverArt.optional(), square: coverArt.optional(), og: z.string().optional() })
+      .strict(),
+  ).describe("Pacote de capas por lugar e tema. Para aplicar um pacote novo use apply_cover_pack; aqui, `null` remove o pacote e a capa volta a ser `imageUrl`."),
   galleryImages: z.array(z.string()).optional().describe("Galeria: lista de `db:caminho` ou URLs https, na ordem de exibição."),
   galleryCaptions: removable(z.record(z.string(), z.string())).describe("Legendas PT, por referência da imagem."),
   galleryCaptionsEn: removable(z.record(z.string(), z.string())).describe("Legendas EN, por referência da imagem."),
@@ -183,6 +189,18 @@ export function applyProjectChanges(
   }
   if (typeof next.imageUrl === "string") next.imageUrl = assertImageRef(next.imageUrl);
   if (changes.galleryImages) next.galleryImages = cleanList(changes.galleryImages).map(assertImageRef);
+  if (changes.coverPack) {
+    const { og, ...slots } = changes.coverPack;
+    if (!slots.card) throw new Error("O pacote de capas precisa de `card` (o cartão claro é a base de tudo).");
+    next.coverPack = {
+      ...Object.fromEntries(
+        Object.entries(slots)
+          .filter(([, art]) => art)
+          .map(([slot, art]) => [slot, { light: assertImageRef(art!.light), ...(art!.dark ? { dark: assertImageRef(art!.dark) } : {}) }]),
+      ),
+      ...(og ? { og: assertImageRef(og) } : {}),
+    };
+  }
   if (changes.tags) next.tags = cleanList(changes.tags);
   if (changes.stack) next.stack = cleanList(changes.stack);
   if (changes.references) {

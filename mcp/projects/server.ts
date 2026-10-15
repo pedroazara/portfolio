@@ -5,7 +5,9 @@ import type { Project } from "../../src/types";
 import { findBySlug, slugOf } from "../../src/utils/slug";
 import { logFileEdit, noteParam, trackClient, type FileChange } from "../core/editLog";
 import { SITE_URL } from "../core/env";
-import { uploadImage } from "../core/images";
+import { putObject, uploadImage } from "../core/images";
+import { COVER_SLOTS, type CoverSlot } from "../../src/lib/coverPack";
+import { buildCoverPack, coverPackRefs, planCoverPack, prepareArt, readPackSource, renderOgImage, type Theme } from "./coverPack";
 import { listBackups, readBackup, readPortfolio, updatePortfolio } from "../core/portfolioDocument";
 import { reply } from "../core/reply";
 import {
@@ -36,6 +38,7 @@ Regras:
 - O site é bilíngue. Ao alterar um campo em português, atualize o equivalente em inglês (titleEn, descriptionEn, detailedDescriptionEn, scientificRelevanceEn, highlightsEn).
 - Para mudanças pontuais no corpo da página, prefira edit_project_text a reenviar o Markdown inteiro.
 - Imagens: upload_project_image devolve uma referência "db:..."; no Markdown use ![descrição](db:...).
+- Pacote de capas (pasta ou .zip do Claude Design): apply_cover_pack, primeiro com dryRun: true. Onde o pacote tem arte, ele vale no lugar de imageUrl.
 - Projetos novos nascem como rascunho (draft: true). Só publique (draft: false) quando o usuário pedir.
 - Use dryRun: true para mostrar o que mudaria antes de alterações grandes.
 - Cada gravação guarda localmente uma cópia do documento anterior (campo backupPath). Para desfazer, use restore_project com essa cópia.`;
@@ -294,7 +297,94 @@ server.registerTool(
       doc.projects = doc.projects.map((p) => (p.id === current.id ? applied.project : p));
       return { result: applied, changed: applied.changedFields.length > 0 };
     });
-    return reply({ ...image, markdown, ...writeSummary(outcome, outcome.result.project, before, outcome.result.changedFields, false) });
+    const packWarning =
+      use === "cover" && target.coverPack
+        ? { warning: "Este projeto tem pacote de capas: onde ele tem arte, a capa nova não aparece. Para voltar a usar só imageUrl, remova o pacote (update_project com coverPack: null)." }
+        : {};
+    return reply({ ...image, markdown, ...packWarning, ...writeSummary(outcome, outcome.result.project, before, outcome.result.changedFields, false) });
+  },
+);
+
+server.registerTool(
+  "apply_cover_pack",
+  {
+    title: "Aplicar pacote de capas",
+    description:
+      "Aplica um pacote de capas feito no Claude Design (skill portfolio-capas): a pasta ou o .zip com card-light.svg e card-dark.svg " +
+      "(cartões, 16:9), card-mobile-*.svg (cartão no celular, 4:3), hero-*.svg (topo da página, 16:9), square-*.svg (1:1) e og.svg (1200×630). " +
+      "Confere nomes, proporções e se os SVGs funcionam dentro de <img>; gera a prévia do link em JPEG 1200×630 de até 300 kB; envia tudo para " +
+      "projects/<codigo>/capas/<versão>/ e grava `coverPack`, com `imageUrl` apontando para o cartão claro. Rode antes com dryRun: true para ver o plano e os avisos.",
+    inputSchema: {
+      slug: slugParam,
+      path: z.string().min(1).describe("Caminho absoluto, nesta máquina, da pasta ou do .zip do pacote."),
+      note: noteParam,
+      dryRun: z.boolean().optional().describe("true confere o pacote e mostra o plano, sem enviar nem gravar."),
+    },
+    annotations: { destructiveHint: true },
+  },
+  async ({ slug, path: source, note, dryRun = false }) => {
+    const { data } = await readPortfolio();
+    const target = findProject(data.projects, slug);
+    const codigo = slugOf(target);
+    const plan = await planCoverPack(await readPackSource(source));
+    if (plan.projeto && !findBySlug([target], plan.projeto)) {
+      throw new Error(`O pack.json é do projeto "${plan.projeto}", não de "${codigo}". Confira o pacote, ou corrija o campo "projeto" se ele estiver errado.`);
+    }
+
+    const folder = `projects/${codigo}/capas/${Date.now().toString(36)}`;
+    const arts = plan.arts.filter((art) => art.slot !== "og");
+    const ogSource = plan.arts.find((art) => art.slot === "og") ?? arts.find((art) => art.slot === "card" && art.theme === "light")!;
+    const report = {
+      arts: arts.map((art) => ({
+        lugar: `${art.slot} (${art.theme === "dark" ? "escuro" : "claro"})`,
+        arquivo: art.source,
+        medidas: `${art.width}×${art.height}`,
+        ondeAparece: COVER_SLOTS[art.slot as CoverSlot].where,
+      })),
+      og: `og.jpg, 1200×630, a partir de ${ogSource.source}`,
+      ignored: plan.ignored,
+      warnings: plan.warnings,
+    };
+    if (dryRun) {
+      return reply({ status: "simulação — nada foi enviado nem gravado", project: summarizeProject(target), folder, ...report });
+    }
+
+    const uploaded: { slot: CoverSlot | "og"; theme?: Theme; ref: string }[] = [];
+    const files: FileChange[] = [];
+    for (const art of arts) {
+      const prepared = await prepareArt(art);
+      const stored = await putObject(`${folder}/${COVER_SLOTS[art.slot as CoverSlot].file}-${art.theme}${prepared.ext}`, prepared.body);
+      uploaded.push({ slot: art.slot, theme: art.theme, ref: `db:${stored}` });
+      files.push({ collection: "images", id: stored, action: "enviado" });
+    }
+    const ogStored = await putObject(`${folder}/og.jpg`, await renderOgImage(ogSource));
+    uploaded.push({ slot: "og", ref: `db:${ogStored}` });
+    files.push({ collection: "images", id: ogStored, action: "enviado" });
+    const coverPack = buildCoverPack(uploaded);
+
+    let before: Project | null = null;
+    const outcome = await updatePortfolio({ tool: "apply_cover_pack", target: slug, note, files }, (doc) => {
+      const current = findProject(doc.projects, slug);
+      before = current;
+      const others = doc.projects.filter((p) => p.id !== current.id);
+      const applied = applyProjectChanges(current, { coverPack, imageUrl: coverPack.card!.light }, others, doc.categories);
+      doc.projects = doc.projects.map((p) => (p.id === current.id ? applied.project : p));
+      return { result: applied, changed: applied.changedFields.length > 0 };
+    });
+    const previous = coverPackRefs((before as Project | null)?.coverPack);
+    return reply({
+      ...writeSummary(outcome, outcome.result.project, before, outcome.result.changedFields, false),
+      folder,
+      ...report,
+      ...(previous.length
+        ? {
+            previousPack: {
+              refs: previous,
+              message: "A versão anterior do pacote continua no Storage. Para liberar espaço, apague com delete_image (portfolio-media) — só com o ok do usuário.",
+            },
+          }
+        : {}),
+    });
   },
 );
 

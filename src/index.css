@@ -164,6 +164,13 @@ body {
   color: var(--tinta);
 }
 
+/* Pacote de capas (ProjectCover): cada tema vê só a sua arte. O <picture>
+   não ocupa caixa própria, então a <img> se dimensiona pelo quadro como antes. */
+.cover-art { display: contents; }
+.cover-art-dark { display: none; }
+.dark .cover-art-light { display: none; }
+.dark .cover-art-dark { display: contents; }
+
 /**
  * Foco por teclado: um anel só, em todo o site.
  *
