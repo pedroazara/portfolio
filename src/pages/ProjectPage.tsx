@@ -330,7 +330,6 @@ export default function ProjectPage({
             emPlanejamento={isPlanned}
             situacao={project.status}
             areas={projCategories.map((cat) => (language === "en" && cat.nameEn) ? cat.nameEn : cat.name)}
-            tecnologias={project.stack && project.stack.length > 0 ? project.stack : (project.tags || [])}
             minutosDeLeitura={readMinutes}
             language={language}
           />

@@ -859,6 +859,7 @@ export default function App() {
               slug={selectedBlogPostId}
               posts={resumeData.posts || []}
               projects={resumeData.projects}
+              categories={resumeData.categories}
               authorName={resumeData.profile.name || "Pedro Henrique Almeida"}
               isEditMode={isEditMode}
               language={language}
