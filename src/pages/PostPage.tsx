@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import {
   ArrowLeft, ArrowRight, Calendar, Clock, Edit2, Code, AlertCircle, FileText, BookOpen,
 } from "lucide-react";
-import { BlogPost, Project } from "../types";
+import { BlogPost, Project, ProjectCategory } from "../types";
 import { Language } from "../lib/translations";
 import { findBySlug, slugOf } from "../utils/slug";
 import { estimateReadTime } from "../utils/readTime";
@@ -15,6 +15,7 @@ import { extractToc } from "../utils/toc";
 import LocalImage from "../components/LocalImage";
 import { COVER_ASPECT_CLASS } from "../lib/coverAspect";
 import { useLocalePath } from "../lib/routes";
+import { projectAreaNames } from "../lib/projectAreas";
 import { editTargetFromViewport } from "../utils/editTarget";
 import ProgressoLeitura from "../components/ProgressoLeitura";
 import ReferenciasSection from "../components/ReferenciasSection";
@@ -26,6 +27,7 @@ interface PostPageProps {
   slug: string;
   posts: BlogPost[];
   projects: Project[];
+  categories: ProjectCategory[];
   authorName: string;
   isEditMode: boolean;
   language: Language;
@@ -40,6 +42,7 @@ export default function PostPage({
   slug,
   posts,
   projects,
+  categories,
   authorName,
   isEditMode,
   language,
@@ -286,7 +289,7 @@ export default function PostPage({
 
               const projTitle = (language === "en" && proj.titleEn ? proj.titleEn : proj.title) || proj.title;
               const projDesc = (language === "en" && proj.descriptionEn ? proj.descriptionEn : proj.description) || proj.description;
-              const stack = proj.stack || proj.technologies || [];
+              const areas = projectAreaNames(proj, categories, language);
 
               return (
                 <Link
@@ -312,18 +315,18 @@ export default function PostPage({
                         {projDesc}
                       </p>
                     </div>
-                    {stack.length > 0 && (
+                    {areas.length > 0 && (
                       <div className="flex flex-wrap gap-1">
-                        {stack.slice(0, 3).map((tech, i) => (
+                        {areas.slice(0, 3).map((area, i) => (
                           <span
                             key={i}
                             className="rounded bg-superficie-alta px-1.5 py-0.5 font-mono text-[10px] text-tinta-suave"
                           >
-                            {tech}
+                            {area}
                           </span>
                         ))}
-                        {stack.length > 3 && (
-                          <span className="font-mono text-[10px] text-tinta-fraca">+{stack.length - 3}</span>
+                        {areas.length > 3 && (
+                          <span className="font-mono text-[10px] text-tinta-fraca">+{areas.length - 3}</span>
                         )}
                       </div>
                     )}

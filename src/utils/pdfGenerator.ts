@@ -2,6 +2,8 @@ import type { jsPDF } from "jspdf";
 import { ResumeData } from "../types";
 import { slugOf } from "./slug";
 import { formatarData, formatarPeriodo } from "../lib/periodo";
+import { localePath, stripLocale } from "../lib/routes";
+import { projectAreaNames } from "../lib/projectAreas";
 
 type PdfLanguage = "pt" | "en";
 
@@ -16,7 +18,8 @@ const PDF_LABELS = {
     skills: "Habilidades Técnicas",
     courses: "Cursos e Certificações",
     viewOnSite: "Ver no Site",
-    technologies: "Tecnologias",
+    area: "Área",
+    areas: "Áreas",
     page: "Página",
     of: "de",
   },
@@ -29,7 +32,8 @@ const PDF_LABELS = {
     skills: "Technical Skills",
     courses: "Courses & Certifications",
     viewOnSite: "View on Site",
-    technologies: "Technologies",
+    area: "Area",
+    areas: "Areas",
     page: "Page",
     of: "of",
   },
@@ -98,6 +102,20 @@ export async function createResumePDFDoc(data?: ResumeData, language: PdfLanguag
   // PDF. Um único ponto evita o QR code e os links de projeto apontarem para
   // domínios diferentes se o site algum dia mudar de endereço.
   const SITE_ORIGIN = (typeof window !== "undefined" && window.location.origin) || "https://pedroazara.vercel.app";
+
+  // Todo link para o próprio site abre no idioma do PDF: o currículo em
+  // inglês leva a /en/... — antes o QR code, o site do contato e os projetos
+  // caíam todos na versão em português.
+  const siteHref = (href: string): string => {
+    if (language !== "en") return href;
+    try {
+      const url = new URL(href);
+      url.pathname = localePath(stripLocale(url.pathname).path, "en");
+      return url.toString();
+    } catch {
+      return href;
+    }
+  };
 
   let y = 15; // Running Y position in mm
 
@@ -177,7 +195,7 @@ export async function createResumePDFDoc(data?: ResumeData, language: PdfLanguag
   if (MARGIN_LEFT + nameWidth < qrX - 4) {
     try {
       const siteUrlRaw = (profile.website && profile.website.trim()) || SITE_ORIGIN;
-      const qrTarget = /^https?:\/\//i.test(siteUrlRaw) ? siteUrlRaw : `https://${siteUrlRaw}`;
+      const qrTarget = siteHref(/^https?:\/\//i.test(siteUrlRaw) ? siteUrlRaw : `https://${siteUrlRaw}`);
       const QRCode = await loadQRCode();
       const qrDataUrl = await QRCode.toDataURL(qrTarget, {
         margin: 0,
@@ -199,9 +217,7 @@ export async function createResumePDFDoc(data?: ResumeData, language: PdfLanguag
   doc.setFontSize(8.5);
 
   const websiteHref = profile.website
-    ? /^https?:\/\//i.test(profile.website)
-      ? profile.website
-      : `https://${profile.website}`
+    ? siteHref(/^https?:\/\//i.test(profile.website) ? profile.website : `https://${profile.website}`)
     : undefined;
   const githubHref = profile.github
     ? profile.github.startsWith("http")
@@ -542,7 +558,7 @@ export async function createResumePDFDoc(data?: ResumeData, language: PdfLanguag
         // páginas — antes ia direto de `proj.id`, que ignora o código de URL
         // editável no formulário do projeto: renomear o link não mudava o que
         // ia para o PDF, e o link impresso apontava para um endereço vencido.
-        const projectLinkUrl = `${SITE_ORIGIN}/project/${encodeURIComponent(slugOf(proj))}`;
+        const projectLinkUrl = siteHref(`${SITE_ORIGIN}/project/${encodeURIComponent(slugOf(proj))}`);
         const rightLabel = L.viewOnSite;
         const projectTitle = pick(proj.title, proj.titleEn, language);
 
@@ -591,14 +607,15 @@ export async function createResumePDFDoc(data?: ResumeData, language: PdfLanguag
 
         y += 4.5;
 
-        // Project Tags / Technologies
-        if (proj.tags && proj.tags.length > 0) {
+        // Área(s) do projeto — já traduzidas, ao contrário das antigas tags.
+        const areas = projectAreaNames(proj, data.categories || [], language);
+        if (areas.length > 0) {
           doc.setFont("helvetica", "normal");
           doc.setFontSize(8);
           doc.setTextColor(INK_META[0], INK_META[1], INK_META[2]); // Slate-500
-          const techText = `${L.technologies}: ${proj.tags.join(", ")}`;
-          const techLines = doc.splitTextToSize(techText, CONTENT_WIDTH);
-          for (const line of techLines) {
+          const areaText = `${areas.length > 1 ? L.areas : L.area}: ${areas.join(", ")}`;
+          const areaLines = doc.splitTextToSize(areaText, CONTENT_WIDTH);
+          for (const line of areaLines) {
             ensureSpace(4);
             doc.text(line, MARGIN_LEFT, y);
             y += 4;

@@ -7,7 +7,6 @@ interface FichaProjetoProps {
   emPlanejamento?: boolean;
   situacao?: string | null;
   areas?: string[];
-  tecnologias?: string[];
   minutosDeLeitura?: number;
   language?: Language;
 }
@@ -24,13 +23,15 @@ const ROTULO = "font-mono text-[10px] font-bold uppercase tracking-widest text-t
  *
  * São duas faixas porque são dois tipos de dado, e tratá-los igual foi o
  * primeiro erro: numa grade de células do mesmo tamanho, "8 min" ocupava a
- * altura inteira que "Instrumentação & Eletrônica, Análise de Dados" precisou,
- * e a lista de seis tecnologias ainda era cortada no fim.
+ * altura inteira que "Instrumentação & Eletrônica, Análise de Dados" precisou.
  *
  * - Em cima, o que é curto e sempre cabe numa linha: período, situação,
  *   leitura. Ficam lado a lado, separados por espaço.
- * - Embaixo, o que é lista e cresce sem aviso: áreas e tecnologias, em
- *   etiquetas que quebram linha e ocupam a largura toda. Nada é truncado.
+ * - Embaixo, o que é lista e cresce sem aviso: as áreas, em etiquetas que
+ *   quebram linha e ocupam a largura toda. Nada é truncado.
+ *
+ * Tecnologias não entram: eram etiquetas soltas, só em português, e a área
+ * já diz de relance do que se trata o projeto.
  *
  * Cada parte só existe se houver o que dizer — projeto sem período não deixa
  * um espaço vazio esperando ser preenchido.
@@ -41,7 +42,6 @@ export default function FichaProjeto({
   emPlanejamento,
   situacao,
   areas = [],
-  tecnologias = [],
   minutosDeLeitura,
   language = "pt",
 }: FichaProjetoProps) {
@@ -80,9 +80,6 @@ export default function FichaProjeto({
 
   const listas: { rotulo: string; itens: string[] }[] = [];
   if (areas.length > 0) listas.push({ rotulo: isEn ? "Areas" : "Áreas", itens: areas });
-  if (tecnologias.length > 0) {
-    listas.push({ rotulo: isEn ? "Technologies" : "Tecnologias", itens: tecnologias });
-  }
 
   if (curtos.length === 0 && listas.length === 0) return null;
 
