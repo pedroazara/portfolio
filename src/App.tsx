@@ -15,7 +15,6 @@ const ProjectSection = lazy(() => import("./components/ProjectSection"));
 const ExperienceEducationSection = lazy(() => import("./components/ExperienceEducationSection"));
 const CoursesSection = lazy(() => import("./components/CoursesSection"));
 const SkillsSection = lazy(() => import("./components/SkillsSection"));
-import AdminStrip from "./components/AdminStrip";
 import GlobalHeader from "./components/GlobalHeader";
 import SectionHeader from "./components/SectionHeader";
 const BlogSection = lazy(() => import("./components/BlogSection"));
@@ -30,7 +29,6 @@ const BlogSection = lazy(() => import("./components/BlogSection"));
  */
 const LoginModal = lazy(() => import("./components/LoginModal"));
 const ImageBankModal = lazy(() => import("./components/ImageBankModal"));
-const AdminManagementModal = lazy(() => import("./components/AdminManagementModal"));
 const PdfPreviewModal = lazy(() => import("./components/PdfPreviewModal"));
 const ElevatorPitchModal = lazy(() => import("./components/ElevatorPitchModal"));
 import Footer from "./components/Footer";
@@ -213,7 +211,6 @@ export default function App() {
 
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isImageBankOpen, setIsImageBankOpen] = useState(false);
-  const [isAdminManagementOpen, setIsAdminManagementOpen] = useState(false);
 
   const [isPdfPreviewOpen, setIsPdfPreviewOpen] = useState(false);
   // Os dois acessos ao pitch compartilham a mesma URL pública e abrem
@@ -223,7 +220,6 @@ export default function App() {
   // depois disso — o pedaço já foi baixado, e a animação de saída sobrevive.
   const precisaLogin = useMountedOnce(isLoginModalOpen);
   const precisaBancoDeImagens = useMountedOnce(isImageBankOpen);
-  const precisaPainel = useMountedOnce(isAdminManagementOpen);
   const precisaPdf = useMountedOnce(isPdfPreviewOpen);
   const [showAutoSaveBanner, setShowAutoSaveBanner] = useState(false);
   const [isGlobalCollapsed, setIsGlobalCollapsed] = useState(false);
@@ -653,19 +649,6 @@ export default function App() {
         {language === "en" ? "Skip to main content" : "Ir para o conteúdo principal"}
       </a>
 
-      {/* Admin Strip (Visible ONLY when authenticated) */}
-      {isAuthenticated && !hasPersonalWorkspace && (
-        <AdminStrip
-          isEditMode={isEditMode}
-          onToggleEditMode={() => setIsEditMode(!isEditMode)}
-          isSaving={isSaving}
-          showAutoSaveBanner={showAutoSaveBanner}
-          language={language}
-          onLogout={handleLogout}
-          onOpenManagement={() => setIsAdminManagementOpen(true)}
-        />
-      )}
-
       {/* Global Navigation Header (64px, scroll-hiding) */}
       {!hasPersonalWorkspace && <GlobalHeader
         isCollapsed={isGlobalCollapsed}
@@ -719,7 +702,35 @@ export default function App() {
               }
             >
               {adminHubMatch ? (
-                <AdminHubPage tab={adminHubTab} portfolioProjects={isDataLoaded && !cloudReadFailed ? resumeData.projects : []} portfolioLoading={!isDataLoaded} portfolioError={cloudReadFailed} authorName={resumeData.profile.name} darkMode={darkMode} onToggleTheme={() => setDarkMode(!darkMode)} onOpenManagement={() => setIsAdminManagementOpen(true)} />
+                <AdminHubPage
+                  tab={adminHubTab}
+                  portfolioProjects={isDataLoaded && !cloudReadFailed ? resumeData.projects : []}
+                  portfolioLoading={!isDataLoaded}
+                  portfolioError={cloudReadFailed}
+                  authorName={resumeData.profile.name}
+                  darkMode={darkMode}
+                  onToggleTheme={() => setDarkMode(!darkMode)}
+                  admin={{
+                    resumeData,
+                    isEditMode,
+                    onEditModeChange: setIsEditMode,
+                    isSaving,
+                    savedRecently: showAutoSaveBanner,
+                    onRestore: handleImportJSON,
+                    onResetToTemplate: handleResetToTemplate,
+                    onClearAll: handleClearAll,
+                    onOpenImageBank: () => setIsImageBankOpen(true),
+                    onOpenPdfPreview: () => setIsPdfPreviewOpen(true),
+                    // O modo de teste não tem sessão: não há do que sair.
+                    onLogout: isAuthenticated
+                      ? async () => {
+                          go("/");
+                          await handleLogout();
+                        }
+                      : undefined,
+                    language,
+                  }}
+                />
               ) : postEditorMatch ? (
                 <PostEditorPage
                   key={postEditorMatch[1]}
@@ -936,20 +947,6 @@ export default function App() {
           <ImageBankModal
             isOpen={isImageBankOpen}
             onClose={() => setIsImageBankOpen(false)}
-          />
-        )}
-
-        {precisaPainel && (
-          <AdminManagementModal
-            isOpen={isAdminManagementOpen}
-            onClose={() => setIsAdminManagementOpen(false)}
-            resumeData={resumeData}
-            onRestore={handleImportJSON}
-            onResetToTemplate={handleResetToTemplate}
-            onClearAll={handleClearAll}
-            onOpenImageBank={() => setIsImageBankOpen(true)}
-            onOpenPdfPreview={() => setIsPdfPreviewOpen(true)}
-            language={language}
           />
         )}
 

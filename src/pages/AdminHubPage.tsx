@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { lazy, Suspense, useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
@@ -20,6 +20,7 @@ import {
   ChevronRight,
   History,
   Sunrise,
+  Loader2,
 } from "lucide-react";
 import TasksBoard from "../components/TasksBoard";
 import LinkVault from "../components/LinkVault";
@@ -32,6 +33,7 @@ import ProjectsPanel from "../components/admin/ProjectsPanel";
 import WorkspaceProjectsOverview from "../components/admin/WorkspaceProjectsOverview";
 import EditLogPanel from "../components/admin/EditLogPanel";
 import DailyUpdatesPanel from "../components/admin/DailyUpdatesPanel";
+import type { PortfolioAdminPanelProps } from "../components/admin/PortfolioAdminPanel";
 import { AdminHubTab, ADMIN_HUB_TABS } from "../lib/adminHubTabs";
 import { createTask, createLink } from "../lib/adminToolsService";
 import { usePersonalWorkspace } from "../hooks/usePersonalWorkspace";
@@ -41,6 +43,9 @@ import { useLocalePath } from "../lib/routes";
 import { useInboxDailyUpdates } from "../hooks/useInboxDailyUpdates";
 import type { Project } from "../types";
 import "./personal-workspace.css";
+
+// Backups, tradução e companhia só são baixados quando a aba abre.
+const PortfolioAdminPanel = lazy(() => import("../components/admin/PortfolioAdminPanel"));
 
 export type { AdminHubTab } from "../lib/adminHubTabs";
 const TAB_META: Record<
@@ -82,6 +87,11 @@ const TAB_META: Record<
     description: "Cada edição do portfólio, sua ou de um agente de IA.",
     icon: History,
   },
+  administracao: {
+    label: "Administração",
+    description: "Modo de edição do site, backups, segurança, mídia e tradução.",
+    icon: Settings2,
+  },
 };
 type CaptureType = "task" | "link";
 interface Props {
@@ -92,7 +102,7 @@ interface Props {
   authorName?: string;
   darkMode?: boolean;
   onToggleTheme: () => void;
-  onOpenManagement: () => void;
+  admin: PortfolioAdminPanelProps;
 }
 
 export default function AdminHubPage({
@@ -103,7 +113,7 @@ export default function AdminHubPage({
   authorName = "Pedro",
   darkMode = false,
   onToggleTheme,
-  onOpenManagement,
+  admin,
 }: Props) {
   const navigate = useNavigate();
   const location = useLocation();
@@ -311,8 +321,8 @@ export default function AdminHubPage({
             <button
               type="button"
               className="ws-icon-button"
-              aria-label="Configurações do portfólio"
-              onClick={onOpenManagement}
+              aria-label="Administração do portfólio"
+              onClick={() => go("administracao")}
             >
               <Settings2 size={18} />
             </button>
@@ -351,8 +361,8 @@ export default function AdminHubPage({
             <button
               type="button"
               className="ws-icon-button ws-compact-settings"
-              aria-label="Configurações do portfólio"
-              onClick={onOpenManagement}
+              aria-label="Administração do portfólio"
+              onClick={() => go("administracao")}
             >
               <Settings2 size={18} />
             </button>
@@ -448,6 +458,23 @@ export default function AdminHubPage({
                 {tab === "links" && <LinkVault requestedId={requestedId} />}
                 {tab === "meu-espaco" && <DailyUpdatesPanel />}
                 {tab === "atividade" && <EditLogPanel />}
+                {tab === "administracao" && (
+                  <Suspense
+                    fallback={
+                      <div className="flex items-center justify-center gap-2 py-24 text-sm text-slate-500">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Carregando as ferramentas…
+                      </div>
+                    }
+                  >
+                    <PortfolioAdminPanel
+                      {...admin}
+                      // Sair também é deixar o painel: os rascunhos pendentes
+                      // gravam antes, enquanto a sessão ainda vale.
+                      onLogout={admin.onLogout && (() => leaveWorkspace(admin.onLogout!))}
+                    />
+                  </Suspense>
+                )}
               </div>
             </>
           )}

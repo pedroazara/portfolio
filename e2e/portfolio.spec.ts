@@ -122,3 +122,30 @@ test("server protects API and supplies security headers", async ({ request }) =>
   expect((await request.post("/api/translate", { data: { text: "Olá" } })).status()).toBe(401);
   expect((await request.get("/api/translate")).status()).toBe(405);
 });
+
+test("portfolio admin tools live in the personal hub and its site mode drives the public pages", async ({ page }) => {
+  await page.goto("/curriculo?dev");
+  await expect(page.getByRole("link", { name: "Editar perfil", exact: true })).toBeVisible();
+
+  await page.goto("/admin/painel/administracao");
+  await expect(page.getByRole("heading", { level: 1, name: "Administração", exact: true })).toBeVisible();
+  const tools = page.getByRole("tablist", { name: "Ferramentas do portfólio", exact: true });
+  for (const name of ["Backups", "Segurança", "Mídia", "Tradução", "Avançado"]) {
+    await expect(tools.getByRole("tab", { name, exact: true })).toBeVisible();
+  }
+  await tools.getByRole("tab", { name: "Mídia", exact: true }).click();
+  await expect(page.getByRole("tabpanel")).toContainText("Banco de Imagens");
+  // The local preview has no session to end.
+  await expect(page.getByRole("button", { name: "Sair", exact: true })).toHaveCount(0);
+
+  const mode = page.getByRole("group", { name: "Modo do site", exact: true });
+  await expect(mode.getByRole("button", { name: "Editar", exact: true })).toHaveAttribute("aria-pressed", "true");
+  await mode.getByRole("button", { name: "Pré-visualizar", exact: true }).click();
+  await expect(mode.getByRole("button", { name: "Pré-visualizar", exact: true })).toHaveAttribute("aria-pressed", "true");
+
+  await page.getByRole("link", { name: /ir para o portfólio/ }).click();
+  await page.getByRole("navigation", { name: "Navegação principal" }).getByRole("link", { name: "Currículo", exact: true }).click();
+  await expect(page).toHaveURL(/\/curriculo$/);
+  await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Editar perfil", exact: true })).toHaveCount(0);
+});

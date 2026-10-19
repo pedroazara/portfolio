@@ -135,12 +135,17 @@ export default function GlobalHeader({
     }
   };
 
-  const topOffset = isAuthenticated ? "top-[40px]" : "top-0";
+  // Com sessão, o botão de admin leva às ferramentas no painel; sem ela, ao login.
+  const openAdmin = () => {
+    if (isAuthenticated) navigate(localePath("/admin/painel/administracao", language));
+    else if (onOpenLogin) onOpenLogin();
+    else navigate(localePath("/admin", language));
+  };
 
   return (
     <>
       <header
-        className={`no-print print:hidden sticky ${topOffset} z-40 w-full transition-all duration-200 ease-in-out ${
+        className={`no-print print:hidden sticky top-0 z-40 w-full transition-all duration-200 ease-in-out ${
           isCollapsed ? "-translate-y-full opacity-0 pointer-events-none" : "translate-y-0 opacity-100"
         } ${
           isScrolled
@@ -231,10 +236,7 @@ export default function GlobalHeader({
               {/* Admin Button */}
               <button
                 type="button"
-                onClick={() => {
-                  if (onOpenLogin) onOpenLogin();
-                  else navigate(localePath("/admin", language));
-                }}
+                onClick={openAdmin}
                 className={`hidden min-[860px]:flex h-8 items-center gap-1.5 rounded-lg border px-2.5 text-[12px] font-medium transition-colors cursor-pointer ${
                   isAuthenticated
                     ? "border-emerald-300 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 font-semibold"
@@ -360,8 +362,7 @@ export default function GlobalHeader({
                   type="button"
                   onClick={() => {
                     setIsMobileMenuOpen(false);
-                    if (onOpenLogin) onOpenLogin();
-                    else navigate(localePath("/admin", language));
+                    openAdmin();
                   }}
                   className="flex items-center gap-2 rounded-lg border border-borda bg-superficie-alta px-3 py-1.5 text-xs font-semibold text-tinta cursor-pointer"
                 >

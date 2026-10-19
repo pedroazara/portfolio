@@ -11,7 +11,6 @@ interface SectionHeaderProps {
   projectCategories?: any[];
   categories?: any[];
   language?: "pt" | "en";
-  isAuthenticated?: boolean;
   isGlobalCollapsed?: boolean;
   onSearchChange?: (query: string) => void;
   searchQuery?: string;
@@ -22,7 +21,6 @@ export default function SectionHeader({
   projectCategories,
   categories,
   language = "pt",
-  isAuthenticated = false,
   isGlobalCollapsed = false,
   onSearchChange,
   searchQuery = "",
@@ -133,13 +131,8 @@ export default function SectionHeader({
     return null;
   }
 
-  // Calculate top offset depending on admin bar and global header collapsed state
-  let topStyle = "top-0";
-  if (isAuthenticated) {
-    topStyle = isGlobalCollapsed ? "top-[40px]" : "top-[104px]";
-  } else {
-    topStyle = isGlobalCollapsed ? "top-0" : "top-[64px]";
-  }
+  // Fica logo abaixo do cabeçalho global, ou no topo quando ele se recolhe.
+  const topStyle = isGlobalCollapsed ? "top-0" : "top-[64px]";
 
   // Categories & counts for /blog
   const blogPosts = (resumeData?.posts || []).filter((p: any) => !p.draft);
