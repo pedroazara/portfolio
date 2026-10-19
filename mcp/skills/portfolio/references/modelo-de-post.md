@@ -28,6 +28,27 @@ Seções sugeridas, em PT e com os títulos equivalentes em EN no
 Omita a seção que não tiver conteúdo real. Projeto em planejamento costuma ter
 só Contexto, Objetivo e Próximos passos.
 
+### Fluxogramas
+
+Fluxo de etapas vai num bloco ` ```fluxo `, que o site desenha como cartões
+numerados ligados por setas (não use ASCII alinhado a espaço num bloco de
+código comum):
+
+````
+```fluxo
+Tema aleatório e desconhecido
+↓
+Pesquisa livre (tempo limitado) | O sistema monta, em segredo, a rubrica
+↓ quando o tempo acaba
+Relatório com feedback
+```
+````
+
+- `↓` sozinho na linha liga dois passos; texto depois da seta vira rótulo.
+- `|` separa o passo de uma nota ao lado; linha começando com `|` continua a nota.
+- Um parêntese no fim do passo vira o detalhe, em letra menor.
+- No `detailedDescriptionEn`, o mesmo bloco traduzido (continua ` ```fluxo `).
+
 Referências não entram no corpo: vão no campo `references`, que o site mostra
 numa seção própria.
 
