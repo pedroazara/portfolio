@@ -12,6 +12,8 @@ import { headingIdsByLine } from "../utils/toc";
 import { parseYouTubeUrl, YouTubeVideo } from "../utils/videoEmbed";
 import { PyCodeBlock, PyOutputBlock } from "./PyBlocks";
 import { codeTheme } from "../lib/codeTheme";
+import FluxogramaBlock from "./FluxogramaBlock";
+import { pareceFluxograma, parseFluxograma } from "../utils/fluxograma";
 
 interface MarkdownRendererProps {
   content: string;
@@ -293,20 +295,38 @@ function lineOf(node: any): number | undefined {
  * Definidos uma única vez, fora de qualquer render — ver `MarkdownContext`.
  */
 const RENDERERS = {
-    // Custom code block
-    code({ node, inline, className, children, ...props }: any) {
-      const match = /language-(\w+)/.exec(className || "");
-      const codeVal = String(children).replace(/\n$/, "");
-      if (!inline && match) {
-        if (match[1] === "python" || match[1] === "py") {
-          return <PyCodeBlock code={codeVal} />;
-        }
-        // Saída já executada de um bloco Python — sempre logo após ele.
-        if (match[1] === "pyresult") {
-          return <PyOutputBlock raw={codeVal} />;
-        }
-        return <CodeBlock code={codeVal} lang={match[1]} />;
+    /**
+     * Bloco cercado por ``` — decidido aqui, no `pre`, e não no `code`.
+     *
+     * O react-markdown 10 não passa mais `inline` ao `code`, então um bloco
+     * sem linguagem chegava lá igual a um código no meio da frase e saía com
+     * o estilo de pílula em cada linha. O `pre` só existe em volta de bloco.
+     */
+    pre({ node }: any) {
+      const codeNode = node?.children?.[0];
+      if (codeNode?.tagName !== "code") return <pre>{textOf(node)}</pre>;
+      const classes = [].concat(codeNode.properties?.className ?? []).map(String);
+      const lang = classes.find((c) => c.startsWith("language-"))?.slice("language-".length);
+      const codeVal = textOf(codeNode).replace(/\n$/, "");
+
+      if (lang === "python" || lang === "py") {
+        return <PyCodeBlock code={codeVal} />;
       }
+      // Saída já executada de um bloco Python — sempre logo após ele.
+      if (lang === "pyresult") {
+        return <PyOutputBlock raw={codeVal} />;
+      }
+      // ```fluxo explícito, ou o fluxograma de setas que os posts já escreviam
+      // num bloco sem linguagem.
+      if (lang === "fluxo" || lang === "flow" || ((!lang || lang === "text") && pareceFluxograma(codeVal))) {
+        // O resto do cabeçalho (```fluxo horizontal) chega em `data.meta`.
+        const meta = String(codeNode.data?.meta ?? "");
+        return <FluxogramaBlock fluxo={parseFluxograma(codeVal, meta)} mdLine={lineOf(node)} />;
+      }
+      return <CodeBlock code={codeVal} lang={lang} />;
+    },
+    // Código no meio da frase (os blocos já foram tratados no `pre`).
+    code({ node, className, children, ...props }: any) {
       return (
         <code
           className="rounded bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-1.5 py-0.5 text-xs font-mono text-indigo-600 dark:text-indigo-400 font-semibold"

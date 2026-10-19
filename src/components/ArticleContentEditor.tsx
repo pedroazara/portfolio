@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { ImagePlus, X, Loader2, Search, Columns2, Play, AlertTriangle } from "lucide-react";
+import { ImagePlus, X, Loader2, Search, Columns2, Play, AlertTriangle, Workflow } from "lucide-react";
 import { StoredImage, listImages, saveImage, fileNameOf, joinPath, GENERAL_FOLDER, isPdfRef } from "../utils/imageDb";
 import { processImagePreservingFormat } from "../utils/imageOptimizer";
 import { Language } from "../lib/translations";
@@ -187,17 +187,16 @@ export default function ArticleContentEditor({
     if (isPicking) loadImages();
   }, [isPicking, loadImages]);
 
-  /** Insere a marcação da imagem na posição do cursor. */
-  const insertImage = (src: string, alt: string) => {
+  /** Insere um bloco na posição do cursor, separado do texto em volta. */
+  const insertAtCursor = (tag: string) => {
     const textarea = textareaRef.current;
     const current = value || "";
     const start = textarea ? textarea.selectionStart : current.length;
     const end = textarea ? textarea.selectionEnd : current.length;
 
-    const tag = `\n\n![${alt}](${src})\n\n`;
     onChange(current.slice(0, start) + tag + current.slice(end));
 
-    // Devolve o cursor para depois da imagem inserida.
+    // Devolve o cursor para depois do bloco inserido.
     setTimeout(() => {
       if (!textarea) return;
       textarea.focus();
@@ -205,6 +204,16 @@ export default function ArticleContentEditor({
       textarea.setSelectionRange(pos, pos);
     }, 50);
   };
+
+  const insertImage = (src: string, alt: string) => insertAtCursor(`\n\n![${alt}](${src})\n\n`);
+
+  /** Modelo de fluxograma — a sintaxe completa está em `utils/fluxograma`. */
+  const insertFlow = () =>
+    insertAtCursor(
+      language === "en"
+        ? "\n\n```fluxo\nFirst step (detail)\n↓\nSecond step | side note\n↓ arrow label\nResult\n```\n\n"
+        : "\n\n```fluxo\nPrimeiro passo (detalhe)\n↓\nSegundo passo | nota ao lado\n↓ rótulo da seta\nResultado\n```\n\n"
+    );
 
   const uploadAndInsert = async (file: File) => {
     if (!file.type.startsWith("image/")) {
@@ -398,6 +407,16 @@ export default function ArticleContentEditor({
           >
             {isBusy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ImagePlus className="h-3.5 w-3.5" />}
             {language === "en" ? "Image" : "Imagem"}
+          </button>
+
+          <button
+            type="button"
+            onClick={insertFlow}
+            title={language === "en" ? "Insert flowchart" : "Inserir fluxograma"}
+            className="flex items-center gap-1.5 rounded-lg border border-slate-200 px-2.5 py-1.5 text-[11px] font-semibold text-slate-600 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+          >
+            <Workflow className="h-3.5 w-3.5" />
+            {language === "en" ? "Flowchart" : "Fluxograma"}
           </button>
         </div>
       </div>
