@@ -16,6 +16,9 @@ Antes de agir, leia:
   Markdown que o site aceita;
 - `references/modelo-de-post.md` — estrutura, tom e exemplos de um post.
 
+Todo texto que esta skill redige passa pela skill `humanize` (veja a regra
+"Texto humano" na seção 6).
+
 ## 0. Confira as ferramentas
 
 Procure as ferramentas `mcp__portfolio-projects__*` e `mcp__portfolio-media__*`
@@ -98,7 +101,7 @@ Monta o post completo de um projeto novo.
    `references/modelo-de-post.md`: título, `codigo`, resumo, corpo com seções,
    relevância técnica quando fizer sentido, destaques, stack, tags, categorias,
    situação, período, links, referências e imagens candidatas com legendas —
-   tudo em PT e EN.
+   tudo em PT e EN. Passe os textos pela skill `humanize` antes de mostrar.
 5. **Com minha confirmação:** `create_project` com os textos (sempre
    `draft: true`) → `upload_project_image` → capa (`crop_cover` + `set_image`,
    ou `apply_cover_pack` se eu tiver um pacote de capas) → galeria → imagens no
@@ -123,7 +126,7 @@ Compara o repositório com o post e propõe atualizações.
      a `situacao`).
 2. **Post atual:** `get_project` completo.
 3. **Plano:** me mostre, em lista curta, o que está desatualizado ou faltando,
-   campo por campo, com o texto proposto. Use `dryRun: true` nas alterações
+   campo por campo, com o texto proposto (já passado pela skill `humanize`). Use `dryRun: true` nas alterações
    grandes para mostrar o efeito.
 4. **Com minha confirmação**, aplique (pode ser só parte do plano) e atualize
    `ultimoCommitSincronizado` em `.claude/portfolio.json`.
@@ -138,6 +141,13 @@ Compara o repositório com o post e propõe atualizações.
   aprovação explícita.
 - **Bilíngue sempre:** toda mudança em PT tem a contrapartida em EN, em inglês
   natural.
+- **Texto humano:** antes de propor ou gravar qualquer texto (resumo, corpo,
+  destaques, legendas, títulos de seção novos), carregue a skill `humanize`
+  com a ferramenta Skill e siga o checklist e o scanner dela, em PT e em EN.
+  Mantenha as seções-padrão do `modelo-de-post.md` (Contexto, Como funciona,
+  Próximos passos...), que são escolha minha e não título genérico de IA. A
+  humanização nunca acrescenta fato: a regra de fidelidade continua valendo.
+  Se a skill não estiver instalada, aplique o mesmo cuidado sem ela e avise.
 - **Rascunho por padrão:** nunca mude `draft` para `false` sem pedido.
 - **Nada sensível:** não leve para o post segredos, chaves, `.env`, URLs
   internas, dados pessoais de terceiros ou código proprietário.
