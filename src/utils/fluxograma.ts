@@ -16,6 +16,9 @@
  *   detalhe).
  *
  * Sem nenhuma seta (só num bloco ```fluxo explícito), cada linha é um passo.
+ *
+ * Na horizontal: ```fluxo horizontal no cabeçalho do bloco, ou a corrente
+ * numa linha só — `Coleta → Modelo → Resultado` (também com `->` e `=>`).
  */
 
 export interface PassoFluxo {
@@ -28,6 +31,7 @@ export interface Fluxograma {
   passos: PassoFluxo[];
   /** `rotulos[i]` é o texto da seta entre `passos[i]` e `passos[i + 1]`. */
   rotulos: (string | undefined)[];
+  direcao: "vertical" | "horizontal";
 }
 
 /** Seta sozinha na linha, com rótulo opcional depois dela. */
@@ -35,6 +39,12 @@ const SETA = /^\s*(?:↓|⬇|⇓|→|->|-->|=>|[vV](?=\s*$))\s*(.*?)\s*$/;
 
 /** Divisória da nota: `|` ou `│` cercado de espaço, ou no começo da linha. */
 const NOTA = /(?:^|\s)[|│](?:\s|$)/;
+
+/** Seta no meio da linha, separando os passos de uma corrente. */
+const CORRENTE = /\s+(?:→|->|=>)\s+/;
+
+/** O que, no cabeçalho do bloco (```fluxo <meta>), pede a horizontal. */
+const META_HORIZONTAL = /\b(?:horizontal|h)\b|→|->/i;
 
 function ehSeta(linha: string): boolean {
   return SETA.test(linha);
@@ -58,9 +68,17 @@ function junta(a: string | undefined, b: string): string {
   return a ? `${a} ${b}` : b;
 }
 
-export function parseFluxograma(codigo: string): Fluxograma {
-  const linhas = codigo.split("\n").map((l) => l.replace(/\s+$/, "")).filter((l) => l.trim());
-  const temSeta = linhas.some(ehSeta);
+export function parseFluxograma(codigo: string, meta = ""): Fluxograma {
+  let linhas = codigo.split("\n").map((l) => l.replace(/\s+$/, "")).filter((l) => l.trim());
+  let temSeta = linhas.some(ehSeta);
+  let direcao: Fluxograma["direcao"] = META_HORIZONTAL.test(meta) ? "horizontal" : "vertical";
+
+  // Corrente numa linha: vira o mesmo texto com uma seta por linha.
+  if (!temSeta && linhas.some((l) => CORRENTE.test(l))) {
+    linhas = linhas.flatMap((l, i) => [...(i ? ["↓"] : []), ...l.split(CORRENTE).flatMap((p, j) => (j ? ["↓", p] : [p]))]);
+    temSeta = true;
+    direcao = "horizontal";
+  }
 
   const passos: PassoFluxo[] = [];
   const rotulos: (string | undefined)[] = [];
@@ -96,7 +114,7 @@ export function parseFluxograma(codigo: string): Fluxograma {
   }
 
   rotulos.length = Math.max(0, passos.length - 1);
-  return { passos, rotulos };
+  return { passos, rotulos, direcao };
 }
 
 /**

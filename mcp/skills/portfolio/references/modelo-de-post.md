@@ -47,6 +47,9 @@ Relatório com feedback
 - `↓` sozinho na linha liga dois passos; texto depois da seta vira rótulo.
 - `|` separa o passo de uma nota ao lado; linha começando com `|` continua a nota.
 - Um parêntese no fim do passo vira o detalhe, em letra menor.
+- Na horizontal: ` ```fluxo horizontal `, ou a corrente numa linha só
+  (`Coleta → Modelo → Resultado`). Bom para 3–5 passos curtos; no celular
+  ela vira vertical sozinha. Fluxo longo ou com notas grandes fica na vertical.
 - No `detailedDescriptionEn`, o mesmo bloco traduzido (continua ` ```fluxo `).
 
 Referências não entram no corpo: vão no campo `references`, que o site mostra

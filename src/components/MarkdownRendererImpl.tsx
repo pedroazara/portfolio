@@ -319,7 +319,9 @@ const RENDERERS = {
       // ```fluxo explícito, ou o fluxograma de setas que os posts já escreviam
       // num bloco sem linguagem.
       if (lang === "fluxo" || lang === "flow" || ((!lang || lang === "text") && pareceFluxograma(codeVal))) {
-        return <FluxogramaBlock fluxo={parseFluxograma(codeVal)} mdLine={lineOf(node)} />;
+        // O resto do cabeçalho (```fluxo horizontal) chega em `data.meta`.
+        const meta = String(codeNode.data?.meta ?? "");
+        return <FluxogramaBlock fluxo={parseFluxograma(codeVal, meta)} mdLine={lineOf(node)} />;
       }
       return <CodeBlock code={codeVal} lang={lang} />;
     },

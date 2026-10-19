@@ -43,6 +43,22 @@ describe("parseFluxograma", () => {
     expect(passos[0]).toEqual({ titulo: "Coleta", detalhe: "dos dados brutos" });
   });
 
+  it("fica na vertical por padrão", () => {
+    expect(parseFluxograma(DO_POST).direcao).toBe("vertical");
+  });
+
+  it("vai para a horizontal pelo cabeçalho do bloco", () => {
+    expect(parseFluxograma("A\n↓\nB", "horizontal").direcao).toBe("horizontal");
+    expect(parseFluxograma("A\n↓\nB", "→").direcao).toBe("horizontal");
+  });
+
+  it("lê a corrente numa linha só como horizontal", () => {
+    const fluxo = parseFluxograma("Coleta (sensores) → Modelo -> Resultado");
+    expect(fluxo.direcao).toBe("horizontal");
+    expect(fluxo.passos).toEqual([{ titulo: "Coleta", detalhe: "sensores" }, { titulo: "Modelo" }, { titulo: "Resultado" }]);
+    expect(fluxo.rotulos).toHaveLength(2);
+  });
+
   it("sem setas, cada linha é um passo", () => {
     expect(parseFluxograma("A\nB\nC").passos.map((p) => p.titulo)).toEqual(["A", "B", "C"]);
   });
