@@ -2,15 +2,15 @@
 
 Permitem que uma IA (Claude Code, Claude Desktop ou outro cliente MCP) leia e
 edite o conteúdo do site sem passar pelo painel: atualizar a página de um
-projeto, enviar prints, recortar capas, reorganizar o banco de imagens.
+projeto, escrever e revisar posts do blog, enviar prints, recortar capas,
+reorganizar o banco de imagens.
 
 | Servidor | Comando | O que faz |
 | --- | --- | --- |
 | `portfolio-projects` | `node mcp/run.mjs projects` | Projetos: listar, ler, criar, alterar campos, editar trechos do Markdown, enviar imagens do projeto |
+| `portfolio-blog` | `node mcp/run.mjs blog` | Posts do blog: listar, ler, criar, alterar campos, editar trechos do Markdown, enviar imagens do post |
 | `portfolio-media` | `node mcp/run.mjs media` | Imagens do site inteiro: listar, ver, enviar, editar, recortar capa, mover, apagar, colocar em qualquer lugar do conteúdo |
 | `portfolio-painel` | `node mcp/run.mjs painel` | Atualizações diárias do painel pessoal (a dica de inglês e outras séries) |
-
-Planejado: `blog` (posts).
 
 ## Como funciona
 
@@ -76,11 +76,13 @@ Use o caminho absoluto deste repositório:
 ```bash
 # Windows (PowerShell)
 claude mcp add portfolio-projects --scope user -- node "C:\caminho\para\portfolio\mcp\run.mjs" projects
+claude mcp add portfolio-blog     --scope user -- node "C:\caminho\para\portfolio\mcp\run.mjs" blog
 claude mcp add portfolio-media    --scope user -- node "C:\caminho\para\portfolio\mcp\run.mjs" media
 claude mcp add portfolio-painel   --scope user -- node "C:\caminho\para\portfolio\mcp\run.mjs" painel
 
 # macOS / Linux
 claude mcp add portfolio-projects --scope user -- node /caminho/para/portfolio/mcp/run.mjs projects
+claude mcp add portfolio-blog     --scope user -- node /caminho/para/portfolio/mcp/run.mjs blog
 claude mcp add portfolio-media    --scope user -- node /caminho/para/portfolio/mcp/run.mjs media
 claude mcp add portfolio-painel   --scope user -- node /caminho/para/portfolio/mcp/run.mjs painel
 ```
@@ -93,6 +95,7 @@ Confira com `claude mcp list` ou, dentro do Claude Code, `/mcp`.
 {
   "mcpServers": {
     "portfolio-projects": { "command": "node", "args": ["C:\\caminho\\para\\portfolio\\mcp\\run.mjs", "projects"] },
+    "portfolio-blog": { "command": "node", "args": ["C:\\caminho\\para\\portfolio\\mcp\\run.mjs", "blog"] },
     "portfolio-media": { "command": "node", "args": ["C:\\caminho\\para\\portfolio\\mcp\\run.mjs", "media"] },
     "portfolio-painel": { "command": "node", "args": ["C:\\caminho\\para\\portfolio\\mcp\\run.mjs", "painel"] }
   }
@@ -127,6 +130,19 @@ Abre uma página onde dá para chamar cada ferramenta à mão.
 | `list_backups` | Cópias locais salvas antes de cada gravação |
 | `restore_project` | **Desfaz**: devolve um projeto ao estado de uma cópia, sem mexer no resto do site |
 
+### `portfolio-blog`
+
+| Ferramenta | Uso |
+| --- | --- |
+| `list_posts` | Resumo de todos os posts, do mais recente ao mais antigo; filtra por texto (título, código, categoria, tags, projeto relacionado) |
+| `get_post` | Post completo por `slug` (código, id ou código antigo), com o tempo de leitura exibido e os links da página e do editor |
+| `create_post` | Cria um post — nasce **rascunho**, com a data de hoje; o `codigo` sai do título |
+| `update_post` | Altera só os campos enviados; `null` remove um campo. Categoria sugerida ganha o nome em inglês sozinha; `projetos` precisa citar projetos que existem |
+| `edit_post_text` | Troca um trecho exato de `content`, `contentEn`, `summary` ou `summaryEn`, ou acrescenta ao fim |
+| `upload_post_image` | Envia imagem (arquivo ou URL) para `posts/<codigo>/`, devolve o Markdown pronto e, com `cover: true`, já põe como capa |
+| `list_backups` | Cópias locais salvas antes de cada gravação (as mesmas do `portfolio-projects`) |
+| `restore_post` | **Desfaz**: devolve um post ao estado de uma cópia, sem mexer no resto do site |
+
 ### `portfolio-media`
 
 | Ferramenta | Uso |
@@ -153,7 +169,7 @@ As atualizações chegam na **caixa de entrada** da aba Meu espaço do painel
 calendário da aba mostra o que chegou em cada dia. Rode
 **uma vez** `supabase/daily_updates.sql` no SQL Editor para criar a tabela.
 
-Toda ferramenta do `portfolio-projects` e do `portfolio-media` que grava aceita `note`: uma frase do agente dizendo o que fez
+Toda ferramenta do `portfolio-projects`, do `portfolio-blog` e do `portfolio-media` que grava aceita `note`: uma frase do agente dizendo o que fez
 e por quê, que aparece no registro de edições.
 
 ## Skill `/portfolio`
@@ -217,16 +233,16 @@ fixo a um agente (ex.: "Claude no notebook"), defina `PORTFOLIO_MCP_AGENT` no
 
 ## Segurança e desfazer
 
-- **Rascunho por padrão.** Projetos criados pela IA não ficam públicos até
-  alguém pedir `draft: false`.
+- **Rascunho por padrão.** Projetos e posts criados pela IA não ficam
+  públicos até alguém pedir `draft: false`.
 - **Simulação.** As ferramentas que gravam conteúdo aceitam `dryRun: true`.
 - **Nada é sobrescrito no Storage.** Envios e edições com nome repetido ganham
   sufixo. (A exceção é o recorte de capa, que o painel também substitui no
   mesmo caminho.)
 - **Cópia antes de cada gravação.** O documento anterior é salvo em
   `mcp/.history/` (as 50 últimas; fora do git). A resposta traz o
-  `backupPath`; `restore_project` usa essa cópia para desfazer — é só pedir
-  "desfaz a última alteração no projeto X".
+  `backupPath`; `restore_project` e `restore_post` usam essa cópia para
+  desfazer — é só pedir "desfaz a última alteração no projeto X" (ou no post X).
 - O painel continua tendo backups diários e, se `supabase/technical-upgrade.sql`
   tiver sido aplicado, o histórico de revisões no próprio banco.
 
@@ -245,7 +261,7 @@ fixo a um agente (ex.: "Claude no notebook"), defina `PORTFOLIO_MCP_AGENT` no
 
 A pasta `core/` concentra o que é comum: credenciais (`supabase.ts`), leitura
 e gravação segura do documento (`portfolioDocument.ts`), arquivos do bucket
-(`images.ts`) e referências `db:` (`references.ts`). Um servidor novo
-(`blog/`) só precisa das próprias regras e de uma linha em
-`run.mjs`. As regras de cada servidor ficam em funções puras
-(`projectOps.ts`, `mediaOps.ts`) testadas com `npm test`, sem rede.
+(`images.ts`) e referências `db:` (`references.ts`). Um servidor novo só
+precisa das próprias regras e de uma linha em `run.mjs`. As regras de cada
+servidor ficam em funções puras (`projectOps.ts`, `blogOps.ts`, `mediaOps.ts`)
+testadas com `npm test`, sem rede.
