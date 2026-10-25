@@ -285,13 +285,18 @@ export function buildNewProject(
  * Troca um trecho exato de um texto, ou acrescenta ao fim quando `oldText`
  * não vem. Exigir trecho único evita trocar o lugar errado sem perceber.
  */
-export function editText(current: string | undefined, newText: string, oldText?: string): string {
+export function editText(
+  current: string | undefined,
+  newText: string,
+  oldText?: string,
+  readHint = "Leia o projeto com get_project",
+): string {
   const body = current || "";
   if (oldText === undefined || oldText === "") {
     return body.trim() ? `${body.replace(/\s+$/, "")}\n\n${newText.replace(/^\s+/, "")}` : newText;
   }
   const count = body.split(oldText).length - 1;
-  if (count === 0) throw new Error("Trecho não encontrado. Leia o projeto com get_project e copie o trecho exato.");
+  if (count === 0) throw new Error(`Trecho não encontrado. ${readHint} e copie o trecho exato.`);
   if (count > 1) throw new Error(`O trecho aparece ${count} vezes. Inclua mais contexto para ele ser único.`);
   return body.replace(oldText, () => newText);
 }

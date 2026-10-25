@@ -3,6 +3,7 @@
  *
  *   node <caminho-do-portfolio>/mcp/run.mjs projects   (projetos)
  *   node <caminho-do-portfolio>/mcp/run.mjs media      (imagens)
+ *   node <caminho-do-portfolio>/mcp/run.mjs blog       (posts do blog)
  *   node <caminho-do-portfolio>/mcp/run.mjs painel     (atualizações diárias)
  *
  * O cliente MCP (Claude Code, Claude Desktop...) inicia o servidor com o
@@ -20,6 +21,7 @@ import { register } from "tsx/esm/api";
 const SERVERS = {
   projects: "./projects/server.ts",
   media: "./media/server.ts",
+  blog: "./blog/server.ts",
   painel: "./painel/server.ts",
 };
 

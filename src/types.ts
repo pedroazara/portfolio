@@ -218,6 +218,8 @@ export interface Course {
 export interface BlogPost {
   id: string;
   codigo?: string; // Optional unique code identifier
+  /** Códigos anteriores, de antes de alguma renomeação. */
+  codigosAntigos?: string[];
   tipo?: "artigo";
   title: string;
   titleEn?: string;
