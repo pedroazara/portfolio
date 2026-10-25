@@ -5,6 +5,7 @@ import { Language } from "../lib/translations";
 import { localePath } from "../lib/routes";
 import { slugOf } from "../utils/slug";
 import { estimateReadTime } from "../utils/readTime";
+import { formatPostDate } from "../utils/postDate";
 
 interface UltimosArtigosProps {
   posts: BlogPost[];
@@ -12,18 +13,6 @@ interface UltimosArtigosProps {
 }
 
 const MAXIMO = 3;
-
-/** "2026-09-08" vira "8 de set. de 2026"; qualquer outro formato passa como veio. */
-function formatarData(data: string, language: Language) {
-  const instante = new Date(`${data}T00:00:00Z`);
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(data) || Number.isNaN(instante.getTime())) return data;
-  return new Intl.DateTimeFormat(language === "en" ? "en-US" : "pt-BR", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-    timeZone: "UTC",
-  }).format(instante);
-}
 
 /**
  * Os artigos mais recentes, na home — e nada quando não há nenhum.
@@ -71,7 +60,7 @@ export default function UltimosArtigos({ posts, language = "pt" }: UltimosArtigo
                 className="group grid gap-2 py-5 sm:grid-cols-[11rem_minmax(0,1fr)] sm:gap-8"
               >
                 <div className="flex flex-wrap gap-x-4 text-sm text-tinta-fraca sm:flex-col">
-                  {post.date && <time dateTime={post.date}>{formatarData(post.date, language)}</time>}
+                  {post.date && <time dateTime={post.date}>{formatPostDate(post.date, language)}</time>}
                   <span>{post.readTime || estimateReadTime(post.content, language)}</span>
                 </div>
                 <div className="max-w-[70ch]">

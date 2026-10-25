@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 import { initialResumeData } from "../src/data/initialData";
 const fixture = structuredClone(initialResumeData);
-fixture.projects.push({ id: "ux-gallery", codigo: "ux-gallery", title: "UX Gallery", description: "Test fixture", categoryId: "ux-category", tags: [], galleryImages: ["/favicon.svg", "/og-home.svg"], detailedDescription: "## Visão geral\n\nTeste\n\n## Detalhes\n\nTeste" });
+fixture.projects.push({ id: "ux-gallery", codigo: "ux-gallery", title: "UX Gallery", description: "Test fixture", categoryId: "ux-category", tags: [], galleryImages: ["/favicon.svg", "/icon.svg"], detailedDescription: "## Visão geral\n\nTeste\n\n## Detalhes\n\nTeste" });
 fixture.categories.push({ id: "ux-category", name: "UX Tests" });
 fixture.posts.push({ id: "ux-article", codigo: "ux-article", title: "UX Article", summary: "Test fixture", content: "## Introdução\n\n" + "Texto para teste de leitura. ".repeat(400) + "\n\n## Resultados\n\nTeste.", date: "2026-01-01", tags: [] });
 
@@ -50,6 +50,10 @@ test("mobile menu contains keyboard focus and article anchors survive loading", 
   await page.getByRole("button", { name: "Nesta página" }).click();
   const sumario = page.getByRole("navigation", { name: "Sumário" });
   await expect(sumario.getByRole("link", { name: "Resultados", exact: true })).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  // O blog tem cabeçalho próprio, sem o menu do portfólio; o menu fica no resto do site.
+  await expect(page.getByRole("button", { name: "Abrir menu de navegação" })).toHaveCount(0);
+  await page.goto("/curriculo");
   await page.getByRole("button", { name: "Abrir menu de navegação" }).click();
   const menu = page.getByRole("dialog", { name: "Menu de navegação" });
   await expect(menu).toBeVisible();

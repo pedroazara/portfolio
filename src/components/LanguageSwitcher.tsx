@@ -2,10 +2,12 @@ import { motion } from "motion/react";
 import { usePrefersReducedMotion } from "../hooks/usePrefersReducedMotion";
 
 /** Animate inside the control; shared layout coordinates include page scroll. */
-export default function LanguageSwitcher({ language, onChange, mobile = false }: {
+export default function LanguageSwitcher({ language, onChange, mobile = false, alwaysVisible = false }: {
   language: "pt" | "en";
   onChange: (language: "pt" | "en") => void;
   mobile?: boolean;
+  /** Versão compacta também no celular, para cabeçalhos sem menu lateral. */
+  alwaysVisible?: boolean;
 }) {
   const reducedMotion = usePrefersReducedMotion();
   return (
@@ -13,7 +15,7 @@ export default function LanguageSwitcher({ language, onChange, mobile = false }:
       role="group"
       aria-label={language === "en" ? "Language" : "Idioma"}
       data-testid={mobile ? "language-mobile" : "language-desktop"}
-      className={`relative grid-cols-2 rounded-lg border border-borda-forte bg-superficie-alta ${mobile ? "grid p-1" : "hidden p-0.5 min-[860px]:grid"}`}
+      className={`relative grid-cols-2 rounded-lg border border-borda-forte bg-superficie-alta ${mobile ? "grid p-1" : alwaysVisible ? "grid p-0.5" : "hidden p-0.5 min-[860px]:grid"}`}
     >
       <div aria-hidden="true" className={`pointer-events-none absolute ${mobile ? "inset-1" : "inset-0.5"}`}>
         <motion.span

@@ -1,12 +1,11 @@
 import React, { useEffect, useMemo, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import {
-  ArrowLeft, ArrowRight, Calendar, Clock, Edit2, Code, AlertCircle, FileText, BookOpen,
-} from "lucide-react";
+import { ArrowLeft, ArrowRight, Edit2, AlertCircle, FileText } from "lucide-react";
 import { BlogPost, Project, ProjectCategory } from "../types";
 import { Language } from "../lib/translations";
 import { findBySlug, slugOf } from "../utils/slug";
 import { estimateReadTime } from "../utils/readTime";
+import { formatPostDate } from "../utils/postDate";
 import MarkdownRenderer from "../components/MarkdownRenderer";
 import TableOfContents from "../components/TableOfContents";
 import ContentUnavailable from "../components/ContentUnavailable";
@@ -52,7 +51,7 @@ export default function PostPage({
 }: PostPageProps) {
   const navigate = useNavigate();
   const lp = useLocalePath();
-  // O que a barra de progresso mede: da capa ao fim do corpo, sem contar
+  // O que a barra de progresso mede: do título ao fim do corpo, sem contar
   // projetos relacionados, navegação entre artigos e rodapé.
   const leituraRef = useRef<HTMLDivElement>(null);
 
@@ -148,22 +147,26 @@ export default function PostPage({
     .slice(0, 3)
     .map((entry) => entry.post);
 
+  const summary = (language === "en" ? post.summaryEn : post.summary) || post.summary;
+  const isEn = language === "en";
+
   return (
-    <div className="grid grid-cols-1 gap-10 xl:grid-cols-[10rem_minmax(0,1fr)]">
-      {/* Sumário (esquerda), só quando há títulos e largura para ele */}
-      <aside className="min-w-0">
+    <div className="grid grid-cols-1 gap-x-12 gap-y-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,42rem)_minmax(0,1fr)]">
+      {/* Sumário na margem esquerda, só quando há títulos e largura para ele;
+          a coluna de leitura fica centrada, alinhada com o cabeçalho do blog. */}
+      <aside className="min-w-0 xl:col-start-1 xl:row-start-1 xl:w-44 xl:justify-self-end xl:pt-40">
         {toc.length > 0 && <TableOfContents entries={toc} language={language} />}
       </aside>
 
-      <article className="mx-auto w-full max-w-4xl">
+      <article className="blog-article mx-auto w-full max-w-[42rem] xl:col-start-2 xl:row-start-1">
       {/* Barra de navegação do artigo */}
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-3 no-print">
+      <div className="mb-10 flex flex-wrap items-center justify-between gap-3 no-print">
         <Link
           to={lp("/blog")}
-          className="flex items-center gap-1.5 rounded-xl border border-borda px-3 py-2 text-xs font-semibold text-tinta-suave transition-colors hover:bg-superficie-alta"
+          className="inline-flex items-center gap-1.5 text-sm text-tinta-fraca underline-offset-4 transition-colors hover:text-tinta hover:underline"
         >
-          <ArrowLeft className="h-3.5 w-3.5" />
-          {language === "en" ? "All articles" : "Todos os artigos"}
+          <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" />
+          {isEn ? "All articles" : "Todos os artigos"}
         </Link>
 
         <div className="flex items-center gap-2">
@@ -179,10 +182,10 @@ export default function PostPage({
                   state: { editTarget: editTargetFromViewport() },
                 })
               }
-              className="flex items-center gap-1.5 rounded-xl bg-acento-solido px-4 py-2 text-xs font-bold text-white transition-colors hover:bg-acento-solido-hover"
+              className="flex items-center gap-1.5 rounded-lg bg-acento-solido px-3 py-1.5 text-xs font-bold text-white transition-colors hover:bg-acento-solido-hover"
             >
               <Edit2 className="h-3.5 w-3.5" />
-              {language === "en" ? "Edit" : "Editar"}
+              {isEn ? "Edit" : "Editar"}
             </button>
           )}
         </div>
@@ -190,12 +193,41 @@ export default function PostPage({
 
       <ProgressoLeitura targetRef={leituraRef} />
 
-      {/* Da capa ao fim do corpo: o que a barra acima mede. */}
+      {/* Do título ao fim do corpo: o que a barra acima mede. */}
       <div ref={leituraRef}>
+
+      <header>
+        <div className="mb-4 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-tinta-fraca">
+          {post.draft && (
+            <span className="rounded bg-amber-100 px-1.5 py-0.5 text-xs font-semibold text-amber-800 dark:bg-amber-950/60 dark:text-amber-300">
+              {isEn ? "Draft" : "Rascunho"}
+            </span>
+          )}
+          {category && <span className="font-medium text-acento-tinta">{category}</span>}
+          {category && post.date && <span aria-hidden="true">·</span>}
+          {post.date && <time dateTime={post.date}>{formatPostDate(post.date, language, "long")}</time>}
+        </div>
+
+        <h1 className="font-serif text-4xl font-bold leading-[1.15] tracking-tight text-tinta sm:text-5xl">
+          {title}
+        </h1>
+
+        {summary && (
+          <p className="mt-5 font-serif text-xl leading-relaxed text-tinta-suave">
+            {summary}
+          </p>
+        )}
+
+        <p className="mt-6 text-sm text-tinta-fraca">
+          {isEn ? "By" : "Por"} <span className="text-tinta">{authorName}</span>
+          <span aria-hidden="true"> · </span>
+          {post.readTime || estimateReadTime(content, language)}
+        </p>
+      </header>
 
       {/* Capa */}
       {post.imageUrl && (
-        <div className={`relative mb-8 w-full overflow-hidden rounded-3xl bg-superficie-alta ${COVER_ASPECT_CLASS}`}>
+        <div className={`relative mt-10 w-full overflow-hidden rounded-md bg-superficie-alta ${COVER_ASPECT_CLASS}`}>
           <LocalImage
             src={post.imageUrl}
             alt={title}
@@ -205,179 +237,97 @@ export default function PostPage({
         </div>
       )}
 
-      {/* Categoria e tags */}
-      <div className="mb-4 flex flex-wrap items-center gap-2">
-        {post.draft && (
-          <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-bold uppercase tracking-wider text-amber-800 dark:bg-amber-950/60 dark:text-amber-300">
-            {language === "en" ? "Draft" : "Rascunho"}
-          </span>
-        )}
-        {category && (
-          <span className="inline-flex items-center gap-1 rounded-full bg-acento-suave px-3 py-1 font-mono text-[10px] font-bold uppercase tracking-widest text-acento-tinta">
-            {category}
-          </span>
-        )}
-        {post.tags.map((tag, idx) => (
-          <span
-            key={idx}
-            className="rounded-full border border-borda-suave bg-superficie-alta px-3 py-1 font-sans text-xs font-semibold text-tinta-suave"
-          >
-            #{tag}
-          </span>
-        ))}
-      </div>
-
-      <h1 className="font-display text-3xl font-black leading-tight tracking-tight text-tinta sm:text-5xl">
-        {title}
-      </h1>
-
-      <div className="mt-6 flex flex-wrap items-center gap-4 border-b border-borda-suave pb-6 font-mono text-xs text-tinta-fraca sm:text-sm">
-        <span className="flex items-center gap-1">
-          <Calendar className="h-4 w-4" />
-          {post.date}
-        </span>
-        <span className="text-borda">•</span>
-        <span className="flex items-center gap-1">
-          <Clock className="h-4 w-4" />
-          {post.readTime || estimateReadTime(post.content, language)}
-        </span>
-        <span className="text-borda">•</span>
-        <span>{authorName}</span>
-      </div>
-
-      <div
-        data-md-field="content"
-        className="prose prose-lg mt-10 max-w-none font-sans leading-relaxed text-tinta dark:prose-invert"
-      >
-        {/* Sem limite de largura — o mesmo ajuste da página de projeto: um
-            corpo mais estreito que a capa e o título acima dele lia como
-            espaço desperdiçado, não como medida de leitura deliberada. */}
-        <MarkdownRenderer
-          content={content}
-          className="max-w-none text-sm sm:text-base space-y-4 text-tinta-suave"
-        />
+      <div data-md-field="content" className="mt-10">
+        <MarkdownRenderer content={content} className="max-w-none" />
       </div>
 
       </div>
+
+      {post.tags.length > 0 && (
+        <ul className="mt-12 flex flex-wrap gap-x-4 gap-y-1 text-sm text-tinta-fraca" aria-label={isEn ? "Tags" : "Etiquetas"}>
+          {post.tags.map((tag, idx) => (
+            <li key={idx}>#{tag}</li>
+          ))}
+        </ul>
+      )}
+
+      {/* Quem escreveu: uma linha, e o portfólio fica a um clique para quem quiser. */}
+      <p className="mt-10 border-t border-borda pt-6 text-sm text-tinta-suave no-print">
+        {isEn ? "Written by" : "Escrito por"} <span className="font-semibold text-tinta">{authorName}</span>.{" "}
+        <Link to={lp("/")} className="text-tinta-fraca underline underline-offset-4 transition-colors hover:text-tinta">
+          {isEn ? "About me" : "Sobre mim"}
+        </Link>
+      </p>
 
       {/* Projetos relacionados */}
       {post.projetos && post.projetos.length > 0 && (
-        <div className="mt-12 border-t border-borda-suave pt-8">
-          <h2 className="mb-4 flex items-center gap-2 font-display text-lg font-bold text-tinta">
-            <Code className="h-5 w-5 text-acento" />
-            <span>{language === "en" ? "Related Projects" : "Projetos Relacionados"}</span>
+        <section className="mt-12">
+          <h2 className="mb-3 font-serif text-lg font-bold text-tinta">
+            {isEn ? "Projects mentioned" : "Projetos mencionados"}
           </h2>
 
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <ul className="divide-y divide-borda border-y border-borda">
             {post.projetos.map((code, idx) => {
               const proj = findBySlug(projects, code);
 
               if (!proj) {
                 // Um código órfão é erro de conteúdo: aparece só para quem edita.
                 return isEditMode ? (
-                  <div
+                  <li
                     key={`orfao-${code}-${idx}`}
-                    className="flex items-center gap-2 rounded-xl border border-rose-300 bg-rose-50 p-4 font-mono text-xs text-rose-700 dark:border-rose-800 dark:bg-rose-950/40 dark:text-rose-300"
+                    className="flex items-center gap-2 py-3 font-mono text-xs text-rose-700 dark:text-rose-300"
                   >
                     <AlertCircle className="h-4 w-4 shrink-0 text-rose-500" />
                     <span>
-                      {language === "en" ? "Unknown project code" : "Código de projeto inexistente"}: [{code}]
+                      {isEn ? "Unknown project code" : "Código de projeto inexistente"}: [{code}]
                     </span>
-                  </div>
+                  </li>
                 ) : null;
               }
 
-              const projTitle = (language === "en" && proj.titleEn ? proj.titleEn : proj.title) || proj.title;
-              const projDesc = (language === "en" && proj.descriptionEn ? proj.descriptionEn : proj.description) || proj.description;
+              const projTitle = (isEn && proj.titleEn ? proj.titleEn : proj.title) || proj.title;
+              const projDesc = (isEn && proj.descriptionEn ? proj.descriptionEn : proj.description) || proj.description;
               const areas = projectAreaNames(proj, categories, language);
 
               return (
-                <Link
-                  key={proj.id}
-                  to={lp(`/projetos/${slugOf(proj)}`)}
-                  className="group flex flex-col items-stretch gap-4 rounded-xl border border-borda-suave bg-superficie p-3.5 transition-all hover:border-acento hover:shadow-md sm:flex-row"
-                >
-                  {proj.imageUrl && (
-                    <div className="h-24 w-full shrink-0 overflow-hidden rounded-lg bg-superficie-alta sm:w-28">
-                      <LocalImage
-                        src={proj.imageUrl}
-                        alt={projTitle}
-                        className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                      />
-                    </div>
-                  )}
-                  <div className="flex min-w-0 flex-1 flex-col justify-between">
-                    <div>
-                      <h3 className="truncate font-display text-sm font-bold text-tinta transition-colors group-hover:text-acento">
-                        {projTitle}
-                      </h3>
-                      <p className="mb-2 line-clamp-2 font-sans text-xs text-tinta-suave">
-                        {projDesc}
-                      </p>
-                    </div>
-                    {areas.length > 0 && (
-                      <div className="flex flex-wrap gap-1">
-                        {areas.slice(0, 3).map((area, i) => (
-                          <span
-                            key={i}
-                            className="rounded bg-superficie-alta px-1.5 py-0.5 font-mono text-[10px] text-tinta-suave"
-                          >
-                            {area}
-                          </span>
-                        ))}
-                        {areas.length > 3 && (
-                          <span className="font-mono text-[10px] text-tinta-fraca">+{areas.length - 3}</span>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                </Link>
+                <li key={proj.id}>
+                  <Link to={lp(`/projetos/${slugOf(proj)}`)} className="group block py-3">
+                    <span className="font-semibold text-tinta underline-offset-4 group-hover:underline">{projTitle}</span>
+                    {areas.length > 0 && <span className="ml-2 text-xs text-tinta-fraca">{areas.slice(0, 2).join(" · ")}</span>}
+                    {projDesc && <span className="mt-0.5 block line-clamp-1 text-sm text-tinta-suave">{projDesc}</span>}
+                  </Link>
+                </li>
               );
             })}
-          </div>
-        </div>
+          </ul>
+        </section>
       )}
 
       {/* Veja também: outros artigos por assunto, não por ordem cronológica */}
       {relatedPosts.length > 0 && (
-        <div className="mt-12 border-t border-borda-suave pt-8 no-print">
-          <h2 className="mb-4 flex items-center gap-2 font-display text-lg font-bold text-tinta">
-            <BookOpen className="h-5 w-5 text-acento" />
-            <span>{language === "en" ? "You Might Also Like" : "Veja Também"}</span>
+        <section className="mt-12 no-print">
+          <h2 className="mb-3 font-serif text-lg font-bold text-tinta">
+            {isEn ? "Keep reading" : "Continue lendo"}
           </h2>
 
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+          <ul className="divide-y divide-borda border-y border-borda">
             {relatedPosts.map((relPost) => {
-              const relTitle = (language === "en" ? relPost.titleEn : relPost.title) || relPost.title;
+              const relTitle = (isEn ? relPost.titleEn : relPost.title) || relPost.title;
               return (
-                <Link
-                  key={relPost.id}
-                  to={lp(`/blog/${slugOf(relPost)}`)}
-                  className="group flex flex-col overflow-hidden rounded-xl border border-borda-suave bg-superficie transition-all hover:border-acento hover:shadow-md"
-                >
-                  {relPost.imageUrl && (
-                    <div className="aspect-video w-full shrink-0 overflow-hidden bg-superficie-alta">
-                      <LocalImage
-                        src={relPost.imageUrl}
-                        alt={relTitle}
-                        className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                      />
-                    </div>
-                  )}
-                  <div className="flex flex-1 flex-col justify-between p-4">
-                    <h3 className="line-clamp-2 font-display text-sm font-bold text-tinta transition-colors group-hover:text-acento">
-                      {relTitle}
-                    </h3>
-                    <span className="mt-2 flex items-center gap-1 font-mono text-[11px] text-tinta-fraca">
-                      <Calendar className="h-3 w-3" />
-                      {relPost.date}
-                    </span>
-                  </div>
-                </Link>
+                <li key={relPost.id}>
+                  <Link to={lp(`/blog/${slugOf(relPost)}`)} className="group flex items-baseline justify-between gap-4 py-3">
+                    <span className="font-serif text-[1.0625rem] text-tinta underline-offset-4 group-hover:underline">{relTitle}</span>
+                    {relPost.date && (
+                      <time dateTime={relPost.date} className="shrink-0 text-xs text-tinta-fraca">
+                        {formatPostDate(relPost.date, language)}
+                      </time>
+                    )}
+                  </Link>
+                </li>
               );
             })}
-          </div>
-        </div>
+          </ul>
+        </section>
       )}
 
       {/* Referências */}
@@ -386,45 +336,35 @@ export default function PostPage({
       {/* Anterior / próximo */}
       {(newerPost || olderPost) && (
         <nav
-          aria-label={language === "en" ? "More articles" : "Mais artigos"}
-          className="mt-12 grid grid-cols-1 gap-3 border-t border-borda-suave pt-8 sm:grid-cols-2 no-print"
+          aria-label={isEn ? "More articles" : "Mais artigos"}
+          className="mt-12 grid grid-cols-1 gap-6 border-t border-borda pt-8 sm:grid-cols-2 no-print"
         >
           {newerPost ? (
-            <Link
-              to={lp(`/blog/${slugOf(newerPost)}`)}
-              className="group rounded-2xl border border-borda-suave p-4 transition-all hover:border-acento hover:shadow-md"
-            >
-              <span className="flex items-center gap-1 font-mono text-[11px] uppercase tracking-wider text-tinta-fraca">
-                <ArrowLeft className="h-3 w-3" />
-                {language === "en" ? "Newer" : "Mais recente"}
+            <Link to={lp(`/blog/${slugOf(newerPost)}`)} className="group">
+              <span className="flex items-center gap-1 text-xs text-tinta-fraca">
+                <ArrowLeft className="h-3 w-3" aria-hidden="true" />
+                {isEn ? "Newer" : "Mais recente"}
               </span>
-              <span className="mt-1 block font-display text-sm font-bold text-tinta transition-colors group-hover:text-acento">
-                {(language === "en" ? newerPost.titleEn : newerPost.title) || newerPost.title}
+              <span className="mt-1 block font-serif text-[1.0625rem] font-semibold text-tinta underline-offset-4 group-hover:underline">
+                {(isEn ? newerPost.titleEn : newerPost.title) || newerPost.title}
               </span>
             </Link>
           ) : (
             <span aria-hidden="true" />
           )}
           {olderPost && (
-            <Link
-              to={lp(`/blog/${slugOf(olderPost)}`)}
-              className="group rounded-2xl border border-borda-suave p-4 text-right transition-all hover:border-acento hover:shadow-md"
-            >
-              <span className="flex items-center justify-end gap-1 font-mono text-[11px] uppercase tracking-wider text-tinta-fraca">
-                {language === "en" ? "Older" : "Mais antigo"}
-                <ArrowRight className="h-3 w-3" />
+            <Link to={lp(`/blog/${slugOf(olderPost)}`)} className="group sm:text-right">
+              <span className="flex items-center gap-1 text-xs text-tinta-fraca sm:justify-end">
+                {isEn ? "Older" : "Mais antigo"}
+                <ArrowRight className="h-3 w-3" aria-hidden="true" />
               </span>
-              <span className="mt-1 block font-display text-sm font-bold text-tinta transition-colors group-hover:text-acento">
-                {(language === "en" ? olderPost.titleEn : olderPost.title) || olderPost.title}
+              <span className="mt-1 block font-serif text-[1.0625rem] font-semibold text-tinta underline-offset-4 group-hover:underline">
+                {(isEn ? olderPost.titleEn : olderPost.title) || olderPost.title}
               </span>
             </Link>
           )}
         </nav>
       )}
-
-      <footer className="mt-12 border-t border-borda-suave pt-6 font-mono text-xs text-tinta-fraca">
-        © {new Date().getFullYear()} {authorName}
-      </footer>
       </article>
     </div>
   );
