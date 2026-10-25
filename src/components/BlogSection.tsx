@@ -1,14 +1,12 @@
 import React, { useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { BlogPost, Project } from "../types";
-import {
-  BookOpen, Plus, FileText, Rss
-} from "lucide-react";
+import { Plus, FileText, Rss } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import ConfirmModal from "./ConfirmModal";
 import { ReorderableList, mergeReorderedSubset } from "./Reorderable";
 import BlogCard from "./BlogCard";
-import { Language, translations } from "../lib/translations";
+import { Language } from "../lib/translations";
 import { findBySlug, slugOf } from "../utils/slug";
 
 interface BlogSectionProps {
@@ -155,9 +153,7 @@ export default function BlogSection({
     return postCat.toLowerCase().trim() === activeCategoryFilter.toLowerCase().trim();
   });
 
-  // Reordering only applies to the unfiltered "Todos" view — the featured
-  // hero post (filteredPosts[0]) always stays fixed; dragging only reorders
-  // the remaining articles among themselves.
+  // Reordering only applies to the unfiltered "Todos" view.
   const canReorderPosts =
     isEditMode && (activeCategoryFilter === "Todos" || activeCategoryFilter === "All") && !searchQuery.trim();
 
@@ -177,81 +173,64 @@ export default function BlogSection({
   const feedKey = `${activeCategoryFilter}-${searchQuery.trim()}`;
   const feedInitial = hasAnimatedFeedOnce ? { opacity: 0, y: 8 } : false;
 
-  return (
-    <div className="mt-16 border-t border-slate-100 dark:border-slate-800/80 pt-16 no-print print:hidden" id="blog-section">
-      {/* Header */}
-      <div className="mb-10 flex flex-col md:flex-row md:items-end md:justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400">
-              <BookOpen className="h-4.5 w-4.5" />
-            </span>
-            <span className="text-xs font-bold uppercase tracking-widest text-indigo-600 dark:text-indigo-400 font-mono">
-              {language === "en" ? "Scientific Communication" : "Divulgação Científica"}
-            </span>
-          </div>
-          <h2 className="mt-2 text-2xl font-black text-slate-900 dark:text-white tracking-tight font-display sm:text-3xl">
-            {translations[language].blog}
-          </h2>
-          <p className="mt-2 text-sm text-slate-500 dark:text-slate-400 font-sans">
-            {language === "en"
-              ? "Articles, research notes and reflections on Physics Engineering, instrumentation and computational science."
-              : "Artigos, notas de pesquisa e pensamentos sobre Engenharia Física, instrumentação e física computacional."}
-          </p>
-        </div>
+  const isEn = language === "en";
 
-        <div className="flex items-center gap-2 no-print print:hidden">
+  return (
+    <div className="mx-auto max-w-[42rem] no-print print:hidden" id="blog-section">
+      {/* Apresentação do blog: nome, uma frase sobre o que se escreve aqui. */}
+      <header className="pt-6 pb-10 sm:pt-12">
+        <h1 className="font-serif text-4xl font-bold tracking-tight text-tinta sm:text-5xl">
+          {isEn ? "Notes" : "Notas"}
+        </h1>
+        <p className="mt-4 max-w-2xl font-serif text-lg leading-relaxed text-tinta-suave sm:text-xl">
+          {isEn
+            ? "Writing on science, technology, what I've been studying and other ideas worth putting down."
+            : "Textos sobre ciência, tecnologia, o que ando estudando e outras ideias que valem ser escritas."}
+        </p>
+        <div className="mt-5 flex flex-wrap items-center gap-4 text-sm">
           <a
             href="/feed.xml"
             target="_blank"
             rel="noopener noreferrer"
-            title={language === "en" ? "Subscribe via RSS" : "Assinar via RSS"}
-            className="flex items-center gap-1.5 rounded-xl border border-slate-200 px-3 py-2 text-xs font-bold text-slate-500 transition-colors hover:border-orange-300 hover:text-orange-500 dark:border-slate-800 dark:text-slate-400 dark:hover:border-orange-800 dark:hover:text-orange-400"
+            className="inline-flex items-center gap-1.5 text-tinta-fraca underline-offset-4 transition-colors hover:text-tinta hover:underline"
           >
-            <Rss className="h-3.5 w-3.5" />
-            <span>RSS</span>
+            <Rss className="h-3.5 w-3.5" aria-hidden="true" />
+            {isEn ? "Subscribe via RSS" : "Assinar via RSS"}
           </a>
 
           {isEditMode && (
             <button
               onClick={handleOpenAdd}
-              className="flex items-center gap-1.5 rounded-xl bg-indigo-600 px-4 py-2 text-xs font-bold text-white shadow-md shadow-indigo-100 dark:shadow-none hover:bg-indigo-700 transition-all active:scale-95"
+              className="flex items-center gap-1.5 rounded-lg bg-acento-solido px-3 py-1.5 text-xs font-bold text-white transition-colors hover:bg-acento-solido-hover"
               id="add-post-btn"
             >
               <Plus className="h-4 w-4" />
-              <span>{language === "en" ? "New Article" : "Novo Artigo"}</span>
+              <span>{isEn ? "New Article" : "Novo Artigo"}</span>
             </button>
           )}
         </div>
-      </div>
+      </header>
 
-      {/* Category Tabs */}
-      <div className="mb-8 flex flex-wrap gap-2 border-b border-slate-200/50 dark:border-slate-800/80 pb-4">
+      {/* Assuntos: links de texto, não pílulas. */}
+      <nav aria-label={isEn ? "Topics" : "Assuntos"} className="flex flex-wrap gap-x-5 gap-y-2 border-b border-borda pb-3 text-sm">
         {availableCategories.map((cat, idx) => {
-          const isActive = selectedCategory === cat || (selectedCategory === "Todos" && cat === "Todos");
-          const displayLabel = cat === "Todos" ? (language === "en" ? "All" : "Todos") : cat;
+          const isActive = selectedCategory === cat;
+          const displayLabel = cat === "Todos" ? (isEn ? "All" : "Todos") : cat;
           return (
             <button
               key={`blog-cat-${cat}-${idx}`}
+              type="button"
               onClick={() => setSelectedCategory(cat)}
-              className={`relative rounded-full px-4 py-1.5 text-xs font-bold transition-colors cursor-pointer ${
-                isActive
-                  ? "text-white"
-                  : "bg-slate-50 dark:bg-slate-900 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-800 dark:hover:text-slate-200"
+              aria-pressed={isActive}
+              className={`cursor-pointer underline-offset-[6px] transition-colors ${
+                isActive ? "font-semibold text-tinta underline decoration-2 decoration-acento" : "text-tinta-fraca hover:text-tinta"
               }`}
             >
-              {isActive && (
-                <motion.span
-                  layoutId="blog-tab-pill"
-                  className="absolute inset-0 rounded-full bg-indigo-600 dark:bg-indigo-500 shadow-sm shadow-indigo-100 dark:shadow-none"
-                  transition={{ type: "spring", stiffness: 500, damping: 35 }}
-                />
-              )}
-              <span className="relative">{displayLabel}</span>
+              {displayLabel}
             </button>
           );
         })}
-      </div>
+      </nav>
 
       <AnimatePresence mode="wait">
       <motion.div
@@ -262,53 +241,39 @@ export default function BlogSection({
         transition={{ duration: 0.2, ease: "easeOut" }}
       >
       {filteredPosts.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 p-12 text-center">
-          <FileText className="mx-auto h-12 w-12 text-slate-300 dark:text-slate-700" />
-          <h3 className="mt-4 text-sm font-bold text-slate-900 dark:text-white font-display">
-            {language === "en" ? "No articles found" : "Sem artigos publicados"}
-          </h3>
-          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400 font-sans">
+        <div className="py-16 text-center">
+          <FileText className="mx-auto h-10 w-10 text-tinta-fraca" aria-hidden="true" />
+          <h2 className="mt-4 font-serif text-lg font-bold text-tinta">
+            {isEn ? "No articles found" : "Sem artigos publicados"}
+          </h2>
+          <p className="mt-1 text-sm text-tinta-suave">
             {isEditMode
-              ? (language === "en" ? "Click 'New Article' to create your first post." : "Clique em 'Novo Artigo' para criar sua primeira publicação no blog.")
-              : (language === "en" ? "No publications available under this category." : "Nenhuma publicação disponível nesta seção.")}
+              ? (isEn ? "Click 'New Article' to create your first post." : "Clique em 'Novo Artigo' para criar sua primeira publicação no blog.")
+              : (isEn ? "No publications available under this category." : "Nenhuma publicação disponível nesta seção.")}
           </p>
         </div>
       ) : (
-        <div className="space-y-6">
-          <BlogCard
-            post={filteredPosts[0]}
-            category={getPostCategoryDisplay(filteredPosts[0])}
-            language={language}
-            featured
-            isEditMode={isEditMode}
-            onOpen={onSelectPost ? () => setSelectedPost(filteredPosts[0]) : undefined}
-            onEdit={event => handleOpenEdit(filteredPosts[0], event)}
-            onDelete={event => handleDelete(filteredPosts[0].id, event)}
-          />
-          {filteredPosts.length > 1 && (
-            <ReorderableList
-              items={filteredPosts.slice(1)}
-              isEditMode={canReorderPosts}
-              onReorder={newOrder => onUpdatePosts(mergeReorderedSubset(posts, newOrder))}
-              getKey={post => post.id}
-              className="grid grid-cols-1 items-start gap-6 md:grid-cols-2"
-              itemClassName="min-w-0"
-            >
-              {(post, dragHandle) => (
-                <BlogCard
-                  post={post}
-                  category={getPostCategoryDisplay(post)}
-                  language={language}
-                  isEditMode={isEditMode}
-                  dragHandle={dragHandle}
-                  onOpen={onSelectPost ? () => setSelectedPost(post) : undefined}
-                  onEdit={event => handleOpenEdit(post, event)}
-                  onDelete={event => handleDelete(post.id, event)}
-                />
-              )}
-            </ReorderableList>
+        <ReorderableList
+          items={filteredPosts}
+          isEditMode={canReorderPosts}
+          onReorder={newOrder => onUpdatePosts(mergeReorderedSubset(posts, newOrder))}
+          getKey={post => post.id}
+          className="divide-y divide-borda"
+          itemClassName="min-w-0"
+        >
+          {(post, dragHandle) => (
+            <BlogCard
+              post={post}
+              category={getPostCategoryDisplay(post)}
+              language={language}
+              isEditMode={isEditMode}
+              dragHandle={dragHandle}
+              onOpen={onSelectPost ? () => setSelectedPost(post) : undefined}
+              onEdit={event => handleOpenEdit(post, event)}
+              onDelete={event => handleDelete(post.id, event)}
+            />
           )}
-        </div>
+        </ReorderableList>
       )}
       </motion.div>
       </AnimatePresence>

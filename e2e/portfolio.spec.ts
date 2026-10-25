@@ -50,6 +50,10 @@ test("mobile menu contains keyboard focus and article anchors survive loading", 
   await page.getByRole("button", { name: "Nesta página" }).click();
   const sumario = page.getByRole("navigation", { name: "Sumário" });
   await expect(sumario.getByRole("link", { name: "Resultados", exact: true })).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  // O blog tem cabeçalho próprio, sem o menu do portfólio; o menu fica no resto do site.
+  await expect(page.getByRole("button", { name: "Abrir menu de navegação" })).toHaveCount(0);
+  await page.goto("/curriculo");
   await page.getByRole("button", { name: "Abrir menu de navegação" }).click();
   const menu = page.getByRole("dialog", { name: "Menu de navegação" });
   await expect(menu).toBeVisible();

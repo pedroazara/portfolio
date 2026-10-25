@@ -17,6 +17,7 @@ const ExperienceEducationSection = lazy(() => import("./components/ExperienceEdu
 const CoursesSection = lazy(() => import("./components/CoursesSection"));
 const SkillsSection = lazy(() => import("./components/SkillsSection"));
 import GlobalHeader from "./components/GlobalHeader";
+import BlogHeader from "./components/BlogHeader";
 import SectionHeader from "./components/SectionHeader";
 const BlogSection = lazy(() => import("./components/BlogSection"));
 /**
@@ -689,8 +690,17 @@ export default function App() {
         {language === "en" ? "Skip to main content" : "Ir para o conteúdo principal"}
       </a>
 
-      {/* Global Navigation Header (64px, scroll-hiding) */}
-      {!hasPersonalWorkspace && <GlobalHeader
+      {/* O blog tem cabeçalho próprio; o resto do site usa a navegação global. */}
+      {isBlog ? (
+        <BlogHeader
+          isCollapsed={isGlobalCollapsed}
+          language={language}
+          onLanguageChange={setLanguage}
+          darkMode={darkMode}
+          onDarkModeToggle={() => setDarkMode(!darkMode)}
+          isAuthenticated={isAuthenticated}
+        />
+      ) : !hasPersonalWorkspace && <GlobalHeader
         isCollapsed={isGlobalCollapsed}
         language={language}
         onLanguageChange={setLanguage}

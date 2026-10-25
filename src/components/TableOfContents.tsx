@@ -30,12 +30,30 @@ export default function TableOfContents({ entries, language = "pt" }: TableOfCon
     // Markdown is lazy-loaded; wait for the target rather than erasing its hash.
     let id: string; try { id = decodeURIComponent(window.location.hash.slice(1)); } catch { return; }
     if (!id) return;
-    const reveal = () => { const target = document.getElementById(id); if (!target) return false; target.scrollIntoView({ behavior: "auto", block: "start" }); return true; };
-    if (reveal()) return;
-    const observer = new MutationObserver(() => { if (reveal()) observer.disconnect(); });
-    observer.observe(document.getElementById("conteudo-principal") || document.body, { childList: true, subtree: true });
+    const reveal = () => { const target = document.getElementById(id); if (!target) return false; target.scrollIntoView({ behavior: "instant", block: "start" }); return true; };
+    // Fontes e imagens que chegam depois do pulo refazem o layout acima do alvo.
+    // Por alguns segundos o pulo se repete a cada mudança de altura, até a
+    // pessoa rolar ou usar o teclado por conta própria.
+    const root = document.getElementById("conteudo-principal") || document.body;
+    let resizeObserver: ResizeObserver | undefined;
+    let settleTimer = 0;
+    const stopFollowing = () => {
+      resizeObserver?.disconnect();
+      clearTimeout(settleTimer);
+      for (const type of ["wheel", "touchstart", "keydown"]) window.removeEventListener(type, stopFollowing);
+    };
+    const follow = () => {
+      if (typeof ResizeObserver === "undefined") return;
+      resizeObserver = new ResizeObserver(() => reveal());
+      resizeObserver.observe(root);
+      settleTimer = window.setTimeout(stopFollowing, 4000);
+      for (const type of ["wheel", "touchstart", "keydown"]) window.addEventListener(type, stopFollowing, { passive: true });
+    };
+    if (reveal()) { follow(); return stopFollowing; }
+    const observer = new MutationObserver(() => { if (reveal()) { observer.disconnect(); follow(); } });
+    observer.observe(root, { childList: true, subtree: true });
     const timeout = window.setTimeout(() => observer.disconnect(), 10000);
-    return () => { observer.disconnect(); clearTimeout(timeout); };
+    return () => { observer.disconnect(); clearTimeout(timeout); stopFollowing(); };
   }, [entryKey]);
 
   useEffect(() => {

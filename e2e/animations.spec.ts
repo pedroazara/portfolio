@@ -49,15 +49,9 @@ test("opening the blog from a scrolled page starts at the top without a scroll a
   await page.evaluate(() => {
     const samples: number[] = [];
     (window as any).__blogScrollSamples = samples;
-    (window as any).__indicatorOffsets = [];
     const record = () => {
       // The URL changes before React commits; only sample the actual blog page.
       if (location.pathname === "/blog" && document.getElementById("blog-section")) samples.push(scrollY);
-      if (location.pathname === "/blog") {
-        const nav = document.querySelector('nav[aria-label="Navegação principal"]')!;
-        const line = nav.querySelector('[data-testid="nav-indicator"]');
-        if (line) (window as any).__indicatorOffsets.push(Math.abs(line.getBoundingClientRect().bottom - nav.getBoundingClientRect().bottom));
-      }
       if (samples.length < 20) requestAnimationFrame(record);
     };
     requestAnimationFrame(record);
@@ -66,7 +60,6 @@ test("opening the blog from a scrolled page starts at the top without a scroll a
   await expect(page).toHaveURL(/\/blog$/);
   await expect.poll(() => page.evaluate(() => (window as any).__blogScrollSamples.length)).toBe(20);
   expect(await page.evaluate(() => (window as any).__blogScrollSamples)).toEqual(Array(20).fill(0));
-  expect(await page.evaluate(() => Math.max(...(window as any).__indicatorOffsets))).toBeLessThan(5);
   await expect(page.getByRole("banner")).toHaveCSS("opacity", "1");
 });
 
