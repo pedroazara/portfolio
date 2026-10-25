@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 import { initialResumeData } from "../src/data/initialData";
 const fixture = structuredClone(initialResumeData);
-fixture.projects.push({ id: "ux-gallery", codigo: "ux-gallery", title: "UX Gallery", description: "Test fixture", categoryId: "ux-category", tags: [], galleryImages: ["/favicon.svg", "/og-home.svg"], detailedDescription: "## Visão geral\n\nTeste\n\n## Detalhes\n\nTeste" });
+fixture.projects.push({ id: "ux-gallery", codigo: "ux-gallery", title: "UX Gallery", description: "Test fixture", categoryId: "ux-category", tags: [], galleryImages: ["/favicon.svg", "/icon.svg"], detailedDescription: "## Visão geral\n\nTeste\n\n## Detalhes\n\nTeste" });
 fixture.categories.push({ id: "ux-category", name: "UX Tests" });
 fixture.posts.push({ id: "ux-article", codigo: "ux-article", title: "UX Article", summary: "Test fixture", content: "## Introdução\n\n" + "Texto para teste de leitura. ".repeat(400) + "\n\n## Resultados\n\nTeste.", date: "2026-01-01", tags: [] });
 
