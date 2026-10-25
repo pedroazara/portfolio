@@ -4,7 +4,8 @@ import { ResumeData, Profile, Project, ProjectCategory, Experience, AcademicActi
 import { initialResumeData } from "./data/initialData";
 import { parseResumeData } from "./lib/contentSchema";
 import { socialImageOf } from "./lib/coverPack";
-import { workspaceKey, readLocalData } from "./lib/localWorkspace";
+import { workspaceKey, readLocalData, downloadJson } from "./lib/localWorkspace";
+import { savePendingEdits, readPendingEdits, clearPendingEdits, mergeEdits, describeEdits, type PendingEdits } from "./lib/pendingEdits";
 import ConnectionStatus from "./components/ConnectionStatus";
 import { trackPage, reportError } from "./lib/observability";
 import ResumeHeader from "./components/ResumeHeader";
@@ -130,6 +131,13 @@ export default function App() {
   // Bloqueamos a gravação nesta sessão para não sobrescrever dados na nuvem
   // com uma cópia local possivelmente desatualizada.
   const [cloudReadFailed, setCloudReadFailed] = useState(false);
+  // Edições de uma sessão anterior que não chegaram à nuvem (ver pendingEdits).
+  // Enquanto a oferta de restaurar está aberta, esta aba não grava outra cópia
+  // por cima dela.
+  const [unsavedEdits, setUnsavedEdits] = useState<PendingEdits | null>(null);
+  const unsavedEditsRef = useRef<PendingEdits | null>(null);
+  unsavedEditsRef.current = unsavedEdits;
+  const tabIdRef = useRef(crypto.randomUUID());
 
   // Load initial resume state from localStorage or template
   const [resumeData, setResumeData] = useState<ResumeData>(initialResumeData);
@@ -159,7 +167,15 @@ export default function App() {
         cloudVersionRef.current = version;
         setLastUpdatedAt(version);
         if (cloudData) {
-          setResumeData(sanitizeResumeData(cloudData));
+          const cloud = sanitizeResumeData(cloudData);
+          setResumeData(cloud);
+          const pending = readPendingEdits();
+          if (pending) {
+            // Se o que ficou pendente já está na nuvem, não há o que oferecer.
+            const merged = sanitizeResumeData(mergeEdits(pending.base, cloud, pending.mine));
+            if (JSON.stringify(merged) === JSON.stringify(cloud)) clearPendingEdits();
+            else setUnsavedEdits(pending);
+          }
         } else {
           // O documento ainda não existe na nuvem: usa a cópia local, se houver.
           loadFromLocalStorage();
@@ -420,7 +436,14 @@ export default function App() {
   useEffect(() => {
     if (!isDataLoaded) return; // Prevent overwriting during initialization
     try {
-      localStorage.setItem(workspaceKey(), JSON.stringify(resumeData));
+      const serialized = JSON.stringify(resumeData);
+      localStorage.setItem(workspaceKey(), serialized);
+      // Edição ainda não sincronizada: guarda à parte, porque a cópia acima é
+      // sobrescrita pela nuvem quando a página recarrega.
+      const synced = lastSyncedRef.current;
+      if (synced !== null && synced !== serialized && !unsavedEditsRef.current) {
+        savePendingEdits(tabIdRef.current, synced, serialized);
+      }
     } catch { setSaveError("Armazenamento local cheio. Exporte seus dados antes de continuar."); }
   }, [resumeData, isDataLoaded]);
 
@@ -455,6 +478,7 @@ export default function App() {
         cloudVersionRef.current = await saveResumeData(resumeData, cloudVersionRef.current);
         setLastUpdatedAt(cloudVersionRef.current);
         lastSyncedRef.current = serialized;
+        clearPendingEdits({ tab: tabIdRef.current, syncedJson: serialized });
         setSaveError(null);
         setShowAutoSaveBanner(true);
         if (bannerTimerRef.current) clearTimeout(bannerTimerRef.current);
@@ -467,7 +491,7 @@ export default function App() {
           // Outra aba gravou depois desta carregar. Não sobrescrevemos: seria
           // apagar o trabalho dela. Recarregar traz a versão nova.
           setSaveError(
-            "Outra aba salvou alterações mais recentes. Recarregue a página para continuar a partir delas — o que você digitou aqui está guardado neste navegador."
+            "Outra aba salvou alterações mais recentes. Recarregue a página: o que você digitou aqui fica guardado neste navegador, e o site oferece restaurar."
           );
         } else {
           setSaveError("Não foi possível salvar na nuvem. Suas alterações continuam guardadas neste navegador.");
@@ -479,6 +503,22 @@ export default function App() {
 
     return () => { cancelled = true; clearTimeout(timer); };
   }, [resumeData, isDataLoaded, isAuthenticated, cloudReadFailed, hasConflict, devPreview]);
+
+  // Reaplica as edições pendentes sobre a versão atual; o salvamento automático
+  // leva o resultado para a nuvem.
+  const restoreUnsavedEdits = () => {
+    const pending = unsavedEdits;
+    if (!pending) return;
+    setResumeData((current) => sanitizeResumeData(mergeEdits(pending.base, current, pending.mine)));
+    clearPendingEdits();
+    setUnsavedEdits(null);
+  };
+
+  const discardUnsavedEdits = () => {
+    if (!window.confirm("Descartar as alterações que não foram salvas? Elas não poderão ser recuperadas.")) return;
+    clearPendingEdits();
+    setUnsavedEdits(null);
+  };
 
   // Se a leitura inicial da nuvem falhou, a gravação fica bloqueada nesta sessão.
   // O admin precisa saber disso — caso contrário editaria achando que está salvando.
@@ -928,6 +968,58 @@ export default function App() {
           >
             <CloudOff className="h-4 w-4 shrink-0" />
             <span className="max-w-xs">{saveError}</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Edições de uma sessão anterior que não chegaram à nuvem */}
+      <AnimatePresence>
+        {isAuthenticated && unsavedEdits && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+            role="alert"
+            className="fixed bottom-4 left-1/2 z-100 w-[calc(100%-2rem)] max-w-md -translate-x-1/2 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-900 shadow-xl dark:border-amber-900/50 dark:bg-amber-950/80 dark:text-amber-200 no-print"
+          >
+            <p className="flex items-center gap-2 font-semibold">
+              <CloudOff className="h-4 w-4 shrink-0" />
+              Alterações de {new Date(unsavedEdits.at).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" })} não chegaram a ser salvas.
+            </p>
+            <ul className="mt-2 list-disc space-y-0.5 pl-6">
+              {(() => {
+                const lines = describeEdits(unsavedEdits.base, unsavedEdits.mine);
+                return [...lines.slice(0, 5), ...(lines.length > 5 ? [`e mais ${lines.length - 5}`] : [])].map((line) => (
+                  <li key={line}>{line}</li>
+                ));
+              })()}
+            </ul>
+            <p className="mt-2">
+              Restaurar junta essas alterações à versão atual, sem desfazer o que foi salvo depois.
+            </p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={restoreUnsavedEdits}
+                className="rounded-full bg-amber-600 px-3 py-1.5 font-semibold text-white hover:bg-amber-700"
+              >
+                Restaurar
+              </button>
+              <button
+                type="button"
+                onClick={() => downloadJson(unsavedEdits.mine, `alteracoes-nao-salvas-${unsavedEdits.at.slice(0, 10)}.json`)}
+                className="rounded-full border border-amber-300 px-3 py-1.5 font-semibold hover:bg-amber-100 dark:border-amber-800 dark:hover:bg-amber-900/40"
+              >
+                Baixar cópia
+              </button>
+              <button
+                type="button"
+                onClick={discardUnsavedEdits}
+                className="rounded-full px-3 py-1.5 font-semibold hover:bg-amber-100 dark:hover:bg-amber-900/40"
+              >
+                Descartar
+              </button>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
